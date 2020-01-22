@@ -83,7 +83,7 @@ int Memory::ExecuteSigScans()
 {
 	for (int i = 0; i<0x2000000; i += 0x1000) {
 		std::vector<byte> data = ReadData<byte>({i}, 0x1100);
-		
+
 		for (auto& [scanBytes, sigScan] : _sigScans) {
 			if (sigScan.found) continue;
 			int index = find(data, scanBytes);
@@ -125,9 +125,10 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 				ThrowError();
 			}
 			_computedAddresses[cumulativeAddress] = computedAddress;
+			cumulativeAddress = computedAddress;
+		} else {
+			cumulativeAddress = search->second;
 		}
-
-		cumulativeAddress = _computedAddresses[cumulativeAddress];
 	}
 	return reinterpret_cast<void*>(cumulativeAddress + final_offset);
 }
