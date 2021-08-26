@@ -293,6 +293,7 @@ bool Panel::LoadPanels(int seed, bool hard)
 	}
 	Random::seed(seed);
 	//Random::SetSeed(seed);
+	Random::rand(); // Ignore value; this is done so that the RNG matches the state that Desert was initially generated in
 	Randomizer().RandomizeDesert();
 	file >> size;
 	while (size-- > 0) {

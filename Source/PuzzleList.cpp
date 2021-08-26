@@ -9,6 +9,7 @@ void PuzzleList::GenerateAllN()
 {
 	generator->setLoadingData(336);
 	CopyTargets();
+	GenerateDesertN();
 	GenerateTutorialN();
 	GenerateSymmetryN();
 	GenerateQuarryN();
@@ -19,7 +20,6 @@ void PuzzleList::GenerateAllN()
 	GenerateVaultsN();
 	GenerateTrianglePanelsN();
 	GenerateOrchardN();
-	GenerateDesertN();
 	GenerateKeepN();
 	GenerateJungleN();
 	GenerateMountainN();
@@ -34,6 +34,7 @@ void PuzzleList::GenerateAllH()
 {
 	generator->setLoadingData(349);
 	CopyTargets();
+	GenerateDesertH();
 	GenerateTutorialH();
 	GenerateSymmetryH();
 	GenerateQuarryH();
@@ -44,7 +45,6 @@ void PuzzleList::GenerateAllH()
 	GenerateVaultsH();
 	GenerateTrianglePanelsH();
 	GenerateOrchardH();
-	GenerateDesertH();
 	GenerateKeepH();
 	GenerateJungleH();
 	GenerateMountainH();
