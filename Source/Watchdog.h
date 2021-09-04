@@ -46,6 +46,14 @@ public:
 	bool ready;
 };
 
+class TestWatchdog : public Watchdog {
+public:
+	TestWatchdog() : Watchdog(10) { ready = false; }
+	virtual void action();
+	bool ready;
+	int go = 0;
+};
+
 class ArrowWatchdog : public Watchdog {
 public:
 	ArrowWatchdog(int id) : Watchdog(0.1f) {

@@ -3,6 +3,8 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #include "Watchdog.h"
+#include "PanelsUnlocks.h"
+#include "PanelsChecks.h"
 #include <thread>
 
 void Watchdog::start()
@@ -50,6 +52,30 @@ void KeepWatchdog::action() {
 	}
 	WritePanelData<float>(0x03317, POWER, { 1, 1 });
 	WritePanelData<int>(0x03317, NEEDS_REDRAW, { 1 });
+}
+
+
+// Completion manager test>
+void TestWatchdog::action() {
+	//THIS IS HOW TO TEST SOLVE STATE!
+	int hasEverBeenSolved = ReadPanelData<int>(0x00061, 0x298);
+
+	std::string test = std::to_string(hasEverBeenSolved);
+
+	go++;
+
+	for (int panelId : doorUnlockPanels) {
+		WritePanelData<float>(panelId, POWER, { (go % 2) * 1.0f, (go % 2) * 1.0f });
+		WritePanelData<int>(panelId, NEEDS_REDRAW, { 1 });
+	}
+
+	int doneChecks = 0;
+
+	for (int id : standardChecks) {
+		doneChecks += ReadPanelData<int>(id, 0x298);
+	}
+
+	OutputDebugStringA(std::to_string(doneChecks).c_str());
 }
 
 //Arrow Watchdog - To run the arrow puzzles

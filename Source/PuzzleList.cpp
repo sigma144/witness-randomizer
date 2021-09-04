@@ -56,7 +56,7 @@ void PuzzleList::GenerateAllH()
 
 void PuzzleList::CopyTargets()
 {
-	Special::copyTarget(0x00021, 0x19650);
+	/*Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
 	Special::copyTarget(0x17CFB, 0x28B39);
 	Special::copyTarget(0x3C12B, 0x28B39); 
@@ -72,13 +72,15 @@ void PuzzleList::CopyTargets()
 	Special::copyTarget(0x17D01, 0x09DE0);
 	Special::copyTarget(0x17F9B, 0x17CAB);
 	Special::copyTarget(0x17C42, 0x09DE0);
-	
+
+
 	Special::setPower(0x17CA4, true);
 	Special::setPower(0x17CAB, true);
 	Special::setPower(0x28B39, true);
+
 	//To fix issues caused by previous versions
 	Special::setPower(0x009AB, true); //Swamp underwater
-	Special::setPower(0x28998, true); //Town Yellow Door
+	Special::setPower(0x28998, true); //Town Yellow Door*/
 }
 
 void PuzzleList::GenerateTutorialN()

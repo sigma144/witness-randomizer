@@ -9,6 +9,10 @@ public:
 
 	void AdjustSpeed();
 
+	void StartWatching();
+
+	void PreventSnipes();
+
 	void ClearOffsets() {_memory->ClearOffsets();}
 
 	enum SWAP {

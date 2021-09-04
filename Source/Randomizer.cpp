@@ -55,6 +55,18 @@ void Randomizer::AdjustSpeed() {
 	// What I would also like to speed up, but haven't been able to figure it out yet: Swamp Flood Gate, Swamp Rotating Bridge
 }
 
+void Randomizer::StartWatching() {
+	//test
+	(new TestWatchdog())->start();
+	//holy shit it works
+}
+
+void Randomizer::PreventSnipes()
+{
+	// Distance-gate shadows laser to prevent sniping through the bars
+	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.5 });
+}
+
 void Randomizer::RandomizeDesert() {
 	std::vector<int> puzzles = desertPanels;
 	std::vector<int> valid1 = { 0x00698, 0x0048F, 0x09F92, 0x09DA6, 0x0078D, 0x04D18, 0x0117A, 0x17ECA, 0x0A02D };

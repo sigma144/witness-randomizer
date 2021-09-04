@@ -71,7 +71,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndMessage;
+HWND hwndAddress, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndMessage;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<Generate> generator = std::make_shared<Generate>();
@@ -157,29 +157,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			//Read seed from text box
 			WCHAR text[100];
-			GetWindowText(hwndSeed, &text[0], 100);
-			int seed = _wtoi(text);
-			if (seed == 0) {
-				//If no seed is entered, pick random seed
-				Random::seed(static_cast<int>(time(NULL)));
-				seed = Random::rand() % 999999 + 1;
-				Random::seed(seed);
-				randomizer->seedIsRNG = true;
+			GetWindowText(hwndAddress, &text[0], 100);
+			int APaddress = _wtoi(text);
+			if (APaddress == 0) {
+				MessageBox(hwnd, L"You must enter an Archipelago address.", NULL, MB_OK);
+				break;
 			}
-			else randomizer->seedIsRNG = false;
+			
+			randomizer->seedIsRNG = false;
+
+			//Here is where the netcode goes and the seed is set, instead of this statement
+			int seed = 123456;
 
 			randomizer->ClearOffsets();
 			
 			ShowWindow(hwndLoadingText, SW_SHOW);
 
 			randomizer->AdjustSpeed(); //Makes certain moving objects move faster
+			randomizer->StartWatching(); //From now on, we check completion.
+			randomizer->PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
 			int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
 			if (lastSeed > 0 && !DEBUG) {
 				if (seed != lastSeed && !randomizer->seedIsRNG) {
 					MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". To use a different seed, you must start a new save file.").c_str(), NULL, MB_OK);
-					SetWindowText(hwndSeed, std::to_wstring(lastSeed).c_str());
+					SetWindowText(hwndAddress, std::to_wstring(lastSeed).c_str());
 					break;
 				}
 				seed = lastSeed;
@@ -224,7 +227,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 
 			SetWindowText(hwndRandomize, L"Randomized!");
-			SetWindowText(hwndSeed, std::to_wstring(seed).c_str());
+			SetWindowText(hwndAddress, std::to_wstring(seed).c_str());
 
 			break;
 		}
@@ -446,13 +449,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	if (hard) SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
 	else SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
 
-	CreateWindow(L"STATIC", L"Enter a seed (optional):",
+	CreateWindow(L"STATIC", L"Archipegalo address:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 125, 160, 16, hwnd, NULL, hInstance, NULL);
-	hwndSeed = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
+	hwndAddress = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
         180, 120, 50, 26, hwnd, NULL, hInstance, NULL);
-	SendMessage(hwndSeed, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
+	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
 	hwndRandomize = CreateWindow(L"BUTTON", L"Randomize",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
