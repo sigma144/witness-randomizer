@@ -39,6 +39,8 @@
 
 #define IDC_DIFFICULTY_NORMAL 0x501
 #define IDC_DIFFICULTY_EXPERT 0x502
+#define IDC_COLORBLIND 0x503
+#define IDC_DOUBLE 0x504
 
 #define SHAPE_11 0x1000
 #define SHAPE_12 0x2000
@@ -71,7 +73,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndMessage;
+HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndMessage;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<Generate> generator = std::make_shared<Generate>();
@@ -87,10 +89,11 @@ Decoration::Color color;
 int currentShape;
 int currentDir;
 bool hard = false;
+bool doubleMode = false;
 int lastSeed;
 bool lastHard;
-std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24,
-							  SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
+bool colorblind;
+std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24, SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
 std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }; //L-shape
 std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
 float target;
@@ -114,45 +117,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		switch (LOWORD(wParam)) {
 
-		//************************* Test button  - general testing (debug mode only) ***************************************
+		//Test button  - general testing (debug mode only)
 		case IDC_TEST:
 			generator->resetConfig();
 			generator->seed(static_cast<unsigned int>(time(NULL)));
-			generator->seed(ctr++);
+			//generator->seed(ctr++);
 			//generator->seed(1);
 			specialCase->test();
 			break;
 
 		//Difficulty selection
 		case IDC_DIFFICULTY_NORMAL:
-			lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-			lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 1);
-			if (lastSeed != 0 && lastHard && !DEBUG) {
-				MessageBox(hwnd, L"This save file was previously randomized on Expert. To change the difficulty, you must start a new save file.", NULL, MB_OK);
-				SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
-				SendMessage(hwndNormal, BM_SETCHECK, BST_UNCHECKED, 1);
-				break;
-			}
 			hard = false;
 			break;
 		case IDC_DIFFICULTY_EXPERT:
-			lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-			lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 1);
-			if (lastSeed != 0 && !lastHard && !DEBUG) {
-				MessageBox(hwnd, L"This save file was previously randomized on Normal. To change the difficulty, you must start a new save file.", NULL, MB_OK);
-				SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
-				SendMessage(hwndExpert, BM_SETCHECK, BST_UNCHECKED, 1);
-				break;
-			}
 			hard = true;
+			break;
+		case IDC_COLORBLIND:
+			colorblind = !IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
+			CheckDlgButton(hwnd, IDC_COLORBLIND, colorblind);
+			break;
+		case IDC_DOUBLE:
+			doubleMode = !IsDlgButtonChecked(hwnd, IDC_DOUBLE);
+			CheckDlgButton(hwnd, IDC_DOUBLE, doubleMode);
 			break;
 
 		//Randomize button
 		case IDC_RANDOMIZE:
 		{
+			bool rerandomize = false;
 			if (Special::ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
-				MessageBox(hwnd, L"Game is already randomized.", NULL, MB_OK);
-				break;
+				if (MessageBox(hwnd, L"Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", NULL, MB_YESNO) == IDYES) {
+					rerandomize = true;
+				}
+				else break;
 			}
 
 			//Read seed from text box
@@ -179,53 +177,74 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
 			int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-			if (lastSeed > 0 && !DEBUG) {
+			if (lastSeed > 0 && !rerandomize && !DEBUG) {
 				if (seed != lastSeed && !randomizer->seedIsRNG) {
-					MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". To use a different seed, you must start a new save file.").c_str(), NULL, MB_OK);
-					SetWindowText(hwndAddress, std::to_wstring(lastSeed).c_str());
-					break;
+					if (MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". Are you sure you want to use seed " + std::to_wstring(seed) + L" instead?").c_str(), NULL, MB_YESNO) == IDNO) {
+						SetWindowText(hwndAddress, std::to_wstring(lastSeed).c_str());
+						break;
+					}
 				}
-				seed = lastSeed;
-				randomizer->seedIsRNG = false;
-				lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 1);
+				lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
 				if (!lastHard && hard) {
-					MessageBox(hwnd, L"This save file was previously randomized on Normal. To change the difficulty, you must start a new save file.", NULL, MB_OK);
-					SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
-					SendMessage(hwndExpert, BM_SETCHECK, BST_UNCHECKED, 1);
-					hard = false;
-					break;
+					if (MessageBox(hwnd, L"This save file was previously randomized on Normal. Are you sure you want to switch to Expert?", NULL, MB_YESNO) == IDNO) {
+						SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
+						SendMessage(hwndExpert, BM_SETCHECK, BST_UNCHECKED, 1);
+						hard = false;
+						break;
+					}
 				}
 				if (lastHard && !hard) {
-					MessageBox(hwnd, L"This save file was previously randomized on Expert. To change the difficulty, you must start a new save file.", NULL, MB_OK);
-					SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
-					SendMessage(hwndNormal, BM_SETCHECK, BST_UNCHECKED, 1);
-					hard = true;
-					break;
+					if (MessageBox(hwnd, L"This save file was previously randomized on Expert. Are you sure you want to switch to Normal?", NULL, MB_YESNO) == IDNO) {
+						SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
+						SendMessage(hwndNormal, BM_SETCHECK, BST_UNCHECKED, 1);
+						hard = true;
+						break;
+					}
+				}
+				bool lastDouble = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+				if (lastDouble && !doubleMode) {
+					if (MessageBox(hwnd, L"This save file was previously randomized on Double Mode. Are you sure you want to disable it?", NULL, MB_YESNO) == IDNO) {
+						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
+						doubleMode = true;
+						break;
+					}
+				}
+				if (!lastDouble && doubleMode) {
+					if (MessageBox(hwnd, L"This save file was not previously randomized on Double Mode. Are you sure you want to enable it?", NULL, MB_YESNO) == IDNO) {
+						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_UNCHECKED, 1);
+						doubleMode = false;
+						break;
+					}
 				}
 			}
 
 			//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
-			else if ((Special::ReadPanelData<int>(0x00064, TRACED_EDGES) > 0 || Special::ReadPanelData<float>(0x00295, POWER) > 0) && !DEBUG) {
-				MessageBox(hwnd, L"You must start a new game to be able to randomize.", NULL, MB_OK);
-				break;
+			else if (Special::hasBeenPlayed() && !rerandomize && !DEBUG) {
+				if (MessageBox(hwnd, L"Warning: It is recommended that you start a new game for the randomizer, to prevent corruption of your save file. Randomize on the current save file anyway?", NULL, MB_YESNO) == IDYES) {
+					randomizer->seedIsRNG = false;
+				}
+				else break;
 			}
-
+			
+			EnableWindow(hwndColorblind, false);
+			EnableWindow(hwndDoubleMode, false);
+			if (colorblind) {
+				std::ofstream out("WRPGconfig.txt");
+				out << "colorblind:true" << std::endl;
+				out.close();
+			}
+			else {
+				std::remove("WRPGconfig.txt");
+			}
 			SetWindowText(hwndRandomize, L"Randomizing...");
-
-			//If a file already exists for the seed and difficulty, load it
-			if (Panel::LoadPanels(seed, hard)) {
-				Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-				Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard ? 2 : 1);
-			} 
-			else { //Otherwise, run the randomizer
-				std::ofstream file("errorlog.txt", std::ofstream::app);
-				file << "GENERATING SEED " << seed << " " << (hard ? "EXPERT" : "NORMAL") << "..." << std::endl;
-				randomizer->seed = seed;
-				if (hard) randomizer->GenerateHard(hwndLoadingText);
-				else randomizer->GenerateNormal(hwndLoadingText);
-				file << "SUCCESS!" << std::endl;
-			}
-
+			randomizer->seed = seed;
+			randomizer->colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
+			randomizer->doubleMode = doubleMode;
+			if (hard) randomizer->GenerateHard(hwndLoadingText);
+			else randomizer->GenerateNormal(hwndLoadingText);
+			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
+			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
+			Special::WritePanelData(0x0A3B2, BACKGROUND_REGION_COLOR + 12, doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndAddress, std::to_wstring(seed).c_str());
 
@@ -386,10 +405,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	};
 	RegisterClassW(&wndClass);
 
-	RECT rect;
-    GetClientRect(GetDesktopWindow(), &rect);
 	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      rect.right - 650, 200, 600, DEBUG ? 700 : 220, nullptr, nullptr, hInstance, nullptr);
+      650, 200, 600, DEBUG ? 700 : 320, nullptr, nullptr, hInstance, nullptr);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -403,24 +420,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		catch (std::exception) { Memory::GLOBALS = 0; }
 	}
 	if (!Memory::GLOBALS) {
-		std::ifstream file("globals.txt");
+		std::ifstream file("WRPGglobals.txt");
 		if (file.is_open()) {
 			file >> std::hex >> Memory::GLOBALS;
+			file.close();
 		}
 		else {
-			std::string str = "Globals ptr not found. Press OK to search for globals ptr. It will probably take around 5 minutes. This popup will close and the calculation will run in the background. Please keep The Witness open during this time.";
-			if (MessageBox(GetActiveWindow(), std::wstring(str.begin(), str.end()).c_str(), NULL, MB_OK) != IDOK) return 0;
-			int address = Special::findGlobals();
+			std::wstring str = L"Globals ptr not found. Press OK to search for globals ptr (may take a minute or two). Please keep The Witness open during this time.";
+			if (MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK) != IDOK) return 0;
+			int address = memory.findGlobals();
 			if (address) {
-				std::stringstream ss; ss << std::hex << "Address found: 0x" << address << ". This address wil be automatically loaded next time. Please post an issue on Github with this address so that it can be added in the future.";
-				std::string str = ss.str();
-				MessageBox(GetActiveWindow(), std::wstring(str.begin(), str.end()).c_str(), NULL, MB_OK);
-				std::ofstream ofile("globals.txt", std::ofstream::app);
+				std::wstringstream ss; ss << std::hex << "Address found: 0x" << address << ". This address wil be automatically loaded next time. Please post an issue on Github with this address so that it can be added in the future.";
+				MessageBox(GetActiveWindow(), ss.str().c_str(), NULL, MB_OK);
+				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
 				ofile << std::hex << address << std::endl;
+				ofile.close();
 			}
 			else {
-				str = "Address could not be found. Please post an issue on the Github page.";
-				MessageBox(GetActiveWindow(), std::wstring(str.begin(), str.end()).c_str(), NULL, MB_OK);
+				str = L"Address could not be found. Please post an issue on the Github page.";
+				MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK);
 				return 0;
 			}
 		}
@@ -429,7 +447,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
 	int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-	hard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 1);
+	hard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+	doubleMode = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
 
 	//-------------------------Basic window controls---------------------------
 
@@ -449,26 +468,39 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	if (hard) SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
 	else SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
 
-	CreateWindow(L"STATIC", L"Archipegalo address:",
+	CreateWindow(L"STATIC", L"Enter a seed (optional):",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 125, 160, 16, hwnd, NULL, hInstance, NULL);
-	hwndAddress = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
+	hwndSeed = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
         180, 120, 50, 26, hwnd, NULL, hInstance, NULL);
-	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
+	SendMessage(hwndSeed, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
 	hwndRandomize = CreateWindow(L"BUTTON", L"Randomize",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		250, 120, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
+		250, 245, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
 
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		400, 125, 160, 16, hwnd, NULL, hInstance, NULL);
-	ShowWindow(hwndLoadingText, SW_HIDE);
+		400, 250, 160, 16, hwnd, NULL, hInstance, NULL);
 
-	hwndMessage = CreateWindow(L"STATIC", L"Seed and difficulty cannot be changed after randomization.",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_CENTER | BS_MULTILINE,
-		10, 160, 580, 80, hwnd, NULL, hInstance, NULL);
+	std::ifstream configFile("WRPGconfig.txt");
+	if (configFile.is_open()) {
+		std::map<std::string, std::string> settings;
+		std::string setting, value;
+		while (!configFile.eof() && configFile.good()) {
+			std::getline(configFile, setting, ':');
+			std::getline(configFile, value);
+			settings[setting] = value;
+		}
+		if (settings.count("colorblind") && settings["colorblind"] == "true") {
+			colorblind = true;
+			CheckDlgButton(hwnd, IDC_COLORBLIND, true);
+		}
+		configFile.close();
+	}
+
+	ShowWindow(hwndLoadingText, SW_HIDE);
 
 	//---------------------Debug/editing controls (debug mode only)---------------------
 

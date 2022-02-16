@@ -22,6 +22,7 @@ public:
 		_handle = NULL;
 		_panel = NULL;
 		_parity = -1;
+		colorblind = false;
 		_seed = Random::rand();
 		arrowColor = backgroundColor = successColor = { 0, 0, 0, 0 };
 		resetConfig();
@@ -29,7 +30,7 @@ public:
 	enum Config { //See configinfo.txt for explanations of config flags.
 		None = 0, FullGaps = 0x1, StartEdgeOnly = 0x2, DisableWrite = 0x4, PreserveStructure = 0x8, MakeStonesUnsolvable = 0x10, SmallShapes = 0x20, DisconnectShapes = 0x40, ResetColors = 0x80,
 		DisableCancelShapes = 0x100, RequireCancelShapes = 0x200, BigShapes = 0x400, SplitShapes = 0x800, RequireCombineShapes = 0x1000, TreehouseLayout = 0x2000, TreehouseColors = 0x4000,
-		AlternateColors = 0x8000, WriteColors = 0x10000, Write2Color = 0x20000, FixBackground = 0x40000, CombineErasers = 0x80000, LongPath = 0x100000, ShortPath = 0x200000, SplitStones = 0x400000,
+		AlternateColors = 0x8000, WriteColors = 0x10000, Write2Color = 0x20000, FixBackground = 0x40000, CombineErasers = 0x80000, LongPath = 0x100000, ShortPath = 0x200000, EnableFlash = 0x400000,
 		DecorationsOnly = 0x800000, FalseParity = 0x1000000, DisableDotIntersection = 0x2000000, WriteDotColor = 0x4000000, WriteDotColor2 = 0x8000000, LongestPath = 0x10000000, WriteInvisible = 0x20000000,
 		DisableReset = 0x40000000, MountainFloorH = 0x80000000
 	};
@@ -104,7 +105,8 @@ private:
 	bool generate(int id, PuzzleSymbols symbols); //************************************************************
 	bool place_all_symbols(PuzzleSymbols& symbols);
 	bool generate_path(PuzzleSymbols& symbols);
-	bool generate_path_length(int minLength);
+	bool generate_path_length(int minLength, int maxLength);
+	bool generate_path_length(int minLength) { return generate_path_length(minLength, 10000); };
 	bool generate_path_regions(int minRegions);
 	bool generate_longest_path();
 	bool generate_special_path();
@@ -117,7 +119,7 @@ private:
 	bool place_exit(int amount);
 	bool can_place_gap(Point pos);
 	bool place_gaps(int amount);
-	bool can_place_dot(Point pos);
+	bool can_place_dot(Point pos, bool intersectionOnly);
 	bool place_dots(int amount, int color, bool intersectionOnly);
 	bool can_place_stone(const std::set<Point>& region, int color);
 	bool place_stones(int color, int amount);
@@ -129,6 +131,7 @@ private:
 	int count_color(const std::set<Point>& region, int color);
 	bool place_stars(int color, int amount);
 	bool has_star(const std::set<Point>& region, int color);
+	bool checkStarZigzag(std::shared_ptr<Panel> panel);
 	bool place_triangles(int color, int amount, int targetCount);
 	int count_sides(Point pos);
 	bool place_arrows(int color, int amount, int targetCount);
@@ -152,6 +155,7 @@ private:
 	bool _allowNonMatch; //Used for multi-generator
 	int _parity;
 	std::vector<std::vector<Point>> _obstructions;
+	bool colorblind;
 
 	HWND _handle;
 	int _areaTotal, _genTotal, _areaPuzzles, _totalPuzzles;

@@ -4,13 +4,8 @@
 
 #include "Special.h"
 #include "MultiGenerate.h"
-
-std::vector<MemoryWrite<int>> Special::writeInt;
-std::vector<MemoryWrite<float>> Special::writeFloat;
-std::vector<MemoryWrite<Color>> Special::writeColor;
-std::vector<MemoryWrite<int>> Special::writeIntVec;
-std::vector<MemoryWrite<float>> Special::writeFloatVec;
-std::vector<MemoryWrite<Color>> Special::writeColorVec;
+#include "Quaternion.h"
+#include "../App/Version.h"
 
 void Special::generateReflectionDotPuzzle(std::shared_ptr<Generate> gen, int id1, int id2, std::vector<std::pair<int, int>> symbols, Panel::Symmetry symmetry, bool split)
 {
@@ -151,7 +146,7 @@ void Special::generateColorFilterPuzzle(int id, Point size, const std::vector<st
 		for (Color &c : symbolColors) {
 			colorCounts[c]++;
 		}
-		for (auto pair : colorCounts) {
+		for (const auto& pair : colorCounts) {
 			if (pair.second % 2) {
 				pass = true;
 				break;
@@ -226,13 +221,10 @@ void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<i
 		generator->setSymbol(Decoration::Start, 0, generator->_height - 1); generator->setSymbol(Decoration::Start, generator->_width - 1, 0);
 		generator->setSymbol(Decoration::Exit, 0, 0); generator->setSymbol(Decoration::Exit, generator->_width - 1, generator->_height - 1);
 	}
-	if (id == 0x00C3F || id == 0x00C41) {
-		generator->generate(id, Decoration::Dot_Intersection | Decoration::Color::Blue, static_cast<int>(dotSequence1.size()), Decoration::Dot_Intersection | Decoration::Color::Yellow, static_cast<int>(dotSequence2.size() - 1));
-	}
-	else if (id == 0x014B2) {
+	if (id == 0x00C41 || id == 0x014B2) { //Generate with one less dot than the pattern (for set start/exit)
 		generator->generate(id, Decoration::Dot_Intersection | Decoration::Color::Blue, static_cast<int>(dotSequence1.size() - 1), Decoration::Dot_Intersection | Decoration::Color::Yellow, static_cast<int>(dotSequence2.size() - 1));
 	}
-	else if (id == 0x00AFB && writeSequence) {
+	else if (id == 0x00AFB && writeSequence) { //Shipwreck Expert
 		while (!generateSoundDotReflectionSpecial(id, size, dotSequence1, dotSequence2, numColored));
 		return;
 	}
@@ -243,6 +235,10 @@ void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<i
 	for (Point p : generator->_starts) {
 		if (generator->_path1.count(p)) p1 = p;
 		if (generator->_path2.count(p)) p2 = p;
+	}
+	if (id == 0x00C41) {
+		generator->set(p1, Decoration::Dot_Intersection);
+		generator->set(p2, Decoration::Dot_Intersection);
 	}
 	int seqPos = 0;
 	while (!generator->_exits.count(p1)) {
@@ -260,22 +256,13 @@ void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<i
 			}
 		}
 	}
-	if (id == 0x014B2) {
-		generator->set(p1, dotSequence1[seqPos] | Decoration::Dot_Intersection | IntersectionFlags::DOT_IS_ORANGE);
-		numColored++;
-	}
 	seqPos = 0;
-	if (id == 0x00C3F || id == 0x00C41 || id == 0x014B2) {
-		generator->set(p2, Decoration::Dot_Intersection | IntersectionFlags::DOT_IS_BLUE);
-		generator->setFlagOnce(Generate::Config::Write2Color);
-		numColored++;
-	}
 	while (!generator->_exits.count(p2)) {
 		path2.erase(p2);
 		int sym = generator->get(p2);
 		if (sym & Decoration::Dot) {
 			generator->set(p2, sym | dotSequence2[seqPos++]);
-			if (!generator->_starts.count(p2)) dots2.insert(p2);
+			dots2.insert(p2);
 		}
 		for (Point dir : Generate::_DIRECTIONS1) {
 			Point newp = p2 + dir;
@@ -284,6 +271,11 @@ void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<i
 				break;
 			}
 		}
+	}
+	if (id == 0x014B2) {
+		generator->set(p1, dotSequence1[seqPos] | Decoration::Dot_Intersection);
+		generator->set(p2, dotSequence2[seqPos] | Decoration::Dot_Intersection);
+		numColored += 2;
 	}
 	for (int i = static_cast<int>(dotSequence1.size() + dotSequence2.size()); i > numColored; i--) {
 		if (i % 2 == 0) { //Want to evenly distribute colors between blue/orange (approximately)
@@ -308,11 +300,13 @@ void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<i
 			if (dotSequence2[i] == DOT_MEDIUM) dotSequence2[i] = 2;
 			if (dotSequence2[i] == DOT_LARGE) dotSequence2[i] = 3;
 		}
-		WritePanelData(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence2.size()) });
-		WriteArray(id, DOT_SEQUENCE, dotSequence2, true);
+		WritePanelData(id, DOT_SEQUENCE_LEN_REFLECTION, { static_cast<int>(dotSequence2.size()) });
+		WriteArray(id, DOT_SEQUENCE_REFLECTION, dotSequence2, true);
 	}
 	generator->write(id);
+	WritePanelData(id, POWER_OFF_ON_FAIL, 0);
 	generator->setSymmetry(Panel::Symmetry::None);
+	if (dotSequence1 != dotSequence2 && id != 0x00AFB) (new JungleWatchdog(id, dotSequence1, dotSequence2))->start();
 }
 
 bool Special::generateSoundDotReflectionSpecial(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored) {
@@ -464,7 +458,7 @@ void Special::generateRGBStonePuzzleH(int id) {
 	while (true) {
 		generator->setFlagOnce(Generate::Config::DisableWrite);
 		generator->generate(id);
-		int amount = 16;
+		int amount = 10;
 		std::set<Decoration::Color> used;
 		std::vector<Decoration::Color> colors = { Decoration::Black, Decoration::Red, Decoration::Green, Decoration::Blue, Decoration::Magenta, Decoration::Yellow };
 		while (amount > 0) {
@@ -583,6 +577,7 @@ void Special::generateApplePuzzle(int id, bool changeExit, bool flip)
 void Special::generateKeepLaserPuzzle(int id, const std::set<Point>& path1, const std::set<Point>& path2, const std::set<Point>& path3, const std::set<Point>& path4, std::vector<std::pair<int, int>> symbols)
 {
 	PuzzleSymbols psymbols(symbols);
+	PuzzleSymbols psymbolsBackup = psymbols;
 	generator->resetConfig();
 	generator->pathWidth = 0.4f;
 	generator->setGridSize(10, 11);
@@ -635,7 +630,8 @@ void Special::generateKeepLaserPuzzle(int id, const std::set<Point>& path1, cons
 					generator->set(x, y, 0);
 		generator->_openpos = generator->_gridpos;
 		for (int i = 0; i < psymbols.symbols[Decoration::Poly].size(); i++) {
-			psymbols.symbols[Decoration::Poly][i].second = Random::rand() % 2 + 2 - (Random::rand() % 5 == 0);
+			psymbols.symbols[Decoration::Poly][i].second = psymbolsBackup.symbols[Decoration::Poly][i].second + Random::rand() % 3 - Random::rand() % 3;
+			if (psymbols.symbols[Decoration::Poly][i].second < 1) psymbols.symbols[Decoration::Poly][i].second = 1;
 		}
 	}
 
@@ -651,7 +647,7 @@ void Special::generateKeepLaserPuzzle(int id, const std::set<Point>& path1, cons
 	generator->set(10, 18, IntersectionFlags::ENDPOINT);
 	generator->set(10, 20, IntersectionFlags::NO_POINT);
 	generator->set(10, 22, IntersectionFlags::NO_POINT);
-
+	generator->setFlagOnce(Generate::Config::EnableFlash);
 	generator->write(id);
 	if (psymbols.getNum(Decoration::Triangle) > 0) (new KeepWatchdog())->start();
 }
@@ -1002,8 +998,11 @@ bool checkShape(const std::set<Point>& shape, int direction) {
 	return false;
 }
 
-void Special::generateMountainFloor(const std::vector<int>& ids, int idfloor)
+void Special::generateMountainFloor()
 {
+	std::vector<int> ids = { 0x09EFF, 0x09F01, 0x09FC1, 0x09F8E };
+	int idfloor = 0x09FDA;
+	//{ 0x09EFF, 0x09F01, 0x09FC1, 0x09F8E }, 0x09FDA
 	generator->resetConfig();
 	std::vector<Point> floorPos = { { 3, 3 },{ 7, 3 },{ 3, 7 },{ 7, 7 } };
 	generator->openPos = std::set<Point>(floorPos.begin(), floorPos.end());
@@ -1016,7 +1015,7 @@ void Special::generateMountainFloor(const std::vector<int>& ids, int idfloor)
 		for (Point p : floorPos) sym.insert(generator->get(p));
 	} while (sym.size() < 4);
 
-	int rotateIndex = Random::rand() % 4;
+	int rotateIndex = Random::rand() % 3;
 	for (int i = 0; i < 4; i++) {
 		int symbol = generator->get(floorPos[i]);
 		//Convert to shape
@@ -1052,19 +1051,23 @@ void Special::generateMountainFloor(const std::vector<int>& ids, int idfloor)
 		gen.setPath({ {0, 0} }); //Just to stop it from trying to make a path
 		gen.setFlag(Generate::Config::DecorationsOnly);
 		gen.setFlag(Generate::Config::DisableWrite);
-		gen.generate(ids[i], Decoration::Poly | (i == rotateIndex ? Decoration::Can_Rotate : 0), 1, Decoration::Eraser | Decoration::Color::Green, 1);
-		std::set<Point> covered;
-		int decoyShape;
-		for (int x = 1; x <= 7; x += 2)
-			for (int y = 1; y <= 7; y += 2)
-				if (gen.get(x, y) != 0) {
-					covered.emplace(Point(x, y));
-					if (gen.get_symbol_type(gen.get(x, y)) == Decoration::Poly) decoyShape = gen.get(x, y);
-				}
-		for (Point p : covered) newShape.erase(p);
-		if (newShape.size() == 0 || decoyShape == symbol) {
-			i--;
-			continue;
+		if (i == rotateIndex) gen.generate(ids[i], { });
+		else
+		{
+			gen.generate(ids[i], Decoration::Poly, 1, Decoration::Eraser | Decoration::Color::Green, 1);
+			std::set<Point> covered;
+			int decoyShape;
+			for (int x = 1; x <= 7; x += 2)
+				for (int y = 1; y <= 7; y += 2)
+					if (gen.get(x, y) != 0) {
+						covered.emplace(Point(x, y));
+						if (gen.get_symbol_type(gen.get(x, y)) == Decoration::Poly) decoyShape = gen.get(x, y);
+					}
+			for (Point p : covered) newShape.erase(p);
+			if (newShape.size() == 0 || decoyShape == symbol) {
+				i--;
+				continue;
+			}
 		}
 		Point pos = pick_random(newShape);
 		gen.setVal(symbol, pos.first, pos.second);
@@ -1075,8 +1078,10 @@ void Special::generateMountainFloor(const std::vector<int>& ids, int idfloor)
 	generator->resetConfig();
 }
 
-void Special::generateMountainFloorH(const std::vector<int>& ids, int idfloor)
+void Special::generateMountainFloorH()
 {
+	const std::vector<int> ids = { 0x09EFF, 0x09F01, 0x09FC1, 0x09F8E };
+	const int idfloor = 0x09FDA;
 	generator->resetConfig();
 	std::vector<Point> floorPos = { { 3, 3 },{ 7, 3 },{ 3, 7 },{ 7, 7 } };
 	generator->openPos = std::set<Point>(floorPos.begin(), floorPos.end());
@@ -1108,7 +1113,7 @@ void Special::generateMountainFloorH(const std::vector<int>& ids, int idfloor)
 		int fails = 0;
 		do {
 			if (fails++ == 50) {
-				generateMountainFloorH(ids, idfloor);
+				generateMountainFloorH();
 				return;
 			}
 			Point shift = Point((Random::rand() % 4) * 2, -(Random::rand() % 4) * 2);
@@ -1138,7 +1143,7 @@ void Special::generateMountainFloorH(const std::vector<int>& ids, int idfloor)
 		fails = 0;
 		while (!gen.generate(ids[i], symbols)) {
 			if (fails++ > 50) {
-				generateMountainFloorH(ids, idfloor);
+				generateMountainFloorH();
 				return;
 			}
 		}
@@ -1166,7 +1171,7 @@ void Special::generateMountainFloorH(const std::vector<int>& ids, int idfloor)
 		gen.write(ids[i]);
 	}
 	if (combine != 2) {
-		generateMountainFloorH(ids, idfloor);
+		generateMountainFloorH();
 		return;
 	}
 	for (Point p : floorPos) generator->set(p, Decoration::Poly);
@@ -1174,14 +1179,16 @@ void Special::generateMountainFloorH(const std::vector<int>& ids, int idfloor)
 	generator->resetConfig();
 }
 
-void Special::generatePivotPanel(int id, Point gridSize, const std::vector<std::pair<int, int>>& symbolVec) {
+void Special::generatePivotPanel(int id, Point gridSize, const std::vector<std::pair<int, int>>& symbolVec, bool colorblind) {
 	int width = gridSize.first * 2 + 1, height = gridSize.second * 2 + 1;
 	std::vector<std::shared_ptr<Generate>> gens;
 	for (int i = 0; i < 3; i++) gens.push_back(std::make_shared<Generate>());
 	for (std::shared_ptr<Generate> gen : gens) {
 		gen->seed(Random::rand());
+		gen->colorblind = colorblind;
 		gen->setSymbol(Decoration::Start, width / 2, height - 1);
 		gen->setGridSize(gridSize.first, gridSize.second);
+		gen->setFlag(Generate::Config::FixBackground);
 		gen->setFlag(Generate::Config::DisableWrite);
 	}
 	gens[0]->setSymbol(Decoration::Exit, 0, height / 2);
@@ -1399,7 +1406,6 @@ void Special::createArrowPuzzle(int id, int x, int y, int dir, int ticks, const 
 		generator->set(p, p.first % 2 ? Decoration::Gap_Row : Decoration::Gap_Column);
 	}
 	generator->write(id);
-	(new ArrowWatchdog(id))->start();
 }
 
 void Special::createArrowSecretDoor(int id)
@@ -1416,7 +1422,6 @@ void Special::createArrowSecretDoor(int id)
 	generator->set(9, 5, Decoration::Arrow | (3 << 12) | (3 << 16));
 	generator->set(9, 9, Decoration::Arrow | (3 << 12) | (6 << 16));
 	generator->write(id);
-	(new ArrowWatchdog(id))->start();
 }
 
 void Special::generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType)
@@ -1430,86 +1435,52 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
-void Special::drawSeedAndDifficulty(int id, int seed, bool hard)
-{
-	std::vector<float> normalPos = { /*N*/ 8, 28, 8, 12, 19, 28, 19, 12, /*O*/ 25, 12, 31, 12, 31, 28, 25, 28,
-		/*R*/ 38, 12, 45, 17, 38, 21, 38, 28, 45, 28, /*M*/ 51, 28, 51, 12, 56, 19, 61, 12, 61, 28,
-		/*A*/ 68, 28, 72, 12, 76, 28, 70, 22, 74, 22, /*L*/ 83, 12, 83, 28, 91, 28 };
-	std::vector<int> normalConnectA = { /*N*/ 0, 1, 2, /*O*/ 4, 5, 6, 7, /*R*/ 8, 9, 10, 10, 10, /*M*/ 13, 14, 15, 16,
-		/*A*/ 18, 19, 21, /*L*/ 23, 24 };
-	std::vector<int> normalConnectB = { /*N*/ 1, 2, 3, /*O*/ 5, 6, 7, 4, /*R*/ 9, 10, 8, 11, 12, /*M*/ 14, 15, 16, 17,
-		/*A*/ 19, 20, 22, /*L*/ 24, 25 };
+void Special::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
+		float left, float right, float top, float bottom) {
+	//012
+	//345
+	//678
+	std::map<char, std::vector<int>> coords = {
+		{ 'a',{ 6,0,2,8,5,3 } },{ 'c',{ 2,0,6,8 } },{ 'd',{ 0,1,5,7,6,0 } },{ 'e',{ 2,0,3,5,3,6,8 } },{ 'g',{ 2,0,6,8,5,4 } },{ 'i',{ 0,2,1,7,6,8 } },{ 'k',{ 0,6,3,2,3,8 } },
+		{ 'l',{ 0,6,8 } },{ 'm',{ 6,0,4,2,8 } },{ 'n',{ 6,0,8,2 } },{ 'o',{ 0,2,8,6,0 } },{ 'p',{ 6,0,2,5,3 } },{ 'r',{ 6,0,2,5,3,8 } },{ 's',{ 2,0,3,5,8,6 } },
+		{ 't',{ 0,2,1,7 } },{ 'u',{ 0,6,8,2 } },{ 'x',{ 0,8,4,2,6 } },{ '0',{ 0,2,8,6,0 } },{ '1',{ 0,1,7,6,8 } },{ '2',{ 0,2,5,3,6,8 } },{ '3',{ 0,2,5,3,5,8,6 } },
+		{ '4',{ 0,3,5,2,8 } },{ '5',{ 2,0,3,5,8,6 } },{ '6',{ 2,0,6,8,5,3 } },{ '7',{ 0,2,7 } },{ '8',{ 0,2,8,6,0,3,5 } },{ '9',{ 6,8,2,0,3,5 } },
+		{ '!',{ 1,4,7 } },{ ' ',{ } },{ '.',{ 7 } },{ '-',{ 3,5 } }
+	};
 
-	std::vector<float> expertPos = { /*E*/ 17, 11, 8, 11, 8, 27, 17, 27, 8, 19, 17, 19, /*X*/ 23, 11, 30, 27, 30, 11, 23, 27,
-		/*P*/ 37, 11, 44, 16, 37, 20, 37, 27, /*E*/ 59, 11, 50, 11, 50, 27, 59, 27, 50, 19, 59, 19,
-		/*R*/ 66, 11, 73, 16, 66, 20, 66, 27, 73, 27, /*T*/ 84, 11, 84, 27, 79, 11, 89, 11 };
-	std::vector<int> expertConnectA = { /*E*/ 0, 1, 2, 4, /*X*/ 6, 8, /*P*/ 10, 11, 12, 12, /*E*/ 14, 15, 16, 18,
-		/*R*/ 20, 21, 22, 22, 22, /*T*/ 25, 27 };
-	std::vector<int> expertConnectB = { /*E*/ 1, 2, 3, 5, /*X*/ 7, 9, /*P*/ 11, 12, 10, 13, /*E*/ 15, 16, 17, 19,
-		/*R*/ 21, 22, 20, 23, 24, /*T*/ 26, 28 };
+	float spacingX = (right - left) / (text.size() * 3 - 1);
+	float spacingY = (top - bottom) / 2;
 
-	std::vector<float> randomPos = { /*R*/ 9, 71, 16, 76, 9, 80, 9, 87, 16, 87, /*A*/ 22, 87, 26, 72, 30, 87, 25, 82, 28, 82,
-		/*N*/ 36, 87, 36, 71, 47, 87, 47, 71, /*D*/ 53, 71, 53, 87, 58, 87, 62, 79, 58, 71, /*O*/ 67, 71, 67, 87, 73, 87, 73, 71,
-		/*M*/ 79, 87, 79, 71, 84, 78, 89, 71, 89, 87 };
-	std::vector<int> randomConnectA = { /*R*/ 0, 1, 2, 2, 2, /*A*/ 5, 6, 8, /*N*/ 10, 11, 12, /*D*/ 14, 15, 16, 17, 18,
-		/*O*/ 19, 20, 21, 22, /*M*/ 23, 24, 25, 26 };
-	std::vector<int> randomConnectB = { /*R*/ 1, 2, 0, 3, 4, /*A*/ 6, 7, 9, /*N*/ 11, 12, 13, /*D*/ 15, 16, 17, 18, 14,
-		/*O*/ 20, 21, 22, 19, /*M*/ 24, 25, 26, 27 };
-
-	std::vector<std::vector<float>> seedPos = { /*0*/ { 0, 0, 9, 0, 9, 16, 0, 16 }, /*1*/ { 2, 5, 7, 0, 7, 16 },
-		/*2*/ { 0, 0, 9, 0, 0, 8, 9, 8, 0, 16, 9, 16 }, /*3*/ { }, /*4*/ { 9, 8, 0, 8, 9, 0, 9, 16 }, /*5*/ { },
-		/*6*/ { }, /*7*/ { 0, 0, 9, 0, 9, 6, 4, 11, 4, 16, }, /*8*/ { }, /*9*/ { } };
-	seedPos[3] = seedPos[5] = seedPos[6] = seedPos[8] = seedPos[9] = seedPos[2];
-	std::vector<std::vector<int>> seedConnectA = { /*0*/ { 0, 1, 2, 3, 0 }, /*1*/ {0, 1}, /*2*/ {0, 1, 2, 2, 4},
-		/*3*/ { 0, 1, 2, 3, 4 }, /*4*/ { 0, 1, 2 }, /*5*/ { 0, 0, 2, 3, 4 }, /*6*/ { 0, 0, 2, 3, 4 }, /*7*/ { 0, 1, 2, 3 },
-		/*8*/ { 0, 0, 2, 1, 4 }, /*9*/{ 0, 0, 2, 1, 4 } };
-	std::vector<std::vector<int>> seedConnectB = { /*0*/ { 1, 2, 3, 0, 2 }, /*1*/ {1, 2}, /*2*/ {1, 3, 3, 4, 5},
-		/*3*/ { 1, 3, 3, 5, 5 }, /*4*/ { 1, 2, 3 }, /*5*/ { 1, 2, 3, 5, 5 }, /*6*/ { 1, 4, 3, 5, 5 }, /*7*/ { 1, 2, 3, 4 },
-		/*8*/ { 1, 4, 3, 5, 5 }, /*9*/{ 1, 2, 3, 5, 5 } };
-
-	std::vector<float> intersections = hard ? expertPos : normalPos;
-	std::vector<int> connectionsA = hard ? expertConnectA : normalConnectA;
-	std::vector<int> connectionsB = hard ? expertConnectB : normalConnectB;
-
-	if (seed <= 0) {
-		int offset = static_cast<int>(intersections.size() / 2);
-		for (int i : randomConnectA)
-			connectionsA.push_back(i + offset);
-		for (int i : randomConnectB)
-			connectionsB.push_back(i + offset);
-		for (float f : randomPos)
-			intersections.push_back(f);
-	}
-	else {
-		for (int x = 82; x >= 5; x -= 15) {
-			int digit = seed % 10;
-			int offset = static_cast<int>(intersections.size() / 2);
-			for (int i : seedConnectA[digit])
-				connectionsA.push_back(i + offset);
-			for (int i : seedConnectB[digit])
-				connectionsB.push_back(i + offset);
-			for (int i = 0; i < seedPos[digit].size(); i += 2) {
-				intersections.push_back(seedPos[digit][i] + x);
-				intersections.push_back(seedPos[digit][i + 1] + 70);
+	for (int i = 0; i < text.size(); i++) {
+		char c = text[i];
+		for (int j = 0; j < coords[c].size(); j++) {
+			int n = coords[c][j];
+			intersections.emplace_back((n % 3 + i * 3) * spacingX + left);
+			intersections.emplace_back(1 - ((2 - n / 3) * spacingY + bottom));
+			if (j > 0 && !(c == '!' && j == 2)) {
+				connectionsA.emplace_back(static_cast<int>(intersections.size()) / 2 - 2);
+				connectionsB.emplace_back(static_cast<int>(intersections.size()) / 2 - 1);
 			}
-			seed /= 10;
 		}
 	}
+}
+
+void Special::drawText(int id, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB, const std::vector<float>& finalLine) {
 
 	std::vector<int> intersectionFlags;
-	for (int i = 0; i < intersections.size(); i++) {
-		intersections[i] /= 100.0f;
-		if (i % 2 == 0) {
-			intersectionFlags.push_back(0);
-			intersections[i] += 0.01f;
-		}
-		else intersections[i] = 1 - intersections[i];
+	for (int i = 0; i < intersections.size() / 2; i++) {
+		intersectionFlags.emplace_back(0);
 	}
-	
-	//Add the straight line
-	intersections.push_back(0.1f); intersections.push_back(0.5f); intersections.push_back(0.9f); intersections.push_back(0.5f);
-	intersectionFlags.push_back(Decoration::Start); intersectionFlags.push_back(Decoration::Exit);
-	connectionsA.push_back(static_cast<int>(intersectionFlags.size()) - 2); connectionsB.push_back(static_cast<int>(intersectionFlags.size()) - 1);
+	intersections.emplace_back(finalLine[0]);
+	intersectionFlags.emplace_back(Decoration::Start);
+
+	for (int i = 1; i < finalLine.size(); i++) {
+		intersections.emplace_back(finalLine[i]);
+		if (i % 2 == 0) {
+			intersectionFlags.emplace_back(i == finalLine.size() - 2 ? Decoration::Exit : 0);
+			connectionsA.emplace_back(static_cast<int>(intersectionFlags.size()) - 2); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size()) - 1);
+		}
+	}
 
 	Panel panel;
 	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
@@ -1520,60 +1491,33 @@ void Special::drawSeedAndDifficulty(int id, int seed, bool hard)
 	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
 	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
+void Special::drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options)
+{
+	std::vector<float> intersections;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+
+	createText(id, hard ? "expert" : "normal", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.25f, 0.4f);
+	std::string seedStr = std::to_string(seed);
+	createText(id, seedStr, intersections, connectionsA, connectionsB, 0.5f - seedStr.size()*0.06f, 0.5f + seedStr.size()*0.06f, setSeed ? 0.6f : 0.65f, setSeed ? 0.75f : 0.8f);
+	if (setSeed) createText(id, "set seed", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.86f, 0.96f);
+	std::string version = VERSION_STR;
+	createText(id, version, intersections, connectionsA, connectionsB, 0.98f - version.size()*0.06f, 0.98f, 0.02f, 0.10f);
+	if (options) createText(id, "option", intersections, connectionsA, connectionsB, 0.02f, 0.5f, 0.02f, 0.10f);
+
+	drawText(id, intersections, connectionsA, connectionsB, { 0.1f, 0.5f, 0.9f, 0.5f });
 }
 
 void Special::drawGoodLuckPanel(int id)
 {
-	std::vector<float> intersections = { /*G*/ 32, 7, 22, 7, 22, 22, 32, 22, 32, 15, 29, 15, /*O*/ 39, 7, 39, 22, 47, 22, 47, 7,
-		/*O*/ 54, 7, 62, 7, 62, 22, 54, 22, /*D*/ 69, 7, 74, 7, 77, 14.5, 74, 22, 69, 22, /*L*/ 22, 79, 22, 94, 31, 94,
-		/*U*/ 38, 79, 38, 94, 46, 94, 46, 79, /*C*/ 60, 79, 55, 79, 52, 86.5, 55, 94, 60, 94, /*K*/ 67, 79, 67, 94, 74, 79, 69, 86.5, 74, 94,
-		/*!*/ 80, 79, 80, 89, 80, 94, /*SIGMA*/ 66, 39, 66, 32, 32, 32, 51, 51, 32, 69, 66, 69, 66, 62 };
-	std::vector<int> connectionsA = { /*G*/ 0, 1, 2, 3, 4, /*O*/ 6, 7, 8, 9, /*O*/ 10, 11, 12, 13, /*D*/ 14, 15, 16, 17, 18,
-		/*L*/ 19, 20, /*U*/ 22, 23, 24, /*C*/ 26, 27, 28, 29, /*K*/ 31, 33, 34, /*!*/ 36, /*SIGMA*/ 39, 40, 41, 42, 43, 44 };
-	std::vector<int> connectionsB = { /*G*/ 1, 2, 3, 4, 5, /*O*/ 7, 8, 9, 6, /*O*/ 11, 12, 13, 10, /*D*/ 15, 16, 17, 18, 14,
-		/*L*/ 20, 21, /*U*/ 23, 24, 25, /*C*/ 27, 28, 29, 30, /*K*/ 32, 34, 35, /*!*/ 37, /*SIGMA*/ 40, 41, 42, 43, 44, 45 };
-
-	std::vector<int> intersectionFlags;
-	for (int i = 0; i < intersections.size(); i++) {
-		intersections[i] /= 100.0f;
-		if (i % 2 == 0) intersectionFlags.push_back(0);
-		else intersections[i] = 1 - intersections[i];
-	}
-	intersectionFlags[39] = Decoration::Start; intersectionFlags[45] = Decoration::Exit;
-
-	Panel panel;
-	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-}
-
-int Special::findGlobals() {
-	Panel panel;
-	int address = 0;
-	for (int i = 0x620000; i < 0x660000; i += 4) {
-		Memory::GLOBALS = i;
-		try {
-			if ((address = panel._memory->ReadPanelData<int>(0x17E52, STYLE_FLAGS, 1)[0]) == 0x0000A040) {
-				return i;
-			}
-		}
-		catch (std::exception) {}
-	}
-	for (int i = 0x600000; i < 0x620000; i += 4) {
-		Memory::GLOBALS = i;
-		try {
-			if ((address = panel._memory->ReadPanelData<int>(0x17E52, STYLE_FLAGS, 1)[0]) == 0x0000A040) {
-				return i;
-			}
-		}
-		catch (std::exception) {}
-	}
-	return 0;
+	std::vector<float> intersections;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	createText(id, "good", intersections, connectionsA, connectionsB, 0.2f, 0.8f, 0.07f, 0.23f);
+	createText(id, "luck!", intersections, connectionsA, connectionsB, 0.2f, 0.8f, 0.77f, 0.93f);
+	drawText(id, intersections, connectionsA, connectionsB, { 0.66f, 0.62f, 0.66f, 0.69f, 0.32f, 0.69f, 0.51f, 0.51f, 0.32f, 0.32f, 0.66f, 0.32f, 0.66f, 0.39f });
 }
 
 //For testing/debugging purposes only

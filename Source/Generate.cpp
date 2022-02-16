@@ -62,7 +62,7 @@ void Generate::generate(int id, const std::vector<std::pair<int, int>>& symbolVe
 void Generate::generateMulti(int id, std::vector<std::shared_ptr<Generate>> gens, std::vector<std::pair<int, int>> symbolVec)
 {
 	MultiGenerate gen;
-	gen.splitStones = hasFlag(Config::SplitStones);
+	gen.splitStones = (id == 0x17C34); //Mountaintop
 	gen.generate(id, gens, symbolVec);
 	incrementProgress();
 }
@@ -71,7 +71,7 @@ void Generate::generateMulti(int id, std::vector<std::shared_ptr<Generate>> gens
 void Generate::generateMulti(int id, int numSolutions, std::vector<std::pair<int, int>> symbolVec)
 {
 	MultiGenerate gen;
-	gen.splitStones = hasFlag(Config::SplitStones);
+	gen.splitStones = (id == 0x17C34); //Mountaintop
 	std::vector<std::shared_ptr<Generate>> gens;
 	for (; numSolutions > 0; numSolutions--) gens.push_back(std::make_shared<Generate>());
 	gen.generate(id, gens, symbolVec);
@@ -234,7 +234,7 @@ void Generate::write(int id)
 		_panel->colorMode = Panel::ColorMode::WriteColors;
 	}
 	else if (hasFlag(Config::TreehouseColors)) {
-		_panel->colorMode = Panel::ColorMode::Treehouse;
+		_panel->colorMode = colorblind ? Panel::ColorMode::TreehouseAlternate : Panel::ColorMode::Treehouse;
 	}
 	if (hasFlag(Config::Write2Color)) {
 		Special::WritePanelData(id, PATTERN_POINT_COLOR_A, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
@@ -263,8 +263,12 @@ void Generate::write(int id)
 		Special::WritePanelData(id, ACTIVE_COLOR, { 1, 1, 1, 1 });
 		Special::WritePanelData(id, REFLECTION_PATH_COLOR, { 1, 1, 1, 1 });
 	}
+	if (hasFlag(Config::TreehouseLayout)) {
+		Special::WritePanelData(id, SPECULAR_ADD, 0.001f);
+	}
 
 	_panel->decorationsOnly = hasFlag(Config::DecorationsOnly);
+	_panel->enableFlash = hasFlag(Config::EnableFlash);
 	_panel->Write(id);
 	
 	if (hasFlag(Config::DisableReset)) _panel->_grid = backupGrid;
@@ -395,7 +399,8 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 				return false;
 
 		clear();
-		while (!generate_path_length(_panel->_width + _panel->_height)) clear();
+		while (!generate_path_length((_panel->_width + _panel->_height),
+			min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
 	}
 	
 	std::set<Point> path = _path; //Backup
@@ -422,7 +427,7 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 		//Pick a random extendable point and extend it for some randomly chosen amount of units.
 		Point randomPos = (extraStarts.size() > 0 ? pick_random(extraStarts) : pick_random(check));
 		Point pos = randomPos;
-		for (int i = (extraStarts.size() > 0 ? 7 : Random::rand() % 5); i >= 0; i--) { //False starts are extended by up to 7 units. Other points are extended up to 4 units at a time
+		for (int i = (extraStarts.size() > 0 ? 7 : 1); i >= 0; i--) { //False starts are extended by up to 7 units. Other points are extended 1 unit at a time
 			std::vector<Point> validDir;
 			for (Point dir : _DIRECTIONS2) {
 				if (!off_edge(pos + dir) && get(pos + dir) == 0) {
@@ -592,6 +597,8 @@ bool Generate::place_all_symbols(PuzzleSymbols & symbols)
 		return false;
 	for (std::pair<int, int> s : symbols[Decoration::Star]) if (!place_stars(s.first & 0xf, s.second))
 		return false;
+	if (symbols.style == Panel::Style::HAS_STARS && hasFlag(Generate::Config::TreehouseLayout) && !checkStarZigzag(_panel))
+		return false;
 	if (eraserColors.size() > 0 && !place_erasers(eraserColors, eraseSymbols))
 		return false;
 	for (std::pair<int, int> s : symbols[Decoration::Dot]) if (!place_dots(s.second, (s.first & 0xf), (s.first & ~0xf) == Decoration::Dot_Intersection))
@@ -655,7 +662,7 @@ bool Generate::generate_path(PuzzleSymbols & symbols)
 }
 
 //Generate a random path with the provided minimum length.
-bool Generate::generate_path_length(int minLength)
+bool Generate::generate_path_length(int minLength, int maxLength)
 {
 	int fails = 0;
 	Point pos = adjust_point(pick_random(_starts));
@@ -677,7 +684,7 @@ bool Generate::generate_path_length(int minLength)
 		pos = newPos;
 		fails = 0;
 	}
-	return _path.size() / 2 + 1 >= minLength;
+	return _path.size() / 2 + 1 >= minLength && _path.size() / 2 + 1 <= maxLength;
 }
 
 //Generate a path with the provided number of regions.
@@ -924,7 +931,7 @@ bool Generate::place_start(int amount)
 		if (_panel->symmetry && pos == get_sym_point(pos)) continue;
 		//Highly discourage putting start points adjacent
 		bool adjacent = false;
-		for (Point dir : _8DIRECTIONS2) {
+		for (Point dir : _DIRECTIONS2) {
 			if (!off_edge(pos + dir) && get(pos + dir) == Decoration::Start) {
 				adjacent = true;
 				break;
@@ -1040,15 +1047,17 @@ bool Generate::place_gaps(int amount) {
 }
 
 //Check if a dot can be placed at pos.
-bool Generate::can_place_dot(Point pos) {
+bool Generate::can_place_dot(Point pos, bool intersectionOnly) {
 	if (get(pos) & DOT)
 		return false;
 	if (_panel->symmetry) {
 		//For symmetry puzzles, make sure the current pos and symmetric pos are both valid
-		if (get_sym_point(pos) == pos) return false;
+		Point symPos = get_sym_point(pos);
+		if (symPos == pos) return false;
 		Panel::Symmetry backupSym = _panel->symmetry;
 		_panel->symmetry = Panel::Symmetry::None; //To prevent endless recursion
-		if (!can_place_dot(get_sym_point(pos))) {
+		//if (!can_place_dot(get_sym_point(pos))) {
+		if (!can_place_dot(symPos, intersectionOnly)) {
 			_panel->symmetry = backupSym;
 			return false;
 		}
@@ -1059,8 +1068,8 @@ bool Generate::can_place_dot(Point pos) {
 	if (hasFlag(Config::DisableDotIntersection)) return true;
 	for (Point dir : _8DIRECTIONS1) {
 		Point p = pos + dir;
-		if (!off_edge(p) && get(p) & DOT) {
-			//Don't allow horizontally adjacent dots
+		if (!off_edge(p) && (get(p) & DOT)) {
+			//Don't allow adjacent dots
 			if (dir.first == 0 || dir.second == 0)
 				return false;
 			//Allow diagonally adjacent placement some of the time
@@ -1068,8 +1077,8 @@ bool Generate::can_place_dot(Point pos) {
 				return false;
 		}
 	}
-	//Allow 2-space horizontally adjacent dots only in rare cases
-	if (Random::rand() % 10 > 0) {
+	//Allow 2-space horizontal/vertical placement some of the time
+	if (Random::rand() % (intersectionOnly ? 10 : 5) > 0) {
 		for (Point dir : _DIRECTIONS2) {
 			Point p = pos + dir;
 			if (!off_edge(p) && (get(p) & DOT)) {
@@ -1103,6 +1112,7 @@ bool Generate::place_dots(int amount, int color, bool intersectionOnly) {
 	std::set<Point> open = (color == 0 ? _path : color == IntersectionFlags::DOT_IS_BLUE ? _path1 : _path2);
 	for (Point p : _starts) open.erase(p);
 	for (Point p : _exits) open.erase(p);
+	for (Point p : blockPos) open.erase(p);
 	if (intersectionOnly) {
 		std::set<Point> intersections;
 		for (Point p : open) {
@@ -1125,7 +1135,7 @@ bool Generate::place_dots(int amount, int color, bool intersectionOnly) {
 			return false;
 		Point pos = pick_random(open);
 		open.erase(pos);
-		if (!can_place_dot(pos)) continue;
+		if (!can_place_dot(pos, intersectionOnly)) continue;
 		int symbol = (pos.first & 1) == 1 ? Decoration::Dot_Row : (pos.second & 1) == 1 ? Decoration::Dot_Column : Decoration::Dot_Intersection;
 		set(pos, symbol | color);
 		for (Point dir : _DIRECTIONS1) {
@@ -1300,8 +1310,9 @@ int Generate::make_shape_symbol(Shape shape, bool rotated, bool negative, int ro
 bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int amount, int numRotated, int numNegative)
 {
 	std::set<Point> open = _openpos;
-	int shapeSize = hasFlag(Config::SmallShapes) ? 2 : hasFlag(Config::BigShapes) ? 6 : 4;
+	int shapeSize = hasFlag(Config::SmallShapes) ? 2 : hasFlag(Config::BigShapes) ? amount == 1 ? 8 : 6 : 4;
 	int targetArea = amount * shapeSize * 7 / 8; //Average size must be at least 7/8 of the target size
+	if (amount * shapeSize > _panel->get_num_grid_blocks()) targetArea = _panel->get_num_grid_blocks();
 	int originalAmount = amount;
 	if (hasFlag(Generate::Config::MountainFloorH) && _panel->_width == 9) { //The 4 small puzzles shape size may vary depending on the path
 		targetArea = 0;
@@ -1311,7 +1322,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 	int minx = _panel->_width, miny = _panel->_height, maxx = 0, maxy = 0;
 	int colorIndex = Random::rand() % colors.size();
 	int colorIndexN = Random::rand() % (negativeColors.size() + 1);
-	bool shapesCanceled = false, shapesCombined = false;
+	bool shapesCanceled = false, shapesCombined = false, flatShapes = true;
 	if (amount == 1) shapesCombined = true;
 	while (amount > 0) {
 		if (open.size() == 0)
@@ -1323,7 +1334,8 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 		for (Point p : region) {
 			if (open.erase(p)) open2.insert(p);
 		}
-		if (region.size() + totalArea == _panel->get_num_grid_blocks()) continue; //To prevent shapes from filling every grid point
+		if (region.size() + totalArea == _panel->get_num_grid_blocks() &&
+			targetArea != _panel->get_num_grid_blocks()) continue; //To prevent shapes from filling every grid point
 		std::vector<Shape> shapes;
 		std::vector<Shape> shapesN;
 		int numShapesN = min(Random::rand() % (numNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
@@ -1363,13 +1375,15 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 		if (hasFlag(Config::SplitShapes) && numShapes != 1) continue;
 		if (hasFlag(Config::RequireCombineShapes) && numShapes == 1) continue;
 		bool balance = false;
-		if (numShapes > amount) { //The region is too big for the number of shapes chosen
+		if (numShapes > amount //The region is too big for the number of shapes chosen
+			|| numNegative > 0 && _panel->id == 0x288AA //Expert UTM Perspective 4
+			|| numNegative > 0 && _panel->id == 0x00089) { //Expert UTM Invisible 6
 			if (numNegative < 2 || hasFlag(Config::DisableCancelShapes)) continue;
 			//Make balancing shapes - Positive and negative will be switched so that code can be reused
 			balance = true;
 			std::set<Point> regionN = _gridpos;
 			numShapes = max(2, Random::rand() % numNegative + 1);			//Actually the negative shapes
-			numShapesN = min(amount, numShapes * 2 / 5 + 1);		//Actually the positive shapes
+			numShapesN = min(amount, 1);		//Actually the positive shapes
 			if (numShapesN >= numShapes * 3 || numShapesN * 5 <= numShapes) continue;
 			shapes.clear();
 			shapesN.clear();
@@ -1462,6 +1476,8 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			int symbol = make_shape_symbol(shape, (numRotated-- > 0), (numShapes-- <= 0));
 			if (symbol == 0)
 				return false;
+			if (!((symbol >> 16) == 0x000F || (symbol >> 16) == 0x1111))
+				flatShapes = false;
 			//Attempt not to put shape symbols adjacent
 			Point pos;
 			for (int i = 0; i < 10; i++) {
@@ -1495,7 +1511,10 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			}
 		}
 	} //Do some final checks - make sure targetArea has been reached, all shapes have been placed, and that config requirements have been met
-	if (totalArea < targetArea || numNegative > 0 || hasFlag(Config::RequireCancelShapes) && !shapesCanceled || hasFlag(Config::RequireCombineShapes) && !shapesCombined)
+	if (totalArea < targetArea || numNegative > 0 ||
+		hasFlag(Config::RequireCancelShapes) && !shapesCanceled ||
+		hasFlag(Config::RequireCombineShapes) && !shapesCombined ||
+		originalAmount > 1 && flatShapes)
 		return false;
 	//If symmetry, make sure it didn't shove all the shapes to one side
 	if (_panel->symmetry && Point::pillarWidth == 0 && originalAmount >= 3 &&
@@ -1558,6 +1577,24 @@ bool Generate::has_star(const std::set<Point>& region, int color)
 	return false;
 }
 
+bool Generate::checkStarZigzag(std::shared_ptr<Panel> panel)
+{
+	if (panel->_width <= 5 || panel->_height <= 5) return true;
+	for (int y = 1; y < panel->_height; y += 2) {
+		std::map<int, int> colorCount;
+		for (int x = 1; x < panel->_width; x += 2) {
+			int color = panel->_grid[x][y];
+			if (color == 0) continue;
+			if (!colorCount.count(color)) colorCount[color] = 0;
+			colorCount[color] += 1;
+		}
+		for (std::pair<int, int> count : colorCount)
+			if (count.second % 2 != 0)
+				return true;
+	}
+	return false;
+}
+
 //Place the given amount of triangles with the given color. targetCount is how many triangles are in the symbol, or 0 for random
 bool Generate::place_triangles(int color, int amount, int targetCount)
 {
@@ -1567,6 +1604,7 @@ bool Generate::place_triangles(int color, int amount, int targetCount)
 		_openpos.erase({ 1, 3 });
 	}
 	std::set<Point> open = _openpos;
+	int count1 = 0, count2 = 0, count3 = 0;
 	while (amount > 0) {
 		if (open.size() == 0)
 			return false;
@@ -1587,8 +1625,18 @@ bool Generate::place_triangles(int color, int amount, int targetCount)
 			}
 			if (found) continue;
 		}
-		if (!targetCount && count == 2 && Random::rand() % 2 == 0) //Prevent it from placing so many 2's
-			continue;
+		if (count == 1) {
+			if (!targetCount && count1 * 2 > count2 + count3 && Random::rand() % 2 == 0) continue;
+			count1++;
+		}
+		if (count == 2) {
+			if (!targetCount && count2 * 2 > count1 + count3 && Random::rand() % 2 == 0) continue;
+			count2++;
+		}
+		if (count == 3) {
+			if (!targetCount && count3 * 2 > count1 + count2 && Random::rand() % 2 == 0) continue;
+			count3++;
+		}
 		set(pos, Decoration::Triangle | color | (count << 16));
 		_openpos.erase(pos);
 		amount--;
@@ -1712,7 +1760,7 @@ bool Generate::place_erasers(const std::vector<int>& colors, const std::vector<i
 				for (Point dir : _8DIRECTIONS1) {
 					if (toErase == Decoration::Dot_Intersection && (dir.first == 0 || dir.second == 0)) continue;
 					Point p2 = p + dir;
-					if (get(p2) == 0 && (hasFlag(Config::FalseParity) || can_place_dot(p2))) {
+					if (get(p2) == 0 && (hasFlag(Config::FalseParity) || can_place_dot(p2, false))) {
 						openEdge.insert(p2);
 					}
 				}

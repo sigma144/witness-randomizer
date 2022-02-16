@@ -41,9 +41,8 @@ protected:
 
 class KeepWatchdog : public Watchdog {
 public:
-	KeepWatchdog() : Watchdog(10) { ready = false; }
+	KeepWatchdog() : Watchdog(10) { }
 	virtual void action();
-	bool ready;
 };
 
 class TestWatchdog : public Watchdog {
@@ -104,9 +103,34 @@ public:
 
 class TreehouseWatchdog : public Watchdog {
 public:
-	TreehouseWatchdog(int id) : Watchdog(2) {
+	TreehouseWatchdog(int id) : Watchdog(1) { }
+	virtual void action();
+};
+
+class JungleWatchdog : public Watchdog {
+public:
+	JungleWatchdog(int id, std::vector<int> correctSeq1, std::vector<int> correctSeq2) : Watchdog(0.5f) {
 		this->id = id;
+		int size = ReadPanelData<int>(id, NUM_DOTS);
+		sizes = ReadArray<int>(id, DOT_FLAGS, ReadPanelData<int>(id, NUM_DOTS));
+		this->correctSeq1 = correctSeq1;
+		this->correctSeq2 = correctSeq2;
+		state = false;
+		tracedLength = 0;
+		ptr1 = ReadPanelData<long>(id, DOT_SEQUENCE);
+		ptr2 = ReadPanelData<long>(id, DOT_SEQUENCE_REFLECTION);
 	}
 	virtual void action();
 	int id;
+	std::vector<int> sizes;
+	long ptr1, ptr2;
+	std::vector<int> correctSeq1, correctSeq2;
+	bool state;
+	int tracedLength;
+};
+
+class TownDoorWatchdog : public Watchdog {
+public:
+	TownDoorWatchdog() : Watchdog(0.2f) { }
+	virtual void action();
 };

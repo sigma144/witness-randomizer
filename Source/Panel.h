@@ -2,6 +2,7 @@
 #include "Memory.h"
 #include "Randomizer.h"
 #include <stdint.h>
+#include <tuple>
 
 struct Point {
 	int first;
@@ -85,12 +86,15 @@ enum IntersectionFlags : int {
 class Endpoint {
 public:
 	enum Direction {
-		LEFT,
-		RIGHT,
-		UP,
-		DOWN,
-		DIAGONAL,
-		DIAGONAL_DOWN,
+		NONE = 0,
+		LEFT = 1,
+		RIGHT = 2,
+		UP = 4,
+		DOWN = 8,
+		UP_LEFT = 5,
+		UP_RIGHT = 6,
+		DOWN_LEFT = 9,
+		DOWN_RIGHT = 10
 	};
 
 	Endpoint(int x, int y, Direction dir, int flags) {
@@ -144,8 +148,8 @@ public:
 	void SetGridSymbol(int x, int y, Decoration::Shape symbol, Decoration::Color color);
 	void ClearGridSymbol(int x, int y);
 	void Resize(int width, int height);
-	static void SavePanels(int seed, bool hard);
-	static bool LoadPanels(int seed, bool hard);
+
+	static void StartArrowWatchdogs(const std::map<int, int>& shuffleMappings = {});
 
 	enum Style {
 		SYMMETRICAL = 0x2, //Not on the town symmetry puzzles? IDK why.
@@ -168,9 +172,10 @@ public:
 	Symmetry symmetry;
 
 	float pathWidth;
-	enum ColorMode { Default, Reset, Alternate, WriteColors, Treehouse, TreehouseLoad };
+	enum ColorMode { Default, Reset, Alternate, WriteColors, Treehouse, TreehouseAlternate };
 	ColorMode colorMode;
 	bool decorationsOnly;
+	bool enableFlash;
 
 private:
 
@@ -207,6 +212,11 @@ private:
 	Point get_sym_point(Point p) { return get_sym_point(p.first, p.second, symmetry); }
 	Point get_sym_point(Point p, Symmetry symmetry) { return get_sym_point(p.first, p.second, symmetry); }
 	Endpoint::Direction get_sym_dir(Endpoint::Direction direction, Symmetry symmetry) {
+		int dirIndex;
+		if (direction == Endpoint::Direction::LEFT) dirIndex = 0;
+		if (direction == Endpoint::Direction::RIGHT) dirIndex = 1;
+		if (direction == Endpoint::Direction::UP) dirIndex = 2;
+		if (direction == Endpoint::Direction::DOWN) dirIndex = 3;
 		std::vector<Endpoint::Direction> mapping;
 		switch (symmetry) {
 		case Symmetry::Horizontal: mapping = { Endpoint::Direction::LEFT, Endpoint::Direction::RIGHT, Endpoint::Direction::DOWN, Endpoint::Direction::UP }; break;
@@ -222,20 +232,31 @@ private:
 		case Symmetry::ParallelVFlip: mapping = { Endpoint::Direction::LEFT, Endpoint::Direction::RIGHT, Endpoint::Direction::DOWN, Endpoint::Direction::UP }; break;
 		default: mapping = { Endpoint::Direction::LEFT, Endpoint::Direction::RIGHT, Endpoint::Direction::UP, Endpoint::Direction::DOWN }; break;
 		}
-		return mapping[direction];
+		return mapping[dirIndex];
 	}
 	int get_num_grid_points() { return ((_width + 1) / 2) * ((_height + 1) / 2); }
 	int get_num_grid_blocks() { return (_width / 2) * (_height / 2);  }
 	int get_parity() { return (get_num_grid_points() + 1) % 2; }
 	Color get_color_rgb(int color) {
-		if (colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseLoad) {
+		if (colorMode == ColorMode::Treehouse) {
 			switch (color) {
 			case 1: return { 0, 0, 0, 1 }; //Black
 			case 2: return { 1, 1, 1, 1 }; //White
-			case 3: return { 1, 1, 1, 1 }; //Red
+			case 3: return { 1, 0, 0, 1 }; //Red (Not used)
 			case 4: return { 1, 0, 1, 1 }; //Magenta
 			case 5: return { 1, 0.5, 0, 1 }; //Orange
 			case 6: return { 0, 1, 0, 1 }; //Green
+			default: return { 0, 0, 0, 0 };
+			}
+		}
+		else if (colorMode == ColorMode::TreehouseAlternate) {
+			switch (color) {
+			case 1: return { 0, 0, 0, 1 }; //Black
+			case 2: return { 0, 0, 1, 1 }; //White->Blue
+			case 3: return { 1, 0, 0, 1 }; //Red (Not used)
+			case 4: return { 1, 0, 1, 1 }; //Magenta
+			case 5: return { 1, 0.5, 0, 1 }; //Orange
+			case 6: return { 1, 1, 1, 1 }; //Green->White
 			default: return { 0, 0, 0, 0 };
 			}
 		}
@@ -414,6 +435,7 @@ private:
 	int id;
 
 	static std::vector<Panel> generatedPanels;
+	static std::vector<std::tuple<int, int>> arrowPuzzles;
 
 	friend class PanelExtractionTests;
 	friend class Generate;

@@ -12,6 +12,7 @@
 
 int Point::pillarWidth = 0;
 std::vector<Panel> Panel::generatedPanels;
+std::vector<std::tuple<int, int>> Panel::arrowPuzzles;
 
 template <class T>
 int find(const std::vector<T> &data, T search, size_t startIndex = 0) {
@@ -60,6 +61,7 @@ void Panel::Read() {
 	_resized = false;
 	colorMode = ColorMode::Default;
 	decorationsOnly = false;
+	enableFlash = false;
 }
 
 void Panel::Write() {
@@ -86,7 +88,7 @@ void Panel::Write() {
 		_memory->WriteArray<int>(id, DOT_FLAGS, iflags);
 	}
 	WriteDecorations();
-	//_style &= ~NO_BLINK;
+	if (enableFlash) _style &= ~NO_BLINK;
 	_memory->WritePanelData<int>(id, STYLE_FLAGS, { _style });
 	if (pathWidth != 1) _memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { pathWidth });
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
@@ -186,178 +188,6 @@ void Panel::Resize(int width, int height)
 	_resized = true;
 }
 
-void Panel::SavePanels(int seed, bool hard)
-{
-	std::string difficulty = hard ? "E" : "N";
-	std::ofstream file("puzzledata" + difficulty + std::to_string(seed) + ".dat");
-	file << generatedPanels.size() << std::endl;
-	for (Panel &panel : generatedPanels) {
-		file << panel.id << " " << Point::pillarWidth << " ";
-		file << panel._width << " " << panel._height << " ";
-		for (std::vector<int> vec : panel._grid) {
-			for (int i : vec) {
-				file << i << " ";
-			}
-		}
-		file << panel._startpoints.size() << " ";
-		for (Point p : panel._startpoints) {
-			file << p.first << " " << p.second << " ";
-		}
-		file << panel._endpoints.size() << " ";
-		for (Endpoint e : panel._endpoints) {
-			file << e.GetX() << " " << e.GetY() << " " << e.GetDir() << " " << e.GetFlags() << " ";
-		}
-		file << panel.minx << " " << panel.miny << " " << panel.maxx << " " << panel.maxy << " " << panel.unitWidth << " " << panel.unitHeight << " ";
-		file << panel._style << "  " << panel._resized << " " << panel.symmetry << " " << panel.pathWidth << " " << panel.colorMode << " " << panel.decorationsOnly << std::endl;
-	}
-	file << Special::writeInt.size() << std::endl;
-	for (MemoryWrite<int> m : Special::writeInt)
-		file << m.id << " " << m.offset << " " << m.data[0] << std::endl;
-	file << Special::writeFloat.size() << std::endl;
-	for (MemoryWrite<float> m : Special::writeFloat)
-		file << m.id << " " << m.offset << " " << m.data[0] << std::endl;
-	file << Special::writeColor.size() << std::endl;
-	for (MemoryWrite<Color> m : Special::writeColor)
-		file << m.id << " " << m.offset << " " << m.data[0].r << " " << m.data[0].g << " " << m.data[0].b << " " << m.data[0].a << std::endl;
-	file << Special::writeIntVec.size() << std::endl;
-	for (MemoryWrite<int> m : Special::writeIntVec) {
-		file << m.id << " " << m.offset << " " << m.data.size();
-		for (int i : m.data) file << " " << i;
-		file << std::endl;
-	}
-	file << Special::writeFloatVec.size() << std::endl;
-	for (MemoryWrite<float> m : Special::writeFloatVec) {
-		file << m.id << " " << m.offset << " " << m.data.size();
-		for (float f : m.data) file << " " << f;
-		file << std::endl;
-	}
-	file << Special::writeColorVec.size() << std::endl;
-	for (MemoryWrite<Color> m : Special::writeColorVec) {
-		file << m.id << " " << m.offset << " " << m.data.size();
-		for (Color c : m.data) file << " " << c.r << " " << c.g << " " << c.b << " " << c.a;
-		file << std::endl;
-	}
-	Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-	Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard ? 2 : 1);
-}
-
-bool Panel::LoadPanels(int seed, bool hard)
-{
-	std::string difficulty = hard ? "E" : "N";
-	std::ifstream file("puzzledata" + difficulty + std::to_string(seed) + ".dat");
-	if (!file.is_open()) {
-		return false;
-	}
-	int size; file >> size;
-	while (size-- > 0) {
-		int id;
-		file >> id >> Point::pillarWidth;
-		Panel panel(id);
-		panel._grid.clear();
-		panel._startpoints.clear();
-		panel._endpoints.clear();
-		file >> panel._width >> panel._height;
-		for (int x = 0; x < panel._width; x++) {
-			panel._grid.emplace_back(std::vector<int>());
-			for (int y = 0; y < panel._height; y++) {
-				int val;
-				file >> val;
-				panel._grid[x].push_back(val);
-			}
-		}
-		int numStarts; file >> numStarts;
-		while (numStarts-- > 0) {
-			Point p;
-			file >> p.first >> p.second;
-			panel._startpoints.push_back(p);
-		}
-		int numExits; file >> numExits;
-		while (numExits-- > 0) {
-			int x, y, dir, flags;
-			file >> x >> y >> dir >> flags;
-			panel._endpoints.emplace_back(Endpoint(x, y, static_cast<Endpoint::Direction>(dir), flags));
-		}
-		file >> panel.minx >> panel.miny >> panel.maxx >> panel.maxy >> panel.unitWidth >> panel.unitHeight;
-		int symmetry, colorMode;
-		file >> panel._style >> panel._resized >> symmetry >> panel.pathWidth >> colorMode >> panel.decorationsOnly;
-		panel.symmetry = static_cast<Panel::Symmetry>(symmetry);
-		panel.colorMode = static_cast<Panel::ColorMode>(colorMode);
-		if (panel.colorMode == Panel::ColorMode::Treehouse)
-			panel.colorMode = Panel::ColorMode::TreehouseLoad; //Colors have already been corrected - don't do it again
-		std::string skip; std::getline(file, skip); //Go to the next line
-		if (file.fail()) {
-			if (file.eof()) return false;
-			file.clear();
-		}
-		else panel.Write();
-	}
-	Random::seed(seed);
-	//Random::SetSeed(seed);
-	Randomizer().RandomizeDesert();
-	file >> size;
-	while (size-- > 0) {
-		int id; file >> id;
-		int offset; file >> offset;
-		int data; file >> data;
-		Special::WritePanelData(id, offset, data);
-	}
-	file >> size;
-	while (size-- > 0) {
-		int id; file >> id;
-		int offset; file >> offset;
-		float data; file >> data;
-		Special::WritePanelData(id, offset, data);
-	}
-	file >> size;
-	while (size-- > 0) {
-		int id; file >> id;
-		int offset; file >> offset;
-		Color data; file >> data.r >> data.g >> data.b >> data.a;
-		Special::WritePanelData(id, offset, data);
-	}
-	file >> size;
-	while (size-- > 0) {
-		int id; file >> id;
-		int offset; file >> offset;
-		int datasize; file >> datasize;
-		std::vector<int> data;
-		while (datasize-- > 0) {
-			int i; file >> i; data.push_back(i);
-		}
-		Special::WriteArray(id, offset, data);
-	}
-	file >> size;
-	while (size-- > 0) {
-		int id; file >> id;
-		int offset; file >> offset;
-		int datasize; file >> datasize;
-		std::vector<float> data;
-		while (datasize-- > 0) {
-			float i; file >> i; data.push_back(i);
-		}
-		Special::WriteArray(id, offset, data);
-	}
-	file >> size;
-	while (size-- > 0) {
-		int id; file >> id;
-		int offset; file >> offset;
-		int datasize; file >> datasize;
-		std::vector<Color> data;
-		while (datasize-- > 0) {
-			Color c; file >> c.r >> c.g >> c.b >> c.a; data.push_back(c);
-		}
-		Special::WriteArray(id, offset, data);
-	}
-	if (hard) {
-		(new KeepWatchdog())->start();
-		(new BridgeWatchdog(0x09E86, 0x09ED8))->start();
-		(new TreehouseWatchdog(0x17DAE))->start();
-	}
-	Special::drawSeedAndDifficulty(0x00064, seed, hard);
-	Special::drawGoodLuckPanel(0x00182);
-	return true;
-}
-
 void Panel::ReadAllData() {
 	Color pathColor = _memory->ReadPanelData<Color>(id, PATH_COLOR);
 	Color rpathColor = _memory->ReadPanelData<Color>(id, REFLECTION_PATH_COLOR);
@@ -413,6 +243,8 @@ void Panel::ReadAllData() {
 	int numTraced = _memory->ReadPanelData<int>(id, TRACED_EDGES);
 	int numSol = _memory->ReadPanelData<int>(id, TRACED_EDGES + 4); //Don't know what this number is for yet
 	int tracedptr = _memory->ReadPanelData<int>(id, TRACED_EDGE_DATA);
+	//float solved = _memory->ReadPanelData<float>(id, PANEL_SOLVED);
+	float distance = _memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
 	std::vector<SolutionPoint> traced; if (tracedptr) traced = _memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 }
 
@@ -435,7 +267,7 @@ void Panel::WriteDecorations() {
 	_style &= ~0x3fc0; //Remove all element flags
 	for (int y=_height-2; y>0; y-=2) {
 		for (int x=1; x<_width; x+=2) {
-			if (colorMode == ColorMode::Treehouse) {
+			if (colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseAlternate) {
 				if ((_grid[x][y] & 0xf) == Decoration::Color::Green) {
 					_grid[x][y] &= ~0xf; _grid[x][y] |= 6;
 				}
@@ -472,18 +304,26 @@ void Panel::WriteDecorations() {
 	}
 	else {
 		_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-		if (colorMode == ColorMode::WriteColors || colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseLoad || _memory->ReadPanelData<int>(id, DECORATION_COLORS))
+		if (colorMode == ColorMode::WriteColors || colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseAlternate || _memory->ReadPanelData<int>(id, DECORATION_COLORS))
 			_memory->WriteArray<Color>(id, DECORATION_COLORS, decorationColors);
 		else if (colorMode == ColorMode::Reset || colorMode == ColorMode::Alternate) {
 			_memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { colorMode == ColorMode::Reset ? 0 : 1 });
 		}
-		if (colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseLoad) {
+		if (colorMode == ColorMode::Treehouse) {
 			_memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
 			_memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } }); //Black
 			_memory->WritePanelData<Color>(id, SYMBOL_B, { { 1, 1, 1, 1 } }); //White
 			_memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
 			_memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
 			_memory->WritePanelData<Color>(id, SYMBOL_E, { { 0, 1, 0, 1 } }); //Green
+		}
+		else if (colorMode == ColorMode::TreehouseAlternate) {
+			_memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
+			_memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } }); //Black
+			_memory->WritePanelData<Color>(id, SYMBOL_B, { { 0, 0, 1, 1 } }); //White->Blue
+			_memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
+			_memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
+			_memory->WritePanelData<Color>(id, SYMBOL_E, { { 1, 1, 1, 1 } }); //Green->White
 		}
 	}
 	if (any || _memory->ReadPanelData<int>(id, DECORATIONS)) {
@@ -492,8 +332,20 @@ void Panel::WriteDecorations() {
 		_memory->WriteArray<int>(id, DECORATION_FLAGS, decorations);
 	}
 	if (arrows) {
-		ArrowWatchdog* watchdog = new ArrowWatchdog(id, Point::pillarWidth);
-		watchdog->style = _style;
+		arrowPuzzles.emplace_back(id, Point::pillarWidth);
+	}
+}
+
+void Panel::StartArrowWatchdogs(const std::map<int, int>& shuffleMappings) {
+	std::map<int, int> invertedMappings;
+	for (const auto& [from, to] : shuffleMappings) {
+		invertedMappings[to] = from;
+	}
+	for (const auto& [id, pillarWidth] : arrowPuzzles) {
+		int realId = id;
+		if (invertedMappings.count(realId)) realId = invertedMappings.at(realId);
+
+		ArrowWatchdog* watchdog = new ArrowWatchdog(realId, pillarWidth);
 		watchdog->start();
 	}
 }
@@ -578,22 +430,18 @@ void Panel::ReadIntersections() {
 				if (connections_a[j] == i) location = connections_b[j];
 				if (connections_b[j] == i) location = connections_a[j];
 				if (location != -1) {
-					Endpoint::Direction dir;
+					Endpoint::Direction dir = Endpoint::Direction::NONE;
 					if (intersections[2 * i] < intersections[2 * location]) { // Our (i) x coordinate is less than the target's (location)
-						dir = Endpoint::Direction::LEFT;
+						dir = (Endpoint::Direction)(dir | Endpoint::Direction::LEFT);
 					}
-					else if (intersections[2 * i] > intersections[2 * location]) {
-						if (intersections[2 * i + 1] > intersections[2 * location + 1])
-							dir = Endpoint::Direction::DIAGONAL;
-						else if (intersections[2 * i + 1] < intersections[2 * location + 1])
-							dir = Endpoint::Direction::DIAGONAL_DOWN;
-						else dir = Endpoint::Direction::RIGHT;
+					if (intersections[2 * i] > intersections[2 * location]) {
+						dir = (Endpoint::Direction)(dir | Endpoint::Direction::RIGHT);
 					}
-					else if (intersections[2 * i + 1] > intersections[2 * location + 1]) { // y coordinate is 0 (bottom) 1 (top), so this check is reversed.
-						dir = Endpoint::Direction::UP;
+					if (intersections[2 * i + 1] < intersections[2 * location + 1]) { // y coordinate is 0 (bottom) 1 (top), so this check is reversed.
+						dir = (Endpoint::Direction)(dir | Endpoint::Direction::DOWN);
 					}
-					else {
-						dir = Endpoint::Direction::DOWN;
+					if (intersections[2 * i + 1] > intersections[2 * location + 1]) {
+						dir = (Endpoint::Direction)(dir | Endpoint::Direction::UP);
 					}
 					xd = (intersections[location * 2] - minx) / unitWidth;
 					yd = (intersections[location * 2 + 1] - miny) / unitHeight;
@@ -696,24 +544,16 @@ void Panel::WriteIntersections() {
 		connections_b.push_back(static_cast<int>(intersectionFlags.size()));  // This endpoint
 		double xPos = minx + endpoint.GetX() * unitWidth;
 		double yPos = miny + (_height - 1 - endpoint.GetY()) * unitHeight;
-		if (endpoint.GetDir() == Endpoint::Direction::LEFT) {
+		if (endpoint.GetDir() & Endpoint::Direction::LEFT) {
 			xPos -= endDist;
 		}
-		else if (endpoint.GetDir() == Endpoint::Direction::RIGHT) {
+		if (endpoint.GetDir() & Endpoint::Direction::RIGHT) {
 			xPos += endDist;
 		}
-		else if (endpoint.GetDir() == Endpoint::Direction::UP) {
+		if (endpoint.GetDir() & Endpoint::Direction::UP) {
 			yPos += endDist;
 		}
-		else if (endpoint.GetDir() == Endpoint::Direction::DOWN) {
-			yPos -= endDist;
-		}
-		else if (endpoint.GetDir() == Endpoint::Direction::DIAGONAL) {
-			xPos += endDist;
-			yPos += endDist;
-		}
-		else if (endpoint.GetDir() == Endpoint::Direction::DIAGONAL_DOWN) {
-			xPos += endDist;
+		if (endpoint.GetDir() & Endpoint::Direction::DOWN) {
 			yPos -= endDist;
 		}
 		intersections.push_back(static_cast<float>(xPos));
@@ -736,6 +576,11 @@ void Panel::WriteIntersections() {
 		for (int x = 0; x < _width; x++) {
 			if (x % 2 == y % 2) continue;
 			if (_grid[x][y] == 0 || _grid[x][y] == OPEN) continue;
+			if (_grid[x][y] & IntersectionFlags::DOT) {
+				_style |= HAS_DOTS;
+				if (_grid[x][y] & IntersectionFlags::DOT_IS_BLUE || _grid[x][y] & IntersectionFlags::DOT_IS_ORANGE)
+					_style |= IS_2COLOR;
+			}
 			if (locate_segment(x, y, connections_a, connections_b) == -1)
 				continue;
 			if (_grid[x][y] & IntersectionFlags::GAP) {
@@ -758,11 +603,6 @@ void Panel::WriteIntersections() {
 			else {
 				if (_grid[x][y] == IntersectionFlags::COLUMN || _grid[x][y] == IntersectionFlags::ROW)
 					continue;
-				if (_grid[x][y] & IntersectionFlags::DOT) {
-					_style |= HAS_DOTS;
-					if (_grid[x][y] & IntersectionFlags::DOT_IS_BLUE || _grid[x][y] & IntersectionFlags::DOT_IS_ORANGE)
-						_style |= IS_2COLOR;
-				}
 				if (!break_segment(x, y, connections_a, connections_b, intersections, intersectionFlags))
 					continue;
 				if (symmetry) {

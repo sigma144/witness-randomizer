@@ -25,11 +25,13 @@ public:
 		generator->setLoadingHandle(handle);
 	}
 
-	void setSeed(int seed, bool isRNG) {
+	void setSeed(int seed, bool isRNG, bool colorblind) {
 		this->seed = seed;
 		this->seedIsRNG = isRNG;
+		this->colorblind = colorblind;
 		if (seed >= 0) generator->seed(seed);
 		else generator->seed(Random::rand());
+		generator->colorblind = colorblind;
 	}
 
 	void CopyTargets();
@@ -84,6 +86,7 @@ private:
 	HWND _handle = nullptr;
 	int seed = 0;
 	bool seedIsRNG = false;
+	bool colorblind = false;
 
 	template <class T> T pick_random(std::vector<T>& vec) { return vec[Random::rand() % vec.size()]; }
 	template <class T> T pick_random(std::set<T>& set) { auto it = set.begin(); std::advance(it, Random::rand() % set.size()); return *it; }

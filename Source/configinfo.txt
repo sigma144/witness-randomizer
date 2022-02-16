@@ -20,7 +20,7 @@ FixBackground: Fix the background area to match the puzzle shape. For puzzles wi
 CombineErasers: Allow erasers to be together
 LongPath: Make a longer than usual path, covering at least 7/8 of the available points
 ShortPath: Make a path without any length restrictions
-SplitStones: Don't put any stones together, even if same color
+EnableFlash: Turn on symbol flashing for the panel
 DecorationsOnly: Write out only the puzzle symbols to memory, preserving the original point and edge locations
 FalseParity: Cause a full path to miss one vertex. For eraser + full dot puzzles
 DisableDotIntersection: Dots will not be put on grid intersections

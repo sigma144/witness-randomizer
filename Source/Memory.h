@@ -14,6 +14,7 @@ class Memory
 {
 public:
 	Memory(const std::string& processName);
+	int findGlobals();
 	~Memory();
 
 	Memory(const Memory& memory) = delete;
@@ -31,7 +32,8 @@ public:
 	}
 
 	bool Read(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
-		for (int i = 0; i < 1000; i++) {
+		if (!retryOnFail) return ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
+		for (int i = 0; i < 10000; i++) {
 			if (ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
 				return true;
 			}
@@ -40,7 +42,8 @@ public:
 	}
 
 	bool Write(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
-		for (int i = 0; i < 1000; i++) {
+		if (!retryOnFail) return WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
+		for (int i = 0; i < 10000; i++) {
 			if (WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
 				return true;
 			}
@@ -99,6 +102,7 @@ public:
 	static int GLOBALS;
 	static bool showMsg;
 	static int globalsTests[3];
+	bool retryOnFail = true;
 
 private:
 	template<class T>
