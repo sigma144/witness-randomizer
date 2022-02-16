@@ -76,7 +76,7 @@ void PuzzleList::CopyTargets()
 	
 	Special::setPower(0x17CA4, true);
 	Special::setPower(0x17CAB, true);
-	Special::setPower(0x28B39, true);
+	Special::setPower(0x28B39, true);*/
 }
 
 void PuzzleList::GenerateTutorialN()

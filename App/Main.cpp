@@ -73,7 +73,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndMessage;
+HWND hwndAddress, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<Generate> generator = std::make_shared<Generate>();
@@ -468,13 +468,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	if (hard) SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
 	else SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
 
-	CreateWindow(L"STATIC", L"Enter a seed (optional):",
+	CreateWindow(L"STATIC", L"Enter an Archipelago Address:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 125, 160, 16, hwnd, NULL, hInstance, NULL);
-	hwndSeed = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
+	hwndAddress = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
         180, 120, 50, 26, hwnd, NULL, hInstance, NULL);
-	SendMessage(hwndSeed, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
+	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
 	hwndRandomize = CreateWindow(L"BUTTON", L"Randomize",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
