@@ -15,9 +15,9 @@ If you want to contribute, shoot me a message on Discord: VioletSoup#1785
 Currently there are two people working on this.
 
 
-![](https://github.com/sigma144/witness-randomizer/blob/master/example.png)
-
 # Witness Random Puzzle Generator
+
+![](https://github.com/sigma144/witness-randomizer/blob/master/example.png)
 
 ### [Click Here to Download (ver 1.2.3)](https://github.com/sigma144/witness-randomizer/releases/download/1.2.3/WitnessRPG1.2.3.zip)
 
