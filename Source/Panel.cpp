@@ -243,7 +243,7 @@ void Panel::ReadAllData() {
 	int numTraced = _memory->ReadPanelData<int>(id, TRACED_EDGES);
 	int numSol = _memory->ReadPanelData<int>(id, TRACED_EDGES + 4); //Don't know what this number is for yet
 	int tracedptr = _memory->ReadPanelData<int>(id, TRACED_EDGE_DATA);
-	//float solved = _memory->ReadPanelData<float>(id, PANEL_SOLVED);
+	//float solved = _memory->ReadPanelData<float>(id, SOLVED);
 	float distance = _memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
 	std::vector<SolutionPoint> traced; if (tracedptr) traced = _memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 }

@@ -39,21 +39,21 @@ void KeepWatchdog::action() {
 // Completion manager test>
 void TestWatchdog::action() {
 	//THIS IS HOW TO TEST SOLVE STATE!
-	int hasEverBeenSolved = ReadPanelData<int>(0x00061, 0x298);
+	int hasEverBeenSolved = ReadPanelData<int>(0x00061, SOLVED);
 
 	std::string test = std::to_string(hasEverBeenSolved);
 
 	go++;
 
-	for (int panelId : doorUnlockPanels) {
-		WritePanelData<float>(panelId, POWER, { (go % 2) * 1.0f, (go % 2) * 1.0f });
-		WritePanelData<int>(panelId, NEEDS_REDRAW, { 1 });
+	for (auto panelId : doorUnlockPanels) {
+		WritePanelData<float>(panelId.first, POWER, { (go % 2) * 1.0f, (go % 2) * 1.0f });
+		WritePanelData<int>(panelId.first, NEEDS_REDRAW, { 1 });
 	}
 
 	int doneChecks = 0;
 
-	for (int id : standardChecks) {
-		doneChecks += ReadPanelData<int>(id, 0x298);
+	for (auto id : standardChecks) {
+		doneChecks += ReadPanelData<int>(id.first, SOLVED);
 	}
 
 	OutputDebugStringA(std::to_string(doneChecks).c_str());
