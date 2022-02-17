@@ -57,6 +57,8 @@ void TestWatchdog::action() {
 	}
 
 	OutputDebugStringA(std::to_string(doneChecks).c_str());
+
+	//this->_memory->WriteMovementSpeed(4.0f); We can manipulate movement speed with this - Potential "bonus" item?
 }
 
 //Arrow Watchdog - To run the arrow puzzles

@@ -419,6 +419,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		}
 		catch (std::exception) { Memory::GLOBALS = 0; }
 	}
+
+	memory.findMovementSpeed();
+
 	if (!Memory::GLOBALS) {
 		std::ifstream file("WRPGglobals.txt");
 		if (file.is_open()) {

@@ -93,6 +93,48 @@ int Memory::findGlobals() {
 	return Memory::GLOBALS;
 }
 
+void Memory::findMovementSpeed() {
+	const std::vector<byte> scanBytes = { 0xF3, 0x0F, 0x59, 0xFD, 0xF3, 0x0F, 0x5C, 0xC8 };
+#define BUFFER_SIZE 0x10000 // 10 KB
+	std::vector<byte> buff;
+	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
+
+	for (uintptr_t i = 0; i < 0x500000; i += BUFFER_SIZE) {
+		SIZE_T numBytesWritten;
+		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
+		buff.resize(numBytesWritten);
+		int index = find(buff, scanBytes);
+		if (index == -1) continue;
+
+		for (; index < buff.size(); index++) {
+			if (buff[index - 4] == 0xF3 && buff[index - 3] == 0x0F && buff[index - 2] == 0x10 && buff[index - 1] == 0x0D) {
+				int speedAddr = (int)(i + index + 4) + *(int*)&buff[index];
+
+				Memory::RUNSPEED = speedAddr;
+
+				break;
+			}
+		}
+
+		for (; index < buff.size(); index++) {
+			if (buff[index - 2] == 0xEB && buff[index - 1] == 0x08) {
+				index -= 0x06;
+				
+				int accelAddr = (int)(i + index + 4) + *(int*)&buff[index];
+
+				Memory::ACCELERATION = accelAddr;
+
+				return;
+			}
+		}
+
+
+		break;
+	}
+
+	return;
+}
+
 void Memory::ThrowError(std::string message) {
 	if (!showMsg) throw std::exception(message.c_str());
 	DWORD exitCode;
@@ -153,6 +195,8 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 }
 
 int Memory::GLOBALS = 0;
+int Memory::RUNSPEED = 0;
+int Memory::ACCELERATION = 0;
 bool Memory::showMsg = false;
 int Memory::globalsTests[3] = {
 	0x62D0A0, //Steam and Epic Games

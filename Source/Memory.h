@@ -15,6 +15,7 @@ class Memory
 public:
 	Memory(const std::string& processName);
 	int findGlobals();
+	void findMovementSpeed();
 	~Memory();
 
 	Memory(const Memory& memory) = delete;
@@ -97,9 +98,18 @@ public:
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
 	}
 
+	void WriteMovementSpeed(float speed) {
+		std::vector speedAddr{ RUNSPEED };
+		std::vector speedVect{ speed };
+
+		WriteData(speedAddr, speedVect);
+	}
+
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
+	static int RUNSPEED;
+	static int ACCELERATION; //Couldn't get this to work, but I'm leaving it here for now
 	static bool showMsg;
 	static int globalsTests[3];
 	bool retryOnFail = true;
