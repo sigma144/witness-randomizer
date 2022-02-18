@@ -49,6 +49,8 @@ private:
 	friend class Panel;
 	friend class PuzzleList;
 	friend class Special;
+
+	friend class APRandomizer;
 };
 
 #define ORIENTATION 0x34

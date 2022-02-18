@@ -2,14 +2,15 @@
 #include <map>
 
 template<typename T, typename T2>
-std::map<T, T2> merge(std::initializer_list<std::map<T, T2>*> vecs)
+std::map<T, T2> merge(std::initializer_list<std::map<T, T2>*> maps)
 {
-	size_t size = 0;
-	for (auto v : vecs) { size += v->size(); }
-	std::map<T, T2> ret;
-	ret.reserve(size);
-	for (auto v : vecs) { ret.insert(ret.end(), v->begin(), v->end()); }
-	return ret;
+	std::map<T, T2> targetMap;
+	
+	for (std::map<T, T2>* sourceMap : maps) {
+		targetMap.insert(sourceMap->begin(), sourceMap->end());
+	}
+
+	return targetMap;
 }
 
 std::map<int, long> tutorial = {

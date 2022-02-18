@@ -29,6 +29,8 @@ void Randomizer::GenerateNormal(HWND loadingHandle) {
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllN();
 	if (doubleMode) ShufflePanels(false);
+
+
 }
 
 void Randomizer::GenerateHard(HWND loadingHandle) {
@@ -71,18 +73,6 @@ void Randomizer::AdjustSpeed() {
 	_memory->WritePanelData<float>(0x17C6A, OPEN_RATE, { 0.25f }); // Ramp Angle, 5x
 	_memory->WritePanelData<float>(0x17F02, OPEN_RATE, { 0.15f }); // Ramp Position, 4x
 	_memory->WritePanelData<float>(0x17C50, OPEN_RATE, { 0.3f }); //Boathouse Barrier, 2x
-}
-
-void Randomizer::StartWatching() {
-	//test
-	(new TestWatchdog())->start();
-	//holy shit it works
-}
-
-void Randomizer::PreventSnipes()
-{
-	// Distance-gate shadows laser to prevent sniping through the bars
-	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.5 });
 }
 
 void Randomizer::RandomizeDesert() {
