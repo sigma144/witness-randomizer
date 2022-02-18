@@ -1,3 +1,22 @@
+# Witness Archipelago Client
+
+Archipelago is a randomizer API that allows cross-game randomization with online servers.
+
+This is a project that intends to make The Witness a compatible game, based off of Sigma's codebase (see below).
+
+See also: https://github.com/NewSoupVi/Archipelago
+
+This is still in active development and does not currently "work" due to lack of Netcode on the client side (this project), although this is being actively worked on.
+
+Most of the interesting code is currently in Source/Watchdog.cpp. All the currently implemented gameplay features are tested there.
+Of course, it will be moved into its appropriate places eventually. :)
+
+If you want to contribute, shoot me a message on Discord: VioletSoup#1785
+Currently there are two people working on this.
+
+
+# Original Readme from Sigma Rando:
+
 ![](https://github.com/sigma144/witness-randomizer/blob/master/example.png)
 
 # Witness Random Puzzle Generator
