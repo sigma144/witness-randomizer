@@ -47,7 +47,7 @@ public:
 
 class TestWatchdog : public Watchdog {
 public:
-	TestWatchdog() : Watchdog(1) { ready = false; }
+	TestWatchdog() : Watchdog(10) { ready = false; }
 	virtual void action();
 	bool ready;
 	int go = 0;
