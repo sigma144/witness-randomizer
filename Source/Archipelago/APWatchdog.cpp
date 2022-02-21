@@ -125,10 +125,10 @@ void APWatchdog::addToIntersections(int id, std::vector<float>& newIntersections
 	sourceConnectionsB.insert(sourceConnectionsB.end(), newConnectionsB.begin(), newConnectionsB.end());
 
 	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(sourceIntersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, sourceIntersections); //position of each point as array of x,y,x,y,x,y
+	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(sourceIntersectionFlags.size()) }); //amount of intersections
+	panel._memory->WriteArray<float>(id, DOT_POSITIONS, sourceIntersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 	panel._memory->WriteArray<int>(id, DOT_FLAGS, sourceIntersectionFlags); //flags for each point such as entrance or exit
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(sourceConnectionsA.size()) });
+	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(sourceConnectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
 	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, sourceConnectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
 	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, sourceConnectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
