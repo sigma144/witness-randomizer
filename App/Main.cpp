@@ -18,6 +18,8 @@
 #include "Watchdog.h"
 #include "Random.h"
 
+#include "Archipelago/APRandomizer.h"
+
 #define IDC_RANDOMIZE 0x401
 #define IDC_TOGGLESPEED 0x402
 #define IDC_SPEEDRUNNER 0x403
@@ -76,6 +78,7 @@ int panel = 0x09E69;
 HWND hwndAddress, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
+std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
 std::shared_ptr<Generate> generator = std::make_shared<Generate>();
 std::shared_ptr<Special> specialCase = std::make_shared<Special>(generator);
 std::vector<byte> bytes;
@@ -164,16 +167,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 			randomizer->seedIsRNG = false;
 
-			//Here is where the netcode goes and the seed is set, instead of this statement
-			int seed = 123456;
+			apRandomizer->Connect();
+			int seed = apRandomizer->Seed;
+			apRandomizer->GenerateNormal();
 
 			randomizer->ClearOffsets();
 			
 			ShowWindow(hwndLoadingText, SW_SHOW);
 
 			randomizer->AdjustSpeed(); //Makes certain moving objects move faster
-			randomizer->StartWatching(); //From now on, we check completion.
-			randomizer->PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
 			int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);

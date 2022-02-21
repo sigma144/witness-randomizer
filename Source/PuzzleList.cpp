@@ -88,10 +88,13 @@ void PuzzleList::GenerateTutorialN()
 	//Mazes
 	generator->setFlag(Generate::Config::FullGaps);
 	generator->setGridSize(6, 6);
+	generator->setGridSize(2, 2); //TODO for testing, remove later
 	generator->generateMaze(0x00293);
 	generator->setGridSize(9, 9);
+	generator->setGridSize(2, 2); //TODO for testing, remove later
 	generator->generateMaze(0x00295, 1, 1);
 	generator->setGridSize(12, 12);
+	generator->setGridSize(2, 2); //TODO for testing, remove later
 	generator->generateMaze(0x002C2);
 	generator->resetConfig();
 	//2 starts maze

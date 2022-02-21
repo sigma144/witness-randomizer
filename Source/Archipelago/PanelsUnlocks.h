@@ -16,7 +16,7 @@ std::map<int, long> doorUnlockPanels = {
 	{ 0x0056E, 158011 }, // Swamp Entry
 	{ 0x17C2E, 158012 }, // Bunker Entry Door
 	{ 0x17CAB, 158013 }, // Jungle Pop-up Wall
-	{ 0x00000, 158014 }, // Boat Access
+	//{ 0x00000, 158014 }, // Boat Access
 	{ 0x0C339, 158015 }, // Desert Surface Door
 	{ 0x0A249, 158016 }, // Desert Pond Exit Door
 	{ 0x28998, 158017 }, // Town Yellow Door
