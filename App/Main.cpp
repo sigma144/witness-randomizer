@@ -169,7 +169,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			apRandomizer->Connect();
 			int seed = apRandomizer->Seed;
-			apRandomizer->GenerateNormal();
 
 			randomizer->ClearOffsets();
 			
@@ -249,6 +248,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Special::WritePanelData(0x0A3B2, BACKGROUND_REGION_COLOR + 12, doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndAddress, std::to_wstring(seed).c_str());
+
+			apRandomizer->Initialize(hwndLoadingText);
+			apRandomizer->GenerateNormal();
 
 			break;
 		}

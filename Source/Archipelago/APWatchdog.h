@@ -16,12 +16,17 @@ public:
 	int go = 0;
 
 	bool redrawText = true;
-
 private:
 	std::shared_ptr<Generate> generator;
 
-	void disablePuzzle(int id);
-
-	static void addText(int id, std::string text, float left, float right, float top, float bottom);
-	static void addToIntersections(int id, std::vector<float>& newIntersections, std::vector<int>& newIntersectionFlags, std::vector<int>& newConnectionsA, std::vector<int>& newConnectionsB);
 };
+
+
+/*class PowedPuzzleWatchdog : public Watchdog {
+public:
+	PowedPuzzleWatchdog() : Watchdog(0.5f) {
+		//std::vector<int> allPanels
+	}
+
+	virtual void action();
+};*/
