@@ -88,6 +88,24 @@ APRandomizer::APRandomizer() {
 
 void APRandomizer::Connect() {
 
+	ap = new APClient("uuid", "Timespinner");
+
+	ap->set_slot_connected_handler([]() {
+		int x = 20;
+		int y = x;
+	});
+	ap->set_slot_refused_handler([](const std::list<std::string>& errors) {
+		int x = 20;
+		int y = x;
+	});
+	ap->set_room_info_handler([&]() {
+		int x = 20;
+		int y = x;
+
+		ap->ConnectSlot("Jarno", "", 0);
+	});
+
+	(new APServerPoller(ap))->start();
 }
 
 void APRandomizer::Initialize(HWND loadingHandle) {

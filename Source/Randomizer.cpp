@@ -2,6 +2,7 @@
 
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
+#include <algorithm>
 #include "Memory.h"
 #include "Randomizer.h"
 #include "Panels.h"
@@ -308,8 +309,8 @@ void Randomizer::ShufflePanels(bool hard) {
 	// Ensure that we open the gate before the final puzzle (by swapping)
 	int panel3Index = find(orchardRandomOrder, 3);
 	int panel4Index = find(orchardRandomOrder, 4);
-	orchardRandomOrder[min(panel3Index, panel4Index)] = 3;
-	orchardRandomOrder[max(panel3Index, panel4Index)] = 4;
+	orchardRandomOrder[std::min(panel3Index, panel4Index)] = 3;
+	orchardRandomOrder[std::max(panel3Index, panel4Index)] = 4;
 	ReassignTargets(orchard, orchardRandomOrder);
 
 	// Don't power off Town Apple Tree on fail on Expert.

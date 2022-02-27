@@ -30,3 +30,15 @@ public:
 
 	virtual void action();
 };*/
+
+class APServerPoller : public Watchdog {
+public:
+	APServerPoller(APClient* client) : Watchdog(0.1f) {
+		ap = client;
+	}
+
+	virtual void action();
+
+private:
+		APClient* ap;
+};

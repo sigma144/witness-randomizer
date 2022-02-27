@@ -32,6 +32,8 @@ private:
 	std::map<int, PuzzleData> disabledPuzzles;
 	std::shared_ptr<Memory> _memory;
 
+	APClient* ap;
+
 	void StartWatching();
 	void PreventSnipes();
 

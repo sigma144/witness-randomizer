@@ -174,8 +174,8 @@ void Panel::Resize(int width, int height)
 		if (e.GetY() == _height - 1) e.SetY(height - 1);
 	}
 	if (_width != _height || width != height) {
-		float maxDim = max(maxx - minx, maxy - miny);
-		float unitSize = maxDim / max(width - 1, height - 1);
+		float maxDim = std::max(maxx - minx, maxy - miny);
+		float unitSize = maxDim / std::max(width - 1, height - 1);
 		minx = 0.5f - unitSize * (width - 1) / 2;
 		maxx = 0.5f + unitSize * (width - 1) / 2;
 		miny = 0.5f - unitSize * (height - 1) / 2;

@@ -47,3 +47,6 @@ void APWatchdog::action() {
 	//this->_memory->WriteMovementSpeed(4.0f); We can manipulate movement speed with this - Potential "bonus" item?
 }
 
+void APServerPoller::action() {
+	ap->poll();
+}

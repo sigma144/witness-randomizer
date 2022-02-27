@@ -108,12 +108,15 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT#0x0A00
+;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,7 +131,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);ASIO_STANDALONE</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -148,11 +151,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -164,6 +168,8 @@
   <ItemGroup>
     <ClInclude Include="Archipelago\APRandomizer.h" />
     <ClInclude Include="Archipelago\APWatchdog.h" />
+    <ClInclude Include="Archipelago\Client\json.hpp" />
+    <ClInclude Include="Archipelago\Client\json\include\nlohmann\json.hpp" />
     <ClInclude Include="Generate.h" />
     <ClInclude Include="Archipelago\PanelsUnlocks.h" />
     <ClInclude Include="Memory.h" />
@@ -183,6 +189,7 @@
   <ItemGroup>
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
+    <ClCompile Include="Archipelago\Client\wswrap\src\wswrap.cpp" />
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />

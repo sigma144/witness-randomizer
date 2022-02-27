@@ -1,10 +1,13 @@
 #pragma once
+
 #include <functional>
 #include <map>
 #include <vector>
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+
+#include "Archipelago\Client\apclientpp\apclient.hpp"
 #include <windows.h>
 // https://github.com/erayarslan/WriteProcessMemory-Example
 // http://stackoverflow.com/q/32798185
