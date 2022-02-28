@@ -44,7 +44,6 @@ public:
 	KeepWatchdog() : Watchdog(10) { }
 	virtual void action();
 };
-
 class ArrowWatchdog : public Watchdog {
 public:
 	ArrowWatchdog(int id) : Watchdog(0.1f) {
