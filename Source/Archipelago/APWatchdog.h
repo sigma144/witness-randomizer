@@ -1,6 +1,9 @@
 #pragma once
+
+#include <map>
 #include "..\Watchdog.h"
 #include "..\Generate.h"
+#include "APRandomizer.h"
 
 class APWatchdog : public Watchdog {
 public:
@@ -18,18 +21,7 @@ public:
 	bool redrawText = true;
 private:
 	std::shared_ptr<Generate> generator;
-
 };
-
-
-/*class PowedPuzzleWatchdog : public Watchdog {
-public:
-	PowedPuzzleWatchdog() : Watchdog(0.5f) {
-		//std::vector<int> allPanels
-	}
-
-	virtual void action();
-};*/
 
 class APServerPoller : public Watchdog {
 public:
@@ -40,5 +32,5 @@ public:
 	virtual void action();
 
 private:
-		APClient* ap;
+	APClient* ap;
 };

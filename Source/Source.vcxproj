@@ -166,6 +166,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Archipelago\APSolvedPuzzlesTracker.h" />
     <ClInclude Include="Archipelago\APRandomizer.h" />
     <ClInclude Include="Archipelago\APWatchdog.h" />
     <ClInclude Include="Archipelago\Client\json.hpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Archipelago\APSolvedPuzzlesTracker.cpp" />
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\Client\wswrap\src\wswrap.cpp" />

@@ -1,5 +1,4 @@
 #include "APRandomizer.h"
-#include "APWatchdog.h"
 
 int Seed;
 
@@ -87,29 +86,58 @@ APRandomizer::APRandomizer() {
 }
 
 void APRandomizer::Connect() {
+	ap = new APClient("uuid", "The Witness");
 
-	ap = new APClient("uuid", "Timespinner");
+	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
+		for (const auto& locationId : locations) {
+			solvedPuzzlesTracker->MarkLocationChecked(locationId);
 
-	ap->set_slot_connected_handler([]() {
-		int x = 20;
-		int y = x;
+			//TODO: make puzzle look solved if it was collected or solved before?
+		}
+	});
+	ap->set_slot_connected_handler([this](const nlohmann::json& slotData) {
+		Seed = slotData["seed"];
+
+		for (auto& [key, val] : slotData["panelhex_to_id"].items())
+		{
+			int panelId = std::stoul(key, nullptr, 16);
+			int locationId = val;
+
+			panelIdToLocationId.insert({ panelId, locationId });
+		}
+
+		solvedPuzzlesTracker = new APSolvedPuzzles(ap, panelIdToLocationId);
+		solvedPuzzlesTracker->start();
 	});
 	ap->set_slot_refused_handler([](const std::list<std::string>& errors) {
-		int x = 20;
-		int y = x;
+		//TODO Scream
 	});
 	ap->set_room_info_handler([&]() {
-		int x = 20;
-		int y = x;
 
-		ap->ConnectSlot("Jarno", "", 0);
+		//for somehow ConnectSlot need to be called as a response to room info
+		ap->ConnectSlot("Witness", "", 0);
+	});
+	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
+		if (!ap->is_data_package_valid()) {
+			// NOTE: this should not happen since we ask for data package before connecting
+			return;
+		}
+		for (const auto& item : items) {
+			std::string itemname = ap->get_item_name(item.item);
+			std::string sender = ap->get_player_alias(item.player);
+			std::string location = ap->get_location_name(item.location);
+			printf("  #%d: %s (%" PRId64 ") from %s - %s\n",
+				item.index, itemname.c_str(), item.item,
+				sender.c_str(), location.c_str());
+			//game->send_item(item.index, item.item, sender, location);
+		}
 	});
 
 	(new APServerPoller(ap))->start();
 }
 
 void APRandomizer::Initialize(HWND loadingHandle) {
-	disablePuzzles(loadingHandle);
+	//disablePuzzles(loadingHandle);
 }
 
 void APRandomizer::disablePuzzles(HWND loadingHandle) {
@@ -158,7 +186,6 @@ void APRandomizer::GenerateNormal() {
 void APRandomizer::StartWatching() {
 	//test
 	(new APWatchdog())->start();
-	//holy shit it works
 }
 
 void APRandomizer::PreventSnipes()

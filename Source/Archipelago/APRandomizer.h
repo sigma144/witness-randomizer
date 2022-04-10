@@ -3,9 +3,12 @@
 #include <memory>
 #include <set>
 #include <map>
+#include "nlohmann\json.hpp"
 #include "..\Randomizer.h"
 #include "..\Special.h"
 #include "PuzzleData.h"
+#include "APWatchdog.h"
+#include "APSolvedPuzzlesTracker.h"
 
 class APRandomizer {
 public:
@@ -30,10 +33,12 @@ public:
 
 private:
 	std::map<int, PuzzleData> disabledPuzzles;
+	std::map<int, int> panelIdToLocationId;
 	std::shared_ptr<Memory> _memory;
 
 	APClient* ap;
-
+	APSolvedPuzzles* solvedPuzzlesTracker;
+	
 	void StartWatching();
 	void PreventSnipes();
 

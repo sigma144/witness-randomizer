@@ -118,10 +118,18 @@ public:
     };
 
     struct TextNode {
+        enum Flags {
+            FLAG_NONE = 0,
+            FLAG_ADVANCEMENT = 1,
+            FLAG_NEVER_EXCLUDE = 2,
+            FLAG_TRAP = 4,
+        };
+
         std::string type;
         std::string color;
         std::string text;
         bool found = false;
+        unsigned flags = FLAG_NONE;
     };
 
     struct Version {
@@ -145,7 +153,7 @@ public:
         _hOnSocketDisconnected = f;
     }
 
-    void set_slot_connected_handler(std::function<void(void)> f)
+    void set_slot_connected_handler(std::function<void(const json&)> f)
     {
         _hOnSlotConnected = f;
     }
@@ -261,8 +269,13 @@ public:
                 text = get_player_alias(id);
             } else if (node.type == "item_id") {
                 int64_t id = stoi64(node.text);
-                if (color.empty() && node.found) color = "green";
-                else if (color.empty()) color = "cyan";
+                if (color.empty()) {
+                    if (node.found) color = "green";
+                    else if (node.flags & TextNode::FLAG_ADVANCEMENT) color = "plum";
+                    else if (node.flags & TextNode::FLAG_NEVER_EXCLUDE) color = "slateblue";
+                    else if (node.flags & TextNode::FLAG_TRAP) color = "salmon";
+                    else color = "cyan";
+                }
                 text = get_item_name(id);
             } else if (node.type == "location_id") {
                 int64_t id = stoi64(node.text);
@@ -341,7 +354,7 @@ public:
     }
 
     bool ConnectSlot(const std::string& name, const std::string& password, int items_handling,
-                     const std::list<std::string>& tags = {}, const Version& ver = {0,2,0})
+                     const std::list<std::string>& tags = {}, const Version& ver = {0,2,6})
     {
         if (_state < State::SOCKET_CONNECTED) return false;
         _slot = name;
@@ -621,7 +634,6 @@ private:
                 }
                 else if (cmd == "Connected") {
                     _state = State::SLOT_CONNECTED;
-                    if (_hOnSlotConnected) _hOnSlotConnected();
                     _team = command["team"];
                     _slotnr = command["slot"];
                     _players.clear();
@@ -633,6 +645,7 @@ private:
                             player["name"].get<std::string>(),
                         });
                     }
+                    if (_hOnSlotConnected) _hOnSlotConnected(command["slot_data"]);
                     // TODO: store checked/missing locations
                     if (_hOnLocationChecked) {
                         std::list<int64_t> checkedLocations;
@@ -700,11 +713,13 @@ private:
                         auto itColor = part.find("color");
                         auto itText = part.find("text");
                         auto itFound = part.find("found");
+                        auto itFlags = part.find("flags");
                         msg.push_back({
                             itType == part.end() ? "" : itType->get<std::string>(),
                             itColor == part.end() ? "" : itColor->get<std::string>(),
                             itText == part.end() ? "" : itText->get<std::string>(),
                             itFound == part.end() ? false : itFound->get<bool>(),
+                            itFlags == part.end() ? 0U : itFlags->get<unsigned>(),
                         });
                     }
                     if (_hOnPrintJson) _hOnPrintJson(msg);
@@ -759,6 +774,9 @@ private:
         if (color == "blue") return "\x1b[34m";
         if (color == "magenta") return "\x1b[35m";
         if (color == "cyan") return "\x1b[36m";
+        if (color == "plum") return "\x1b[38:5:219m";
+        if (color == "slateblue") return "\x1b[38:5:62m";
+        if (color == "salmon") return "\x1b[38:5:210m";
         return "\x1b[0m";
     }
 
@@ -789,7 +807,7 @@ private:
 
     std::function<void(void)> _hOnSocketConnected = nullptr;
     std::function<void(void)> _hOnSocketDisconnected = nullptr;
-    std::function<void(void)> _hOnSlotConnected = nullptr;
+    std::function<void(const json&)> _hOnSlotConnected = nullptr;
     std::function<void(void)> _hOnSlotDisconnected = nullptr;
     std::function<void(const std::list<std::string>&)> _hOnSlotRefused = nullptr;
     std::function<void(void)> _hOnRoomInfo = nullptr;
