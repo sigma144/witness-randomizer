@@ -85,8 +85,20 @@ APRandomizer::APRandomizer() {
 	_memory = std::make_shared<Memory>("witness64_d3d11.exe");
 }
 
-void APRandomizer::Connect() {
-	ap = new APClient("uuid", "The Witness");
+bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
+	std::string uri = server;
+
+	if (uri.rfind("ws://", 0) == std::string::npos)
+		uri = "ws://" + uri;
+	if (uri.find(":") == std::string::npos)
+		uri = uri + ":38281";
+	else if(uri.rfind(":") == uri.length())
+		uri = uri + "38281";
+
+	ap = new APClient("uuid", "The Witness", uri);
+
+	bool connected = false;
+	bool hasConnectionResult = false;
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
 		for (const auto& locationId : locations) {
@@ -95,8 +107,13 @@ void APRandomizer::Connect() {
 			//TODO: make puzzle look solved if it was collected or solved before?
 		}
 	});
-	ap->set_slot_connected_handler([this](const nlohmann::json& slotData) {
+
+	ap->set_slot_connected_handler([&](const nlohmann::json& slotData) {
 		Seed = slotData["seed"];
+
+		Hard = slotData["hard_mode"] == true;
+		UnlockSymbols = slotData["unlock_symbols"] == true;
+		DisableNonRandomizedPuzzles = slotData["disable_non_randomized_puzzles"] == true;
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items())
 		{
@@ -108,36 +125,69 @@ void APRandomizer::Connect() {
 
 		solvedPuzzlesTracker = new APSolvedPuzzles(ap, panelIdToLocationId);
 		solvedPuzzlesTracker->start();
-	});
-	ap->set_slot_refused_handler([](const std::list<std::string>& errors) {
-		//TODO Scream
-	});
-	ap->set_room_info_handler([&]() {
 
-		//for somehow ConnectSlot need to be called as a response to room info
-		ap->ConnectSlot("Witness", "", 0);
+		connected = true;
+		hasConnectionResult = true;
 	});
+
+	ap->set_slot_refused_handler([&](const std::list<std::string>& errors) {
+		auto errorString = std::accumulate(errors.begin(), errors.end(), std::string(),
+			[](const std::string& a, const std::string& b) -> std::string {
+				return a + (a.length() > 0 ? "," : "") + b;
+			});
+
+		std::wstring wError = std::wstring(errorString.begin(), errorString.end());
+
+		connected = false;
+		hasConnectionResult = true;
+
+		WCHAR errorMessage[100] = L"Connection Failed: ";
+		wcscat_s(errorMessage, 100, wError.data());
+
+		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
+	});
+
+	ap->set_room_info_handler([&]() {
+		//for somehow ConnectSlot need to be called as a response to room info
+		ap->ConnectSlot(user, password, 7);
+	});
+
 	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
 		if (!ap->is_data_package_valid()) {
 			// NOTE: this should not happen since we ask for data package before connecting
 			return;
 		}
 		for (const auto& item : items) {
-			std::string itemname = ap->get_item_name(item.item);
-			std::string sender = ap->get_player_alias(item.player);
-			std::string location = ap->get_location_name(item.location);
-			printf("  #%d: %s (%" PRId64 ") from %s - %s\n",
-				item.index, itemname.c_str(), item.item,
-				sender.c_str(), location.c_str());
-			//game->send_item(item.index, item.item, sender, location);
+			//Unlock puzzle or give speedboost or turn panal off
 		}
 	});
 
 	(new APServerPoller(ap))->start();
+
+	auto start = std::chrono::system_clock::now();
+
+	while (!hasConnectionResult) {
+		if (DateTime::since(start).count() > 5000) {
+			connected = false;
+			hasConnectionResult = true;
+
+			std::wstring wideServer = Converty::Utf8ToWide(uri);
+
+			WCHAR errorMessage[100] = L"Timeout while connecting to server: ";
+			wcscat_s(errorMessage, 100, wideServer.data());
+
+			MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+
+	return connected;
 }
 
 void APRandomizer::Initialize(HWND loadingHandle) {
-	//disablePuzzles(loadingHandle);
+	StartWatching(); //From now on, we check completion.
+	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 }
 
 void APRandomizer::disablePuzzles(HWND loadingHandle) {
@@ -179,8 +229,11 @@ void APRandomizer::enablePuzzles() {
 }
 
 void APRandomizer::GenerateNormal() {
-	StartWatching(); //From now on, we check completion.
-	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
+
+}
+
+void APRandomizer::GenerateHard() {
+
 }
 
 void APRandomizer::StartWatching() {

@@ -9,10 +9,18 @@
 #include "PuzzleData.h"
 #include "APWatchdog.h"
 #include "APSolvedPuzzlesTracker.h"
+#include "..\Converty.h"
+#include "..\DateTime.h"
 
 class APRandomizer {
 public:
-	int Seed = 12345;
+	int Seed = 0;
+
+	bool Hard = false;
+	bool UnlockSymbols = false;
+	bool DisableNonRandomizedPuzzles = false;
+
+	bool connected = false;
 
 	bool unlockedStones = false;
 	bool unlockedColoredStones = false;
@@ -27,9 +35,10 @@ public:
 
 	APRandomizer();
 
-	void Connect();
+	bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
 	void Initialize(HWND loadingHandle);
 	void GenerateNormal();
+	void GenerateHard();
 
 private:
 	std::map<int, PuzzleData> disabledPuzzles;
