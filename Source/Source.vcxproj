@@ -194,8 +194,6 @@
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\Client\wswrap\src\wswrap.cpp" />
-    <ClCompile Include="Converty.cpp" />
-    <ClCompile Include="DateTime.cpp" />
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
