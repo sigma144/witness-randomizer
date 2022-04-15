@@ -66,7 +66,7 @@ private:
 	static void addPuzzleSimbols(PuzzleData* panel, std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& polygons);
 };
 
-#define ITEM_OFFSET 1580000
+#define ITEM_OFFSET 158000
 
 //Puzzle Symbols
 const int ITEM_DOTS = ITEM_OFFSET + 0;
