@@ -436,8 +436,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 #if _DEBUG
 	auto defaultAddress = L"localhost";
+	auto defaultUser = L"Witness";
 #else
 	auto defaultAddress = L"archipelago.gg:";
+	auto defaultUser = L"";
 #endif
 
 	CreateWindow(L"STATIC", L"Enter an AP address:",
@@ -451,7 +453,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	CreateWindow(L"STATIC", L"Enter slot name:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 125, 160, 16, hwnd, NULL, hInstance, NULL);
-	hwndUser = CreateWindow(MSFTEDIT_CLASS, L"",
+	hwndUser = CreateWindow(MSFTEDIT_CLASS, defaultUser,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		180, 120, 400, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndUser, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change

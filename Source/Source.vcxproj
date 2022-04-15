@@ -166,7 +166,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Archipelago\APSolvedPuzzlesTracker.h" />
     <ClInclude Include="Archipelago\APRandomizer.h" />
     <ClInclude Include="Archipelago\APWatchdog.h" />
     <ClInclude Include="Archipelago\Client\json.hpp" />
@@ -174,12 +173,10 @@
     <ClInclude Include="Converty.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Generate.h" />
-    <ClInclude Include="Archipelago\PanelsUnlocks.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
     <ClInclude Include="Panel.h" />
     <ClInclude Include="Panels.h" />
-    <ClInclude Include="Archipelago\PanelsChecks.h" />
     <ClInclude Include="Archipelago\PuzzleData.h" />
     <ClInclude Include="PuzzleList.h" />
     <ClInclude Include="PuzzleSymbols.h" />
@@ -190,7 +187,6 @@
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Archipelago\APSolvedPuzzlesTracker.cpp" />
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\Client\wswrap\src\wswrap.cpp" />

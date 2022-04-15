@@ -1,8 +1,6 @@
 #include "PuzzleData.h"
 
-PuzzleData::PuzzleData(std::shared_ptr<Memory> _memory, int puzzleId) {
-	id = puzzleId;
-
+void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	grid_size_x = _memory->ReadPanelData<int>(id, GRID_SIZE_X);
 	grid_size_y = _memory->ReadPanelData<int>(id, GRID_SIZE_Y);
 	path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
@@ -24,28 +22,44 @@ PuzzleData::PuzzleData(std::shared_ptr<Memory> _memory, int puzzleId) {
 
 	for (int i = 0; i < numberOfDecorations; i++)
 	{
-		if ((decoration_flags[i] & 0x700) == Decoration::Shape::Stone) {
-			if (decoration_flags[i] & 0x00E)
+		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
+			if ((decorations[i] & 0x00F) != Decoration::Color::White && (decorations[i] & 0x00F) != Decoration::Color::Black)
 				hasColoredStones = true;
 			else
 				hasStones = true;
 		}
-		else if ((decoration_flags[i] & 0x700) == Decoration::Shape::Star) {
+		else if ((decorations[i] & 0x700) == Decoration::Shape::Star) {
 			hasStars = true;
+
+			//TODO: Detect start + other simbol? maybe count stars by color?
 		}
-		else if ((decoration_flags[i] & 0x700) == Decoration::Shape::Poly) {
+		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
 			hasTetris = true;
+
+			if ((decorations[i] & 0x1000) == Decoration::Can_Rotate) {
+				if ((decorations[i] & 0x2000) == Decoration::Negative)
+					hasTetrisNegativeRotated = true;
+				else
+					hasTetrisRotated = true;
+			}
+			else {
+				if ((decorations[i] & 0x2000) == Decoration::Negative)
+					hasTetrisNegative = true;
+			}
 		}
-		else if ((decoration_flags[i] & 0x700) == Decoration::Shape::Eraser) {
+		else if ((decorations[i] & 0x700) == Decoration::Shape::Eraser) {
 			hasErasers = true;
 		}
-		else if ((decoration_flags[i] & 0x700) == Decoration::Shape::Triangle) {
+		else if ((decorations[i] & 0x700) == Decoration::Shape::Triangle) {
 			hasTriangles = true;
 		}
-		else if ((decoration_flags[i] & 0x700) == Decoration::Shape::Arrow) {
+		else if ((decorations[i] & 0x700) == Decoration::Shape::Arrow) {
 			hasArrows = true;
 		}
 	}
+
+  	if (_memory->ReadPanelData<int>(id, REFLECTION_DATA))
+		hasSymmetry = true;
 
 	for (int i = 0; i < numberOfDots; i++)
 	{
@@ -54,6 +68,8 @@ PuzzleData::PuzzleData(std::shared_ptr<Memory> _memory, int puzzleId) {
 				hasColoredDots = true;
 			else if (dot_flags[i] & DOT_IS_INVISIBLE)
 				hasInvisibleDots = true;
+			else if (dot_flags[i] & DOT_SMALL || dot_flags[i] & DOT_MEDIUM || dot_flags[i] & DOT_LARGE)
+				hasSoundDots = true;
 			else
 				hasDots = true;
 		}

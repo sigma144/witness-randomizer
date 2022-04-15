@@ -4,21 +4,31 @@
 struct PuzzleData
 {
 	public:
-		PuzzleData(std::shared_ptr<Memory> _memory, int id);
+		PuzzleData(int panelId) {
+			id = panelId;
+		};
+
+		void Read(std::shared_ptr<Memory> _memory);
 		void Restore(std::shared_ptr<Memory> _memory);
 
 		int id;
 
-		bool hasStones;
-		bool hasColoredStones;
-		bool hasStars;
-		bool hasTetris;
-		bool hasErasers;
-		bool hasTriangles;
-		bool hasDots;
-		bool hasColoredDots;
-		bool hasInvisibleDots;
-		bool hasArrows;
+		bool hasStones = false;
+		bool hasColoredStones = false;
+		bool hasStars = false;
+		bool hasStarsWithOtherSymbol = false;
+		bool hasTetris = false;
+		bool hasTetrisRotated = false;
+		bool hasTetrisNegative = false;
+		bool hasTetrisNegativeRotated = false;
+		bool hasErasers = false;
+		bool hasTriangles = false;
+		bool hasDots = false;
+		bool hasColoredDots = false;
+		bool hasInvisibleDots = false;
+		bool hasSoundDots = false;
+		bool hasArrows = false;
+		bool hasSymmetry = false;
 
 		int grid_size_x;
 		int grid_size_y;
