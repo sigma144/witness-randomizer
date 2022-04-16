@@ -1,0 +1,6 @@
+Write correct simbols to missing panels
+Dersert locked?
+Symetry door?
+Fix powerup offsets
+Update missing panels
+Check why discord work
