@@ -6,7 +6,7 @@ APRandomizer::APRandomizer() {
 
 bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
-	
+
 	ap = new APClient("uuid", "The Witness", uri);
 
 	bool connected = false;
@@ -30,8 +30,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		UnlockSymbols = slotData["unlock_symbols"] == true;
 		DisableNonRandomizedPuzzles = slotData["disable_non_randomized_puzzles"] == true;
 
-		for (auto& [key, val] : slotData["panelhex_to_id"].items())
-		{
+		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
 			int panelId = std::stoul(key, nullptr, 16);
 			int locationId = val;
 
@@ -63,11 +62,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	});
 
 	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
-		bool updatePanels = false;
-
 		for (const auto& item : items) {
-			switch (item.item)
-			{
+			switch (item.item) {
 				//Puzzle Symbols
 				case ITEM_DOTS:							unlockedDots = true;							break;
 				case ITEM_COLORED_DOTS:					unlockedColoredDots = true;				break;
@@ -78,14 +74,16 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				case ITEM_TETRIS:							unlockedTetris = true;						break;
 				case ITEM_TETRIS_ROTATED:				unlockedTetrisRotated = true;				break;
 				case ITEM_TETRIS_NEGATIVE:				unlockedTetrisNegative = true;			break;
-				case ITEM_TETRIS_NEGATIVE_ROTATED:	unlockedTetrisNegative = true	;			break;
+				case ITEM_TETRIS_NEGATIVE_ROTATED:	unlockedTetrisNegative = true;			break;
 				case ITEM_STARS:							unlockedStars = true;						break;
 				case ITEM_STARS_WITH_OTHER_SYMBOL:	unlockedStarsWithOtherSimbol = true;	break;
 				case ITEM_SQUARES:						unlockedStones = true;						break;
 				case ITEM_COLORED_SQUARES:				unlockedColoredStones = true;				break;
+
 				//Powerups
 				case ITEM_TEMP_SPEED_BOOST:			async->ApplyTemporarySpeedBoost();		break;
 				case ITEM_TEMP_SPEED_REDUCTION:		async->ApplyTemporarySlow();				break;
+
 				//Traps
 				case ITEM_POWER_SURGE:					async->TriggerPowerSurge();				break;
 
@@ -93,12 +91,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 					break;
 			}
 
-			if (item.item < ITEM_TEMP_SPEED_BOOST)
-				updatePanels = true;
+			if (item.item < ITEM_TEMP_SPEED_BOOST) {
+				updatePuzzleLocks(item.item);
+			}
 		}
-
-		if (updatePanels)
-			enablePuzzles();
 	});
 
 	(new APServerPoller(ap))->start();
@@ -149,46 +145,43 @@ void APRandomizer::Initialize(HWND loadingHandle) {
 }
 
 void APRandomizer::disablePuzzles(HWND loadingHandle) {
-	for (int i = 0; i < sizeof(AllPuzzles) / sizeof(AllPuzzles[0]); i++)
-	{
+	for (int i = 0; i < sizeof(AllPuzzles) / sizeof(AllPuzzles[0]); i++)	{
 		std::wstring text = L"Locking puzzles: " + std::to_wstring(i) + L"/" + std::to_wstring(sizeof(AllPuzzles));
 		SetWindowText(loadingHandle, text.c_str());
 
 		if (!_memory->ReadPanelData<int>(AllPuzzles[i], SOLVED))
-			disablePuzzle(AllPuzzles[i]);
+			updatePuzzleLock(AllPuzzles[i]);
 	}
 }
 
-void APRandomizer::enablePuzzles() {
-	std::vector<PuzzleData*> puzzlesToEnable;
+void APRandomizer::updatePuzzleLocks(int itemIndex) {
+	std::vector<PuzzleData*> puzzlesToUpdate;
 
-	for (auto const& [id, puzzle] : disabledPuzzles)
-	{
-		if (
-				(!unlockedStones && puzzle->hasStones)
-				|| (!unlockedColoredStones && puzzle->hasColoredStones)
-				|| (!unlockedStars && puzzle->hasStars)
-				|| (!unlockedTetris && puzzle->hasTetris)
-				|| (!unlockedTetrisRotated && puzzle->hasTetrisRotated)
-				|| (!unlockedTetrisNegative && puzzle->hasTetrisNegative)
-				|| (!unlockedTetrisNegativeRotated && puzzle->hasTetrisNegativeRotated)
-				|| (!unlockedErasers && puzzle->hasErasers)
-				|| (!unlockedTriangles && puzzle->hasTriangles)
-				|| (!unlockedDots && puzzle->hasDots)
-				|| (!unlockedColoredDots && puzzle->hasColoredDots)
-				|| (!unlockedInvisibleDots && puzzle->hasInvisibleDots)
-				|| (!unlockedArrows && puzzle->hasArrows)
-				|| (!unlockedSymmetry && puzzle->hasSymmetry)
-			)
-			continue;
+	for (auto const& [id, puzzle] : disabledPuzzles) {
+		switch (itemIndex) {
+			//Puzzle Symbols
+			case ITEM_DOTS:							if (puzzle->hasDots) puzzlesToUpdate.push_back(puzzle);							break;
+			case ITEM_COLORED_DOTS:					if (puzzle->hasColoredDots) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_SOUND_DOTS:					if (puzzle->hasSoundDots) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_INVISIBLE_DOTS:				if (puzzle->hasInvisibleDots) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_SYMMETRY:						if (puzzle->hasSymmetry) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_TRIANGLES:						if (puzzle->hasTriangles) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_ERASOR:							if (puzzle->hasErasers) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_TETRIS:							if (puzzle->hasTetris) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_TETRIS_ROTATED:				if (puzzle->hasTetrisRotated) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_TETRIS_NEGATIVE:				if (puzzle->hasTetrisNegative) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_TETRIS_NEGATIVE_ROTATED:	if (puzzle->hasTetrisNegativeRotated) puzzlesToUpdate.push_back(puzzle);	break;
+			case ITEM_STARS:							if (puzzle->hasStars) puzzlesToUpdate.push_back(puzzle);							break;
+			case ITEM_STARS_WITH_OTHER_SYMBOL:	if (puzzle->hasStarsWithOtherSymbol) puzzlesToUpdate.push_back(puzzle);		break;
+			case ITEM_SQUARES:						if (puzzle->hasStones) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
 
-		puzzlesToEnable.push_back(puzzle);
+			default:																																			break;
+		}
 	}
 
-	for (auto& puzzle : puzzlesToEnable) {
-		puzzle->Restore(_memory);
-		disabledPuzzles.erase(puzzle->id);
-		delete puzzle;
+	for (auto& puzzle : puzzlesToUpdate) {
+		updatePuzzleLock(puzzle->id);
 	}
 }
 
@@ -204,49 +197,86 @@ void APRandomizer::PreventSnipes()
 	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.5 });
 }
 
-void APRandomizer::disablePuzzle(int id) {
-	if (disabledPuzzles.count(id) == 1)
-		return;
+void APRandomizer::updatePuzzleLock(int id) {
+	bool isLocked;
+	PuzzleData* puzzle;
 
-	PuzzleData* puzzle = new PuzzleData(id);
-	puzzle->Read(_memory);
-
-	disabledPuzzles.insert({ id, puzzle });
-
-	const int width = 4;
-	const int height = 2;
-
-	std::vector<float> intersections;
-	std::vector<int> intersectionFlags;
-	std::vector<int> connectionsA;
-	std::vector<int> connectionsB;
-	std::vector<int> decorations;
-	std::vector<int> decorationsFlags;
-	std::vector<int> polygons;
-
-	addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB);
-
-	Special::createText(id, "missing", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
-
-	addPuzzleSimbols(puzzle, decorations, decorationsFlags, intersections, intersectionFlags, polygons);
-
-	_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
-	_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
-	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
-	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
-	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
-	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-	_memory->WriteArray<int>(id, DECORATIONS, decorations);
-	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-	if (polygons.size() > 0) { //TODO maybe just always write ?
-		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
-		_memory->WriteArray<int>(id, COLORED_REGIONS, polygons);
+	if (disabledPuzzles.count(id) == 1) {
+		isLocked = true;
+		puzzle = disabledPuzzles[id];
 	}
-	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	else {
+		isLocked = false;
+		puzzle = new PuzzleData(id);
+		puzzle->Read(_memory);
+	}
+
+	if ((puzzle->hasStones && !unlockedStones)
+		|| (puzzle->hasStars && !unlockedStars)
+		//|| (puzzle->hasStarsWithOtherSymbol && !unlockedStarsWithOtherSimbol) //NYI
+		|| (puzzle->hasTetris && !unlockedTetris)
+		|| (puzzle->hasTetrisRotated && !unlockedTetrisRotated)
+		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
+		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
+		|| (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated)
+		|| (puzzle->hasErasers && !unlockedErasers)
+		|| (puzzle->hasTriangles && !unlockedTriangles)
+		|| (puzzle->hasDots && !unlockedDots)
+		//|| (puzzle->hasColoredDots && !unlockedColoredDots) //NYI
+		//|| (puzzle->hasInvisibleDots && !unlockedInvisibleDots) //NYI
+		|| (puzzle->hasSoundDots && !unlockedSoundDots)
+		|| (puzzle->hasArrows && !unlockedArrows)
+		|| (puzzle->hasSymmetry && !unlockedSymmetry))
+	{
+		//puzzle should be locked
+		if (!isLocked)
+			disabledPuzzles.insert({ id, puzzle });
+
+		const int width = 4;
+		const int height = 2;
+
+		std::vector<float> intersections;
+		std::vector<int> intersectionFlags;
+		std::vector<int> connectionsA;
+		std::vector<int> connectionsB;
+		std::vector<int> decorations;
+		std::vector<int> decorationsFlags;
+		std::vector<int> polygons;
+
+		addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB);
+
+		Special::createText(id, "missing", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+
+		addPuzzleSimbols(puzzle, decorations, decorationsFlags, intersections, intersectionFlags, polygons);
+
+		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
+		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
+		_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
+		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+		_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+		_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+		_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+		_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+		_memory->WriteArray<int>(id, DECORATIONS, decorations);
+		_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+		if (polygons.size() > 0) { //TODO maybe just always write ?
+			_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
+			_memory->WriteArray<int>(id, COLORED_REGIONS, polygons);
+		}
+		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	}
+	else if (isLocked) {
+		//puzzle is locked but should nolonger be locked
+		puzzle->Restore(_memory);
+		disabledPuzzles.erase(puzzle->id);
+		delete puzzle;
+	}
+	else {
+		//puzzle isnt locked and should not be locked
+		delete puzzle;
+	}
 }
 
 void APRandomizer::addMissingSimbolsDisplay(std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB) {
@@ -313,9 +343,9 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decora
 	int column = 4;
 	int secondRowOffset = -column;
 
-	if (puzzle->hasStones)
+	if (puzzle->hasStones && !unlockedStones)
 	{
-		if (puzzle->hasColoredStones)
+		if (puzzle->hasColoredStones && !unlockedColoredStones)
 		{
 			gridDecorations[column] = Decoration::Stone | Decoration::Color::Orange;
 			gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Blue;
@@ -328,9 +358,9 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decora
 			column++;
 		}
 	}
-	if (puzzle->hasStars)
+	if (puzzle->hasStars && !unlockedStars)
 	{
-		if (puzzle->hasStarsWithOtherSymbol) {
+		if (puzzle->hasStarsWithOtherSymbol && !unlockedStarsWithOtherSimbol) {
 			gridDecorations[column] = Decoration::Star | Decoration::Color::Green;
 			gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Green;
 			column++;
@@ -340,13 +370,13 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decora
 			column++;
 		}
 	}
-	if (puzzle->hasTetris) //no idea how
+	if (puzzle->hasTetris && !unlockedTetris) //no idea how
 	{
-		if (puzzle->hasTetrisRotated) {
+		if (puzzle->hasTetrisRotated && !unlockedTetrisRotated) {
 			//normal rotated
 		}
-		else if (puzzle->hasTetrisNegative) {
-			if (puzzle->hasTetrisNegativeRotated) {
+		else if (puzzle->hasTetrisNegative && !unlockedTetrisNegative) {
+			if (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated) {
 				//rotated negative
 			}
 			else {
@@ -354,39 +384,43 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decora
 			}
 		}
 		else {
-			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow; 
+			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow;
 			column++;
 		}
 	}
-	if (puzzle->hasErasers)
+	if (puzzle->hasErasers && !unlockedErasers)
 	{
 		gridDecorations[column] = Decoration::Eraser;
 		column++;
 	}
-	if (puzzle->hasTriangles)
+	if (puzzle->hasTriangles && !unlockedTriangles)
 	{
 		gridDecorations[column] = Decoration::Triangle2;
 		column++;
 	}
-	if (puzzle->hasDots) {
-		//add black dot on line
+	if (puzzle->hasColoredDots && !unlockedColoredDots) {
+		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_BLUE;
+		intersectionFlags[12] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_ORANGE;
 	}
-	if (puzzle->hasColoredDots) {
-		// add a blue and orange dot on line
+	else if (puzzle->hasInvisibleDots && !unlockedInvisibleDots) {
+		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
+		intersectionFlags[12] = IntersectionFlags::DOT;
 	}
-	if (puzzle->hasInvisibleDots) {
-		// add an invisiable dot ??? wtf ???
+	else if (puzzle->hasSoundDots && !unlockedSoundDots) {
+		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_SMALL;
+		intersectionFlags[12] = IntersectionFlags::DOT | IntersectionFlags::DOT_MEDIUM;
+		intersectionFlags[13] = IntersectionFlags::DOT | IntersectionFlags::DOT_LARGE;
 	}
-	if (puzzle->hasSoundDots) {
-		// add a small and latge red dot
+	else if (puzzle->hasDots && !unlockedDots) {
+		intersectionFlags[11] = IntersectionFlags::DOT;
 	}
-	if (puzzle->hasSymmetry) { 
-		// decide how to represent
+	if (puzzle->hasSymmetry && !unlockedSymmetry) {
+		// decide how to represent, probely draw something
 	}
-	if (puzzle->hasArrows)
+	if (puzzle->hasArrows && !unlockedArrows)
 	{
 		Panel panel;
-		panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons); //BUG: should either pass decorations or gridDecorations along
+		panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
 		column++;
 	}
 

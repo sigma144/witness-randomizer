@@ -59,13 +59,13 @@ void APWatchdog::MarkLocationChecked(int locationId)
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
 	temporarySpeedModdificationStartTime = std::chrono::system_clock::now();
-	currentSpeed = 2.5f;
+	currentSpeed = baseSpeed * 2.0f;
 	hasTemporarySpeedModdification = true;
 }
 
 void APWatchdog::ApplyTemporarySlow() {
 	temporarySpeedModdificationStartTime = std::chrono::system_clock::now();
-	currentSpeed = 0.4f;
+	currentSpeed = baseSpeed * 0.4f;
 	hasTemporarySpeedModdification = true;
 }
 
