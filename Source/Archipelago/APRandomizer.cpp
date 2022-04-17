@@ -152,6 +152,8 @@ void APRandomizer::disablePuzzles(HWND loadingHandle) {
 		if (!_memory->ReadPanelData<int>(AllPuzzles[i], SOLVED))
 			updatePuzzleLock(AllPuzzles[i]);
 	}
+
+	SetWindowText(loadingHandle, L"Done!");
 }
 
 void APRandomizer::updatePuzzleLocks(int itemIndex) {
@@ -245,13 +247,13 @@ void APRandomizer::updatePuzzleLock(int id) {
 
 		addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB);
 
-		Special::createText(id, "missing", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+		createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
 		addPuzzleSimbols(puzzle, decorations, decorationsFlags, intersections, intersectionFlags, polygons);
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
-		_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
+		_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.5f });
 		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -292,7 +294,7 @@ void APRandomizer::addMissingSimbolsDisplay(std::vector<float>& intersections, s
 	};
 
 	//flag for each point
-	//must be half the size of gridIntersections as its one per intersections
+	//must be half the size of gridIntersections as its one per intersection
 	std::vector<int> gridIntersectionFlags = {
 		0, 0, 0, 0, 0, //bottom row
 		0, 0, 0, 0, 0, //middle row
@@ -330,6 +332,20 @@ void APRandomizer::addMissingSimbolsDisplay(std::vector<float>& intersections, s
 	intersectionFlags.insert(intersectionFlags.begin(), gridIntersectionFlags.begin(), gridIntersectionFlags.end());
 	connectionsA.insert(connectionsA.begin(), gridConnectionsA.begin(), gridConnectionsA.end());
 	connectionsB.insert(connectionsB.begin(), gridConnectionsB.begin(), gridConnectionsB.end());
+}
+
+void APRandomizer::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags, 
+	std::vector<int>& connectionsA, std::vector<int>& connectionsB, float left, float right, float top, float bottom) {
+
+	int currentIntersections = intersections.size();
+
+	Special::createText(id, text, intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+
+	int newIntersections = intersections.size();
+
+	for (int i = 0; i < (newIntersections - currentIntersections) / 2; i++) {
+		intersectionFlags.emplace_back(0);
+	}
 }
 
 void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decorations, std::vector<int>& decorationsFlags,

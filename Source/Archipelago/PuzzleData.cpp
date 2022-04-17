@@ -31,7 +31,12 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Star) {
 			hasStars = true;
 
-			//TODO: Detect start + other simbol? maybe count stars by color?
+			for (int j = 0; j < numberOfDecorations; j++) {
+				if (((decorations[j] & 0x700) != 0) //check if any other simbol shares its color
+					&& ((decorations[j] & 0x700) != Decoration::Shape::Star)
+					&& ((decorations[j] & 0x00F) == (decorations[i] & 0x00F)))
+						hasStarsWithOtherSymbol = true;
+			}
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
 			hasTetris = true;

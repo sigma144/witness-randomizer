@@ -1,1 +1,3 @@
 Write correct simbols to missing panels
+Implement option DisableNonRandomizedPuzzles
+
