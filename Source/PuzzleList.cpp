@@ -30,6 +30,31 @@ void PuzzleList::GenerateAllN()
 	//GenerateMonasteryN(); //Can't randomize
 }
 
+void PuzzleList::GenerateShadowsN() {
+	generator->setLoadingData(L"Shadows", 13);
+	generator->resetConfig();
+
+	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+
+	_memory->WritePanelData<int>(0x386FA, SEQUENCE_LEN , { 0 });
+	_memory->WritePanelData<int>(0x386FA, DOT_SEQUENCE_LEN, { 0 });
+	generator->generate(0x386FA, Decoration::Arrow1, 5);
+
+	generator->generate(0x1C33F, Decoration::Arrow2, 5);
+	generator->generate(0x196E2, Decoration::Arrow3, 5);
+	generator->generate(0x1972A, Decoration::Arrow, 6);
+	generator->generate(0x19809, Decoration::Arrow1, 5);
+	generator->generate(0x19806, Decoration::Arrow1, 5);
+	generator->generate(0x196F8, Decoration::Arrow1, 5);
+	generator->generate(0x1972F, Decoration::Arrow1, 5);
+
+	generator->generate(0x19797, Decoration::Arrow1, 5);
+	generator->generate(0x1979A, Decoration::Arrow1, 5);
+	generator->generate(0x197E0, Decoration::Arrow1, 5);
+	generator->generate(0x197E8, Decoration::Arrow1, 5);
+	generator->generate(0x197E5, Decoration::Arrow1, 5);
+}
+
 void PuzzleList::GenerateAllH()
 {
 	generator->setLoadingData(349);
@@ -87,14 +112,23 @@ void PuzzleList::GenerateTutorialN()
 	Special::drawGoodLuckPanel(0x00182);
 	//Mazes
 	generator->setFlag(Generate::Config::FullGaps);
+#if _DEBUG
+	generator->setGridSize(4, 4);
+#else
 	generator->setGridSize(6, 6);
-	generator->setGridSize(4, 4); //TODO for testing, remove later
+#endif
 	generator->generateMaze(0x00293);
+#if _DEBUG
+	generator->setGridSize(4, 4);
+#else
 	generator->setGridSize(9, 9);
-	generator->setGridSize(4, 4); //TODO for testing, remove later
+#endif
 	generator->generateMaze(0x00295, 1, 1);
+#if _DEBUG
+	generator->setGridSize(4, 4);
+#else
 	generator->setGridSize(12, 12);
-	generator->setGridSize(4, 4); //TODO for testing, remove later
+#endif
 	generator->generateMaze(0x002C2);
 	generator->resetConfig();
 	//2 starts maze
@@ -121,12 +155,12 @@ void PuzzleList::GenerateTutorialN()
 	//Stones Tutorial
 	generator->resetConfig();
 	generator->setGridSize(4, 4);
-	generator->generate(0x018AF, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5);
-	generator->generate(0x0001B, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5);
-	generator->generate(0x012C9, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5, Decoration::Start, 3);
+	generator->generate(0x018AF, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5, Decoration::Arrow, 1);
+	generator->generate(0x0001B, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5, Decoration::Poly, 1);
+	generator->generate(0x012C9, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5, Decoration::Start, 3, Decoration::Poly | Decoration::Can_Rotate, 1);
 	generator->setGridSize(5, 5);
-	generator->generate(0x0001C, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 11, Decoration::Stone | Decoration::Color::White, 8);
-	generator->generate(0x0001D, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 11, Decoration::Stone | Decoration::Color::White, 8);
+	generator->generate(0x0001C, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 11, Decoration::Stone | Decoration::Color::White, 8, Decoration::Poly, 1, Decoration::Poly | Decoration::Negative, 1);
+	generator->generate(0x0001D, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 11, Decoration::Stone | Decoration::Color::White, 8, Decoration::Poly, 1, Decoration::Poly | Decoration::Can_Rotate | Decoration::Negative, 1);
 	generator->generate(0x0001E, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 11, Decoration::Stone | Decoration::Color::White, 8, Decoration::Start, 3);
 	generator->generate(0x0001F, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5, Decoration::Gap, 10);
 	generator->generate(0x00020, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Stone | Decoration::Color::White, 5, Decoration::Gap, 10);

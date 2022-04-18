@@ -210,11 +210,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
 			SetWindowText(hwndRandomize, L"Randomized!");
 
-			apRandomizer->Initialize(hwndLoadingText);
 			if (hard)
 				apRandomizer->GenerateHard();
 			else
 				apRandomizer->GenerateNormal();
+			apRandomizer->Initialize(hwndLoadingText);
 
 			break;
 		}

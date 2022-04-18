@@ -30,8 +30,6 @@ void Randomizer::GenerateNormal(HWND loadingHandle) {
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllN();
 	if (doubleMode) ShufflePanels(false);
-
-
 }
 
 void Randomizer::GenerateHard(HWND loadingHandle) {

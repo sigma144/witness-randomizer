@@ -20,6 +20,18 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	//num_colored_regions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
 	//colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, num_colored_regions);
 
+	if (id == 0x386FA) {
+		int sequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
+		std::vector<int> sequence = _memory->ReadArray<int>(id, SEQUENCE, sequenceLen);
+
+		int dotSequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
+		std::vector<int> dotSequence = _memory->ReadArray<int>(id, SEQUENCE, dotSequenceLen);
+	}
+
+	if (id == 0x018AF) {
+		auto y = 20;
+	}
+
 	for (int i = 0; i < numberOfDecorations; i++)
 	{
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
@@ -55,7 +67,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Eraser) {
 			hasErasers = true;
 		}
-		else if ((decorations[i] & 0x700) == Decoration::Shape::Triangle) {
+		else if ((decorations[i] & 0x700) == Decoration::Shape::Triangle && (decorations[i] & 0x70000) != 0) { //triangle with size 0 are used by arrows
 			hasTriangles = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Arrow) {

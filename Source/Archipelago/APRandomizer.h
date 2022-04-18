@@ -64,7 +64,7 @@ private:
 
 	void addMissingSimbolsDisplay(std::vector<float>& newIntersections, std::vector<int>& newIntersectionFlags, std::vector<int>& newConnectionsA, std::vector<int>& newConnectionsB);
 	void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, float left, float right, float top, float bottom);
-	void addPuzzleSimbols(PuzzleData* panel, std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& polygons);
+	void addPuzzleSimbols(PuzzleData* puzzle,	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons);
 };
 
 //Puzzle Symbols
@@ -87,11 +87,11 @@ const int ITEM_COLORED_SQUARES = ITEM_SQUARES + 1;
 const int ITEM_ARROWS = ITEM_OFFSET + 80;
 
 //Powerups
-#define ITEM_POWERUP_OFFSET 158000 + 500
+#define ITEM_POWERUP_OFFSET ITEM_OFFSET + 500
 const int ITEM_TEMP_SPEED_BOOST = ITEM_POWERUP_OFFSET + 0;
 
 //Traps
-#define ITEM_TRAP_OFFSET 158000 + 600
+#define ITEM_TRAP_OFFSET ITEM_OFFSET + 600
 const int ITEM_TEMP_SPEED_REDUCTION = ITEM_TRAP_OFFSET + 0;
 const int ITEM_POWER_SURGE = ITEM_TRAP_OFFSET + 10;
 
@@ -172,7 +172,8 @@ const int AllPuzzles[]{
 		0x18076, 0x0A15C, 0x09FFF, 0x0A15F, 0x012D7 // Desert Final and exit
 		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, 0x03317, 0x0360E, // Keep
 		*/
-		0x0026F, 0x00C3F, 0x00C41, 0x014B2, // Jungle
+		//0x17F9B,	0x002C4,	0x00767,	0x002C6,	0x0070E,	0x0070F,	0x0087D,	0x002C7, // Jungle Sound waves //Does not contain dots so isnt locked
+		0x0026D,	0x0026E,	0x0026F,	0x00C3F,	0x00C41,	0x014B2, // Jungle Dots
 		//Doors
 		0x01A54, // Glass Factory Entry
 		0x000B0, // Symmetry Island Door 1
@@ -206,6 +207,8 @@ const int AllPuzzles[]{
 		0x17D01, // Town Orange Crate Discard
 		0x17F9B, // Jungle Discard
 		0x17C42, // Mountainside Discard
+		0x386FA,	0x1C33F,	0x196E2,	0x1972A,	0x19809,	0x19806,	0x196F8,	0x1972F, //shadows avoid
+		0x19797,	0x1979A,	0x197E0,	0x197E8,	0x197E5 //Shadow follow
 };
 
 

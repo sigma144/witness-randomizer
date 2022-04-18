@@ -188,6 +188,7 @@ void APRandomizer::updatePuzzleLocks(int itemIndex) {
 }
 
 void APRandomizer::GenerateNormal() {
+	
 }
 
 void APRandomizer::GenerateHard() {
@@ -247,9 +248,9 @@ void APRandomizer::updatePuzzleLock(int id) {
 
 		addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB);
 
-		createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+		addPuzzleSimbols(puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons);
 
-		addPuzzleSimbols(puzzle, decorations, decorationsFlags, intersections, intersectionFlags, polygons);
+		createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
@@ -348,8 +349,9 @@ void APRandomizer::createText(int id, std::string text, std::vector<float>& inte
 	}
 }
 
-void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decorations, std::vector<int>& decorationsFlags,
-	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& polygons) {
+void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, 
+	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
+	std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons) {
 
 	//does not respect width/height but its hardcoded at a grid of 4/2
 	//stored the puzzle simnbols per grid section, from bottom to top from left to right so buttom left is decoration 0
@@ -431,7 +433,42 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle, std::vector<int>& decora
 		intersectionFlags[11] = IntersectionFlags::DOT;
 	}
 	if (puzzle->hasSymmetry && !unlockedSymmetry) {
-		// decide how to represent, probely draw something
+		float x = intersections[column - 4];
+		int intersectionOffset = intersectionFlags.size();
+
+		std::vector<float> symmetryIntersections = {
+			x + 0.05f, 0.35f, x + 0.08f, 0.35f, x + 0.12f, 0.35f, x + 0.15f, 0.35f, //bottom row
+			x + 0.05f, 0.40f, x + 0.08f, 0.40f, x + 0.12f, 0.40f, x + 0.15f, 0.40f, //middle row
+			x + 0.05f, 0.45f, x + 0.08f, 0.45f, x + 0.12f, 0.45f, x + 0.15f, 0.45f, //top row
+		};
+		std::vector<int> symmetryIntersectionFlags = {
+			0, 0, 0, 0, //bottom row
+			0, 0, 0, 0, //middle row
+			0, 0, 0, 0, //top row
+		};
+		std::vector<int> symmetryConnectionsA = {
+			intersectionOffset + 0, intersectionOffset + 2, //horizontal bottom row
+			intersectionOffset + 4, intersectionOffset + 6, //horizontal middle row
+			intersectionOffset + 8, intersectionOffset + 11,//horizontal top row
+			intersectionOffset + 4, // vertical left column
+			intersectionOffset + 1, // vertical 2 column
+			intersectionOffset + 2, // vertical 3 column
+			intersectionOffset + 7, // vertical right column
+		};
+		std::vector<int> symmetryConnectionsB = {
+			intersectionOffset + 1, intersectionOffset + 3, //horizontal bottom row
+			intersectionOffset + 5, intersectionOffset + 7, //horizontal middle row
+			intersectionOffset + 9, intersectionOffset + 10,//horizontal top row
+			intersectionOffset + 8, // vertical left column
+			intersectionOffset + 5, // vertical 2 column
+			intersectionOffset + 6, // vertical 3 column
+			intersectionOffset + 11,// vertical right column
+		};
+
+		intersections.insert(intersections.end(), symmetryIntersections.begin(), symmetryIntersections.end());
+		intersectionFlags.insert(intersectionFlags.end(), symmetryIntersectionFlags.begin(), symmetryIntersectionFlags.end());
+		connectionsA.insert(connectionsA.end(), symmetryConnectionsA.begin(), symmetryConnectionsA.end());
+		connectionsB.insert(connectionsB.end(), symmetryConnectionsB.begin(), symmetryConnectionsB.end());
 	}
 	if (puzzle->hasArrows && !unlockedArrows)
 	{
