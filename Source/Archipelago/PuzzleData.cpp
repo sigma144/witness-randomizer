@@ -20,13 +20,15 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	//num_colored_regions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
 	//colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, num_colored_regions);
 
-	if (id == 0x386FA) {
+#if _DEBUG
+	if (id == 0x386FA) { //Stone quarry
 		int sequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
 		std::vector<int> sequence = _memory->ReadArray<int>(id, SEQUENCE, sequenceLen);
 
 		int dotSequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
 		std::vector<int> dotSequence = _memory->ReadArray<int>(id, SEQUENCE, dotSequenceLen);
 	}
+#endif
 
 	for (int i = 0; i < numberOfDecorations; i++)
 	{
@@ -37,28 +39,32 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 				hasStones = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Star) {
-			hasStars = true;
+			bool sharesColorWithOtherShape = false;
 
 			for (int j = 0; j < numberOfDecorations; j++) {
 				if (((decorations[j] & 0x700) != 0) //check if any other simbol shares its color
 					&& ((decorations[j] & 0x700) != Decoration::Shape::Star)
-					&& ((decorations[j] & 0x00F) == (decorations[i] & 0x00F)))
-						hasStarsWithOtherSymbol = true;
+					&& ((decorations[j] & 0x00F) == (decorations[i] & 0x00F))) {
+
+					sharesColorWithOtherShape = true;
+					break;
+				}
 			}
+						
+			if (sharesColorWithOtherShape)
+				hasStarsWithOtherSymbol = true;
+			else
+				hasStars = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
-			hasTetris = true;
-
-			if ((decorations[i] & 0x1000) == Decoration::Can_Rotate) {
-				if ((decorations[i] & 0x2000) == Decoration::Negative)
-					hasTetrisNegativeRotated = true;
-				else
-					hasTetrisRotated = true;
-			}
-			else {
-				if ((decorations[i] & 0x2000) == Decoration::Negative)
-					hasTetrisNegative = true;
-			}
+			if (((decorations[i] & 0x1000) == Decoration::Can_Rotate) && ((decorations[i] & 0x2000) == Decoration::Negative))
+				hasTetrisNegativeRotated = true;
+			else if ((decorations[i] & 0x2000) == Decoration::Negative)
+				hasTetrisNegative = true;
+			else if ((decorations[i] & 0x1000) == Decoration::Can_Rotate)
+				hasTetrisRotated = true;
+			else
+				hasTetris = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Eraser) {
 			hasErasers = true;
@@ -86,6 +92,12 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 			else
 				hasDots = true;
 		}
+	}
+
+	if (id == 0x17C2E) //Greenhouse bunker door
+	{
+		hasStones = true;
+		hasColoredStones = true;
 	}
 }
 

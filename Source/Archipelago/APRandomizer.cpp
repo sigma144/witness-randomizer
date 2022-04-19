@@ -77,8 +77,9 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				case ITEM_TETRIS_NEGATIVE_ROTATED:	unlockedTetrisNegative = true;			break;
 				case ITEM_STARS:							unlockedStars = true;						break;
 				case ITEM_STARS_WITH_OTHER_SYMBOL:	unlockedStarsWithOtherSimbol = true;	break;
-				case ITEM_SQUARES:						unlockedStones = true;						break;
+				case ITEM_B_W_SQUARES:					unlockedStones = true;						break;
 				case ITEM_COLORED_SQUARES:				unlockedColoredStones = true;				break;
+				case ITEM_SQUARES: unlockedStones = unlockedColoredStones = true;				break;
 
 				//Powerups
 				case ITEM_TEMP_SPEED_BOOST:			async->ApplyTemporarySpeedBoost();		break;
@@ -175,8 +176,9 @@ void APRandomizer::updatePuzzleLocks(int itemIndex) {
 			case ITEM_TETRIS_NEGATIVE_ROTATED:	if (puzzle->hasTetrisNegativeRotated) puzzlesToUpdate.push_back(puzzle);	break;
 			case ITEM_STARS:							if (puzzle->hasStars) puzzlesToUpdate.push_back(puzzle);							break;
 			case ITEM_STARS_WITH_OTHER_SYMBOL:	if (puzzle->hasStarsWithOtherSymbol) puzzlesToUpdate.push_back(puzzle);		break;
-			case ITEM_SQUARES:						if (puzzle->hasStones) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_B_W_SQUARES:					if (puzzle->hasStones) puzzlesToUpdate.push_back(puzzle);						break;
 			case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_SQUARES: if (puzzle->hasStones || puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);			break;
 
 			default:																																			break;
 		}
@@ -233,7 +235,7 @@ void APRandomizer::updatePuzzleLock(int id) {
 
 	if ((puzzle->hasStones && !unlockedStones)
 		|| (puzzle->hasStars && !unlockedStars)
-		//|| (puzzle->hasStarsWithOtherSymbol && !unlockedStarsWithOtherSimbol) //NYI
+		|| (puzzle->hasStarsWithOtherSymbol && !unlockedStarsWithOtherSimbol)
 		|| (puzzle->hasTetris && !unlockedTetris)
 		|| (puzzle->hasTetrisRotated && !unlockedTetrisRotated)
 		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
@@ -242,7 +244,7 @@ void APRandomizer::updatePuzzleLock(int id) {
 		|| (puzzle->hasErasers && !unlockedErasers)
 		|| (puzzle->hasTriangles && !unlockedTriangles)
 		|| (puzzle->hasDots && !unlockedDots)
-		//|| (puzzle->hasColoredDots && !unlockedColoredDots) //NYI
+		|| (puzzle->hasColoredDots && !unlockedColoredDots)
 		//|| (puzzle->hasInvisibleDots && !unlockedInvisibleDots) //NYI
 		|| (puzzle->hasSoundDots && !unlockedSoundDots)
 		|| (puzzle->hasArrows && !unlockedArrows)
@@ -370,8 +372,6 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 	std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons) {
 
-	const int defaultLShape = 0x00170000;
-
 	//does not respect width/height but its hardcoded at a grid of 4/2
 	//stored the puzzle simnbols per grid section, from bottom to top from left to right so buttom left is decoration 0
 	std::vector<int> gridDecorations(8, 0);
@@ -380,69 +380,70 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	int column = 4;
 	int secondRowOffset = -column;
 
-	if (puzzle->hasStones && !unlockedStones)
-	{
-		if (puzzle->hasColoredStones && !unlockedColoredStones)
-		{
-			gridDecorations[column] = Decoration::Stone | Decoration::Color::Orange;
-			gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Blue;
-			column++;
-		}
-		else
-		{
-			gridDecorations[column] = Decoration::Stone | Decoration::Color::Black;
-			gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::White;
-			column++;
-		}
+	if (puzzle->hasStones && !unlockedStones && puzzle->hasColoredStones && !unlockedColoredStones)	{
+		gridDecorations[column] = Decoration::Stone | Decoration::Color::Black;
+		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Blue;
+		column++;
 	}
-	if (puzzle->hasStars && !unlockedStars)
-	{
-		if (puzzle->hasStarsWithOtherSymbol && !unlockedStarsWithOtherSimbol) {
-			gridDecorations[column] = Decoration::Star | Decoration::Color::Green;
-			gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Green;
-			column++;
-		}
-		else {
-			gridDecorations[column] = Decoration::Star | Decoration::Color::Magenta;
-			column++;
-		}
+	else if (puzzle->hasColoredStones && !unlockedColoredStones) {
+		gridDecorations[column] = Decoration::Stone | Decoration::Color::Orange;
+		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Blue;
+		column++;
 	}
-	if (puzzle->hasTetris && !unlockedTetris)
-	{
-		if (puzzle->hasTetrisRotated && !unlockedTetrisRotated) {
-			gridDecorations[column] = Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Yellow | defaultLShape;
-			column++;
-		}
-		else if (puzzle->hasTetrisNegative && !unlockedTetrisNegative) {
-			if (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated) {
-				gridDecorations[column] = Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Yellow | defaultLShape;
-				gridDecorations[column + secondRowOffset] = Decoration::Poly | Decoration::Can_Rotate | Decoration::Negative | Decoration::Color::Blue | defaultLShape;
-				column++;
-			}
-			else {
-				gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
-				gridDecorations[column + secondRowOffset] = Decoration::Poly | Decoration::Negative | Decoration::Color::Blue | defaultLShape;
-				column++;
-			}
-		}
-		else {
-			gridDecorations[column] = Decoration::Poly |  Decoration::Color::Yellow | defaultLShape;
-			column++;
-		}
+	else if (puzzle->hasStones && !unlockedStones) {
+		gridDecorations[column] = Decoration::Stone | Decoration::Color::Black;
+		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::White;
+		column++;
 	}
-	if (puzzle->hasErasers && !unlockedErasers)
+
+	if (puzzle->hasStarsWithOtherSymbol && !unlockedStarsWithOtherSimbol) {
+		gridDecorations[column] = Decoration::Star | Decoration::Color::Green;
+		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Green;
+		column++;
+	} else if (puzzle->hasStars && !unlockedStars) {
+		gridDecorations[column] = Decoration::Star | Decoration::Color::Magenta;
+		column++;
+	}
+
+	const int defaultLShape = 0x00170000;
+	if (	(puzzle->hasTetris && !unlockedTetris)
+		|| (puzzle->hasTetrisRotated && !unlockedTetrisRotated) 
+		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative) 
+		|| (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated))
 	{
+		if ((puzzle->hasTetris && !unlockedTetris) && (puzzle->hasTetrisRotated && !unlockedTetrisRotated))
+			gridDecorations[column] = 
+				Decoration::Poly | Decoration::Color::Yellow | defaultLShape | Decoration::Can_Rotate;
+		else if (puzzle->hasTetris && !unlockedTetris)
+			gridDecorations[column] =
+				Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
+
+		if ((puzzle->hasTetrisNegative && !unlockedTetrisNegative) && (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated))
+			gridDecorations[column + secondRowOffset] = 
+				Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative | Decoration::Can_Rotate;
+		else if (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
+			gridDecorations[column + secondRowOffset] =
+				Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative;
+
+		column++;
+	}
+
+	if (puzzle->hasErasers && !unlockedErasers) {
 		gridDecorations[column] = Decoration::Eraser;
 		column++;
 	}
-	if (puzzle->hasTriangles && !unlockedTriangles)
-	{
+
+	if (puzzle->hasTriangles && !unlockedTriangles)	{
 		gridDecorations[column] = Decoration::Triangle2;
 		column++;
 	}
+
 	if (puzzle->hasColoredDots && !unlockedColoredDots) {
 		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_BLUE;
 		intersectionFlags[12] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_ORANGE;
+
+		if (puzzle->hasDots && !unlockedDots)
+			intersectionFlags[13] = IntersectionFlags::DOT;
 	}
 	else if (puzzle->hasInvisibleDots && !unlockedInvisibleDots) {
 		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
@@ -456,6 +457,7 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	else if (puzzle->hasDots && !unlockedDots) {
 		intersectionFlags[11] = IntersectionFlags::DOT;
 	}
+
 	if (puzzle->hasSymmetry && !unlockedSymmetry) {
 		float x = intersections[column - 4];
 		int intersectionOffset = intersectionFlags.size();
@@ -494,8 +496,8 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 		connectionsA.insert(connectionsA.end(), symmetryConnectionsA.begin(), symmetryConnectionsA.end());
 		connectionsB.insert(connectionsB.end(), symmetryConnectionsB.begin(), symmetryConnectionsB.end());
 	}
-	if (puzzle->hasArrows && !unlockedArrows)
-	{
+
+	if (puzzle->hasArrows && !unlockedArrows)	{
 		//TODO Fix meh
 		Panel panel;
 		panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
