@@ -188,7 +188,24 @@ void APRandomizer::updatePuzzleLocks(int itemIndex) {
 }
 
 void APRandomizer::GenerateNormal() {
-	
+#if _DEBUG
+	_memory->WritePanelData<float>(0x0001B, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x0001B, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x012C9, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x012C9, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x0001C, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x0001C, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x0001D, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x0001D, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x0001E, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x0001E, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x0001F, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x0001F, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x00020, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x00020, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(0x00021, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<int>(0x00021, NEEDS_REDRAW, { 1 });
+#endif
 }
 
 void APRandomizer::GenerateHard() {
@@ -353,6 +370,8 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 	std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons) {
 
+	const int defaultLShape = 0x00170000;
+
 	//does not respect width/height but its hardcoded at a grid of 4/2
 	//stored the puzzle simnbols per grid section, from bottom to top from left to right so buttom left is decoration 0
 	std::vector<int> gridDecorations(8, 0);
@@ -388,21 +407,26 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 			column++;
 		}
 	}
-	if (puzzle->hasTetris && !unlockedTetris) //no idea how
+	if (puzzle->hasTetris && !unlockedTetris)
 	{
 		if (puzzle->hasTetrisRotated && !unlockedTetrisRotated) {
-			//normal rotated
+			gridDecorations[column] = Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Yellow | defaultLShape;
+			column++;
 		}
 		else if (puzzle->hasTetrisNegative && !unlockedTetrisNegative) {
 			if (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated) {
-				//rotated negative
+				gridDecorations[column] = Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Yellow | defaultLShape;
+				gridDecorations[column + secondRowOffset] = Decoration::Poly | Decoration::Can_Rotate | Decoration::Negative | Decoration::Color::Blue | defaultLShape;
+				column++;
 			}
 			else {
-				//non rotated negative
+				gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
+				gridDecorations[column + secondRowOffset] = Decoration::Poly | Decoration::Negative | Decoration::Color::Blue | defaultLShape;
+				column++;
 			}
 		}
 		else {
-			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow;
+			gridDecorations[column] = Decoration::Poly |  Decoration::Color::Yellow | defaultLShape;
 			column++;
 		}
 	}
@@ -472,6 +496,7 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	}
 	if (puzzle->hasArrows && !unlockedArrows)
 	{
+		//TODO Fix meh
 		Panel panel;
 		panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
 		column++;

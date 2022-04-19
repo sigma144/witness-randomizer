@@ -28,10 +28,6 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		std::vector<int> dotSequence = _memory->ReadArray<int>(id, SEQUENCE, dotSequenceLen);
 	}
 
-	if (id == 0x018AF) {
-		auto y = 20;
-	}
-
 	for (int i = 0; i < numberOfDecorations; i++)
 	{
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
