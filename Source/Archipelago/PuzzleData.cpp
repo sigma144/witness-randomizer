@@ -28,6 +28,13 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		int dotSequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
 		std::vector<int> dotSequence = _memory->ReadArray<int>(id, SEQUENCE, dotSequenceLen);
 	}
+
+	//if (id == 0x386FA) { //First stoner
+	int coloredRegionLen = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
+	std::vector<int> polygons = _memory->ReadArray<int>(id, COLORED_REGIONS, coloredRegionLen);
+
+	if (coloredRegionLen > 0)
+		auto x = 10;
 #endif
 
 	for (int i = 0; i < numberOfDecorations; i++)

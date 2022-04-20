@@ -1,4 +1,3 @@
-Write correct simbols to missing panels
 
 Implement option DisableNonRandomizedPuzzles
 
@@ -23,10 +22,11 @@ Investigave vault not opening after collect
 01110000000000000000 Triangle count
 
 Poly shapes
-0000-0000-0000-0000-0000-0111-0000-0000 = Decoration
+0000-0000-0000-0000-0000-0111-0000-0000 = Decoration (0100 = poly)
 0000-0000-0000-0000-0000-0000-0000-1111 = Color
 0000-0000-0000-0000-0011-0000-0000-0000 = Rotation (left bit), Negative (right bit)
 1111-0000-0000-0000-0000-0000-0000-0000 = blocks from left to right, top row
 0000-1111-0000-0000-0000-0000-0000-0000 = blocks from left to right, 2nd row
 0000-0000-1111-0000-0000-0000-0000-0000 = blocks from left to right, 3rd row
 0000-0000-0000-1111-0000-0000-0000-0000 = blocks from left to right, bottom row
+                         

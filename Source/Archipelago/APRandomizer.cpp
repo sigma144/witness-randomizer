@@ -191,7 +191,7 @@ void APRandomizer::updatePuzzleLocks(int itemIndex) {
 
 void APRandomizer::GenerateNormal() {
 #if _DEBUG
-	_memory->WritePanelData<float>(0x0001B, POWER, { 1.0f, 1.0f });
+	_memory->WritePanelData<float>(0x0001B, POWER, {1.0f, 1.0f});
 	_memory->WritePanelData<int>(0x0001B, NEEDS_REDRAW, { 1 });
 	_memory->WritePanelData<float>(0x012C9, POWER, { 1.0f, 1.0f });
 	_memory->WritePanelData<int>(0x012C9, NEEDS_REDRAW, { 1 });
@@ -269,7 +269,7 @@ void APRandomizer::updatePuzzleLock(int id) {
 
 		addPuzzleSimbols(puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons);
 
-		createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+		//createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
@@ -286,6 +286,7 @@ void APRandomizer::updatePuzzleLock(int id) {
 		if (polygons.size() > 0) { //TODO maybe just always write ?
 			_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
 			_memory->WriteArray<int>(id, COLORED_REGIONS, polygons);
+			_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 		}
 		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
@@ -411,14 +412,14 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative) 
 		|| (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated))
 	{
-		if ((puzzle->hasTetris && !unlockedTetris) && (puzzle->hasTetrisRotated && !unlockedTetrisRotated))
+		if (puzzle->hasTetrisRotated && !unlockedTetrisRotated)
 			gridDecorations[column] = 
 				Decoration::Poly | Decoration::Color::Yellow | defaultLShape | Decoration::Can_Rotate;
 		else if (puzzle->hasTetris && !unlockedTetris)
 			gridDecorations[column] =
 				Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
 
-		if ((puzzle->hasTetrisNegative && !unlockedTetrisNegative) && (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated))
+		if (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated)
 			gridDecorations[column + secondRowOffset] = 
 				Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative | Decoration::Can_Rotate;
 		else if (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
@@ -459,7 +460,7 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	}
 
 	if (puzzle->hasSymmetry && !unlockedSymmetry) {
-		float x = intersections[column - 4];
+		float x = intersections[(column - 4) * 2];
 		int intersectionOffset = intersectionFlags.size();
 
 		std::vector<float> symmetryIntersections = {
@@ -495,12 +496,34 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 		intersectionFlags.insert(intersectionFlags.end(), symmetryIntersectionFlags.begin(), symmetryIntersectionFlags.end());
 		connectionsA.insert(connectionsA.end(), symmetryConnectionsA.begin(), symmetryConnectionsA.end());
 		connectionsB.insert(connectionsB.end(), symmetryConnectionsB.begin(), symmetryConnectionsB.end());
+
+		column++;
 	}
 
 	if (puzzle->hasArrows && !unlockedArrows)	{
+		float x = intersections[(column - 4) * 2];
+		int intersectionOffset = intersectionFlags.size();
+
+		std::vector<float> arrowIntersections = {
+			x + 0.05f, 0.40f, x + 0.15f, 0.40f,
+			x + 0.09f, 0.35f, x + 0.09f, 0.45f
+		};
+		std::vector<int> arrowIntersectionFlags = { 0, 0, 0, 0 };
+		std::vector<int> arrowConnectionsA = {
+			intersectionOffset + 0,	intersectionOffset + 0,	intersectionOffset + 0,
+		};
+		std::vector<int> arrowConnectionsB = {
+			intersectionOffset + 1, intersectionOffset + 2, intersectionOffset + 3,
+		};
+
+		intersections.insert(intersections.end(), arrowIntersections.begin(), arrowIntersections.end());
+		intersectionFlags.insert(intersectionFlags.end(), arrowIntersectionFlags.begin(), arrowIntersectionFlags.end());
+		connectionsA.insert(connectionsA.end(), arrowConnectionsA.begin(), arrowConnectionsA.end());
+		connectionsB.insert(connectionsB.end(), arrowConnectionsB.begin(), arrowConnectionsB.end());
+
 		//TODO Fix meh
-		Panel panel;
-		panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
+		//Panel panel;
+		//panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
 		column++;
 	}
 
