@@ -14,6 +14,7 @@
 class APRandomizer {
 public:
 	int Seed = 0;
+	int FinalPanel = 0;
 
 	bool Hard = false;
 	bool UnlockSymbols = false;
@@ -56,9 +57,11 @@ private:
 	
 	void PreventSnipes();
 
-	void disablePuzzles(HWND loadingHandle);
+	void setPuzzleLocks(HWND loadingHandle);
 	void updatePuzzleLock(int id);
 	void updatePuzzleLocks(int itemIndex);
+	void HandleDisableNonRandomizedPuzzles();
+	void disablePuzzle(int id);
 
 	std::string buildUri(std::string& server);
 
@@ -149,8 +152,8 @@ const int AllPuzzles[]{
 		0x09EAD, 0x09EAF, 0x33AF5, 0x33AF7, 0x09F6E, // Mountain Purple Panels
 		0x09FD3, 0x09FD4, 0x09FD6, 0x09FD7, 0x09FD8, // Mountain Rainbow Row
 		0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Mountain multi puzzle
-		0x09E86, 0x09ED8, // Mountain double bridge
-		0x09EFF, 0x09F01, 0x09FC1, 0x09F8E, 0x09FDA, // Mountain floor
+		//0x09E86, 0x09ED8, // Mountain double bridge
+		//0x09EFF, 0x09F01, 0x09FC1, 0x09F8E, 0x09FDA, // Mountain floor
 		0x0383D, 0x0383A, 0x0383F, 0x09E56, 0x03859, 0x09E5A, 0x339BB, 0x33961, // Mountain pillar puzzles
 		/*
 		Disabled caves as its beyond the final puzzlesand thus makes no sense to include in AP

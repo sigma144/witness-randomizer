@@ -11,7 +11,11 @@ void APWatchdog::action() {
 
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
-	bool isCompleted = false;
+
+	if (ReadPanelData<int>(finalPanel, SOLVED) && !isCompleted) {
+		isCompleted = true;
+		ap->StatusUpdate(APClient::ClientStatus::GOAL);
+	}
 
 	auto it = panelIdToLocationId.begin();
 	while (it != panelIdToLocationId.end())
@@ -21,9 +25,6 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (ReadPanelData<int>(panelId, SOLVED))
 		{
-			if (panelId == 0x3D9A9)
-				isCompleted = true;			
-
 			solvedLocations.push_back(locationId);
 
 			it = panelIdToLocationId.erase(it);
@@ -36,9 +37,6 @@ void APWatchdog::CheckSolvedPanels() {
 
 	if (!solvedLocations.empty())
 		ap->LocationChecks(solvedLocations);
-
-	if (isCompleted)
-		ap->StatusUpdate(APClient::ClientStatus::GOAL);
 }
 
 void APWatchdog::MarkLocationChecked(int locationId)

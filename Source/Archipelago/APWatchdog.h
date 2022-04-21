@@ -9,10 +9,11 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping) : Watchdog(1) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel) : Watchdog(1) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
+		finalPanel = lastPanel;
 	}
 
 	virtual void action();
@@ -26,6 +27,8 @@ private:
 	APClient* ap;
 	std::shared_ptr<Generate> generator;
 	std::map<int, int> panelIdToLocationId;
+	int finalPanel;
+	bool isCompleted = false;
 
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;

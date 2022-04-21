@@ -29,6 +29,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		Hard = slotData["hard_mode"] == true;
 		UnlockSymbols = slotData["unlock_symbols"] == true;
 		DisableNonRandomizedPuzzles = slotData["disable_non_randomized_puzzles"] == true;
+		FinalPanel = slotData["victory_location"];
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
 			int panelId = std::stoul(key, nullptr, 16);
@@ -37,7 +38,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			panelIdToLocationId.insert({ panelId, locationId });
 		}
 
-		async = new APWatchdog(ap, panelIdToLocationId);
+		async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
 		async->start();
 
 		connected = true;
@@ -139,13 +140,13 @@ void APRandomizer::Initialize(HWND loadingHandle) {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if (UnlockSymbols)
-		disablePuzzles(loadingHandle);
+		setPuzzleLocks(loadingHandle);
 
 	if (DisableNonRandomizedPuzzles)
 		; //TODO: handle
 }
 
-void APRandomizer::disablePuzzles(HWND loadingHandle) {
+void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 	for (int i = 0; i < sizeof(AllPuzzles) / sizeof(AllPuzzles[0]); i++)	{
 		std::wstring text = L"Locking puzzles: " + std::to_wstring(i) + L"/" + std::to_wstring(sizeof(AllPuzzles));
 		SetWindowText(loadingHandle, text.c_str());
@@ -190,27 +191,70 @@ void APRandomizer::updatePuzzleLocks(int itemIndex) {
 }
 
 void APRandomizer::GenerateNormal() {
-#if _DEBUG
-	_memory->WritePanelData<float>(0x0001B, POWER, {1.0f, 1.0f});
-	_memory->WritePanelData<int>(0x0001B, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x012C9, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x012C9, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x0001C, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x0001C, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x0001D, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x0001D, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x0001E, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x0001E, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x0001F, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x0001F, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x00020, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x00020, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(0x00021, POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<int>(0x00021, NEEDS_REDRAW, { 1 });
-#endif
+	HandleDisableNonRandomizedPuzzles();
 }
 
 void APRandomizer::GenerateHard() {
+	HandleDisableNonRandomizedPuzzles();
+}
+
+void APRandomizer::HandleDisableNonRandomizedPuzzles()
+{
+	if (!DisableNonRandomizedPuzzles)
+		return;
+
+	Special::copyTarget(0x00021, 0x19650);
+	Special::copyTarget(0x00061, 0x09DE0);
+	Special::copyTarget(0x17CFB, 0x28B39);
+	Special::copyTarget(0x3C12B, 0x28B39);
+	Special::copyTarget(0x17CE7, 0x17CA4);
+	Special::copyTarget(0x00B8D, 0x28B39);
+	Special::copyTarget(0x17FA9, 0x17CA4);
+	Special::copyTarget(0x17FA0, 0x17CAB);
+	Special::copyTarget(0x17D27, 0x17CAB);
+	Special::copyTarget(0x17D28, 0x19650);
+	Special::copyTarget(0x17D01, 0x09DE0);
+	Special::copyTarget(0x17C71, 0x19650);
+	Special::copyTarget(0x17CF7, 0x28B39);
+	Special::copyTarget(0x17D01, 0x09DE0);
+	Special::copyTarget(0x17F9B, 0x17CAB);
+	Special::copyTarget(0x17C42, 0x09DE0);
+	Special::copyTarget(0x00A5B, 0x17CA4);
+
+	Special::setPower(0x17CA4, true);
+	Special::setPower(0x17CAB, true);
+	Special::setPower(0x28B39, true);
+
+	disablePuzzle(0x386FA); //Shadows
+	disablePuzzle(0x17C2E); //BNK3R door
+	disablePuzzle(0x00B10); //Monastary door left
+	disablePuzzle(0x00C92); //Monastary door right
+	disablePuzzle(0x002C4); //Waves one
+	disablePuzzle(0x18590); //Town transparent symmetry
+	disablePuzzle(0x00143); //Orchard Apple Tree 1
+	disablePuzzle(0x00139); //Keep Hedge Maze 1
+	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
+	disablePuzzle(0x0042D); //Mountaintop River Shape
+	disablePuzzle(0x009B8); //Symmetry Island Scenery Outlines 1
+}
+
+void APRandomizer::disablePuzzle(int id) {
+	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
+	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+
+	createText(id, "disa8led", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+
+	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.5f });
+	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { 0 });
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void APRandomizer::PreventSnipes()
@@ -269,7 +313,7 @@ void APRandomizer::updatePuzzleLock(int id) {
 
 		addPuzzleSimbols(puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons);
 
-		//createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+		createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
