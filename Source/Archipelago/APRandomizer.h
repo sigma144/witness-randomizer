@@ -29,7 +29,6 @@ public:
 	bool unlockedTetris = false;
 	bool unlockedTetrisRotated = false;
 	bool unlockedTetrisNegative = false;
-	bool unlockedTetrisNegativeRotated = false;
 	bool unlockedErasers = false;
 	bool unlockedTriangles = false;
 	bool unlockedDots = false;
@@ -82,7 +81,6 @@ const int ITEM_ERASOR = ITEM_OFFSET + 30;
 const int ITEM_TETRIS = ITEM_OFFSET + 40;
 const int ITEM_TETRIS_ROTATED = ITEM_TETRIS + 1;
 const int ITEM_TETRIS_NEGATIVE = ITEM_TETRIS + 10;
-const int ITEM_TETRIS_NEGATIVE_ROTATED = ITEM_TETRIS_NEGATIVE + 1;
 const int ITEM_STARS = ITEM_OFFSET + 60;
 const int ITEM_STARS_WITH_OTHER_SYMBOL = ITEM_STARS + 1;
 const int ITEM_SQUARES = ITEM_OFFSET + 70;

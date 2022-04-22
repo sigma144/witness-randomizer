@@ -1,13 +1,7 @@
 
-Implement option DisableNonRandomizedPuzzles
-
-Implement new options
+Decide / implement quarry shadows shortcut
 
 Investigave vault not opening after collect
-
-
-
-
 
   110010011100000000 = Some arrow
         011000000000 = triangles

@@ -20,7 +20,6 @@ struct PuzzleData
 		bool hasTetris = false;
 		bool hasTetrisRotated = false;
 		bool hasTetrisNegative = false;
-		bool hasTetrisNegativeRotated = false;
 		bool hasErasers = false;
 		bool hasTriangles = false;
 		bool hasDots = false;

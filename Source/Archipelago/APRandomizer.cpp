@@ -75,7 +75,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				case ITEM_TETRIS:							unlockedTetris = true;						break;
 				case ITEM_TETRIS_ROTATED:				unlockedTetrisRotated = true;				break;
 				case ITEM_TETRIS_NEGATIVE:				unlockedTetrisNegative = true;			break;
-				case ITEM_TETRIS_NEGATIVE_ROTATED:	unlockedTetrisNegative = true;			break;
 				case ITEM_STARS:							unlockedStars = true;						break;
 				case ITEM_STARS_WITH_OTHER_SYMBOL:	unlockedStarsWithOtherSimbol = true;	break;
 				case ITEM_B_W_SQUARES:					unlockedStones = true;						break;
@@ -174,7 +173,6 @@ void APRandomizer::updatePuzzleLocks(int itemIndex) {
 			case ITEM_TETRIS:							if (puzzle->hasTetris) puzzlesToUpdate.push_back(puzzle);						break;
 			case ITEM_TETRIS_ROTATED:				if (puzzle->hasTetrisRotated) puzzlesToUpdate.push_back(puzzle);				break;
 			case ITEM_TETRIS_NEGATIVE:				if (puzzle->hasTetrisNegative) puzzlesToUpdate.push_back(puzzle);				break;
-			case ITEM_TETRIS_NEGATIVE_ROTATED:	if (puzzle->hasTetrisNegativeRotated) puzzlesToUpdate.push_back(puzzle);	break;
 			case ITEM_STARS:							if (puzzle->hasStars) puzzlesToUpdate.push_back(puzzle);							break;
 			case ITEM_STARS_WITH_OTHER_SYMBOL:	if (puzzle->hasStarsWithOtherSymbol) puzzlesToUpdate.push_back(puzzle);		break;
 			case ITEM_B_W_SQUARES:					if (puzzle->hasStones) puzzlesToUpdate.push_back(puzzle);						break;
@@ -284,7 +282,6 @@ void APRandomizer::updatePuzzleLock(int id) {
 		|| (puzzle->hasTetrisRotated && !unlockedTetrisRotated)
 		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
 		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
-		|| (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated)
 		|| (puzzle->hasErasers && !unlockedErasers)
 		|| (puzzle->hasTriangles && !unlockedTriangles)
 		|| (puzzle->hasDots && !unlockedDots)
@@ -453,8 +450,7 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 	const int defaultLShape = 0x00170000;
 	if (	(puzzle->hasTetris && !unlockedTetris)
 		|| (puzzle->hasTetrisRotated && !unlockedTetrisRotated) 
-		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative) 
-		|| (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated))
+		|| (puzzle->hasTetrisNegative && !unlockedTetrisNegative))
 	{
 		if (puzzle->hasTetrisRotated && !unlockedTetrisRotated)
 			gridDecorations[column] = 
@@ -463,10 +459,7 @@ void APRandomizer::addPuzzleSimbols(PuzzleData* puzzle,
 			gridDecorations[column] =
 				Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
 
-		if (puzzle->hasTetrisNegativeRotated && !unlockedTetrisNegativeRotated)
-			gridDecorations[column + secondRowOffset] = 
-				Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative | Decoration::Can_Rotate;
-		else if (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
+		if (puzzle->hasTetrisNegative && !unlockedTetrisNegative)
 			gridDecorations[column + secondRowOffset] =
 				Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative;
 

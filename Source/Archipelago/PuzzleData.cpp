@@ -17,26 +17,6 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	decorations = _memory->ReadArray<int>(id, DECORATIONS, numberOfDecorations);
 	decoration_flags = _memory->ReadArray<int>(id, DECORATION_FLAGS, numberOfDecorations);
 
-	//num_colored_regions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
-	//colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, num_colored_regions);
-
-#if _DEBUG
-	if (id == 0x386FA) { //Stone quarry
-		int sequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
-		std::vector<int> sequence = _memory->ReadArray<int>(id, SEQUENCE, sequenceLen);
-
-		int dotSequenceLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
-		std::vector<int> dotSequence = _memory->ReadArray<int>(id, SEQUENCE, dotSequenceLen);
-	}
-
-	//if (id == 0x386FA) { //First stoner
-	int coloredRegionLen = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
-	std::vector<int> polygons = _memory->ReadArray<int>(id, COLORED_REGIONS, coloredRegionLen);
-
-	if (coloredRegionLen > 0)
-		auto x = 10;
-#endif
-
 	for (int i = 0; i < numberOfDecorations; i++)
 	{
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
@@ -64,9 +44,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 				hasStars = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
-			if (((decorations[i] & 0x1000) == Decoration::Can_Rotate) && ((decorations[i] & 0x2000) == Decoration::Negative))
-				hasTetrisNegativeRotated = true;
-			else if ((decorations[i] & 0x2000) == Decoration::Negative)
+			if ((decorations[i] & 0x2000) == Decoration::Negative)
 				hasTetrisNegative = true;
 			else if ((decorations[i] & 0x1000) == Decoration::Can_Rotate)
 				hasTetrisRotated = true;
@@ -121,7 +99,5 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
-	//_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { num_colored_regions }); //why devide by 4 tho?
-	//_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions);
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
