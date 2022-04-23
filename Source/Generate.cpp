@@ -399,6 +399,10 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 				return false;
 
 		clear();
+		if (hasFlag(Generate::Config::ShortPath)) {
+			while (!generate_path_length((_panel->_width + _panel->_height),
+				min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 1 / 2))) clear();
+		}
 		while (!generate_path_length((_panel->_width + _panel->_height),
 			std::min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
 	}
@@ -494,6 +498,17 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 		set(p, Decoration::Gap_Column);
 	}
 	_path = path; //Restore backup of the correct solution for testing purposes
+	std::vector<std::string> solution; //For debugging only
+	for (int y = 0; y < _panel->_height; y++) {
+		std::string row;
+		for (int x = 0; x < _panel->_width; x++) {
+			if (_path.count(Point(x, y))) {
+				row += "xx";
+			}
+			else row += "    ";
+		}
+		solution.push_back(row);
+	}
 	if (!hasFlag(Config::DisableWrite)) write(id);
 	return true;
 }
@@ -618,7 +633,7 @@ bool Generate::generate_path(PuzzleSymbols & symbols)
 	if (_obstructions.size() > 0) {
 		std::vector<Point> walls = pick_random(_obstructions);
 		for (Point p : walls) if (get(p) == 0) set(p, p.first % 2 == 0 ? Decoration::Gap_Column : Decoration::Gap_Row);
-		bool result = (hasFlag(Config::ShortPath) ? generate_path_length(1) : _parity != -1 ? generate_longest_path() : 
+		bool result = (hasFlag(Config::ShortPath) ? generate_path_length(1) : _parity != -1 ? generate_longest_path() :
 			hitPoints.size() > 0 ? generate_special_path() : generate_path_length(_panel->get_num_grid_points() * 3 / 4));
 		for (Point p : walls) if (get(p) & Decoration::Gap) set(p, 0);
 		return result;

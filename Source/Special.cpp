@@ -7,6 +7,29 @@
 #include "Quaternion.h"
 #include "../App/Version.h"
 
+void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
+	do {
+		gen->setFlagOnce(Generate::Config::DisableWrite);
+		generator->setSymbol(Decoration::Start, 0, 16);
+		generator->setSymbol(Decoration::Start, 22, 16);
+		generator->setSymbol(Decoration::Exit, 8, 0);
+		generator->setSymbol(Decoration::Exit, 14, 0);
+		generator->setFlagOnce(Generate::Config::ShortPath);
+		generator->generateMaze(0x0005C);
+	} while (generator->_path.count(Point(12, 16)));
+	std::shared_ptr<Panel> puzzle = gen->_panel;
+	for (int x = 0; x < puzzle->_width / 2; x++) {
+		for (int y = 0; y < puzzle->_height; y++) {
+			Point sp = puzzle->get_sym_point(x, y, Panel::Symmetry::Vertical);
+			if (puzzle->_grid[sp.first][sp.second] & Decoration::Gap) {
+				puzzle->_grid[x][y] = puzzle->_grid[sp.first][sp.second];
+				puzzle->_grid[sp.first][sp.second] = 0;
+			}
+		}
+	}
+	gen->write(id);
+}
+
 void Special::generateReflectionDotPuzzle(std::shared_ptr<Generate> gen, int id1, int id2, std::vector<std::pair<int, int>> symbols, Panel::Symmetry symmetry, bool split)
 {
 	gen->setFlagOnce(Generate::Config::DisableWrite);
