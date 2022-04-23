@@ -30,6 +30,31 @@ void PuzzleList::GenerateAllN()
 	//GenerateMonasteryN(); //Can't randomize
 }
 
+void PuzzleList::GenerateShadowsN() {
+	generator->setLoadingData(L"Shadows", 13);
+	generator->resetConfig();
+
+	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+
+	_memory->WritePanelData<int>(0x386FA, SEQUENCE_LEN , { 0 });
+	_memory->WritePanelData<int>(0x386FA, DOT_SEQUENCE_LEN, { 0 });
+	generator->generate(0x386FA, Decoration::Arrow1, 5);
+
+	generator->generate(0x1C33F, Decoration::Arrow2, 5);
+	generator->generate(0x196E2, Decoration::Arrow3, 5);
+	generator->generate(0x1972A, Decoration::Arrow, 6);
+	generator->generate(0x19809, Decoration::Arrow1, 5);
+	generator->generate(0x19806, Decoration::Arrow1, 5);
+	generator->generate(0x196F8, Decoration::Arrow1, 5);
+	generator->generate(0x1972F, Decoration::Arrow1, 5);
+
+	generator->generate(0x19797, Decoration::Arrow1, 5);
+	generator->generate(0x1979A, Decoration::Arrow1, 5);
+	generator->generate(0x197E0, Decoration::Arrow1, 5);
+	generator->generate(0x197E8, Decoration::Arrow1, 5);
+	generator->generate(0x197E5, Decoration::Arrow1, 5);
+}
+
 void PuzzleList::GenerateAllH()
 {
 	generator->setLoadingData(349);
@@ -56,7 +81,7 @@ void PuzzleList::GenerateAllH()
 
 void PuzzleList::CopyTargets()
 {
-	Special::copyTarget(0x00021, 0x19650);
+	/*Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
 	Special::copyTarget(0x17CFB, 0x28B39);
 	Special::copyTarget(0x3C12B, 0x28B39); 
@@ -76,7 +101,7 @@ void PuzzleList::CopyTargets()
 	
 	Special::setPower(0x17CA4, true);
 	Special::setPower(0x17CAB, true);
-	Special::setPower(0x28B39, true);
+	Special::setPower(0x28B39, true);*/
 }
 
 void PuzzleList::GenerateTutorialN()
@@ -87,11 +112,23 @@ void PuzzleList::GenerateTutorialN()
 	Special::drawGoodLuckPanel(0x00182);
 	//Mazes
 	generator->setFlag(Generate::Config::FullGaps);
+#if _DEBUG
+	generator->setGridSize(4, 4);
+#else
 	generator->setGridSize(6, 6);
+#endif
 	generator->generateMaze(0x00293);
+#if _DEBUG
+	generator->setGridSize(4, 4);
+#else
 	generator->setGridSize(9, 9);
+#endif
 	generator->generateMaze(0x00295, 1, 1);
+#if _DEBUG
+	generator->setGridSize(4, 4);
+#else
 	generator->setGridSize(12, 12);
+#endif
 	generator->generateMaze(0x002C2);
 	generator->resetConfig();
 	//2 starts maze

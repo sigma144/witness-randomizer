@@ -93,6 +93,53 @@ int Memory::findGlobals() {
 	return Memory::GLOBALS;
 }
 
+void Memory::findMovementSpeed() {
+	executeSigScan({ 0xF3, 0x0F, 0x59, 0xFD, 0xF3, 0x0F, 0x5C, 0xC8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		int found = 0;
+		// This doesn't have a consistent offset from the scan, so search until we find "jmp +08"
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0xEB && data[index - 1] == 0x08) {
+				this->ACCELERATION = Memory::ReadStaticInt(offset, index - 0x06, data);
+				this->DECELERATION = Memory::ReadStaticInt(offset, index + 0x04, data);
+				found++;
+				break;
+			}
+		}
+
+		// Once again, there's no consistent offset, so we read until "movss xmm1, [addr]"
+		for (; index < data.size(); index++) {
+			if (data[index - 4] == 0xF3 && data[index - 3] == 0x0F && data[index - 2] == 0x10 && data[index - 1] == 0x0D) {
+				this->RUNSPEED = Memory::ReadStaticInt(offset, index, data);
+				found++;
+				break;
+			}
+		}
+		return (found == 2);
+		});
+}
+
+__int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL) {
+	// (address of next line) + (index interpreted as 4byte int)
+	return offset + index + bytesToEOL + *(int*)&data[index];
+}
+
+#define BUFFER_SIZE 0x10000 // 10 KB
+void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc) {
+	size_t notFound = 0;
+	std::vector<byte> buff;
+	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
+
+	for (uintptr_t i = 0; i < 0x500000; i += BUFFER_SIZE) {
+		SIZE_T numBytesWritten;
+		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
+		buff.resize(numBytesWritten);
+		int index = find(buff, scanBytes);
+		if (index == -1) continue;
+		scanFunc(i, index, buff); // We're expecting i to be relative to the base address here.
+		break;
+	}
+}
+
 void Memory::ThrowError(std::string message) {
 	if (!showMsg) throw std::exception(message.c_str());
 	DWORD exitCode;
@@ -153,6 +200,9 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 }
 
 int Memory::GLOBALS = 0;
+int Memory::RUNSPEED = 0;
+int Memory::ACCELERATION = 0;
+int Memory::DECELERATION = 0;
 bool Memory::showMsg = false;
 int Memory::globalsTests[3] = {
 	0x62D0A0, //Steam and Epic Games

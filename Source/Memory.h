@@ -1,10 +1,13 @@
 #pragma once
+
 #include <functional>
 #include <map>
 #include <vector>
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+
+#include "Archipelago\Client\apclientpp\apclient.hpp"
 #include <windows.h>
 // https://github.com/erayarslan/WriteProcessMemory-Example
 // http://stackoverflow.com/q/32798185
@@ -13,8 +16,12 @@
 class Memory
 {
 public:
+
+
 	Memory(const std::string& processName);
 	int findGlobals();
+	void findMovementSpeed();
+	static __int64 ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL = 4);
 	~Memory();
 
 	Memory(const Memory& memory) = delete;
@@ -97,12 +104,27 @@ public:
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
 	}
 
+	void WriteMovementSpeed(float speed) {
+		if (speed == 0) return;
+		float sprintSpeed = this->ReadData<float>({ RUNSPEED }, 1)[0];
+		if (sprintSpeed == 0.0f) return; // sanity check, to avoid an accidental div0
+		float multiplier = speed / sprintSpeed;
+		if (multiplier == 1.0f) return;
+		this->WriteData<float>({ RUNSPEED }, { speed });
+		this->WriteData<float>({ ACCELERATION }, { this->ReadData<float>({ACCELERATION}, 1)[0] * multiplier });
+		this->WriteData<float>({ DECELERATION }, { this->ReadData<float>({DECELERATION}, 1)[0] * multiplier });
+	}
+
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
+	static int RUNSPEED;
+	static int ACCELERATION;
+	static int DECELERATION;
 	static bool showMsg;
 	static int globalsTests[3];
 	bool retryOnFail = true;
+
 
 private:
 	template<class T>
@@ -125,6 +147,11 @@ private:
 		if (!showMsg) throw std::exception();
 		ThrowError(offsets, true);
 	}
+
+	using ScanFunc = std::function<void(__int64 offset, int index, const std::vector<byte>& data)>;
+	using ScanFunc2 = std::function<bool(__int64 offset, int index, const std::vector<byte>& data)>;
+	void executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc);
+
 	void ThrowError(std::string message);
 	void ThrowError(const std::vector<int>& offsets, bool rw_flag);
 	void ThrowError();

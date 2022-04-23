@@ -174,8 +174,8 @@ void Panel::Resize(int width, int height)
 		if (e.GetY() == _height - 1) e.SetY(height - 1);
 	}
 	if (_width != _height || width != height) {
-		float maxDim = max(maxx - minx, maxy - miny);
-		float unitSize = maxDim / max(width - 1, height - 1);
+		float maxDim = std::max(maxx - minx, maxy - miny);
+		float unitSize = maxDim / std::max(width - 1, height - 1);
 		minx = 0.5f - unitSize * (width - 1) / 2;
 		maxx = 0.5f + unitSize * (width - 1) / 2;
 		miny = 0.5f - unitSize * (height - 1) / 2;
@@ -243,7 +243,7 @@ void Panel::ReadAllData() {
 	int numTraced = _memory->ReadPanelData<int>(id, TRACED_EDGES);
 	int numSol = _memory->ReadPanelData<int>(id, TRACED_EDGES + 4); //Don't know what this number is for yet
 	int tracedptr = _memory->ReadPanelData<int>(id, TRACED_EDGE_DATA);
-	//float solved = _memory->ReadPanelData<float>(id, PANEL_SOLVED);
+	//float solved = _memory->ReadPanelData<float>(id, SOLVED);
 	float distance = _memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
 	std::vector<SolutionPoint> traced; if (tracedptr) traced = _memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 }

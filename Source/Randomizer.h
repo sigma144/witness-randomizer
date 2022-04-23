@@ -11,6 +11,10 @@ public:
 
 	void AdjustSpeed();
 
+	void StartWatching();
+
+	void PreventSnipes();
+
 	void ClearOffsets() {_memory->ClearOffsets();}
 
 	enum SWAP {
@@ -45,6 +49,8 @@ private:
 	friend class Panel;
 	friend class PuzzleList;
 	friend class Special;
+
+	friend class APRandomizer;
 };
 
 #define ORIENTATION 0x34

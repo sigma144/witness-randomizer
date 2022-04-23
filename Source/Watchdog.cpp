@@ -32,7 +32,6 @@ void KeepWatchdog::action() {
 		WritePanelData<int>(0x03317, NEEDS_REDRAW, { 1 });
 	}
 }
-
 //Arrow Watchdog - To run the arrow puzzles
 
 void ArrowWatchdog::action() {

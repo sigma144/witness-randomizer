@@ -1,0 +1,41 @@
+
+Decide / implement quarry shadows shortcut
+
+Investigave vault not opening after collect
+
+  110010011100000000 = Some arrow
+        011000000000 = triangles
+        011100000000 = Arrows
+    1111000000000000 = target count
+11110000000000000000 = directions
+
+00010000011000000000 == Triangle1
+00100000011000000000 == Triangle2
+00110000011000000000 == Triangle3
+01000000011000000000 == Triangle4
+01110000000000000000 Triangle count
+
+Poly shapes
+0000-0000-0000-0000-0000-0111-0000-0000 = Decoration (0100 = poly)
+0000-0000-0000-0000-0000-0000-0000-1111 = Color
+0000-0000-0000-0000-0011-0000-0000-0000 = Rotation (left bit), Negative (right bit)
+1111-0000-0000-0000-0000-0000-0000-0000 = blocks from left to right, top row
+0000-1111-0000-0000-0000-0000-0000-0000 = blocks from left to right, 2nd row
+0000-0000-1111-0000-0000-0000-0000-0000 = blocks from left to right, 3rd row
+0000-0000-0000-1111-0000-0000-0000-0000 = blocks from left to right, bottom row
+
+BUGS:
+
+major:
+receicing multiple items at once does not correctly reset temporary effects like poweresurge
+
+minor: 
+
+hopefully fixed:
+quary stones 1 (1367) is calculated as stones & erazors, but should be colored stones & erazors
+left monastary door panel is off
+keep pressure plates dont respect locking policies
+quarry lazer didnt say missing shapers
+tetris briges are on
+ship vault has both colored dots aswel as sound dots   
+bunker door is on, should be disabled not missing, town symmmetry is not off // Missing seems to take priority over disabled

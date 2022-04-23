@@ -404,7 +404,7 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 				min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 1 / 2))) clear();
 		}
 		while (!generate_path_length((_panel->_width + _panel->_height),
-			min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
+			std::min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
 	}
 	
 	std::set<Point> path = _path; //Backup
@@ -664,7 +664,7 @@ bool Generate::generate_path(PuzzleSymbols & symbols)
 
 	//For stone puzzles, the path must have a certain number of regions
 	if (symbols.style == Panel::Style::HAS_STONES && _splitPoints.size() == 0)
-		return generate_path_regions(min(symbols.getNum(Decoration::Stone), (_panel->_width / 2 + _panel->_height / 2) / 2 + 1));
+		return generate_path_regions(std::min(symbols.getNum(Decoration::Stone), (_panel->_width / 2 + _panel->_height / 2) / 2 + 1));
 
 	if (symbols.style == Panel::Style::HAS_SHAPERS) {
 		if (hasFlag(Config::SplitShapes)) {
@@ -1189,7 +1189,7 @@ bool Generate::place_stones(int color, int amount) {
 	while (amount > 0) {
 		if (open.size() == 0) {
 			//Make sure there is room for the remaining stones and enough partitions have been made (based on the grid size)
-			if (open2.size() < amount || _bisect && passCount < min(originalAmount, (_panel->_width / 2 + _panel->_height / 2 + 2) / 4))
+			if (open2.size() < amount || _bisect && passCount < std::min(originalAmount, (_panel->_width / 2 + _panel->_height / 2 + 2) / 4))
 				return false;
 			//Put remaining stones wherever they will fit
 			Point pos = pick_random(open2);
@@ -1353,7 +1353,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			targetArea != _panel->get_num_grid_blocks()) continue; //To prevent shapes from filling every grid point
 		std::vector<Shape> shapes;
 		std::vector<Shape> shapesN;
-		int numShapesN = min(Random::rand() % (numNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
+		int numShapesN = std::min(Random::rand() % (numNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
 		if (amount == 1) numShapesN = numNegative;
 		if (numShapesN) {
 			std::set<Point> regionN = _gridpos;
@@ -1370,7 +1370,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 					}
 				}
 				if (!regionN.count(pos)) return false;
-				Shape shape = generate_shape(regionN, pos, min(Random::rand() % 3 + 1, maxSize));
+				Shape shape = generate_shape(regionN, pos, std::min(Random::rand() % 3 + 1, maxSize));
 				shapesN.push_back(shape);
 				for (Point p : shape) {
 					if (region.count(p)) bufferRegion.insert(p); //Buffer region stores overlap between shapes
@@ -1397,15 +1397,15 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			//Make balancing shapes - Positive and negative will be switched so that code can be reused
 			balance = true;
 			std::set<Point> regionN = _gridpos;
-			numShapes = max(2, Random::rand() % numNegative + 1);			//Actually the negative shapes
-			numShapesN = min(amount, 1);		//Actually the positive shapes
+			numShapes = std::max(2, Random::rand() % numNegative + 1);			//Actually the negative shapes
+			numShapesN = std::min(amount, 1);		//Actually the positive shapes
 			if (numShapesN >= numShapes * 3 || numShapesN * 5 <= numShapes) continue;
 			shapes.clear();
 			shapesN.clear();
 			region.clear();
 			bufferRegion.clear();
 			for (int i = 0; i < numShapesN; i++) {
-				Shape shape = generate_shape(regionN, pick_random(regionN), min(shapeSize + 1, numShapes * 2 / numShapesN + Random::rand() % 3 - 1));
+				Shape shape = generate_shape(regionN, pick_random(regionN), std::min(shapeSize + 1, numShapes * 2 / numShapesN + Random::rand() % 3 - 1));
 				shapesN.push_back(shape);
 				for (Point p : shape) {
 					region.insert(p);

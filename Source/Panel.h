@@ -443,4 +443,5 @@ private:
 	friend class Special;
 	friend class MultiGenerate;
 	friend class ArrowWatchdog;
+	friend class APRandomizer;
 };
