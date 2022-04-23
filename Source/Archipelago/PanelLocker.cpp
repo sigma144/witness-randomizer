@@ -66,29 +66,28 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, int itemIndex) {
 	for (auto const& [id, puzzle] : lockedPuzzles) {
 		switch (itemIndex) {
 			//Puzzle Symbols
-		case ITEM_DOTS:							if (puzzle->hasDots) puzzlesToUpdate.push_back(puzzle);							break;
-		case ITEM_COLORED_DOTS:					if (puzzle->hasColoredDots) puzzlesToUpdate.push_back(puzzle);					break;
-		case ITEM_SOUND_DOTS:					if (puzzle->hasSoundDots) puzzlesToUpdate.push_back(puzzle);					break;
-		case ITEM_INVISIBLE_DOTS:				if (puzzle->hasInvisibleDots) puzzlesToUpdate.push_back(puzzle);				break;
-		case ITEM_SYMMETRY:						if (puzzle->hasSymmetry) puzzlesToUpdate.push_back(puzzle);						break;
-		case ITEM_TRIANGLES:						if (puzzle->hasTriangles) puzzlesToUpdate.push_back(puzzle);					break;
-		case ITEM_ERASOR:							if (puzzle->hasErasers) puzzlesToUpdate.push_back(puzzle);						break;
-		case ITEM_TETRIS:							if (puzzle->hasTetris) puzzlesToUpdate.push_back(puzzle);						break;
-		case ITEM_TETRIS_ROTATED:				if (puzzle->hasTetrisRotated) puzzlesToUpdate.push_back(puzzle);				break;
-		case ITEM_TETRIS_NEGATIVE:				if (puzzle->hasTetrisNegative) puzzlesToUpdate.push_back(puzzle);				break;
-		case ITEM_STARS:							if (puzzle->hasStars) puzzlesToUpdate.push_back(puzzle);							break;
-		case ITEM_STARS_WITH_OTHER_SYMBOL:	if (puzzle->hasStarsWithOtherSymbol) puzzlesToUpdate.push_back(puzzle);		break;
-		case ITEM_B_W_SQUARES:					if (puzzle->hasStones) puzzlesToUpdate.push_back(puzzle);						break;
-		case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
-		case ITEM_SQUARES: if (puzzle->hasStones || puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);			break;
+			case ITEM_DOTS:							if (puzzle->hasDots) puzzlesToUpdate.push_back(puzzle);							break;
+			case ITEM_COLORED_DOTS:					if (puzzle->hasColoredDots) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_SOUND_DOTS:					if (puzzle->hasSoundDots) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_INVISIBLE_DOTS:				if (puzzle->hasInvisibleDots) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_SYMMETRY:						if (puzzle->hasSymmetry) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_TRIANGLES:						if (puzzle->hasTriangles) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_ERASOR:							if (puzzle->hasErasers) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_TETRIS:							if (puzzle->hasTetris) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_TETRIS_ROTATED:				if (puzzle->hasTetrisRotated) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_TETRIS_NEGATIVE:				if (puzzle->hasTetrisNegative) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_STARS:							if (puzzle->hasStars) puzzlesToUpdate.push_back(puzzle);							break;
+			case ITEM_STARS_WITH_OTHER_SYMBOL:	if (puzzle->hasStarsWithOtherSymbol) puzzlesToUpdate.push_back(puzzle);		break;
+			case ITEM_B_W_SQUARES:					if (puzzle->hasStones) puzzlesToUpdate.push_back(puzzle);						break;
+			case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
+			case ITEM_SQUARES: if (puzzle->hasStones || puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);			break;
 
-		default:																																			break;
+			default:																																			break;
 		}
 	}
 
-	for (auto& puzzle : puzzlesToUpdate) {
+	for (auto& puzzle : puzzlesToUpdate)
 		UpdatePuzzleLock(state, puzzle->id);
-	}
 }
 
 void PanelLocker::UpdatePuzzleLock(const APState& state, int id) {
@@ -239,9 +238,8 @@ void PanelLocker::createText(int id, std::string text, std::vector<float>& inter
 
 	int newIntersections = intersections.size();
 
-	for (int i = 0; i < (newIntersections - currentIntersections) / 2; i++) {
+	for (int i = 0; i < (newIntersections - currentIntersections) / 2; i++)
 		intersectionFlags.emplace_back(0);
-	}
 }
 
 void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
@@ -288,15 +286,12 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 		|| (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative))
 	{
 		if (puzzle->hasTetrisRotated && !state.unlockedTetrisRotated)
-			gridDecorations[column] =
-			Decoration::Poly | Decoration::Color::Yellow | defaultLShape | Decoration::Can_Rotate;
+			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape | Decoration::Can_Rotate;
 		else if (puzzle->hasTetris && !state.unlockedTetris)
-			gridDecorations[column] =
-			Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
+			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
 
 		if (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative)
-			gridDecorations[column + secondRowOffset] =
-			Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative;
+			gridDecorations[column + secondRowOffset] = Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative;
 
 		column++;
 	}

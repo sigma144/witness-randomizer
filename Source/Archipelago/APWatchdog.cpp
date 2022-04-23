@@ -45,13 +45,9 @@ void APWatchdog::MarkLocationChecked(int locationId)
 	while (it != panelIdToLocationId.end())
 	{
 		if (it->second == locationId)
-		{
 			it = panelIdToLocationId.erase(it);
-		}
 		else
-		{
 			it++;
-		}
 	}
 }
 
@@ -103,8 +99,7 @@ void APWatchdog::HandlePowerSurge() {
 	{
 		hasPowerSurge = false;
 
-		for (auto& [panelId, powerValues] : powerSurgedPanels) {
+		for (auto& [panelId, powerValues] : powerSurgedPanels)
 			WritePanelData<float>(panelId, POWER, powerValues);
-		}
 	}
 }

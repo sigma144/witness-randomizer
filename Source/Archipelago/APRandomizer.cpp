@@ -15,9 +15,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
-		for (const auto& locationId : locations) {
+		for (const auto& locationId : locations)
 			async->MarkLocationChecked(locationId);
-		}
 	});
 
 	ap->set_slot_connected_handler([&](const nlohmann::json& slotData) {
@@ -88,9 +87,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 					break;
 			}
 
-			if (item.item < ITEM_TEMP_SPEED_BOOST) {
+			if (item.item < ITEM_TEMP_SPEED_BOOST)
 				panelLocker->UpdatePuzzleLocks(state, item.item);
-			}
 		}
 	});
 
@@ -151,12 +149,12 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 }
 
 void APRandomizer::GenerateNormal() {
-	if (DisableNonRandomizedPuzzles);
+	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles();
 }
 
 void APRandomizer::GenerateHard() {
-	if (DisableNonRandomizedPuzzles);
+	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles();
 }
 
