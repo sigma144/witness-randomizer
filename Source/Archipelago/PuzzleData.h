@@ -38,7 +38,6 @@ struct PuzzleData
 		std::vector<int> dot_connections_b;
 		std::vector<int> decorations;
 		std::vector<int> decoration_flags;
-		int num_colored_regions;
 		std::vector<int> colored_regions;
 };
 

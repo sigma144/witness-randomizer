@@ -6,96 +6,51 @@
 #include "nlohmann\json.hpp"
 #include "..\Randomizer.h"
 #include "..\Special.h"
+#include "APState.h"
+#include "PanelLocker.h"
 #include "PuzzleData.h"
 #include "APWatchdog.h"
 #include "..\Converty.h"
 #include "..\DateTime.h"
 
 class APRandomizer {
-public:
-	int Seed = 0;
-	int FinalPanel = 0;
+	public:
+		APRandomizer() {
+			_memory = std::make_shared<Memory>("witness64_d3d11.exe");
+			panelLocker = new PanelLocker(_memory);
+		};
 
-	bool Hard = false;
-	bool UnlockSymbols = false;
-	bool DisableNonRandomizedPuzzles = false;
+		int Seed = 0;
+		int FinalPanel = 0;
 
-	bool connected = false;
+		bool Hard = false;
+		bool UnlockSymbols = false;
+		bool DisableNonRandomizedPuzzles = false;
 
-	bool unlockedStones = false;
-	bool unlockedColoredStones = false;
-	bool unlockedStars = false;
-	bool unlockedStarsWithOtherSimbol = false;
-	bool unlockedTetris = false;
-	bool unlockedTetrisRotated = false;
-	bool unlockedTetrisNegative = false;
-	bool unlockedErasers = false;
-	bool unlockedTriangles = false;
-	bool unlockedDots = false;
-	bool unlockedColoredDots = false;
-	bool unlockedSoundDots = false;
-	bool unlockedInvisibleDots = false;
-	bool unlockedArrows = false;
-	bool unlockedSymmetry = false;
+		bool connected = false;
 
-	APRandomizer();
+		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
+		void Initialize(HWND loadingHandle);
 
-	bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
-	void Initialize(HWND loadingHandle);
+		void GenerateNormal();
+		void GenerateHard();
 
-	void GenerateNormal();
-	void GenerateHard();
+	private:
+		std::map<int, int> panelIdToLocationId;
+		std::shared_ptr<Memory> _memory;
 
-private:
-	std::map<int, PuzzleData*> disabledPuzzles;
-	std::map<int, int> panelIdToLocationId;
-	std::shared_ptr<Memory> _memory;
+		APClient* ap;
+		APWatchdog* async;
+		PanelLocker* panelLocker;
 
-	APClient* ap;
-	APWatchdog* async;
+		APState state = APState();
 	
-	void PreventSnipes();
+		void PreventSnipes();
 
-	void setPuzzleLocks(HWND loadingHandle);
-	void updatePuzzleLock(int id);
-	void updatePuzzleLocks(int itemIndex);
-	void HandleDisableNonRandomizedPuzzles();
-	void disablePuzzle(int id);
+		void setPuzzleLocks(HWND loadingHandle);
 
-	std::string buildUri(std::string& server);
-
-	void addMissingSimbolsDisplay(std::vector<float>& newIntersections, std::vector<int>& newIntersectionFlags, std::vector<int>& newConnectionsA, std::vector<int>& newConnectionsB);
-	void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, float left, float right, float top, float bottom);
-	void addPuzzleSimbols(PuzzleData* puzzle,	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons);
+		std::string buildUri(std::string& server);
 };
-
-//Puzzle Symbols
-#define ITEM_OFFSET 158000
-const int ITEM_DOTS = ITEM_OFFSET + 0;
-const int ITEM_COLORED_DOTS = ITEM_DOTS + 1;
-const int ITEM_SOUND_DOTS = ITEM_DOTS + 5;
-const int ITEM_INVISIBLE_DOTS = ITEM_DOTS + 6;
-const int ITEM_SYMMETRY = ITEM_OFFSET + 10;
-const int ITEM_TRIANGLES = ITEM_OFFSET + 20;
-const int ITEM_ERASOR = ITEM_OFFSET + 30;
-const int ITEM_TETRIS = ITEM_OFFSET + 40;
-const int ITEM_TETRIS_ROTATED = ITEM_TETRIS + 1;
-const int ITEM_TETRIS_NEGATIVE = ITEM_TETRIS + 10;
-const int ITEM_STARS = ITEM_OFFSET + 60;
-const int ITEM_STARS_WITH_OTHER_SYMBOL = ITEM_STARS + 1;
-const int ITEM_SQUARES = ITEM_OFFSET + 70;
-const int ITEM_B_W_SQUARES = ITEM_SQUARES + 1;
-const int ITEM_COLORED_SQUARES = ITEM_SQUARES + 2;
-const int ITEM_ARROWS = ITEM_OFFSET + 80;
-
-//Powerups
-#define ITEM_POWERUP_OFFSET ITEM_OFFSET + 500
-const int ITEM_TEMP_SPEED_BOOST = ITEM_POWERUP_OFFSET + 0;
-
-//Traps
-#define ITEM_TRAP_OFFSET ITEM_OFFSET + 600
-const int ITEM_TEMP_SPEED_REDUCTION = ITEM_TRAP_OFFSET + 0;
-const int ITEM_POWER_SURGE = ITEM_TRAP_OFFSET + 10;
 
 const int AllPuzzles[]{
 		0x0A171, 0x04CA4, // Tutorial Secret back area
@@ -144,14 +99,13 @@ const int AllPuzzles[]{
 		0x17F89, 0x0A168, 0x33AB2, //Windmill Puzzles
 		0x033D4, 0x0CC7B, 0x002A6, 0x00AFB, 0x15ADD, // Vaults
 		0x17C34, // Mountain
-		0x09E39,	// Mountain Purple Bridge
 		0x09E73, 0x09E75, 0x09E78, 0x09E79, 0x09E6C, 0x09E6F, 0x09E6B, // Mountain Orange Row
 		0x09E7A, 0x09E71, 0x09E72, 0x09E69, 0x09E7B, // Mountain Green Row
 		0x09EAD, 0x09EAF, 0x33AF5, 0x33AF7, 0x09F6E, // Mountain Purple Panels
 		0x09FD3, 0x09FD4, 0x09FD6, 0x09FD7, 0x09FD8, // Mountain Rainbow Row
 		0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Mountain multi puzzle
-		//0x09E86, 0x09ED8, // Mountain double bridge
-		//0x09EFF, 0x09F01, 0x09FC1, 0x09F8E, 0x09FDA, // Mountain floor
+		0x09E86, 0x09E39, // Mountain double bridge //might need to be disable if we cant fix the scaling
+		0x09EFF, 0x09F01, 0x09FC1, 0x09F8E, 0x09FDA, // Mountain floor
 		0x0383D, 0x0383A, 0x0383F, 0x09E56, 0x03859, 0x09E5A, 0x339BB, 0x33961, // Mountain pillar puzzles
 		/*
 		Disabled caves as its beyond the final puzzlesand thus makes no sense to include in AP
@@ -172,8 +126,8 @@ const int AllPuzzles[]{
 		0x00C72, 0x0129D,	0x008BB, 0x0078D, 0x18313, // Desert Pond
 		0x04D18,	0x01205, 0x181AB, 0x0117A, 0x17ECA, // Desert Flood
 		0x18076, 0x0A15C, 0x09FFF, 0x0A15F, 0x012D7 // Desert Final and exit
-		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, 0x03317, 0x0360E, // Keep
 		*/
+		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, 0x03317, 0x0360E, // Keep
 		//0x17F9B,	0x002C4,	0x00767,	0x002C6,	0x0070E,	0x0070F,	0x0087D,	0x002C7, // Jungle Sound waves //Does not contain dots so isnt locked
 		0x0026D,	0x0026E,	0x0026F,	0x00C3F,	0x00C41,	0x014B2, // Jungle Dots
 		//Doors
@@ -210,7 +164,9 @@ const int AllPuzzles[]{
 		0x17F9B, // Jungle Discard
 		0x17C42, // Mountainside Discard
 		0x386FA,	0x1C33F,	0x196E2,	0x1972A,	0x19809,	0x19806,	0x196F8,	0x1972F, //shadows avoid
-		0x19797,	0x1979A,	0x197E0,	0x197E8,	0x197E5 //Shadow follow
+		0x19797,	0x1979A,	0x197E0,	0x197E8,	0x197E5, //Shadow follow
+		0x09F7F, // Quary lazer panel
+		0x181F5, 0x18488, // Swamp bridge controlls
 };
 
 

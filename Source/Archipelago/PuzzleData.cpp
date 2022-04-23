@@ -17,8 +17,10 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	decorations = _memory->ReadArray<int>(id, DECORATIONS, numberOfDecorations);
 	decoration_flags = _memory->ReadArray<int>(id, DECORATION_FLAGS, numberOfDecorations);
 
-	for (int i = 0; i < numberOfDecorations; i++)
-	{
+	int numberColoredRegions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
+	colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions);
+
+	for (int i = 0; i < numberOfDecorations; i++) {
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
 			if ((decorations[i] & 0x00F) != Decoration::Color::White && (decorations[i] & 0x00F) != Decoration::Color::Black)
 				hasColoredStones = true;
@@ -65,8 +67,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
   	if (_memory->ReadPanelData<int>(id, REFLECTION_DATA))
 		hasSymmetry = true;
 
-	for (int i = 0; i < numberOfDots; i++)
-	{
+	for (int i = 0; i < numberOfDots; i++)	{
 		if (dot_flags[i] & DOT) {
 			if (dot_flags[i] & DOT_IS_BLUE || dot_flags[i] & DOT_IS_ORANGE)
 				hasColoredDots = true;
@@ -79,9 +80,12 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		}
 	}
 
-	if (id == 0x17C2E) //Greenhouse bunker door
-	{
+	if (id == 0x17C2E) { //Greenhouse bunker door
 		hasStones = true;
+		hasColoredStones = true;
+	}
+	else if (id == 0x00557 || id == 0x005F1 || id == 0x00620 || id == 0x009F5 || id == 0x0146C) { // quarry erazor + stones (stones are incorrectly detected as b/w)
+		hasStones = false;
 		hasColoredStones = true;
 	}
 }
@@ -99,5 +103,7 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
+	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size()) });
+	_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions);
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
