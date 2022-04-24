@@ -87,6 +87,10 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	else if (id == 0x00557 || id == 0x005F1 || id == 0x00620 || id == 0x009F5 || id == 0x0146C) { // quarry erazor + stones (stones are incorrectly detected as b/w)
 		hasStones = false;
 		hasColoredStones = true;
+	} 
+	else if (id == 0x17D9B || id == 0x17D99 || id == 0x17DAA) {
+		hasStones = true;
+		hasColoredStones = false;
 	}
 }
 

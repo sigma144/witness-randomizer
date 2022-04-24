@@ -41,6 +41,8 @@ void PanelLocker::DisableNonRandomizedPuzzles()
 void PanelLocker::disablePuzzle(int id) {
 	if (lockedPuzzles.count(id) == 1)
 		unlockPuzzle(lockedPuzzles[id]);
+
+	disabledPuzzles.emplace_back(id);
 	
 	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
 	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
@@ -91,6 +93,9 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, int itemIndex) {
 }
 
 void PanelLocker::UpdatePuzzleLock(const APState& state, int id) {
+	if (find(disabledPuzzles.begin(), disabledPuzzles.end(), id) != disabledPuzzles.end())
+		return;
+
 	bool isLocked;
 	PuzzleData* puzzle;
 

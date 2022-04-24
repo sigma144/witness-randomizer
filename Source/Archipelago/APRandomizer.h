@@ -30,7 +30,7 @@ class APRandomizer {
 		bool connected = false;
 
 		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
-		void Initialize(HWND loadingHandle);
+		void PostGeneration(HWND loadingHandle);
 
 		void GenerateNormal();
 		void GenerateHard();

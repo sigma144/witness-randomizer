@@ -28,13 +28,7 @@ BUGS:
 
 major:
 receicing multiple items at once does not correctly reset temporary effects like poweresurge
+quarry lazer didnt say missing shapers
 
 minor: 
 tetris briges are on
-bunker door is on, should be disabled not missing, town symmmetry is not off // Missing seems to take priority over disabled
-
-hopefully fixed:
-quary stones 1 (1367) is calculated as stones & erazors, but should be colored stones & erazors
-left monastary door panel is off
-quarry lazer didnt say missing shapers
-ship vault has both colored dots aswel as sound dots   

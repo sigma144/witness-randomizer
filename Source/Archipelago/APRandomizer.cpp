@@ -21,10 +21,11 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 	ap->set_slot_connected_handler([&](const nlohmann::json& slotData) {
 		Seed = slotData["seed"];
-		Hard = slotData["hard_mode"] == true;
-		UnlockSymbols = slotData["unlock_symbols"] == true;
-		DisableNonRandomizedPuzzles = slotData["disable_non_randomized_puzzles"] == true;
 		FinalPanel = slotData["victory_location"];
+
+		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
+		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
+		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
 			int panelId = std::stoul(key, nullptr, 16);
@@ -129,7 +130,7 @@ std::string APRandomizer::buildUri(std::string& server)
 	return uri;
 }
 
-void APRandomizer::Initialize(HWND loadingHandle) {
+void APRandomizer::PostGeneration(HWND loadingHandle) {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if (UnlockSymbols)

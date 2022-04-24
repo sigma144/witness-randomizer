@@ -1,7 +1,6 @@
 #pragma once
 
-#include <memory>
-#include <set>
+#include <vector>
 #include <map>
 #include "..\Randomizer.h"
 #include "..\Special.h"
@@ -19,6 +18,7 @@ class PanelLocker {
 		void UpdatePuzzleLocks(const APState& state, int itemIndex);
 
 	private:
+		std::vector<int> disabledPuzzles;
 		std::map<int, PuzzleData*> lockedPuzzles;
 		std::shared_ptr<Memory> _memory;
 
