@@ -190,6 +190,7 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="Randomizer.h" />
     <ClInclude Include="Special.h" />
+    <ClInclude Include="StringSplitter.h" />
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>

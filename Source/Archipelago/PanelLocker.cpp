@@ -24,8 +24,9 @@ void PanelLocker::DisableNonRandomizedPuzzles()
 	Special::setPower(0x17CAB, true);
 	Special::setPower(0x28B39, true);
 	Special::setPower(0x00C92, true); //Monastary door right
+	Special::setPower(0x1972A, true); //Shadows avoid 4
 
-	disablePuzzle(0x386FA); //Shadows
+	disablePuzzle(0x1972A); //Shadows
 	disablePuzzle(0x17C2E); //BNK3R door
 	disablePuzzle(0x00B10); //Monastary door left
 	disablePuzzle(0x00C92); //Monastary door right
@@ -47,9 +48,11 @@ void PanelLocker::disablePuzzle(int id) {
 	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
 	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
 	std::vector<int> connectionsA;
-	std::vector<int> connectionsB;
+	std::vector<int> connectionsB;	
+	std::vector<int> decorations = { Decoration::Triangle }; //Invisable triangle to have a non empty decorations array
+	std::vector<int> decorationsFlags = { 0 };
 
-	createText(id, "disa8led", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+	createText(id, "disabled", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
 	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.5f });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
@@ -58,11 +61,14 @@ void PanelLocker::disablePuzzle(int id) {
 	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
 	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { 0 });
+	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorationsFlags.size()) });
+	_memory->WriteArray<int>(id, DECORATIONS, decorations);
+	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
-void PanelLocker::UpdatePuzzleLocks(const APState& state, int itemIndex) {
+void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) {
 	std::vector<PuzzleData*> puzzlesToUpdate;
 
 	for (auto const& [id, puzzle] : lockedPuzzles) {
@@ -92,7 +98,7 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, int itemIndex) {
 		UpdatePuzzleLock(state, puzzle->id);
 }
 
-void PanelLocker::UpdatePuzzleLock(const APState& state, int id) {
+void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	if (find(disabledPuzzles.begin(), disabledPuzzles.end(), id) != disabledPuzzles.end())
 		return;
 
@@ -175,6 +181,49 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, int id) {
 	}
 }
 
+void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item, const bool& receiving, const std::string& receivingPlayer, const std::string& itemName) {
+	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
+	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<int> decorations = { Decoration::Triangle }; //Invisable triangle to have a non empty decorations array
+	std::vector<int> decorationsFlags = { 0 };
+
+	createCenteredText(id, receiving ? "received" : "send", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
+
+	std::vector<std::string> words = StringSplitter::split(itemName, ' ');
+	for (std::size_t i = 0; i < words.size() && i < 5; ++i)
+		createCenteredText(id, words[i], intersections, intersectionFlags, connectionsA, connectionsB, 0.22f + (0.1f * i), 0.3f + (0.1f * i));
+
+	std::string player = receivingPlayer;
+	createCenteredText(id, "to " + player, intersections, intersectionFlags, connectionsA, connectionsB, 0.87f, 0.97f);
+
+	Color backgroundColor;
+	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
+		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
+	else if (item.flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
+		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
+	else if (item.flags & APClient::ItemFlags::FLAG_TRAP)
+		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
+	else
+		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
+
+	_memory->WritePanelData<Color>(id, PATH_COLOR, { { 0.0f, 0.0f, 0.0f, 1.0f } });
+	_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
+	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.3f });
+	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorationsFlags.size()) });
+	_memory->WriteArray<int>(id, DECORATIONS, decorations);
+	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 	puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
@@ -234,12 +283,28 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 	connectionsB.insert(connectionsB.begin(), gridConnectionsB.begin(), gridConnectionsB.end());
 }
 
+void PanelLocker::createCenteredText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags,
+	std::vector<int>& connectionsA, std::vector<int>& connectionsB, float top, float bottom) {
+
+	float left, right;
+
+	if (text.size() > 20)
+		text.erase(20);
+
+	if (text.size() > 12)
+		createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.97f, top, bottom);
+	else if (text.size() > 6)
+		createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.3f, 0.7f, top, bottom);
+	else
+		createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.4f, 0.6f, top, bottom);
+}
+
 void PanelLocker::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags,
 	std::vector<int>& connectionsA, std::vector<int>& connectionsB, float left, float right, float top, float bottom) {
 
 	int currentIntersections = intersections.size();
 
-	Special::createText(id, text, intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+	Special::createText(id, text, intersections, connectionsA, connectionsB, left, right, top, bottom);
 
 	int newIntersections = intersections.size();
 

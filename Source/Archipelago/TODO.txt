@@ -1,6 +1,4 @@
 
-Decide / implement quarry shadows shortcut
-
   110010011100000000 = Some arrow
         011000000000 = triangles
         011100000000 = Arrows
@@ -21,6 +19,9 @@ Poly shapes
 0000-1111-0000-0000-0000-0000-0000-0000 = blocks from left to right, 2nd row
 0000-0000-1111-0000-0000-0000-0000-0000 = blocks from left to right, 3rd row
 0000-0000-0000-1111-0000-0000-0000-0000 = blocks from left to right, bottom row
+
+TODO:
+try to make shadows editable to make them arrow puzzles
 
 BUGS:
 

@@ -103,10 +103,18 @@ public:
         ANSI,
     };
 
+    enum ItemFlags {
+       FLAG_NONE = 0,
+       FLAG_ADVANCEMENT = 1,
+       FLAG_NEVER_EXCLUDE = 2,
+       FLAG_TRAP = 4,
+    };
+
     struct NetworkItem {
         int64_t item;
         int64_t location;
         int player;
+        unsigned flags;
         int index = -1; // to sync items, not actually part of NetworkItem
     };
 
@@ -118,13 +126,6 @@ public:
     };
 
     struct TextNode {
-        enum Flags {
-            FLAG_NONE = 0,
-            FLAG_ADVANCEMENT = 1,
-            FLAG_NEVER_EXCLUDE = 2,
-            FLAG_TRAP = 4,
-        };
-
         std::string type;
         std::string color;
         std::string text;
@@ -193,7 +194,7 @@ public:
         _hOnPrint = f;
     }
 
-    void set_print_json_handler(std::function<void(const std::list<TextNode>&)> f)
+    void set_print_json_handler(std::function<void(const std::list<TextNode>&, const NetworkItem*, const int*)> f)
     {
         _hOnPrintJson = f;
     }
@@ -271,9 +272,9 @@ public:
                 int64_t id = stoi64(node.text);
                 if (color.empty()) {
                     if (node.found) color = "green";
-                    else if (node.flags & TextNode::FLAG_ADVANCEMENT) color = "plum";
-                    else if (node.flags & TextNode::FLAG_NEVER_EXCLUDE) color = "slateblue";
-                    else if (node.flags & TextNode::FLAG_TRAP) color = "salmon";
+                    else if (node.flags & ItemFlags::FLAG_ADVANCEMENT) color = "plum";
+                    else if (node.flags & ItemFlags::FLAG_NEVER_EXCLUDE) color = "slateblue";
+                    else if (node.flags & ItemFlags::FLAG_TRAP) color = "salmon";
                     else color = "cyan";
                 }
                 text = get_item_name(id);
@@ -664,6 +665,7 @@ private:
                             item["item"].get<int64_t>(),
                             item["location"].get<int64_t>(),
                             item["player"].get<int>(),
+                            item["flags"].get<unsigned>(),
                             index++,
                         });
                     }
@@ -676,6 +678,8 @@ private:
                             item["item"].get<int64_t>(),
                             item["location"].get<int64_t>(),
                             item["player"].get<int>(),
+                            item["flags"].get<unsigned>(),
+                            -1
                         });
                     }
                     if (_hOnLocationInfo) _hOnLocationInfo(items);
@@ -707,6 +711,26 @@ private:
                     if (_hOnPrint) _hOnPrint(command["text"].get<std::string>());
                 }
                 else if (cmd == "PrintJSON") {
+                    NetworkItem* pItem = nullptr;
+                    NetworkItem item;
+                    if (command.contains("item")) {
+                        item = {
+                           command["item"]["item"].get<int64_t>(),
+                           command["item"]["location"].get<int64_t>(),
+                           command["item"]["player"].get<int>(),
+                           command["item"]["flags"].get<unsigned>(),
+                           -1
+                        };
+                        pItem = &item;
+                    }
+
+                    int* pReciever = nullptr;
+                    int reciever;
+                    if (command.contains("receiving")) {
+                       int reciever = command["receiving"];
+                       pReciever = &reciever;
+                    }
+
                     std::list<TextNode> msg;
                     for (const auto& part: command["data"]) {
                         auto itType = part.find("type");
@@ -722,7 +746,7 @@ private:
                             itFlags == part.end() ? 0U : itFlags->get<unsigned>(),
                         });
                     }
-                    if (_hOnPrintJson) _hOnPrintJson(msg);
+                    if (_hOnPrintJson) _hOnPrintJson(msg, pItem, pReciever);
                 }
                 else if (cmd == "Bounced") {
                     if (_hOnBounced) _hOnBounced(command);
@@ -815,7 +839,7 @@ private:
     std::function<void(const std::list<NetworkItem>&)> _hOnLocationInfo = nullptr;
     std::function<void(const json&)> _hOnDataPackageChanged = nullptr;
     std::function<void(const std::string&)> _hOnPrint = nullptr;
-    std::function<void(const std::list<TextNode>&)> _hOnPrintJson = nullptr;
+    std::function<void(const std::list<TextNode>&, const NetworkItem*, const int*)> _hOnPrintJson = nullptr;
     std::function<void(const json&)> _hOnBounced = nullptr;
     std::function<void(const std::list<int64_t>&)> _hOnLocationChecked = nullptr;
 

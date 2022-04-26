@@ -11,7 +11,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all);
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 2});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -78,11 +78,11 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
 
 				//Powerups
-				case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();		break;
-				case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();				break;
+				case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
+				case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
 
 				//Traps
-				case ITEM_POWER_SURGE:							async->TriggerPowerSurge();				break;
+				case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
 
 				default:
 					break;
@@ -91,6 +91,21 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			if (item.item < ITEM_TEMP_SPEED_BOOST)
 				panelLocker->UpdatePuzzleLocks(state, item.item);
 		}
+	});
+
+	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
+		const APClient::NetworkItem item = *networkItem;
+		const int receiver = *receivingPlayer;
+
+		if (item.player != ap->get_player_number())
+			return;
+
+		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {
+			return pair.second == item.location;
+		});
+
+		if (findResult != std::end(panelIdToLocationId))
+			panelLocker->SetItemReward(findResult->first, item, receiver == ap->get_player_number(), ap->get_player_alias(receiver), ap->get_item_name(item.item));
 	});
 
 	(new APServerPoller(ap))->start();
@@ -131,6 +146,8 @@ std::string APRandomizer::buildUri(std::string& server)
 }
 
 void APRandomizer::PostGeneration(HWND loadingHandle) {
+	state.unlockedStones = true;
+
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if (UnlockSymbols)
