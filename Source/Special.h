@@ -24,6 +24,7 @@ public:
 		this->generator = generator;
 	}
 	
+	void generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id);
 	void generateReflectionDotPuzzle(std::shared_ptr<Generate> gen, int id1, int id2, std::vector<std::pair<int, int>> symbols, Panel::Symmetry symmetry, bool split);
 	void generateAntiPuzzle(int id);
 	void generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter);

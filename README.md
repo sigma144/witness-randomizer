@@ -1,27 +1,24 @@
 # Witness Archipelago Client
 
-Archipelago is a randomizer API that allows cross-game randomization with online servers.
+[Archipelago](https://archipelago.gg/) is a multiworld randomizer API that allows cross-game randomization with online servers.
 
 This is a project that intends to make The Witness a compatible game, based off of Sigma's codebase (see below).
 
-See also: https://github.com/NewSoupVi/Archipelago
+For more info on how to get started, refer to the [game info page](https://archipelago.gg/games/The%20Witness/info/en) and [setup guide](https://archipelago.gg/tutorial/The%20Witness/setup/en)
 
-This is still in active development and does not currently "work" due to lack of Netcode on the client side (this project), although this is being actively worked on.
+## Features
+-  Puzzles get locked behind the puzzle symbols\mechanics they contain to facilitate a progression experience.
+-  Every last panel in a row of panels is considered a location check for archipelago.
+-  After a key panel is solved it will display what item it send out or what item you received.
 
-Most of the interesting code is currently in Source/Watchdog.cpp. All the currently implemented gameplay features are tested there.
-Of course, it will be moved into its appropriate places eventually. :)
-
-If you want to contribute, shoot me a message on Discord: VioletSoup#1785
-Currently there are two people working on this.
-
+Most of the interesting code is currently in Source\Archipelago. 
+This project was originally started by [NewSoupVi](https://github.com/newsoupvi) and continued by [Jarno](https://github.com/JarnoWesthof)
 
 # Original Readme from Sigma Rando:
 
 ![](https://github.com/sigma144/witness-randomizer/blob/master/example.png)
 
-# Witness Random Puzzle Generator
-
-### [Click Here to Download (ver 1.2.3)](https://github.com/sigma144/witness-randomizer/releases/download/1.2.3/WitnessRPG1.2.3.zip)
+## Witness Random Puzzle Generator
 
 #### Randomizer Version 1.2 is finally out! It includes numerous puzzle tweaks, nerfs, and bug fixes. Full change log coming shortly
 
