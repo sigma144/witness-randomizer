@@ -3,7 +3,6 @@ try to make shadows editable to make them arrow puzzles
 
 BUGS:
 major:
-receicing multiple items at once does not correctly reset temporary effects like poweresurge
 
 minor: 
 
