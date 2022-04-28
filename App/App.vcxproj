@@ -72,21 +72,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>WitnessRandomizer</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>WitnessRandomizer</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago</TargetName>
     <IncludePath>C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um;$(IncludePath)</IncludePath>
     <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>WitnessRandomizer</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago (32)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>WitnessRPG</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago</TargetName>
     <OutDir>..\GithubPackage\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
