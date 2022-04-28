@@ -94,11 +94,11 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	});
 
 	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
+		if (!receivingPlayer || !networkItem || networkItem->player != ap->get_player_number())
+			return;
+
 		const APClient::NetworkItem item = *networkItem;
 		const int receiver = *receivingPlayer;
-
-		if (item.player != ap->get_player_number())
-			return;
 
 		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {
 			return pair.second == item.location;
@@ -146,8 +146,6 @@ std::string APRandomizer::buildUri(std::string& server)
 }
 
 void APRandomizer::PostGeneration(HWND loadingHandle) {
-	state.unlockedStones = true;
-
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if (UnlockSymbols)

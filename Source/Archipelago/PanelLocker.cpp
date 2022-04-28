@@ -195,8 +195,10 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	for (std::size_t i = 0; i < words.size() && i < 5; ++i)
 		createCenteredText(id, words[i], intersections, intersectionFlags, connectionsA, connectionsB, 0.22f + (0.1f * i), 0.3f + (0.1f * i));
 
-	std::string player = receivingPlayer;
-	createCenteredText(id, "to " + player, intersections, intersectionFlags, connectionsA, connectionsB, 0.87f, 0.97f);
+	if (receiving) {
+		std::string player = receivingPlayer;
+		createCenteredText(id, "to " + player, intersections, intersectionFlags, connectionsA, connectionsB, 0.87f, 0.97f);
+	}
 
 	Color backgroundColor;
 	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
