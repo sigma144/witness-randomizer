@@ -214,7 +214,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				apRandomizer->GenerateHard();
 			else
 				apRandomizer->GenerateNormal();
-			apRandomizer->Initialize(hwndLoadingText);
+			apRandomizer->PostGeneration(hwndLoadingText);
 
 			break;
 		}

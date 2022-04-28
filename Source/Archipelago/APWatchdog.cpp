@@ -45,13 +45,9 @@ void APWatchdog::MarkLocationChecked(int locationId)
 	while (it != panelIdToLocationId.end())
 	{
 		if (it->second == locationId)
-		{
 			it = panelIdToLocationId.erase(it);
-		}
 		else
-		{
 			it++;
-		}
 	}
 }
 
@@ -78,8 +74,13 @@ void APWatchdog::HandleMovementSpeed() {
 }
 
 void APWatchdog::TriggerPowerSurge() {
-	if (!hasPowerSurge)
-	{
+	if (hasPowerSurge) {
+		powerSurgeStartTime = std::chrono::system_clock::now();
+	}
+	else {
+		hasPowerSurge = true;
+		powerSurgeStartTime = std::chrono::system_clock::now();
+
 		for (const auto& panelId : AllPuzzles) {
 			if (ReadPanelData<int>(panelId, SOLVED))
 				continue;
@@ -93,9 +94,6 @@ void APWatchdog::TriggerPowerSurge() {
 			}
 		}
 	}
-
-	powerSurgeStartTime = std::chrono::system_clock::now();
-	hasPowerSurge = true;
 }
 
 void APWatchdog::HandlePowerSurge() {
@@ -104,7 +102,14 @@ void APWatchdog::HandlePowerSurge() {
 		hasPowerSurge = false;
 
 		for (auto& [panelId, powerValues] : powerSurgedPanels) {
+			if (panelId == 0x033D4) {
+				auto x = 20;
+			}
+
 			WritePanelData<float>(panelId, POWER, powerValues);
+			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 });
 		}
+
+		powerSurgedPanels.clear();
 	}
 }

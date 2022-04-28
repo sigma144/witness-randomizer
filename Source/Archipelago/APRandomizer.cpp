@@ -11,21 +11,21 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all);
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 2});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
-		for (const auto& locationId : locations) {
+		for (const auto& locationId : locations)
 			async->MarkLocationChecked(locationId);
-		}
 	});
 
 	ap->set_slot_connected_handler([&](const nlohmann::json& slotData) {
 		Seed = slotData["seed"];
-		Hard = slotData["hard_mode"] == true;
-		UnlockSymbols = slotData["unlock_symbols"] == true;
-		DisableNonRandomizedPuzzles = slotData["disable_non_randomized_puzzles"] == true;
 		FinalPanel = slotData["victory_location"];
+
+		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
+		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
+		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
 			int panelId = std::stoul(key, nullptr, 16);
@@ -78,20 +78,34 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
 
 				//Powerups
-				case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();		break;
-				case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();				break;
+				case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
+				case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
 
 				//Traps
-				case ITEM_POWER_SURGE:							async->TriggerPowerSurge();				break;
+				case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
 
 				default:
 					break;
 			}
 
-			if (item.item < ITEM_TEMP_SPEED_BOOST) {
+			if (item.item < ITEM_TEMP_SPEED_BOOST)
 				panelLocker->UpdatePuzzleLocks(state, item.item);
-			}
 		}
+	});
+
+	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
+		if (!receivingPlayer || !networkItem || networkItem->player != ap->get_player_number())
+			return;
+
+		const APClient::NetworkItem item = *networkItem;
+		const int receiver = *receivingPlayer;
+
+		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {
+			return pair.second == item.location;
+		});
+
+		if (findResult != std::end(panelIdToLocationId))
+			panelLocker->SetItemReward(findResult->first, item, receiver == ap->get_player_number(), ap->get_player_alias(receiver), ap->get_item_name(item.item));
 	});
 
 	(new APServerPoller(ap))->start();
@@ -131,7 +145,7 @@ std::string APRandomizer::buildUri(std::string& server)
 	return uri;
 }
 
-void APRandomizer::Initialize(HWND loadingHandle) {
+void APRandomizer::PostGeneration(HWND loadingHandle) {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if (UnlockSymbols)
@@ -151,12 +165,12 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 }
 
 void APRandomizer::GenerateNormal() {
-	if (DisableNonRandomizedPuzzles);
+	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles();
 }
 
 void APRandomizer::GenerateHard() {
-	if (DisableNonRandomizedPuzzles);
+	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles();
 }
 
