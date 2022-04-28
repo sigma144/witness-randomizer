@@ -1,29 +1,26 @@
 # Witness Archipelago Client
 
-Archipelago is a randomizer API that allows cross-game randomization with online servers.
+[Archipelago](https://archipelago.gg/) is a multiworld randomizer API that allows cross-game randomization with online servers.
 
 This is a project that intends to make The Witness a compatible game, based off of Sigma's codebase (see below).
 
-See also: https://github.com/NewSoupVi/Archipelago
+For more info on how to get started, refer to the [game info page](https://archipelago.gg/games/The%20Witness/info/en) and [setup guide](https://archipelago.gg/tutorial/The%20Witness/setup/en)
 
-This is still in active development and does not currently "work" due to lack of Netcode on the client side (this project), although this is being actively worked on.
+## Features
+-  Puzzles get locked behind the puzzle symbols\mechanics they contain to facilitate a progression experience.
+-  Every last panel in a row of panels is considered a location check for archipelago.
+-  After a key panel is solved it will display what item it send out or what item you received.
 
-Most of the interesting code is currently in Source/Watchdog.cpp. All the currently implemented gameplay features are tested there.
-Of course, it will be moved into its appropriate places eventually. :)
-
-If you want to contribute, shoot me a message on Discord: VioletSoup#1785
-Currently there are two people working on this.
-
+Most of the interesting code is currently in Source\Archipelago. 
+This project was originally started by [NewSoupVi](https://github.com/newsoupvi) and continued by [Jarno](https://github.com/JarnoWesthof)
 
 # Original Readme from Sigma Rando:
 
 ![](https://github.com/sigma144/witness-randomizer/blob/master/example.png)
 
-# Witness Random Puzzle Generator
+## Witness Random Puzzle Generator
 
-### [Click Here to Download (ver 1.3.0)](https://github.com/sigma144/witness-randomizer/releases/download/1.3.0/WitnessRPG1.3.0.zip)
-
-#### Randomizer Version 1.3 is out, which includes compatibility for Expert double rando! Double rando capability is also now included in the randomizer itself. This release has not been fully tested, so I will be actively monitoring for any issues/bugs that crop up. Big thank you to hatkirbyy who contributed the code for this release and got Expert working 😄
+#### Randomizer Version 1.2 is finally out! It includes numerous puzzle tweaks, nerfs, and bug fixes. Full change log coming shortly
 
 The Witness Random Puzzle Generator takes most of the puzzles in Jonathan Blow's "The Witness" and makes them into new, randomly generated puzzles. The mod requires the game in order to function. No game files will be altered, as the randomizer works enterly in RAM. This mod uses WinAPI, so it is only compatible with Microsoft Windows. There is a program you can use that might make it work with Linux; see https://marugawa.dk/witness-randomizer-on-linux for more details.
 
