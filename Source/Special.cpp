@@ -121,7 +121,7 @@ void Special::generateAntiPuzzle(int id)
 	}
 }
 
-void Special::generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter)
+void Special::generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind)
 {
 	generator->setFlagOnce(Generate::Config::DisableWrite);
 	generator->setGridSize(size.first, size.second);
@@ -136,6 +136,7 @@ void Special::generateColorFilterPuzzle(int id, Point size, const std::vector<st
 	if (filter.g == 1) {
 		for (int i = 0; i < availableColors.size(); i++) {
 			Color c = availableColors[i];
+			if (colorblind && c.r == 0) continue;
 			if (c.g == 0) availableColors.push_back({ c.r, 1, c.b, 1 });
 		}
 	}

@@ -1115,7 +1115,10 @@ bool Generate::place_dots(int amount, int color, bool intersectionOnly) {
 				set(x, y, Decoration::Dot_Intersection);
 			}
 		}
-		return true;
+		amount -= _panel->get_num_grid_points();
+		if (amount <= 0) return true;
+		intersectionOnly = false;
+		setFlagOnce(Config::DisableDotIntersection);
 	}
 
 	if (color == Decoration::Color::Blue || color == Decoration::Color::Cyan)

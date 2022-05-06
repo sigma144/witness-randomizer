@@ -27,7 +27,7 @@ public:
 	void generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id);
 	void generateReflectionDotPuzzle(std::shared_ptr<Generate> gen, int id1, int id2, std::vector<std::pair<int, int>> symbols, Panel::Symmetry symmetry, bool split);
 	void generateAntiPuzzle(int id);
-	void generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter);
+	void generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind);
 	void generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSequence, bool writeSequence);
 	void generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSequence, bool writeSequence);
 	void generateSoundDotReflectionPuzzle(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored, bool writeSequence);
