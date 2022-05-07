@@ -471,11 +471,11 @@ void PuzzleList::GenerateTreehouseN()
 	generator->generate(0x17DC7, Decoration::Star | Decoration::Color::Magenta, 6, Decoration::Dot_Intersection, 6, Decoration::Gap, 3);
 	generator->generate(0x17CE4, Decoration::Star | Decoration::Color::Magenta, 6, Decoration::Dot_Intersection, 6, Decoration::Gap, 3);
 	generator->setGridSize(5, 5);
-	generator->pathWidth = 0.8f;
+	generator->pathWidth = 0.84f;
 	generator->generate(0x17D2D, Decoration::Star | Decoration::Color::Magenta, 6, Decoration::Dot_Intersection, 9, Decoration::Gap, 8);
-	generator->pathWidth = 1;
 	generator->generate(0x17D6C, Decoration::Star | Decoration::Color::Magenta, 8, Decoration::Dot_Intersection, 9, Decoration::Gap, 5);
 	generator->removeFlag(Generate::Config::FullGaps);
+	generator->pathWidth = 1;
 	//Pink Bridge 2
 	generator->setGridSize(3, 3);
 	generator->generate(0x17D9B, Decoration::Star | Decoration::Color::Magenta, 4, Decoration::Stone | Decoration::Color::Black, 2, Decoration::Stone | Decoration::Color::White, 2);
@@ -865,7 +865,7 @@ void PuzzleList::GenerateCavesN()
 	generator->setFlag(Generate::Config::EnableFlash);
 	generator->generate(0x0A16B, Decoration::Dot_Intersection, 33);
 	generator->generate(0x0A2CE, Decoration::Dot_Intersection, 25, Decoration::Star | Decoration::Color::Black, 6, Decoration::Star | Decoration::Color::White, 2);
-	generator->generate(0x0A2D7, Decoration::Dot_Intersection, 25, Decoration::Triangle | Decoration::Color::Black, 4);
+	generator->generate(0x0A2D7, Decoration::Dot_Intersection, 25, Decoration::Star | Decoration::Color::Black, 1, Decoration::Star | Decoration::Color::White, 2, Decoration::Stone | Decoration::Color::Black, 2, Decoration::Stone | Decoration::Color::White, 1);
 	generator->generate(0x0A2DD, Decoration::Dot_Intersection, 25, Decoration::Poly | Decoration::Color::Black, 3);
 	generator->generate(0x0A2EA, Decoration::Dot_Intersection, 25, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Black, 2);
 	generator->setSymbol(Decoration::Start, 0, 0); generator->setSymbol(Decoration::Start, 6, 6); generator->setSymbol(Decoration::Start, 0, 6);

@@ -42,7 +42,7 @@ void Randomizer::GenerateHard(HWND loadingHandle) {
 	SetWindowText(loadingHandle, L"Done!");
 	if (!Special::hasBeenRandomized())
 		MessageBox(GetActiveWindow(), L"Hi there! Thanks for trying out Expert Mode. It will be tough, but I hope you have fun!\r\n\r\n"
-		L"Expert has some unique tricks up its sleeve. You will encounter some situations that may seem impossible at first (even in tutorial)! "
+		L"Expert has some unique tricks up its sleeve. You will encounter some situations that may seem impossible at first glance (even in tutorial)! "
 		L"In these situations, try to think of alternate approaches that weren't required in the base game.\r\n\r\n"
 		L"For especially tough puzzles, the Solver folder has a solver that works for most puzzles, though it occasionally fails to find a solution.\r\n\r\n"
 		L"The Github wiki also has a Hints page that can help with certain tricky puzzles.\r\n\r\n"
