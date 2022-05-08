@@ -182,6 +182,9 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 }
 
 void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item, const bool& receiving, const std::string& receivingPlayer, const std::string& itemName) {
+	if (!_memory->ReadPanelData<int>(id, SOLVED))
+		return;
+
 	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
 	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
 	std::vector<int> connectionsA;
