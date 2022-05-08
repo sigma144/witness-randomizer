@@ -43,9 +43,9 @@ void Randomizer::GenerateHard(HWND loadingHandle) {
 	SetWindowText(loadingHandle, L"Done!");
 	if (!Special::hasBeenRandomized())
 		MessageBox(GetActiveWindow(), L"Hi there! Thanks for trying out Expert Mode. It will be tough, but I hope you have fun!\r\n\r\n"
-		L"Expert has some unique tricks up its sleeve. You will encounter some situations that may seem impossible at first glance. "
+		L"Expert has some unique tricks up its sleeve. You will encounter some situations that may seem impossible at first glance (even in tutorial)! "
 		L"In these situations, try to think of alternate approaches that weren't required in the base game.\r\n\r\n"
-		L"For especially tough puzzles, the Solver folder has a solver that works for most puzzles, though it currently has some trouble with Erasers.\r\n\r\n"
+		L"For especially tough puzzles, the Solver folder has a solver that works for most puzzles, though it occasionally fails to find a solution.\r\n\r\n"
 		L"The Github wiki also has a Hints page that can help with certain tricky puzzles.\r\n\r\n"
 		L"Thanks for playing, and good luck!", L"Welcome", MB_OK);
 }
@@ -77,15 +77,17 @@ void Randomizer::AdjustSpeed() {
 void Randomizer::RandomizeDesert() {
 	std::vector<int> puzzles = desertPanels;
 	std::vector<int> valid1 = { 0x00698, 0x0048F, 0x09F92, 0x09DA6, 0x0078D, 0x04D18, 0x0117A, 0x17ECA, 0x0A02D };
-	std::vector<int> valid2 = { 0x00698, 0x09F92, 0x0A036, 0x0A049, 0x0A053, 0x00422, 0x006E3, 0x00C72, 0x008BB, 0x0078D, 0x01205, 0x181AB, 0x012D7, 0x17ECA, 0x0A02D };
+	std::vector<int> valid2 = { 0x00698, 0x0048F, 0x09F92, 0x0A036, 0x0A049, 0x0A053, 0x00422, 0x006E3, 0x00C72, 0x008BB, 0x0078D, 0x04D18, 0x01205, 0x181AB, 0x012D7, 0x17ECA, 0x0A02D };
 	std::vector<int> valid3 = { 0x00698, 0x0048F, 0x09F92, 0x0A036, 0x0A049, 0x00422, 0x008BB, 0x0078D, 0x18313, 0x01205 };
 	std::vector<int> validSurfaceSeven = { 0x00698, 0x0048F, 0x09F92, 0x0A036, 0x0A049, 0x0A053, 0x00422, 0x006E3, 0x0A02D, 0x00C72, 0x0129D, 0x008BB, 0x0078D, 0x18313, 0x04D18, 0x01205, 0x181AB, 0x17ECA, 0x012D7 };
+	std::vector<int> validSurfaceThree = { 0x00698, 0x0048F, 0x09F92, 0x0A049, 0x006E3, 0x008BB, 0x0078D, 0x01205, 0x012D7, 0x17ECA, 0x0A02D };
 	int endIndex = static_cast<int>(desertPanels.size());
 	for (int i = 0; i < endIndex - 1; i++) {
 		const int target = Random::rand() % (endIndex - i) + i;
 		//Prevent ambiguity caused by shadows, and ensure all latches on Surface 7 and Light 3 must be opened
 		if (i == target || i == 1 && std::find(valid1.begin(), valid1.end(), desertPanels[target]) == valid1.end() || 
-			(i == 2 || i == 9) && std::find(valid2.begin(), valid2.end(), desertPanels[target]) == valid2.end() ||
+			i == 2 && std::find(validSurfaceThree.begin(), validSurfaceThree.end(), desertPanels[target]) == validSurfaceThree.end() ||
+			i == 9 && std::find(valid2.begin(), valid2.end(), desertPanels[target]) == valid2.end() ||
 			i == 6 && std::find(validSurfaceSeven.begin(), validSurfaceSeven.end(), desertPanels[target]) == validSurfaceSeven.end() ||
 			i == 10 && std::find(valid3.begin(), valid3.end(), desertPanels[target]) == valid3.end()) {
 			i--;

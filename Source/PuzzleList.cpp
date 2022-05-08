@@ -288,7 +288,7 @@ void PuzzleList::GenerateQuarryN()
 	generator->generate(0x014E9, Decoration::Stone | Decoration::Color::White, 4, Decoration::Stone | Decoration::Color::Black, 4, Decoration::Stone | Decoration::Color::Red, 3, Decoration::Eraser | Decoration::Color::Green, 1);
 	//Dots + Stones
 	generator->resetConfig();
-	generator->setSymbol(Decoration::Start, 0, 0);
+	generator->setSymbol(Decoration::Start, 4, 4);
 	generator->setFlagOnce(Generate::Config::AlternateColors);
 	generator->generate(0x0367C, Decoration::Stone | Decoration::Color::White, 5, Decoration::Stone | Decoration::Color::Black, 5, Decoration::Dot, 4, Decoration::Eraser | Decoration::Color::Green, 1);
 	generator->generate(0x3C125, Decoration::Stone | Decoration::Color::White, 10, Decoration::Stone | Decoration::Color::Black, 10,
@@ -508,11 +508,11 @@ void PuzzleList::GenerateTreehouseN()
 	generator->generate(0x17DC7, Decoration::Star | Decoration::Color::Magenta, 6, Decoration::Dot_Intersection, 6, Decoration::Gap, 3);
 	generator->generate(0x17CE4, Decoration::Star | Decoration::Color::Magenta, 6, Decoration::Dot_Intersection, 6, Decoration::Gap, 3);
 	generator->setGridSize(5, 5);
-	generator->pathWidth = 0.8f;
+	generator->pathWidth = 0.84f;
 	generator->generate(0x17D2D, Decoration::Star | Decoration::Color::Magenta, 6, Decoration::Dot_Intersection, 9, Decoration::Gap, 8);
-	generator->pathWidth = 1;
 	generator->generate(0x17D6C, Decoration::Star | Decoration::Color::Magenta, 8, Decoration::Dot_Intersection, 9, Decoration::Gap, 5);
 	generator->removeFlag(Generate::Config::FullGaps);
+	generator->pathWidth = 1;
 	//Pink Bridge 2
 	generator->setGridSize(3, 3);
 	generator->generate(0x17D9B, Decoration::Star | Decoration::Color::Magenta, 4, Decoration::Stone | Decoration::Color::Black, 2, Decoration::Stone | Decoration::Color::White, 2);
@@ -628,8 +628,7 @@ void PuzzleList::GenerateTownN()
 	generator->generate(0x28998, Decoration::Poly | Decoration::Can_Rotate, 4, Decoration::Star | Decoration::Color::White, 6);
 	//Church Star Door
 	generator->removeFlag(Generate::Config::EnableFlash);
-	specialCase->generateColorFilterPuzzle(0x28A0D, { 4, 4 }, { std::make_pair<int, int>(Decoration::Star | 1, 6),
-		std::make_pair<int,int>(Decoration::Star | 2, 6), std::make_pair<int,int>(Decoration::Star | 3, 4) }, { 1, 1, 0, 0 });
+	specialCase->generateColorFilterPuzzle(0x28A0D, { 4, 4 }, { { Decoration::Star | 1, 6 },{ Decoration::Star | 2, 6 }, { Decoration::Star | 3, 4 } }, { 1, 1, 0, 0 }, colorblind);
 	specialCase->setPower(0x28A69, false); (new TownDoorWatchdog())->start();
 	//Soundproof Room
 	std::vector<int> allPitches = { DOT_SMALL, DOT_SMALL, DOT_MEDIUM, DOT_MEDIUM, DOT_LARGE, DOT_LARGE };
@@ -901,10 +900,9 @@ void PuzzleList::GenerateCavesN()
 
 	//Full Dots
 	generator->setFlag(Generate::Config::EnableFlash);
-	generator->generate(0x0A16B, Decoration::Dot_Intersection, 25, Decoration::Stone | Decoration::Color::Black, 1, Decoration::Stone | Decoration::Color::White, 1,
-		Decoration::Stone | Decoration::Color::Cyan, 1, Decoration::Stone | Decoration::Color::Magenta, 1);
+	generator->generate(0x0A16B, Decoration::Dot_Intersection, 33);
 	generator->generate(0x0A2CE, Decoration::Dot_Intersection, 25, Decoration::Star | Decoration::Color::Black, 6, Decoration::Star | Decoration::Color::White, 2);
-	generator->generate(0x0A2D7, Decoration::Dot_Intersection, 25, Decoration::Triangle | Decoration::Color::Black, 4);
+	generator->generate(0x0A2D7, Decoration::Dot_Intersection, 25, Decoration::Star | Decoration::Color::Black, 1, Decoration::Star | Decoration::Color::White, 2, Decoration::Stone | Decoration::Color::Black, 2, Decoration::Stone | Decoration::Color::White, 1);
 	generator->generate(0x0A2DD, Decoration::Dot_Intersection, 25, Decoration::Poly | Decoration::Color::Black, 3);
 	generator->generate(0x0A2EA, Decoration::Dot_Intersection, 25, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Black, 2);
 	generator->setSymbol(Decoration::Start, 0, 0); generator->setSymbol(Decoration::Start, 6, 6); generator->setSymbol(Decoration::Start, 0, 6);
@@ -1025,7 +1023,8 @@ void PuzzleList::GenerateJungleN()
 
 	generator->setLoadingData(L"Jungle", 4);
 	generator->resetConfig();
-
+	specialCase->generateSoundDotPuzzle(0x0026D, { 2, 2 }, { DOT_SMALL, DOT_LARGE }, false);
+	specialCase->generateSoundDotPuzzle(0x0026E, { 2, 2 }, { DOT_SMALL, DOT_LARGE }, false);
 	specialCase->generateSoundDotPuzzle(0x0026F, { 4, 4 }, { DOT_MEDIUM, DOT_MEDIUM, DOT_SMALL, DOT_MEDIUM, DOT_LARGE }, false);
 	if (Random::rand() % 2) specialCase->generateSoundDotPuzzle(0x00C3F, { 4, 4 }, { DOT_SMALL, DOT_MEDIUM, DOT_SMALL, DOT_LARGE }, true);
 	else specialCase->generateSoundDotPuzzle(0x00C3F, { 4, 4 }, { DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_SMALL, DOT_LARGE }, true);
@@ -1801,8 +1800,7 @@ void PuzzleList::GenerateTownH()
 	generator->generate(0x28998, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Black, 3, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::White, 2,
 		Decoration::Star | Decoration::Color::Black, 4, Decoration::Star | Decoration::Color::White, 5);
 	//Church Star Door
-	specialCase->generateColorFilterPuzzle(0x28A0D, { 5, 5 }, { std::make_pair<int, int>(Decoration::Star | 1, 6), std::make_pair<int, int>(Decoration::Star | 2, 6),
-		std::make_pair<int,int>(Decoration::Star | 3, 6), std::make_pair<int,int>(Decoration::Star | 4, 6) }, { 1, 1, 0, 0 });
+	specialCase->generateColorFilterPuzzle(0x28A0D, { 5, 5 }, { { Decoration::Star | 1, 6 }, { Decoration::Star | 2, 6 }, { Decoration::Star | 3, 6 }, { Decoration::Star | 4, 6 } }, { 1, 1, 0, 0 }, false);
 	//Mess with targets
 	specialCase->copyTarget(0x03C08, 0x28A0D); specialCase->copyTarget(0x28A0D, 0x28998);
 	specialCase->setTargetAndDeactivate(0x28998, 0x28A0D); specialCase->setTargetAndDeactivate(0x03C0C, 0x03C08);
