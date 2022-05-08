@@ -182,15 +182,13 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 }
 
 void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item, const bool& receiving, const std::string& receivingPlayer, const std::string& itemName) {
-	if (!_memory->ReadPanelData<int>(id, SOLVED))
+	if (!_memory->ReadPanelData<int>(id, SOLVED)) //Setting item reward makes the puzzle unsolveable only do it on solved puzzles
 		return;
 
 	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
 	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;
-	std::vector<int> decorations = { Decoration::Triangle }; //Invisable triangle to have a non empty decorations array
-	std::vector<int> decorationsFlags = { 0 };
 
 	createCenteredText(id, receiving ? "received" : "send", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
 
@@ -198,7 +196,7 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	for (std::size_t i = 0; i < words.size() && i < 5; ++i)
 		createCenteredText(id, words[i], intersections, intersectionFlags, connectionsA, connectionsB, 0.22f + (0.1f * i), 0.3f + (0.1f * i));
 
-	if (receiving) {
+	if (!receiving) {
 		std::string player = receivingPlayer;
 		createCenteredText(id, "to " + player, intersections, intersectionFlags, connectionsA, connectionsB, 0.87f, 0.97f);
 	}
@@ -222,10 +220,19 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
 	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorationsFlags.size()) });
+	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+
+	std::vector<int> decorations; 
+	std::vector<int> decorationsFlags;
+	//override decorations with invisiables triangles of size 0
+	int numDecorations = _memory->ReadPanelData<int>(id, NUM_DECORATIONS);
+		for (int i = 0; i < numDecorations; i++) {
+		decorations.emplace_back(Decoration::Triangle);
+		decorationsFlags.emplace_back(0);
+	}
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 

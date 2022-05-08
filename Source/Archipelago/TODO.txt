@@ -3,11 +3,10 @@ try to make shadows editable to make them arrow puzzles
 
 BUGS:
 major:
-adding http:// infront of server crashes client
-Simbols arent properly cleared when panel is changed to item reward
-Hinting a panel cases it to be replaced by the send item screen
+
 
 minor: 
+Panel background gets scrambled when it show item send data
 
 Wont fix:
 quarry lazer didnt say missing shapers

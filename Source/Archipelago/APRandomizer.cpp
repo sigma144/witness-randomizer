@@ -52,8 +52,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		connected = false;
 		hasConnectionResult = true;
 
-		WCHAR errorMessage[100] = L"Connection Failed: ";
-		wcscat_s(errorMessage, 100, wError.data());
+		WCHAR errorMessage[200] = L"Connection Failed: ";
+		wcscat_s(errorMessage, 200, wError.data());
 
 		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
 	});
@@ -119,8 +119,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			std::wstring wideServer = Converty::Utf8ToWide(uri);
 
-			WCHAR errorMessage[100] = L"Timeout while connecting to server: ";
-			wcscat_s(errorMessage, 100, wideServer.data());
+			WCHAR errorMessage[200] = L"Timeout while connecting to server: ";
+			wcscat_s(errorMessage, 200, wideServer.data());
 
 			MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
 		}
