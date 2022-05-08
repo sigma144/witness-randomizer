@@ -401,7 +401,7 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 		clear();
 		if (hasFlag(Generate::Config::ShortPath)) {
 			while (!generate_path_length((_panel->_width + _panel->_height),
-				min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 1 / 2))) clear();
+				std::min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 1 / 2))) clear();
 		}
 		while (!generate_path_length((_panel->_width + _panel->_height),
 			std::min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
