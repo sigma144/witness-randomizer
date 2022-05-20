@@ -33,6 +33,7 @@
 #define IDT_RANDOMIZED 0x409
 #define IDC_TOGGLELASERS 0x410
 #define IDC_TOGGLESNIPES 0x411
+#define IDC_RESTORE 0x420
 
 #define IDC_ADD 0x301
 #define IDC_REMOVE 0x302
@@ -77,7 +78,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -130,6 +131,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_COLORBLIND:
 			colorblind = !IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
 			CheckDlgButton(hwnd, IDC_COLORBLIND, colorblind);
+			break;
+
+		case IDC_RESTORE:
+			randomizer->RestoreLineWidths();
 			break;
 
 		//Randomize button
@@ -374,7 +379,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	RegisterClassW(&wndClass);
 
 	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 250, nullptr, nullptr, hInstance, nullptr);
+      650, 200, 600, DEBUG ? 700 : 380, nullptr, nullptr, hInstance, nullptr);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -466,9 +471,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		180, 150, 400, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndPassword, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
-	hwndRandomize = CreateWindow(L"BUTTON", L"Randomize",
+	hwndRandomize = CreateWindow(L"BUTTON", L"Connect",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 180, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
+
+	hwndRestore = CreateWindow(L"BUTTON", L"Restore",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		450, 280, 130, 26, hwnd, (HMENU)IDC_RESTORE, hInstance, NULL);
+
+	CreateWindow(L"STATIC", L"If you crashed/closed the game and/or the randomizer and are attempting to reconnect, follow these steps:\n1. Press this restore button\n2. Restart both the game and the randomizer again. This is very important, do not skip!\n3. Connect again normally.",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
+		10, 240, 430, 100, hwnd, NULL, hInstance, NULL);
 
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,

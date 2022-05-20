@@ -24,6 +24,15 @@ std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::v
 	return result;
 }
 
+void Randomizer::RestoreLineWidths()
+{
+	for (auto const& x : LineWidths)
+	{
+		_memory->WritePanelData<float>(x.first, PATH_WIDTH_SCALE, { x.second });
+		_memory->WritePanelData<int>(x.first, NEEDS_REDRAW, { 1 });
+	}
+}
+
 void Randomizer::GenerateNormal(HWND loadingHandle) {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
 	puzzles->setLoadingHandle(loadingHandle);

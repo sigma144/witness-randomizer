@@ -6,6 +6,8 @@
 
 class Randomizer {
 public:
+	void RestoreLineWidths();
+
 	void GenerateNormal(HWND loadingHandle);
 	void GenerateHard(HWND loadingHandle);
 
