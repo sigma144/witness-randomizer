@@ -25,6 +25,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
 		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
+		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : true;
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
@@ -167,11 +168,17 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 void APRandomizer::GenerateNormal() {
 	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles();
+
+	if (EarlyUTM)
+		panelLocker->EarlyUTM();
 }
 
 void APRandomizer::GenerateHard() {
 	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles();
+
+	if (EarlyUTM)
+		panelLocker->EarlyUTM();
 }
 
 void APRandomizer::PreventSnipes()

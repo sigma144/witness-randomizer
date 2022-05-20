@@ -15,6 +15,7 @@ class PanelLocker {
 		};
 
 		void DisableNonRandomizedPuzzles();
+		void EarlyUTM();
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		void SetItemReward(const int& id, const APClient::NetworkItem& item, const bool& receiving, const std::string& receivingPlayer, const std::string& itemName);

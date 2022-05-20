@@ -25,6 +25,7 @@ class APRandomizer {
 
 		bool Hard = false;
 		bool UnlockSymbols = false;
+		bool EarlyUTM = false;
 		bool DisableNonRandomizedPuzzles = false;
 
 		bool connected = false;

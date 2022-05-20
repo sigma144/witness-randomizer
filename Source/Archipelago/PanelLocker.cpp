@@ -39,6 +39,11 @@ void PanelLocker::DisableNonRandomizedPuzzles()
 	disablePuzzle(0x009B8); //Symmetry Island Scenery Outlines 1
 }
 
+void PanelLocker::EarlyUTM()
+{
+	Special::copyTarget(0x17C42, 0x021D7); // Mountain Discard Early UTM
+}
+
 void PanelLocker::disablePuzzle(int id) {
 	if (lockedPuzzles.count(id) == 1)
 		unlockPuzzle(lockedPuzzles[id]);
