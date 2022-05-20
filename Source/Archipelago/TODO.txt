@@ -1,5 +1,7 @@
 TODO:
 try to make shadows editable to make them arrow puzzles
+Un-disable River Vault: It actually *is* randomized, turns out!
+Put bridge panels back into the panel locking.
 
 BUGS:
 major:
