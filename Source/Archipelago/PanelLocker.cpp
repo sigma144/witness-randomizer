@@ -185,11 +185,13 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	if (!_memory->ReadPanelData<int>(id, SOLVED)) //Setting item reward makes the puzzle unsolveable only do it on solved puzzles
 		return;
 
-	//Mountain combo panel
-	if (id == 0x09FD2)
+	//Mountain combo panel & Mountain Bottom Layer Discard
+	if (id == 0x09FD2 || id == 0x17FA2)
 	{
-		//this fails as the last panel can be solved while yielding an error on one of the previus panels
+		return;
+		//Combo Panel: This fails as the last panel can be solved while yielding an error on one of the previus panels
 		//maybe check if staircase is opened
+		//Bottom Layer Discard: This panel opens a door on a timer. If you fail to go through the door in time, you will get locked.
 	}
 
 	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
