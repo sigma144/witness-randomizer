@@ -92,6 +92,10 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasStones = true;
 		hasColoredStones = false;
 	}
+	else if (id == 0x09E39)
+	{
+		hasStarsWithOtherSymbol = false;
+	}
 }
 
 void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
