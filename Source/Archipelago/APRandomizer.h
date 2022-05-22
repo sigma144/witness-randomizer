@@ -48,7 +48,7 @@ class APRandomizer {
 	
 		void PreventSnipes();
 
-		void EarlyUTM();
+		void MakeEarlyUTM();
 
 		void setPuzzleLocks(HWND loadingHandle);
 

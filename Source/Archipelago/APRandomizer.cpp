@@ -170,7 +170,7 @@ void APRandomizer::GenerateNormal() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		EarlyUTM();
+		this->MakeEarlyUTM();
 }
 
 void APRandomizer::GenerateHard() {
@@ -178,7 +178,7 @@ void APRandomizer::GenerateHard() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		EarlyUTM();
+		this->MakeEarlyUTM();
 }
 
 void APRandomizer::PreventSnipes()
@@ -187,7 +187,7 @@ void APRandomizer::PreventSnipes()
 	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.5 });
 }
 
-void APRandomizer::EarlyUTM()
+void APRandomizer::MakeEarlyUTM()
 {
-	Special::copyTarget(0x0042D, 0x021D7); // Mountain Discard Early UTM
+	Special::copyTarget(0x0042D, 0x021D7); // River Shape Early UTM
 }
