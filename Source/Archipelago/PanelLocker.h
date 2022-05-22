@@ -14,7 +14,7 @@ class PanelLocker {
 			_memory = memory;
 		};
 
-		void DisableNonRandomizedPuzzles();
+		void DisableNonRandomizedPuzzles(bool RiverShape);
 		void EarlyUTM();
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);

@@ -167,7 +167,7 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 
 void APRandomizer::GenerateNormal() {
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles();
+		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
 		panelLocker->EarlyUTM();
@@ -175,7 +175,7 @@ void APRandomizer::GenerateNormal() {
 
 void APRandomizer::GenerateHard() {
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles();
+		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
 		panelLocker->EarlyUTM();

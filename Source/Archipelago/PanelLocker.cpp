@@ -1,6 +1,6 @@
 #include "PanelLocker.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles()
+void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -35,13 +35,15 @@ void PanelLocker::DisableNonRandomizedPuzzles()
 	disablePuzzle(0x00143); //Orchard Apple Tree 1
 	disablePuzzle(0x00139); //Keep Hedge Maze 1
 	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
-	disablePuzzle(0x0042D); //Mountaintop River Shape
+	
+	if(RiverShape) disablePuzzle(0x0042D); //Mountaintop River Shape
+
 	disablePuzzle(0x009B8); //Symmetry Island Scenery Outlines 1
 }
 
 void PanelLocker::EarlyUTM()
 {
-	Special::copyTarget(0x17C42, 0x021D7); // Mountain Discard Early UTM
+	Special::copyTarget(0x0042D, 0x021D7); // Mountain Discard Early UTM
 }
 
 void PanelLocker::disablePuzzle(int id) {
