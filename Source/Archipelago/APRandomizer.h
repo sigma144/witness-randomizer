@@ -53,6 +53,8 @@ class APRandomizer {
 };
 
 const int AllPuzzles[]{
+		0x0C373, // Tutorial Patio Floor
+		0x0C335, // Tutorial Pillar??
 		0x0A171, 0x04CA4, // Tutorial Secret back area
 		0x0005D, 0x0005E, 0x0005F, 0x00060, 0x00061, // Tutorial Dots Tutorial
 		0x018AF, 0x0001B, 0x012C9, 0x0001C, 0x0001D, 0x0001E, 0x0001F, 0x00020, 0x00021,	// Tutorial Stones Tutorial
@@ -90,6 +92,7 @@ const int AllPuzzles[]{
 		0x17D88, 0x17DB4, 0x17D8C, 0x17CE3, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB7, 0x17DB1, 0x17DA2, // Treehouse Orange Bridge 2
 		0x17E3C, 0x17E4D, 0x17E4F, 0x17E52, 0x17E5B, 0x17E5F, 0x17E61, // Treehouse Green Bridge
 		0x2899C, 0x28A33, 0x28ABF, 0x28AC0, 0x28AC1, 0x28AD9, // Town Full Dots + Shapes
+		0x2896A, // Town Rooftop Bridge
 		0x28AC7, 0x28AC8, 0x28ACA, 0x28ACB, 0x28ACC, // Town Blue Symmetry
 		0x18590, // Town Symmetry start
 		0x28A69, // Town Church Star Door
@@ -141,6 +144,7 @@ const int AllPuzzles[]{
 		0x334DB, // Shadows Outer Door Control
 		0x00B10, // Monastery Left Door
 		0x00C92, // Monastery Right Door
+		0x09D9B, // Monastery Overhead Door Control
 		0x0056E, // Swamp Entry
 		0x17C2E, // Bunker Entry Door
 		0x17CAB, // Jungle Pop-up Wall

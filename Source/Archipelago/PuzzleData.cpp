@@ -28,6 +28,8 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 				hasStones = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Star) {
+			hasStars = true;
+
 			bool sharesColorWithOtherShape = false;
 
 			for (int j = 0; j < numberOfDecorations; j++) {
@@ -92,9 +94,14 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasStones = true;
 		hasColoredStones = false;
 	}
-	else if (id == 0x09E39)
+	else if (id == 0x09E39 || id == 0x17F89) // These have sometimes shown "Star with other Symbol" despite not actually having that. No idea why...
 	{
+		hasStars = false;
 		hasStarsWithOtherSymbol = false;
+	}
+	else if (id == 0x0C373) // Patio Floor - In case we decide not to lock the Pillar itself, bc locking that looks pretty wonky (but technically works)
+	{
+		hasTriangles == true;
 	}
 }
 
