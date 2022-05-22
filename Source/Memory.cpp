@@ -132,26 +132,12 @@ void Memory::findActivePanel() {
 
 int Memory::GetActivePanel() {
 
-	ThrowError(std::to_string(this->ReadDataLong<int>(this->ACTIVEPANELOFFSETS, 1)[0] - 1));
-
-	return this->ReadDataLong<int>(this->ACTIVEPANELOFFSETS, 1)[0] - 1;
+	return this->ReadData<int>(this->ACTIVEPANELOFFSETS, 1)[0] - 1;
 }
 
 __int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL) {
 	// (address of next line) + (index interpreted as 4byte int)
 	return offset + index + bytesToEOL + *(int*)&data[index];
-}
-
-void Memory::ReadDataInternalLong(void* buffer, uintptr_t computedOffset, size_t bufferSize) {
-	assert(bufferSize > 0);
-	if (!_handle) return;
-	// Ensure that the buffer size does not cause a read across a page boundary.
-	if (bufferSize > 0x1000 - (computedOffset & 0x0000FFF)) {
-		bufferSize = 0x1000 - (computedOffset & 0x0000FFF);
-	}
-	if (!ReadProcessMemory(_handle, (void*)computedOffset, buffer, bufferSize, nullptr)) {
-		assert(false);
-	}
 }
 
 #define BUFFER_SIZE 0x10000 // 10 KB
@@ -209,7 +195,7 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 	int final_offset = offsets.back();
 	offsets.pop_back();
 
-	uintptr_t cumulativeAddress =  _baseAddress;
+	uintptr_t cumulativeAddress = _baseAddress;
 	for (const int offset : offsets) {
 		cumulativeAddress += offset;
 
@@ -229,39 +215,11 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 	return reinterpret_cast<void*>(cumulativeAddress + final_offset);
 }
 
-uintptr_t Memory::ComputeOffsetLong(std::vector<__int64> offsets, bool absolute) {
-	assert(offsets.size() > 0);
-	assert(offsets.front() != 0);
-
-	// Leave off the last offset, since it will be either read/write, and may not be of type uintptr_t.
-	const __int64 final_offset = offsets.back();
-	offsets.pop_back();
-
-	uintptr_t cumulativeAddress = _baseAddress;
-	for (const __int64 offset : offsets) {
-		cumulativeAddress += offset;
-
-		// If the address was already computed, continue to the next offset.
-		const auto search = _computedAddresses.find(cumulativeAddress);
-		if (search == std::end(_computedAddresses)) {
-			// If the address is not yet computed, then compute it.
-			uintptr_t computedAddress = 0;
-			if (!Read(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {
-				if (!showMsg) throw std::exception();
-				ThrowError("");
-			}
-			_computedAddresses[cumulativeAddress] = computedAddress;
-		}
-		cumulativeAddress = _computedAddresses[cumulativeAddress];
-	}
-	return cumulativeAddress + final_offset;
-}
-
 int Memory::GLOBALS = 0;
 int Memory::RUNSPEED = 0;
 int Memory::ACCELERATION = 0;
 int Memory::DECELERATION = 0;
-std::vector<__int64> Memory::ACTIVEPANELOFFSETS = {};
+std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;
 int Memory::globalsTests[3] = {
 	0x62D0A0, //Steam and Epic Games

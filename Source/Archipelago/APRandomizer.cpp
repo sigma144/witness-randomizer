@@ -190,6 +190,16 @@ void APRandomizer::PreventSnipes()
 void APRandomizer::SkipPuzzle()
 {
 	int id = _memory->GetActivePanel();
+
+	if (id == -1) return;
+
+	std::vector<int> decorations = { Decoration::Triangle }; //Invisable triangle to have a non empty decorations array
+	std::vector<int> decorationsFlags = { 0 };
+
+	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	_memory->WriteArray<int>(id, DECORATIONS, decorations);
+	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+
 	Special::drawGoodLuckPanel(id);
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
