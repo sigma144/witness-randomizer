@@ -44,8 +44,6 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 						
 			if (sharesColorWithOtherShape)
 				hasStarsWithOtherSymbol = true;
-			else
-				hasStars = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
 			if ((decorations[i] & 0x2000) == Decoration::Negative)
