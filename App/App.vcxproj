@@ -88,6 +88,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>The Witness Randomizer for Archipelago</TargetName>
     <OutDir>..\GithubPackage\</OutDir>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

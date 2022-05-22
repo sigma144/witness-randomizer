@@ -21,6 +21,8 @@ public:
 	Memory(const std::string& processName);
 	int findGlobals();
 	void findMovementSpeed();
+	void findActivePanel();
+	int GetActivePanel();
 	static __int64 ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL = 4);
 	~Memory();
 
@@ -119,6 +121,7 @@ public:
 
 	static int GLOBALS;
 	static int RUNSPEED;
+	static std::vector<__int64> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
 	static int DECELERATION;
 	static bool showMsg;
@@ -139,6 +142,16 @@ private:
 		return {};
 	}
 
+	void ReadDataInternalLong(void* buffer, const uintptr_t computedOffset, size_t bufferSize);
+
+	template<class T>
+	inline std::vector<T> ReadDataLong(const std::vector<__int64>& offsets, size_t numItems) {
+		std::vector<T> data(numItems);
+		if (!_handle) return data;
+		ReadDataInternalLong(&data[0], ComputeOffsetLong(offsets), numItems * sizeof(T));
+		return data;
+	}
+
 	template <class T>
 	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
 		if (Write(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
@@ -157,6 +170,7 @@ private:
 	void ThrowError();
 
 	void* ComputeOffset(std::vector<int> offsets);
+	uintptr_t ComputeOffsetLong(std::vector<__int64> offsets, bool absolute = false);
 
 	std::map<uintptr_t, uintptr_t> _computedAddresses;
 	std::map<std::pair<int, int>, int> _arraySizes;

@@ -35,6 +35,7 @@ class APRandomizer {
 
 		void GenerateNormal();
 		void GenerateHard();
+		void SkipPuzzle();
 
 	private:
 		std::map<int, int> panelIdToLocationId;

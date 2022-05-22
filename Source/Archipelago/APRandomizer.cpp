@@ -186,3 +186,10 @@ void APRandomizer::PreventSnipes()
 	// Distance-gate shadows laser to prevent sniping through the bars
 	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.5 });
 }
+
+void APRandomizer::SkipPuzzle()
+{
+	int id = _memory->GetActivePanel();
+	Special::drawGoodLuckPanel(id);
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}

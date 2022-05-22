@@ -34,6 +34,7 @@
 #define IDC_TOGGLELASERS 0x410
 #define IDC_TOGGLESNIPES 0x411
 #define IDC_RESTORE 0x420
+#define IDC_SKIPPUZZLE 0x421
 
 #define IDC_ADD 0x301
 #define IDC_REMOVE 0x302
@@ -78,7 +79,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -223,6 +224,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			break;
 		}
+
+		case IDC_SKIPPUZZLE:
+			apRandomizer->SkipPuzzle();
+			break;
 
 		//Add a symbol to the puzzle (debug mode only)
 		case IDC_ADD:
@@ -394,6 +399,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	}
 
 	memory.findMovementSpeed();
+	memory.findActivePanel();
 
 	if (!Memory::GLOBALS) {
 		std::ifstream file("WRPGglobals.txt");
@@ -475,17 +481,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 180, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
 
+	hwndSkip = CreateWindow(L"BUTTON", L"Skip Puzzle",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		450, 210, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
+
+
 	hwndRestore = CreateWindow(L"BUTTON", L"Restore",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 280, 130, 26, hwnd, (HMENU)IDC_RESTORE, hInstance, NULL);
+		450, 310, 130, 26, hwnd, (HMENU)IDC_RESTORE, hInstance, NULL);
 
 	CreateWindow(L"STATIC", L"If you crashed/closed the game and/or the randomizer and are attempting to reconnect, follow these steps:\n1. Press this restore button\n2. Restart both the game and the randomizer again. This is very important, do not skip!\n3. Connect again normally.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 240, 430, 100, hwnd, NULL, hInstance, NULL);
+		10, 270, 430, 100, hwnd, NULL, hInstance, NULL);
 
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		250, 185, 160, 16, hwnd, NULL, hInstance, NULL);
+		250, 215, 160, 16, hwnd, NULL, hInstance, NULL);
 
 	std::ifstream configFile("WRPGconfig.txt");
 	if (configFile.is_open()) {
