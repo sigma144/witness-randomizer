@@ -1579,6 +1579,55 @@ void Special::drawGoodLuckPanel(int id)
 	drawText(id, intersections, connectionsA, connectionsB, { 0.66f, 0.62f, 0.66f, 0.69f, 0.32f, 0.69f, 0.51f, 0.51f, 0.32f, 0.32f, 0.66f, 0.32f, 0.66f, 0.39f });
 }
 
+void Special::DrawSimplePanel(int id)
+{
+	std::vector<float> intersections;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<float> finalLine = { 0.5f, 0.1f, 0.5f, 0.9f };
+
+	std::vector<int> intersectionFlags;
+	for (int i = 0; i < intersections.size() / 2; i++) {
+		intersectionFlags.emplace_back(0);
+	}
+	intersections.emplace_back(finalLine[0]);
+	intersectionFlags.emplace_back(Decoration::Start);
+
+	for (int i = 1; i < finalLine.size(); i++) {
+		intersections.emplace_back(finalLine[i]);
+		if (i % 2 == 0) {
+			intersectionFlags.emplace_back(i == finalLine.size() - 2 ? Decoration::Exit : 0);
+			connectionsA.emplace_back(static_cast<int>(intersectionFlags.size()) - 2); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size()) - 1);
+		}
+	}
+
+	int seqLen = 0;
+	std::vector<int> seq = { };
+
+	Panel panel;
+
+	std::vector<int> decorations = { Decoration::Triangle };
+	std::vector<int> decorationsFlags = { 0 };
+
+	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	panel._memory->WriteArray<int>(id, DECORATIONS, decorations);
+	panel._memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+
+	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
+
+	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 1.0f });
+	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 //For testing/debugging purposes only
 void Special::test() {
 
