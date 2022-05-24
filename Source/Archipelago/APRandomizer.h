@@ -49,6 +49,8 @@ class APRandomizer {
 	
 		void PreventSnipes();
 
+		void MakeEarlyUTM();
+
 		void setPuzzleLocks(HWND loadingHandle);
 
 		std::string buildUri(std::string& server);

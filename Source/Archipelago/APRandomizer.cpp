@@ -170,7 +170,7 @@ void APRandomizer::GenerateNormal() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		panelLocker->EarlyUTM();
+		this->MakeEarlyUTM();
 }
 
 void APRandomizer::GenerateHard() {
@@ -178,13 +178,18 @@ void APRandomizer::GenerateHard() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		panelLocker->EarlyUTM();
+		this->MakeEarlyUTM();
 }
 
 void APRandomizer::PreventSnipes()
 {
 	// Distance-gate shadows laser to prevent sniping through the bars
-	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.5 });
+	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.7 });
+}
+
+void APRandomizer::MakeEarlyUTM()
+{
+	Special::copyTarget(0x0042D, 0x021D7); // River Shape Early UTM
 }
 
 void APRandomizer::SkipPuzzle()

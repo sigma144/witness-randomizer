@@ -44,8 +44,6 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 						
 			if (sharesColorWithOtherShape)
 				hasStarsWithOtherSymbol = true;
-			else
-				hasStars = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
 			if ((decorations[i] & 0x2000) == Decoration::Negative)
@@ -101,7 +99,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	}
 	else if (id == 0x0C373) // Patio Floor - In case we decide not to lock the Pillar itself, bc locking that looks pretty wonky (but technically works)
 	{
-		hasTriangles == true;
+		hasTriangles = true;
 	}
 }
 
