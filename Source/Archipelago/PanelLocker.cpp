@@ -187,8 +187,8 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	if (!_memory->ReadPanelData<int>(id, SOLVED)) //Setting item reward makes the puzzle unsolveable only do it on solved puzzles
 		return;
 
-	//Mountain combo panel & Mountain Bottom Layer Discard
-	if (id == 0x09FD2 || id == 0x17FA2)
+	//Mountain combo panel & Mountain Bottom Layer Discard & Tutorial Back Left
+	if (id == 0x09FD2 || id == 0x17FA2 || id == 0x0A3B5)
 	{
 		return;
 		//Combo Panel: This fails as the last panel can be solved while yielding an error on one of the previus panels
