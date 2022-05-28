@@ -65,6 +65,8 @@ public:
 	static void drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options);
 	static void drawGoodLuckPanel(int id);
 
+	static void SkipPanel(int id);
+
 	static void DrawSimplePanel(int id);
 
 	void test(); //For testing/debugging purposes only

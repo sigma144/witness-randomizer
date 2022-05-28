@@ -4,6 +4,7 @@
 
 #include "Special.h"
 #include "MultiGenerate.h"
+#include "Archipelago/SkipSpecialCases.h"
 #include "Quaternion.h"
 #include "../App/Version.h"
 
@@ -1579,53 +1580,162 @@ void Special::drawGoodLuckPanel(int id)
 	drawText(id, intersections, connectionsA, connectionsB, { 0.66f, 0.62f, 0.66f, 0.69f, 0.32f, 0.69f, 0.51f, 0.51f, 0.32f, 0.32f, 0.66f, 0.32f, 0.66f, 0.39f });
 }
 
+void Special::SkipPanel(int id) {
+	if (skip_specialCase.count(id) == 0) {
+		DrawSimplePanel(id);
+		return;
+	}
+
+	//Symmetry Blue/Yellow panels before laser
+
+	if (id == 0x00A52 || id == 0x00A61) {
+		DrawSimplePanel(0x00A52);
+		DrawSimplePanel(0x00A61);
+		return;
+	}
+
+	if (id == 0x00A57 || id == 0x00A64) {
+		DrawSimplePanel(0x00A57);
+		DrawSimplePanel(0x00A64);
+		return;
+	}
+
+	if (id == 0x00A5B || id == 0x00A68) {
+		DrawSimplePanel(0x00A5B);
+		DrawSimplePanel(0x00A68);
+		return;
+	}
+
+	//Keep Pressure Plates
+
+	if (id == 0x0A3A8) {
+		DrawSimplePanel(0x033EA);
+		return;
+	}
+	if (id == 0x0A3B9) {
+		DrawSimplePanel(0x01BE9);
+		return;
+	}
+	if (id == 0x0A3BB) {
+		DrawSimplePanel(0x01CD3);
+		return;
+	}
+	if (id == 0x0A3AD) {
+		DrawSimplePanel(0x01D3F);
+		return;
+	}
+}
+
 void Special::DrawSimplePanel(int id)
 {
-	std::vector<float> intersections;
-	std::vector<int> connectionsA;
-	std::vector<int> connectionsB;
-	std::vector<float> finalLine = { 0.5f, 0.1f, 0.5f, 0.9f };
-
-	std::vector<int> intersectionFlags;
-	for (int i = 0; i < intersections.size() / 2; i++) {
-		intersectionFlags.emplace_back(0);
-	}
-	intersections.emplace_back(finalLine[0]);
-	intersectionFlags.emplace_back(Decoration::Start);
-
-	for (int i = 1; i < finalLine.size(); i++) {
-		intersections.emplace_back(finalLine[i]);
-		if (i % 2 == 0) {
-			intersectionFlags.emplace_back(i == finalLine.size() - 2 ? Decoration::Exit : 0);
-			connectionsA.emplace_back(static_cast<int>(intersectionFlags.size()) - 2); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size()) - 1);
-		}
-	}
-
-	int seqLen = 0;
-	std::vector<int> seq = { };
+	if (skip_completelyExclude.count(id)) return;
 
 	Panel panel;
+
+	int style = panel._style = panel._memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	style &= ~Panel::Style::SYMMETRICAL;
+	style &= ~Panel::Style::HAS_TRIANGLES;
+	style &= ~Panel::Style::HAS_DOTS;
+	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
+
+	panel._memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
+
+
+	if (!skip_noLine.count(id)) {
+		std::vector<float> intersections;
+		std::vector<int> connectionsA;
+		std::vector<int> connectionsB;
+
+		std::vector<float> finalLine = { 0.5f, 0.9f, 0.5f, 0.1f };
+
+		if (skip_specialLine.count(id)) {
+			finalLine = skip_specialLine.at(id);
+		}
+
+		std::vector<int> intersectionFlags;
+		for (int i = 0; i < intersections.size() / 2; i++) {
+			intersectionFlags.emplace_back(0);
+		}
+		intersections.emplace_back(finalLine[0]);
+		intersectionFlags.emplace_back(Decoration::Start);
+
+		for (int i = 1; i < finalLine.size(); i++) {
+			intersections.emplace_back(finalLine[i]);
+			if (i % 2 == 0) {
+				intersectionFlags.emplace_back(i == finalLine.size() - 2 ? Decoration::Exit : 0);
+				connectionsA.emplace_back(static_cast<int>(intersectionFlags.size()) - 2); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size()) - 1);
+			}
+		}
+
+		int seqLen = 0;
+		std::vector<int> seq = { };
+
+		panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 1.0f });
+		panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+		panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+		panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+		panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+		panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+		panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+		panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { 0 });
+		panel._memory->WritePanelData<INT64>(id, DOT_SEQUENCE_REFLECTION, { 0 });
+		panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { 0 });
+		panel._memory->WritePanelData<INT64>(id, DOT_SEQUENCE, { 0 });
+	}
+
+	else
+
+	{
+		
+	}
 
 	std::vector<int> decorations = { Decoration::Triangle };
 	std::vector<int> decorationsFlags = { 0 };
 
-	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+
+	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, {static_cast<int>(decorations.size())});
 	panel._memory->WriteArray<int>(id, DECORATIONS, decorations);
 	panel._memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 
 	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
 	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
 
-	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 1.0f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
 	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+
+	//Get rid of Dots. God this is janky.
+
+	panel._memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersectionFlags = panel._memory->ReadArray<int>(id, DOT_FLAGS, NUM_DOTS);
+	std::vector<int> newIntFlags = {};
+	for (int value : intersectionFlags) {
+		if (value == Decoration::Start) {
+			newIntFlags.emplace_back(Decoration::Start);
+
+			std::wstringstream os_;
+			os_ << "\n" << std::hex << value;
+			OutputDebugStringW(os_.str().c_str());
+		}
+		else if ((value & Decoration::Exit) == Decoration::Exit || value == 0xffffffff) {
+			newIntFlags.emplace_back(Decoration::Exit);
+
+			std::wstringstream os_;
+			os_ << "\n" << std::hex << value;
+			OutputDebugStringW(os_.str().c_str());
+		}
+		else if (value & Decoration::Dot) {
+			newIntFlags.emplace_back(0);
+		}
+		else newIntFlags.emplace_back(value);
+	}
+
+	panel._memory->WriteArray<int>(id, DOT_FLAGS, newIntFlags);
+
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+
+
+	//Figure out a way to have the randomizer not touch a skipped panel when rerandomizing?
+	//Not really necessary, actually, as you should never re-randomize while the game is already running with randomized panels. You should only re-randomize after the game was closed, and the vanilla panels were re-loaded.
 }
 
 //For testing/debugging purposes only

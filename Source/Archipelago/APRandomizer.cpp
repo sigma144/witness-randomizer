@@ -198,5 +198,5 @@ void APRandomizer::SkipPuzzle()
 
 	if (id == -1) return;
 
-	Special::DrawSimplePanel(id);
+	Special::SkipPanel(id);
 }
