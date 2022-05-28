@@ -118,11 +118,11 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	}
 
 	if ((puzzle->hasStones && !state.unlockedStones)
+		|| (puzzle->hasColoredStones && !state.unlockedColoredStones)
 		|| (puzzle->hasStars && !state.unlockedStars)
 		|| (puzzle->hasStarsWithOtherSymbol && !state.unlockedStarsWithOtherSimbol)
 		|| (puzzle->hasTetris && !state.unlockedTetris)
 		|| (puzzle->hasTetrisRotated && !state.unlockedTetrisRotated)
-		|| (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative)
 		|| (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative)
 		|| (puzzle->hasErasers && !state.unlockedErasers)
 		|| (puzzle->hasTriangles && !state.unlockedTriangles)

@@ -474,3 +474,5 @@ const std::map<int, float> LineWidths =
 {0x197e5,0.8},
 {0x9f7f,0.65},
 };
+
+//TODO: Add Jungle Vault
