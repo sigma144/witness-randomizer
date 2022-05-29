@@ -52,6 +52,8 @@ class APRandomizer {
 
 		void MakeEarlyUTM();
 
+		void SetRequiredLasers(int mountain, int challenge);
+
 		void setPuzzleLocks(HWND loadingHandle);
 
 		std::string buildUri(std::string& server);
