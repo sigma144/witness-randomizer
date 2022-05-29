@@ -2,7 +2,7 @@
 
 [Archipelago](https://archipelago.gg/) is a multiworld randomizer API that allows cross-game randomization with online servers.
 
-This is a project that intends to make The Witness a compatible game, based off of Sigma's codebase (see below).
+This is a project that intends to make The Witness a compatible game, based off of Sigma's and Darkid's codebase (see below).
 
 For more info on how to get started, refer to the [game info page](https://archipelago.gg/games/The%20Witness/info/en) and [setup guide](https://archipelago.gg/tutorial/The%20Witness/setup/en)
 
