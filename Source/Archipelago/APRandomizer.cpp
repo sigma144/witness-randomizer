@@ -25,7 +25,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
 		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
-		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : true;
+		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
