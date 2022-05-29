@@ -26,8 +26,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
 		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : true;
-		MountainLasers = slotData.contains("mountain_lasers") ? (int) slotData["mountain_lasers"] : 7;
-		ChallengeLasers = slotData.contains("challenge_lasers") ? (int) slotData["challenge_lasers"] : 11;
+		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
+		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
@@ -151,7 +151,7 @@ std::string APRandomizer::buildUri(std::string& server)
 void APRandomizer::PostGeneration(HWND loadingHandle) {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
-	SetRequiredLasers(4, 6);
+	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
@@ -194,89 +194,4 @@ void APRandomizer::PreventSnipes()
 void APRandomizer::MakeEarlyUTM()
 {
 	Special::copyTarget(0x0042D, 0x021D7); // River Shape Early UTM
-}
-
-void APRandomizer::SetRequiredLasers(int mountain, int challenge) {
-	int id = 0x09F7F;
-
-	std::vector<float> intersections;
-	std::vector<int> connectionsA;
-	std::vector<int> connectionsB;
-	std::vector<float> finalLine = { 0.5f, 0.04f, 0.5f, 0.14f, 0.5f, 0.23f, 0.5f, 0.32f, 0.5f, 0.41f, 0.5f, 0.50f, 0.5f, 0.59f, 0.5f, 0.68f , 0.5f, 0.77f , 0.5f, 0.86f , 0.5f, 0.95f };
-
-	int jM = (mountain - 1);
-	float yMountain = finalLine[jM * 2 + 1];
-
-	int jC = (challenge - 1);
-	float yChallenge = finalLine[jC * 2 + 1];
-
-	finalLine.insert(finalLine.begin() + 4, 0.57);
-	finalLine.insert(finalLine.begin() + 5, yMountain);
-
-	finalLine.insert(finalLine.begin() + 8, 0.43);
-	finalLine.insert(finalLine.begin() + 9, yChallenge);
-
-	if (jM > 1) {
-		if (jM > 2) {
-			jM++;
-		}
-		jM++;
-	}
-	if (jC > 1) {
-		if (jC > 2) {
-			jC++;
-		}
-		jC++;
-	}
-
-	std::vector<int> intersectionFlags;
-	for (int i = 0; i < intersections.size() / 2; i++) {
-		intersectionFlags.emplace_back(0);
-	}
-	intersections.emplace_back(finalLine[0]);
-	intersectionFlags.emplace_back(Decoration::Start);
-
-	for (int i = 1; i < finalLine.size(); i++) {
-		intersections.emplace_back(finalLine[i]);
-		if (i % 2 == 0) {
-			intersectionFlags.emplace_back(i == 4 || i == 8 ? Decoration::Exit : 0);
-
-			if (i == 4 || i == 8) {
-				connectionsA.emplace_back(static_cast<int>(i == 4 ? jM : jC)); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size() - 1));
-			}
-			else if (i == 6 || i == 10) {
-				connectionsA.emplace_back(static_cast<int>(intersectionFlags.size() - 3)); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size() - 1));
-			}
-			else {
-				connectionsA.emplace_back(static_cast<int>(intersectionFlags.size() - 2)); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size() - 1));
-			}
-		}
-	}
-
-
-	int seqLen = 0;
-	std::vector<int> seq = { };
-
-	Panel panel;
-
-	std::vector<int> decorations = { Decoration::Triangle };
-	std::vector<int> decorationsFlags = { 0 };
-
-	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-	panel._memory->WriteArray<int>(id, DECORATIONS, decorations);
-	panel._memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-
-	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
-	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
-
-	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
-	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
-	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }

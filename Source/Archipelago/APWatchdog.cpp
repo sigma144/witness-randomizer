@@ -12,9 +12,18 @@ void APWatchdog::action() {
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
 
-	if (ReadPanelData<int>(finalPanel, SOLVED) && !isCompleted) {
+	if (finalPanel != 0x17FA2 && ReadPanelData<int>(finalPanel, SOLVED) && !isCompleted) {
 		isCompleted = true;
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
+	}
+	else if (finalPanel == 0x17FA2 && !isCompleted)
+	{
+		float power = ReadPanelData<float>(finalPanel, POWER);
+
+		if (power != 0.0f) {
+			isCompleted = true;
+			ap->StatusUpdate(APClient::ClientStatus::GOAL);
+		}
 	}
 
 	auto it = panelIdToLocationId.begin();

@@ -1583,6 +1583,91 @@ void Special::drawGoodLuckPanel(int id)
 	drawText(id, intersections, connectionsA, connectionsB, { 0.66f, 0.62f, 0.66f, 0.69f, 0.32f, 0.69f, 0.51f, 0.51f, 0.32f, 0.32f, 0.66f, 0.32f, 0.66f, 0.39f });
 }
 
+void Special::SetRequiredLasers(int mountain, int challenge) {
+	int id = 0x09F7F;
+
+	std::vector<float> intersections;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<float> finalLine = { 0.5f, 0.04f, 0.5f, 0.14f, 0.5f, 0.23f, 0.5f, 0.32f, 0.5f, 0.41f, 0.5f, 0.50f, 0.5f, 0.59f, 0.5f, 0.68f , 0.5f, 0.77f , 0.5f, 0.86f , 0.5f, 0.95f };
+
+	int jM = (mountain - 1);
+	float yMountain = finalLine[jM * 2 + 1];
+
+	int jC = (challenge - 1);
+	float yChallenge = finalLine[jC * 2 + 1];
+
+	finalLine.insert(finalLine.begin() + 4, 0.43);
+	finalLine.insert(finalLine.begin() + 5, yMountain);
+
+	finalLine.insert(finalLine.begin() + 8, 0.57);
+	finalLine.insert(finalLine.begin() + 9, yChallenge);
+
+	if (jM > 1) {
+		if (jM > 2) {
+			jM++;
+		}
+		jM++;
+	}
+	if (jC > 1) {
+		if (jC > 2) {
+			jC++;
+		}
+		jC++;
+	}
+
+	std::vector<int> intersectionFlags;
+	for (int i = 0; i < intersections.size() / 2; i++) {
+		intersectionFlags.emplace_back(0);
+	}
+	intersections.emplace_back(finalLine[0]);
+	intersectionFlags.emplace_back(Decoration::Start);
+
+	for (int i = 1; i < finalLine.size(); i++) {
+		intersections.emplace_back(finalLine[i]);
+		if (i % 2 == 0) {
+			intersectionFlags.emplace_back(i == 4 || i == 8 ? Decoration::Exit : 0);
+
+			if (i == 4 || i == 8) {
+				connectionsA.emplace_back(static_cast<int>(i == 4 ? jM : jC)); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size() - 1));
+			}
+			else if (i == 6 || i == 10) {
+				connectionsA.emplace_back(static_cast<int>(intersectionFlags.size() - 3)); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size() - 1));
+			}
+			else {
+				connectionsA.emplace_back(static_cast<int>(intersectionFlags.size() - 2)); connectionsB.emplace_back(static_cast<int>(intersectionFlags.size() - 1));
+			}
+		}
+	}
+
+
+	int seqLen = 0;
+	std::vector<int> seq = { };
+
+	Panel panel;
+
+	std::vector<int> decorations = { Decoration::Triangle };
+	std::vector<int> decorationsFlags = { 0 };
+
+	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	panel._memory->WriteArray<int>(id, DECORATIONS, decorations);
+	panel._memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+
+	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
+
+	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
+	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 //For testing/debugging purposes only
 void Special::test() {
 
