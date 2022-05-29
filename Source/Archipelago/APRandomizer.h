@@ -27,6 +27,8 @@ class APRandomizer {
 		bool UnlockSymbols = false;
 		bool EarlyUTM = false;
 		bool DisableNonRandomizedPuzzles = false;
+		int MountainLasers = 7;
+		int ChallengeLasers = 11;
 
 		bool connected = false;
 
