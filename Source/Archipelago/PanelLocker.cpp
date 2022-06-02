@@ -34,6 +34,7 @@ void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
 	disablePuzzle(0x18590); //Town transparent symmetry
 	disablePuzzle(0x00143); //Orchard Apple Tree 1
 	disablePuzzle(0x00139); //Keep Hedge Maze 1
+	disablePuzzle(0x0360E); //Keep Laser Hedges
 	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
 	
 	if(RiverShape) disablePuzzle(0x0042D); //Mountaintop River Shape
