@@ -202,7 +202,7 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;
 
-	createCenteredText(id, receiving ? "received" : "send", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
+	createCenteredText(id, receiving ? "received" : "sent", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
 
 	std::vector<std::string> words = StringSplitter::split(itemName, ' ');
 	for (std::size_t i = 0; i < words.size() && i < 5; ++i)
