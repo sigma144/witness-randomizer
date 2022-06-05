@@ -42,6 +42,7 @@ private:
 	void CheckSolvedPanels();
 	void HandleMovementSpeed();
 	void HandlePowerSurge();
+	void UpdateChallengeLock();
 };
 
 class APServerPoller : public Watchdog {

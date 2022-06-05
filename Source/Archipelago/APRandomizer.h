@@ -140,7 +140,7 @@ const int AllPuzzles[]{
 		//Doors
 		0x01A54, // Glass Factory Entry
 		0x000B0, // Symmetry Island Door 1
-		0x1C349, // Symmetry Island Door 2
+		// 0x1C349, // Symmetry Island Door 2. Doesn't work properly :(
 		0x01E5A, // Mill Entry Door Left
 		0x09E57, // Quarry Entry Gate 1
 		0x0288C, // Treehouse Door 1&2

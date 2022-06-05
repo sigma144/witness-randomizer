@@ -7,6 +7,7 @@ void APWatchdog::action() {
 	CheckSolvedPanels();
 	HandleMovementSpeed();
 	HandlePowerSurge();
+	UpdateChallengeLock();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -120,5 +121,17 @@ void APWatchdog::HandlePowerSurge() {
 		}
 
 		powerSurgedPanels.clear();
+	}
+}
+
+void APWatchdog::UpdateChallengeLock() {
+	float power = ReadPanelData<float>(0x17FA2, POWER); //Challenge is supposed to unlock when the long solution of the box is solved, which activates the Mountain Bottom Layer Discard
+
+	if (power != 0.0f) {
+		Special::setPower(0x0A332, true);
+	}
+	else
+	{
+		Special::setPower(0x0A332, false);
 	}
 }
