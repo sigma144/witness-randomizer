@@ -31,6 +31,7 @@ class APRandomizer {
 		int ChallengeLasers = 11;
 
 		bool connected = false;
+		bool randomizationFinished = false;
 
 		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
 		void PostGeneration(HWND loadingHandle);
