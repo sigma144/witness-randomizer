@@ -1,6 +1,5 @@
 #include "APWatchdog.h"
 #include "..\Quaternion.h"
-#include "..\Special.h"
 #include <thread>
 
 void APWatchdog::action() {
@@ -137,10 +136,10 @@ void APWatchdog::UpdateChallengeLock() {
 	float power = ReadPanelData<float>(0x17FA2, POWER); //Challenge is supposed to unlock when the long solution of the box is solved, which activates the Mountain Bottom Layer Discard
 
 	if (power != 0.0f) {
-		Special::setPower(0x0A332, true);
+		WritePanelData<float>(0x0A332, POWER, { 1.0, 1.0 });
 	}
 	else
 	{
-		Special::setPower(0x0A332, false);
+		WritePanelData<float>(0x0A332, POWER, { 0.0, 0.0 });
 	}
 }

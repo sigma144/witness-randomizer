@@ -37,9 +37,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			panelIdToLocationId.insert({ panelId, locationId });
 		}
 
-		async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
-		async->start();
-
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -59,41 +56,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		wcscat_s(errorMessage, 200, wError.data());
 
 		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
-	});
-
-	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
-		for (const auto& item : items) {
-			switch (item.item) {
-				//Puzzle Symbols
-				case ITEM_DOTS:									state.unlockedDots = true;							break;
-				case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
-				case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
-				case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
-				case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
-				case ITEM_ERASOR:									state.unlockedErasers = true;						break;
-				case ITEM_TETRIS:									state.unlockedTetris = true;						break;
-				case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
-				case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
-				case ITEM_STARS:									state.unlockedStars = true;						break;
-				case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
-				case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
-				case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
-				case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
-
-				//Powerups
-				case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
-				case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
-
-				//Traps
-				case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
-
-				default:
-					break;
-			}
-
-			if (item.item < ITEM_TEMP_SPEED_BOOST)
-				panelLocker->UpdatePuzzleLocks(state, item.item);
-		}
 	});
 
 	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
@@ -155,6 +117,44 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
+
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
+	async->start();
+
+	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
+		for (const auto& item : items) {
+			switch (item.item) {
+				//Puzzle Symbols
+			case ITEM_DOTS:									state.unlockedDots = true;							break;
+			case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
+			case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
+			case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
+			case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
+			case ITEM_ERASOR:									state.unlockedErasers = true;						break;
+			case ITEM_TETRIS:									state.unlockedTetris = true;						break;
+			case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
+			case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
+			case ITEM_STARS:									state.unlockedStars = true;						break;
+			case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
+			case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
+			case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
+			case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
+
+				//Powerups
+			case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
+			case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
+
+				//Traps
+			case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
+
+			default:
+				break;
+			}
+
+			if (item.item < ITEM_TEMP_SPEED_BOOST)
+				panelLocker->UpdatePuzzleLocks(state, item.item);
+		}
+	});
 }
 
 void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
