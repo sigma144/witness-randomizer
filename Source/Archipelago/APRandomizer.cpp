@@ -19,13 +19,54 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			async->MarkLocationChecked(locationId);
 	});
 
+	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
+		while (!randomizationFinished) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		for (const auto& item : items) {
+			switch (item.item) {
+				//Puzzle Symbols
+			case ITEM_DOTS:									state.unlockedDots = true;							break;
+			case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
+			case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
+			case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
+			case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
+			case ITEM_ERASOR:									state.unlockedErasers = true;						break;
+			case ITEM_TETRIS:									state.unlockedTetris = true;						break;
+			case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
+			case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
+			case ITEM_STARS:									state.unlockedStars = true;						break;
+			case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
+			case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
+			case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
+			case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
+
+				//Powerups
+			case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
+			case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
+
+				//Traps
+			case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
+
+			default:
+				break;
+			}
+
+			if (item.item < ITEM_TEMP_SPEED_BOOST)
+				panelLocker->UpdatePuzzleLocks(state, item.item);
+		}
+	});
+
 	ap->set_slot_connected_handler([&](const nlohmann::json& slotData) {
 		Seed = slotData["seed"];
 		FinalPanel = slotData["victory_location"];
 
 		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
 		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
-		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : true;
+		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
+		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
+		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
@@ -34,9 +75,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			panelIdToLocationId.insert({ panelId, locationId });
 		}
-
-		async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
-		async->start();
 
 		connected = true;
 		hasConnectionResult = true;
@@ -57,41 +95,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		wcscat_s(errorMessage, 200, wError.data());
 
 		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
-	});
-
-	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
-		for (const auto& item : items) {
-			switch (item.item) {
-				//Puzzle Symbols
-				case ITEM_DOTS:									state.unlockedDots = true;							break;
-				case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
-				case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
-				case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
-				case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
-				case ITEM_ERASOR:									state.unlockedErasers = true;						break;
-				case ITEM_TETRIS:									state.unlockedTetris = true;						break;
-				case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
-				case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
-				case ITEM_STARS:									state.unlockedStars = true;						break;
-				case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
-				case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
-				case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
-				case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
-
-				//Powerups
-				case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
-				case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
-
-				//Traps
-				case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
-
-				default:
-					break;
-			}
-
-			if (item.item < ITEM_TEMP_SPEED_BOOST)
-				panelLocker->UpdatePuzzleLocks(state, item.item);
-		}
 	});
 
 	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
@@ -149,8 +152,15 @@ std::string APRandomizer::buildUri(std::string& server)
 void APRandomizer::PostGeneration(HWND loadingHandle) {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
+	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
+
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
+
+	randomizationFinished = true;
+
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
+	async->start();
 }
 
 void APRandomizer::setPuzzleLocks(HWND loadingHandle) {

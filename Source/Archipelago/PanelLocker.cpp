@@ -34,6 +34,7 @@ void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
 	disablePuzzle(0x18590); //Town transparent symmetry
 	disablePuzzle(0x00143); //Orchard Apple Tree 1
 	disablePuzzle(0x00139); //Keep Hedge Maze 1
+	disablePuzzle(0x0360E); //Keep Laser Hedges
 	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
 	
 	if(RiverShape) disablePuzzle(0x0042D); //Mountaintop River Shape
@@ -118,11 +119,11 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	}
 
 	if ((puzzle->hasStones && !state.unlockedStones)
+		|| (puzzle->hasColoredStones && !state.unlockedColoredStones)
 		|| (puzzle->hasStars && !state.unlockedStars)
 		|| (puzzle->hasStarsWithOtherSymbol && !state.unlockedStarsWithOtherSimbol)
 		|| (puzzle->hasTetris && !state.unlockedTetris)
 		|| (puzzle->hasTetrisRotated && !state.unlockedTetrisRotated)
-		|| (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative)
 		|| (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative)
 		|| (puzzle->hasErasers && !state.unlockedErasers)
 		|| (puzzle->hasTriangles && !state.unlockedTriangles)
@@ -187,8 +188,8 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	if (!_memory->ReadPanelData<int>(id, SOLVED)) //Setting item reward makes the puzzle unsolveable only do it on solved puzzles
 		return;
 
-	//Mountain combo panel & Mountain Bottom Layer Discard
-	if (id == 0x09FD2 || id == 0x17FA2)
+	//Mountain combo panel & Mountain Bottom Layer Discard & Tutorial Back Left
+	if (id == 0x09FD2 || id == 0x17FA2 || id == 0x0A3B5)
 	{
 		return;
 		//Combo Panel: This fails as the last panel can be solved while yielding an error on one of the previus panels
@@ -201,7 +202,7 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;
 
-	createCenteredText(id, receiving ? "received" : "send", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
+	createCenteredText(id, receiving ? "received" : "sent", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
 
 	std::vector<std::string> words = StringSplitter::split(itemName, ' ');
 	for (std::size_t i = 0; i < words.size() && i < 5; ++i)

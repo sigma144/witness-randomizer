@@ -31,6 +31,12 @@ void Randomizer::RestoreLineWidths()
 		_memory->WritePanelData<float>(x.first, PATH_WIDTH_SCALE, { x.second });
 		_memory->WritePanelData<int>(x.first, NEEDS_REDRAW, { 1 });
 	}
+
+	for (auto const& x : Power)
+	{
+		_memory->WritePanelData<float>(x.first, POWER, { x.second });
+		_memory->WritePanelData<int>(x.first, NEEDS_REDRAW, { 1 });
+	}
 }
 
 void Randomizer::GenerateNormal(HWND loadingHandle) {

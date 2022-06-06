@@ -12,6 +12,8 @@
 #undef Process32Next
 
 Memory::Memory(const std::string& processName) {
+	std::string process32 = "witness_d3d11.exe";
+
 	// First, get the handle of the process
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
@@ -23,6 +25,16 @@ Memory::Memory(const std::string& processName) {
 		}
 	}
 	if (!_handle) {
+		PROCESSENTRY32 entry;
+		entry.dwSize = sizeof(entry);
+		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		while (Process32Next(snapshot, &entry)) {
+			if (process32 == entry.szExeFile) {
+				MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
+				throw std::exception("Unable to find process!");
+			}
+		}
+
 		MessageBox(GetActiveWindow(), L"Process not found in RAM. Please open The Witness and then try again.", NULL, MB_OK);
 		throw std::exception("Unable to find process!");
 	}

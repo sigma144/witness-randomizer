@@ -1010,8 +1010,6 @@ void PuzzleList::GenerateKeepN()
 		{ { Decoration::Dot, 4 },{ Decoration::Star | Decoration::Color::Black, 4 },{ Decoration::Star | Decoration::Color::White, 4 },
 		{ Decoration::Stone | Decoration::Color::Black, 7 },{ Decoration::Stone | Decoration::Color::White, 5 },{ Decoration::Stone | Decoration::Color::Cyan, 1 },
 		{ Decoration::Stone | Decoration::Color::Magenta, 1 },{ Decoration::Poly, 5 } });
-
-	specialCase->clearTarget(0x0360E); //Must solve pressure plate side
 }
 
 void PuzzleList::GenerateJungleN()
@@ -2321,8 +2319,6 @@ void PuzzleList::GenerateKeepH()
 		{ Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Black, 1 },{ Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::White, 1 },
 		{ Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Yellow, 2 },{ Decoration::Poly | Decoration::Color::Yellow, 3 },{ Decoration::Poly | Decoration::Color::Blue, 3 },
 		{ Decoration::Star | Decoration::Color::Blue, 2 },{ Decoration::Triangle | Decoration::Color::Yellow, 2 },{ Decoration::Triangle | Decoration::Color::Blue, 2 } });
-
-	specialCase->clearTarget(0x0360E); //Must solve pressure plate side
 }
 
 void PuzzleList::GenerateJungleH()

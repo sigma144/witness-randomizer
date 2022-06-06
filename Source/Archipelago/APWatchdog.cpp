@@ -1,20 +1,38 @@
 #include "APWatchdog.h"
 #include "..\Quaternion.h"
-#include "..\Special.h"
 #include <thread>
 
 void APWatchdog::action() {
 	CheckSolvedPanels();
 	HandleMovementSpeed();
 	HandlePowerSurge();
+	UpdateChallengeLock();
 }
 
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
 
-	if (ReadPanelData<int>(finalPanel, SOLVED) && !isCompleted) {
+	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelData<int>(finalPanel, SOLVED) && !isCompleted) {
 		isCompleted = true;
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
+	}
+	if (finalPanel == 0x09F7F && !isCompleted)
+	{
+		float power = ReadPanelData<float>(0x17C34, POWER);
+
+		if (power != 0.0f) {
+			isCompleted = true;
+			ap->StatusUpdate(APClient::ClientStatus::GOAL);
+		}
+	}
+	if (finalPanel == 0xFFF00 && !isCompleted)
+	{
+		float power = ReadPanelData<float>(0x17FA2, POWER);
+
+		if (power != 0.0f) {
+			isCompleted = true;
+			ap->StatusUpdate(APClient::ClientStatus::GOAL);
+		}
 	}
 
 	auto it = panelIdToLocationId.begin();
@@ -111,5 +129,17 @@ void APWatchdog::HandlePowerSurge() {
 		}
 
 		powerSurgedPanels.clear();
+	}
+}
+
+void APWatchdog::UpdateChallengeLock() {
+	float power = ReadPanelData<float>(0x17FA2, POWER); //Challenge is supposed to unlock when the long solution of the box is solved, which activates the Mountain Bottom Layer Discard
+
+	if (power != 0.0f) {
+		WritePanelData<float>(0x0A332, POWER, { 1.0, 1.0 });
+	}
+	else
+	{
+		WritePanelData<float>(0x0A332, POWER, { 0.0, 0.0 });
 	}
 }
