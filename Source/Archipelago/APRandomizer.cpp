@@ -161,9 +161,10 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
 
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
+
 	randomizationFinished = true;
 
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
 	async->start();
 }
 
