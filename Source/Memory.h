@@ -15,6 +15,9 @@
 // http://stackoverflow.com/q/1387064
 class Memory
 {
+private:
+	std::recursive_mutex mtx;
+
 public:
 
 
@@ -41,6 +44,8 @@ public:
 	}
 
 	bool Read(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		if (!retryOnFail) return ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
 		for (int i = 0; i < 10000; i++) {
 			if (ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
@@ -51,6 +56,7 @@ public:
 	}
 
 	bool Write(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		if (!retryOnFail) return WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
 		for (int i = 0; i < 10000; i++) {
 			if (WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
@@ -62,6 +68,7 @@ public:
 
 	template <class T>
 	std::vector<T> ReadArray(int panel, int offset, int size) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		if (size == 0) return std::vector<T>();
 		if (offset == 0x230 || offset == 0x238) { //Traced edge data - this moves sometimes so it should not be cached
 			//Invalidate cache entry for old array address
@@ -73,6 +80,7 @@ public:
 
 	template <class T>
 	void WriteArray(int panel, int offset, const std::vector<T>& data) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		if (data.size() == 0) return;
 		if (data.size() > _arraySizes[std::make_pair(panel, offset)]) {
 			//Invalidate cache entry for old array address
@@ -86,6 +94,7 @@ public:
 
 	template <class T>
 	void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		if (force) _arraySizes[std::make_pair(panel, offset)] = 0;
 		WriteArray(panel, offset, data);
 	}
@@ -107,6 +116,7 @@ public:
 	}
 
 	void WriteMovementSpeed(float speed) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		if (speed == 0) return;
 		float sprintSpeed = this->ReadData<float>({ RUNSPEED }, 1)[0];
 		if (sprintSpeed == 0.0f) return; // sanity check, to avoid an accidental div0
