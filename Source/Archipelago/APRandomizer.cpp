@@ -15,6 +15,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
+		while (!randomizationFinished) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
 		for (const auto& locationId : locations)
 			async->MarkLocationChecked(locationId);
 	});
