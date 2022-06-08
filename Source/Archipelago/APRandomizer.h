@@ -178,4 +178,6 @@ const int AllPuzzles[]{
 		// 0x181F5, 0x18488, // Swamp bridge controlls //no work
 };
 
+#define DATAPACKAGE_CACHE "ap_datapackage.json"
+
 

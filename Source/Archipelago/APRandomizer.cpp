@@ -5,6 +5,9 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 	ap = new APClient("uuid", "The Witness", uri);
 
+	try {	ap->set_data_package_from_file(DATAPACKAGE_CACHE);	}
+	catch (std::exception) { /* ignore */ }
+
 	bool connected = false;
 	bool hasConnectionResult = false;
 
@@ -114,6 +117,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 		if (findResult != std::end(panelIdToLocationId))
 			panelLocker->SetItemReward(findResult->first, item, receiver == ap->get_player_number(), ap->get_player_alias(receiver), ap->get_item_name(item.item));
+	});
+
+	ap->set_data_package_changed_handler([&](const nlohmann::json& data) {
+		ap->save_data_package(DATAPACKAGE_CACHE);
 	});
 
 	(new APServerPoller(ap))->start();
