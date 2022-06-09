@@ -122,10 +122,6 @@ void APWatchdog::ResetPowerSurge() {
 	hasPowerSurge = false;
 
 	for (const auto& panelId : AllPuzzles) {
-		if (panelId == 0x0001B) {
-			auto x = 20;
-		}
-
 		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
 		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
