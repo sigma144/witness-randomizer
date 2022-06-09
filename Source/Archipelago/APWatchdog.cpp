@@ -106,9 +106,8 @@ void APWatchdog::TriggerPowerSurge() {
 			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
 			if (powerValues[0] > 0) {
-				powerSurgedPanels.insert({ panelId, powerValues });
-
-				WritePanelData<float>(panelId, POWER, { 0.0f, 0.0f });
+				//using -20f as offset to create a unique recogniseable value that is also stored in the save
+				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] });
 			}
 		}
 	}
@@ -116,19 +115,27 @@ void APWatchdog::TriggerPowerSurge() {
 
 void APWatchdog::HandlePowerSurge() {
 	if (hasPowerSurge && DateTime::since(powerSurgeStartTime).count() > 10000)
-	{
-		hasPowerSurge = false;
+		ResetPowerSurge();
+}
 
-		for (auto& [panelId, powerValues] : powerSurgedPanels) {
-			if (panelId == 0x033D4) {
-				auto x = 20;
-			}
+void APWatchdog::ResetPowerSurge() {
+	hasPowerSurge = false;
+
+	for (const auto& panelId : AllPuzzles) {
+		if (panelId == 0x0001B) {
+			auto x = 20;
+		}
+
+		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
+
+		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
+		{
+			powerValues[0] -= -20.0f;
+			powerValues[1] -= -20.0f;
 
 			WritePanelData<float>(panelId, POWER, powerValues);
 			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 });
 		}
-
-		powerSurgedPanels.clear();
 	}
 }
 

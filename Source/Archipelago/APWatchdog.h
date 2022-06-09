@@ -22,6 +22,7 @@ public:
 	void ApplyTemporarySpeedBoost();
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
+	void ResetPowerSurge();
 
 private:
 	APClient* ap;
@@ -32,7 +33,6 @@ private:
 
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
-	std::map<int, std::vector<float>> powerSurgedPanels;
 
 	float baseSpeed = 2.0f;
 	float currentSpeed = 2.0f;

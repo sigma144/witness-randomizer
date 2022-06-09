@@ -170,6 +170,8 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
 
+	async->ResetPowerSurge();
+
 	randomizationFinished = true;
 
 	async->start();
@@ -192,7 +194,7 @@ void APRandomizer::GenerateNormal() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		this->MakeEarlyUTM();
+		MakeEarlyUTM();
 }
 
 void APRandomizer::GenerateHard() {
@@ -200,7 +202,7 @@ void APRandomizer::GenerateHard() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		this->MakeEarlyUTM();
+		MakeEarlyUTM();
 }
 
 void APRandomizer::PreventSnipes()
