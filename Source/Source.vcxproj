@@ -178,6 +178,7 @@
     <ClInclude Include="Archipelago\APWatchdog.h" />
     <ClInclude Include="Archipelago\Client\json.hpp" />
     <ClInclude Include="Archipelago\Client\json\include\nlohmann\json.hpp" />
+    <ClInclude Include="Archipelago\SkipSpecialCases.h" />
     <ClInclude Include="Converty.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Generate.h" />

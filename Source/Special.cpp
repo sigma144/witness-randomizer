@@ -1775,7 +1775,22 @@ void Special::DrawSimplePanel(int id)
 	else
 
 	{
-		
+		//Get rid of Dots.
+
+		int num_dots = panel._memory->ReadPanelData<int>(id, NUM_DOTS);
+		std::vector<int> intersectionFlags = panel._memory->ReadArray<int>(id, DOT_FLAGS, num_dots);
+		std::vector<int> newIntFlags = {};
+		for (int value : intersectionFlags) {
+			int noDotColor = value & 0xFFFF00FF;
+
+			if (noDotColor == Decoration::Dot_Intersection || noDotColor == Decoration::Dot_Row || noDotColor == Decoration::Dot_Column) {
+				value &= ~IntersectionFlags::DOT;
+				newIntFlags.emplace_back(value);
+			}
+			else newIntFlags.emplace_back(value);
+		}
+
+		panel._memory->WriteArray<int>(id, DOT_FLAGS, newIntFlags);
 	}
 
 	std::vector<int> decorations = { Decoration::Triangle };
@@ -1792,35 +1807,11 @@ void Special::DrawSimplePanel(int id)
 	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
 
-	//Get rid of Dots. God this is janky.
-
-	panel._memory->ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<int> intersectionFlags = panel._memory->ReadArray<int>(id, DOT_FLAGS, NUM_DOTS);
-	std::vector<int> newIntFlags = {};
-	for (int value : intersectionFlags) {
-		if (value == Decoration::Start) {
-			newIntFlags.emplace_back(Decoration::Start);
-
-			std::wstringstream os_;
-			os_ << "\n" << std::hex << value;
-			OutputDebugStringW(os_.str().c_str());
-		}
-		else if ((value & Decoration::Exit) == Decoration::Exit || value == 0xffffffff) {
-			newIntFlags.emplace_back(Decoration::Exit);
-
-			std::wstringstream os_;
-			os_ << "\n" << std::hex << value;
-			OutputDebugStringW(os_.str().c_str());
-		}
-		else if (value & Decoration::Dot) {
-			newIntFlags.emplace_back(0);
-		}
-		else newIntFlags.emplace_back(value);
-	}
-
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, newIntFlags);
-
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+
+	std::wstringstream os_;
+	os_ << "HELLO-0";
+	OutputDebugStringW(os_.str().c_str());
 
 
 	//Figure out a way to have the randomizer not touch a skipped panel when rerandomizing?

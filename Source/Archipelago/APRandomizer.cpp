@@ -214,4 +214,8 @@ void APRandomizer::SkipPuzzle()
 	if (id == -1) return;
 
 	Special::SkipPanel(id);
+
+	std::wstringstream os_;
+	os_ << "HELLO";
+	OutputDebugStringW(os_.str().c_str());
 }

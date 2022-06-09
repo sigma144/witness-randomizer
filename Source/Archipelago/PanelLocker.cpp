@@ -227,14 +227,14 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
 	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.3f });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
-	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections, true); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags, true); //flags for each point such as entrance or exit
 	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
-	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA, true); //start of a connection between points, contains position of point in sourceIntersectionFlags
+	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB, true); //end of a connection between points, contains position of point in sourceIntersectionFlags
 	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
 
-	std::vector<int> decorations; 
+	std::vector<int> decorations;
 	std::vector<int> decorationsFlags;
 	//override decorations with invisiables triangles of size 0
 	int numDecorations = _memory->ReadPanelData<int>(id, NUM_DECORATIONS);
@@ -245,10 +245,21 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 
+	std::wstringstream os_;
+	os_ << static_cast<int>(intersectionFlags.size());
+	os_ << "\n";
+	for (int i = intersections.size() - 1; i >= 0; i--)
+		os_ << intersections[i];
+	OutputDebugStringW(os_.str().c_str());
+
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
+	std::wstringstream os_;
+	os_ << std::hex << puzzle->id;
+	OutputDebugStringW(os_.str().c_str());
+
 	puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
 	delete puzzle;
