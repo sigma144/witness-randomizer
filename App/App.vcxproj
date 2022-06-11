@@ -99,7 +99,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -139,7 +139,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 black-sliver
+/* Copyright (c) 2022 black-sliver, FelicitusNeko
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -9,6 +9,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #ifndef _APCLIENT_HPP
 #define _APCLIENT_HPP
+
 
 #include <wswrap.hpp>
 #include <string>
@@ -29,6 +30,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <chrono>
 #include <stdint.h>
 #include <inttypes.h>
+#include <stdio.h>
+#include <limits>
 
 
 //#define APCLIENT_DEBUG // to get debug output
@@ -44,6 +47,8 @@ protected:
     }
 
 public:
+    static constexpr int64_t INVALID_NAME_ID = std::numeric_limits<int64_t>::min();
+
     APClient(const std::string& uuid, const std::string& game, const std::string& uri="ws://localhost:38281")
     {
         // fix up URI (add ws:// and default port if none is given)
@@ -142,6 +147,25 @@ public:
         {
             j = nlohmann::json{{"major", ver.ma}, {"minor", ver.mi}, {"build", ver.build}, {"class", "Version"}};
         }
+
+        static Version from_json(const nlohmann::json& j) {
+            return {
+                j.value("major", 0),
+                j.value("minor", 0),
+                j.value("build", 0)
+            };
+        }
+
+        constexpr bool operator<(const Version& other)
+        {
+            return (ma<other.ma) || (ma==other.ma && mi<other.mi) ||
+                   (ma==other.ma && mi==other.mi && build<other.build);
+        }
+
+        constexpr bool operator>=(const Version& other)
+        {
+            return !(*this<other);
+        }
     };
 
     void set_socket_connected_handler(std::function<void(void)> f)
@@ -199,6 +223,11 @@ public:
         _hOnPrintJson = f;
     }
 
+    void set_print_json_handler(std::function<void(const std::list<TextNode>&)> f)
+    {
+        _hOnPrintJson = std::bind(f, std::placeholders::_1);
+    }
+
     void set_bounced_handler(std::function<void(const json&)> f)
     {
         _hOnBounced = f;
@@ -227,6 +256,54 @@ public:
         }
     }
 
+    bool set_data_package_from_file(const std::string& path)
+    {
+        FILE* f;
+#if defined WIN32 || defined _WIN32
+        if ((fopen_s(&f, path.c_str(), "rb")) != 0) {
+#else
+        if ((f = fopen(path.c_str(), "rb")) == NULL) {
+#endif
+            return false;
+        }
+        char* buf = nullptr;
+        size_t len = (size_t)0;
+        if ((0 == fseek(f, 0, SEEK_END)) &&
+            ((len = ftell(f)) > 0) &&
+            ((buf = (char*)malloc(len+1))) &&
+            (0 == fseek(f, 0, SEEK_SET)) &&
+            (len == fread(buf, 1, len, f)))
+        {
+            buf[len] = 0;
+            try {
+                set_data_package(json::parse(buf));
+            } catch (std::exception) {
+                free(buf);
+                fclose(f);
+                throw;
+            }
+        }
+        free(buf);
+        fclose(f);
+        return true;
+    }
+
+    bool save_data_package(const std::string& path)
+    {
+        FILE* f;
+#if defined WIN32 || defined _WIN32
+        if ((fopen_s(&f, path.c_str(), "wb")) != 0) {
+#else
+        if ((f = fopen(path.c_str(), "wb")) == NULL) {
+#endif
+            return false;
+        }
+        std::string s = _dataPackage.dump();
+        fwrite(s.c_str(), 1, s.length(), f);
+        fclose(f);
+        return true;
+    }
+
     std::string get_player_alias(int slot)
     {
         if (slot == 0) return "Server";
@@ -245,11 +322,41 @@ public:
         return "Unknown";
     }
 
+    /*Usage is not recomended
+    * Return the id associated with the location name
+    * Return APClient::INVALID_NAME_ID when undefined*/
+    int64_t get_location_id(const std::string& name) const
+    {
+        if (_dataPackage["games"].contains(_game))
+        {
+            for (const auto& pair : _dataPackage["games"][_game]["location_name_to_id"].items())
+            {
+                if (pair.key() == name) return pair.value().get<int64_t>();
+            }
+        }
+        return INVALID_NAME_ID;
+    }
+
     std::string get_item_name(int64_t code)
     {
         auto it = _items.find(code);
         if (it != _items.end()) return it->second;
         return "Unknown";
+    }
+
+    /*Usage is not recomended
+    * Return the id associated with the item name
+    * Return APClient::INVALID_NAME_ID when undefined*/
+    int64_t get_item_id(const std::string& name) const
+    {
+        if (_dataPackage["games"].contains(_game))
+        {
+            for (const auto& pair : _dataPackage["games"][_game]["item_name_to_id"].items())
+            {
+                if (pair.key() == name) return pair.value().get<int64_t>();
+            }
+        }
+        return INVALID_NAME_ID;
     }
 
     std::string render_json(const std::list<TextNode>& msg, RenderFormat fmt=RenderFormat::TEXT)
@@ -414,18 +521,24 @@ public:
         return true;
     }
 
-    bool GetDataPackage(const std::list<std::string>& exclude = {})
+    bool GetDataPackage(const std::list<std::string>& exclude = {}, const std::list<std::string>& include = {})
     {
         if (_state < State::ROOM_INFO) return false;
         auto packet = json{{
             {"cmd", "GetDataPackage"},
-            {"exclusions", exclude},
         }};
+        if (_serverVersion >= Version{0,3,2}) {
+            if (!include.empty()) packet[0]["games"] = include; // new since 0.3.2
+        }
+        else {
+            if (!exclude.empty()) packet[0]["exclusions"] = exclude; // backward compatibility; deprecated in 0.3.2
+        }
+        // TODO: drop support for "exclusions" 2023
         debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
         _ws->send(packet.dump());
         return true;
     }
-    
+
     bool Bounce(const json& data, std::list<std::string> games = {},
                 std::list<int> slots = {}, std::list<std::string> tags = {})
     {
@@ -446,7 +559,7 @@ public:
         _ws->send(packet.dump());
         return true;
     }
-    
+
     bool Say(const std::string& text)
     {
         if (_state < State::ROOM_INFO) return false; // or SLOT_CONNECTED?
@@ -592,37 +705,52 @@ private:
                 if (cmd == "RoomInfo") {
                     _localConnectTime = std::chrono::steady_clock::now();
                     _serverConnectTime = command["time"].get<double>();
+                    _serverVersion = Version::from_json(command["version"]);
                     _seed = command["seed_name"];
                     if (_state < State::ROOM_INFO) _state = State::ROOM_INFO;
                     if (_hOnRoomInfo) _hOnRoomInfo();
-                    
+
                     // check if cached data package is already valid
                     // we are nice and check and query individual games
                     _dataPackageValid = true;
                     std::list<std::string> exclude;
+                    std::list<std::string> include;
+                    std::set<std::string> playedGames;
+                    auto itGames = command.find("games");
+                    if (itGames != command.end() && itGames->is_array()) {
+                        playedGames = itGames->get<std::set<std::string>>();
+                    }
                     for (auto itV: command["datapackage_versions"].items()) {
+                        if (!playedGames.empty() && !playedGames.count(itV.key()) && itV.key() != "Archipelago") {
+                            // game exists but is not being played
+                            exclude.push_back(itV.key());
+                            continue;
+                        }
                         if (!itV.value().is_number()) continue;
                         int v = itV.value().get<int>();
                         if (v < 1) {
                             // 0 means don't cache
                             _dataPackageValid = false;
+                            include.push_back(itV.key());
                             continue;
                         }
                         auto itDp = _dataPackage["games"].find(itV.key());
                         if (itDp == _dataPackage["games"].end()) {
                             // new game
                             _dataPackageValid = false;
+                            include.push_back(itV.key());
                             continue;
                         }
                         if ((*itDp)["version"] != v) {
                             // different version
                             _dataPackageValid = false;
+                            include.push_back(itV.key());
                             continue;
                         }
                         // ok, cache valid
                         exclude.push_back(itV.key());
                     }
-                    if (!_dataPackageValid) GetDataPackage(exclude);
+                    if (!_dataPackageValid) GetDataPackage(exclude, include);
                     else debug("DataPackage up to date");
                 }
                 else if (cmd == "ConnectionRefused") {
@@ -665,7 +793,7 @@ private:
                             item["item"].get<int64_t>(),
                             item["location"].get<int64_t>(),
                             item["player"].get<int>(),
-                            item["flags"].get<unsigned>(),
+                            item.value("flags", 0U),
                             index++,
                         });
                     }
@@ -678,7 +806,7 @@ private:
                             item["item"].get<int64_t>(),
                             item["location"].get<int64_t>(),
                             item["player"].get<int>(),
-                            item["flags"].get<unsigned>(),
+                            item.value("flags", 0U),
                             -1
                         });
                     }
@@ -718,7 +846,7 @@ private:
                            command["item"]["item"].get<int64_t>(),
                            command["item"]["location"].get<int64_t>(),
                            command["item"]["player"].get<int>(),
-                           command["item"]["flags"].get<unsigned>(),
+                           command["item"].value("flags", 0U),
                            -1
                         };
                         pItem = &item;
@@ -733,17 +861,12 @@ private:
 
                     std::list<TextNode> msg;
                     for (const auto& part: command["data"]) {
-                        auto itType = part.find("type");
-                        auto itColor = part.find("color");
-                        auto itText = part.find("text");
-                        auto itFound = part.find("found");
-                        auto itFlags = part.find("flags");
                         msg.push_back({
-                            itType == part.end() ? "" : itType->get<std::string>(),
-                            itColor == part.end() ? "" : itColor->get<std::string>(),
-                            itText == part.end() ? "" : itText->get<std::string>(),
-                            itFound == part.end() ? false : itFound->get<bool>(),
-                            itFlags == part.end() ? 0U : itFlags->get<unsigned>(),
+                            part.value("type", ""),
+                            part.value("color", ""),
+                            part.value("text", ""),
+                            part.value<bool>("found", false),
+                            part.value("flags", 0U),
                         });
                     }
                     if (_hOnPrintJson) _hOnPrintJson(msg, pItem, pReciever);
@@ -859,6 +982,7 @@ private:
     json _dataPackage;
     double _serverConnectTime = 0;
     std::chrono::steady_clock::time_point _localConnectTime;
+    Version _serverVersion = {0,0,0};
 
     const json _packetSchemaJson = R"({
         "type": "array",

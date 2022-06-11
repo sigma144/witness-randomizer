@@ -332,3 +332,5 @@ ASALocalRun/
 # Misc
 enc_temp_folder/
 /Witness Save Data.lnk
+
+*datapackage.json
