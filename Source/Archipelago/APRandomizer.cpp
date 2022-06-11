@@ -5,6 +5,9 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 	ap = new APClient("uuid", "The Witness", uri);
 
+	try {	ap->set_data_package_from_file(DATAPACKAGE_CACHE);	}
+	catch (std::exception) { /* ignore */ }
+
 	bool connected = false;
 	bool hasConnectionResult = false;
 
@@ -116,6 +119,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			panelLocker->SetItemReward(findResult->first, item, receiver == ap->get_player_number(), ap->get_player_alias(receiver), ap->get_item_name(item.item));
 	});
 
+	ap->set_data_package_changed_handler([&](const nlohmann::json& data) {
+		ap->save_data_package(DATAPACKAGE_CACHE);
+	});
+
 	(new APServerPoller(ap))->start();
 
 	auto start = std::chrono::system_clock::now();
@@ -163,6 +170,8 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
 
+	async->ResetPowerSurge();
+
 	randomizationFinished = true;
 
 	async->start();
@@ -185,7 +194,7 @@ void APRandomizer::GenerateNormal() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		this->MakeEarlyUTM();
+		MakeEarlyUTM();
 }
 
 void APRandomizer::GenerateHard() {
@@ -193,7 +202,7 @@ void APRandomizer::GenerateHard() {
 		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
 
 	if (EarlyUTM)
-		this->MakeEarlyUTM();
+		MakeEarlyUTM();
 }
 
 void APRandomizer::PreventSnipes()

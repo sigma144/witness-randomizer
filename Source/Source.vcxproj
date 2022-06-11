@@ -96,7 +96,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT=0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -136,7 +136,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
