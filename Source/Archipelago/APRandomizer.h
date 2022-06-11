@@ -170,12 +170,13 @@ const int AllPuzzles[]{
 		0x17D27, // Keep Discard
 		0x17D28, // Shipwreck Discard
 		0x17D01, // Town Orange Crate Discard
+		0x17C71, // Town Rooftop Discard
 		0x17F9B, // Jungle Discard
 		0x17C42, // Mountainside Discard
 		0x386FA,	0x1C33F,	0x196E2,	0x1972A,	0x19809,	0x19806,	0x196F8,	0x1972F, //shadows avoid
 		0x19797,	0x1979A,	0x197E0,	0x197E8,	0x197E5, //Shadow follow
 		0x09F7F, // Quary lazer panel
-		// 0x181F5, 0x18488, // Swamp bridge controlls //no work
+		0x181F5, 0x18488, 0x17E2B // Swamp bridge controlls
 };
 
 
