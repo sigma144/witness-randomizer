@@ -125,6 +125,10 @@ public:
 		this->WriteData<float>({ DECELERATION }, { this->ReadData<float>({DECELERATION}, 1)[0] * multiplier });
 	}
 
+	void OpenDoor(int id) {
+		CallVoidFunction(id, 0x14008EB60);
+	}
+
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
@@ -167,6 +171,8 @@ private:
 	void ThrowError();
 
 	void* ComputeOffset(std::vector<int> offsets);
+
+	void CallVoidFunction(int id, uint64_t functionAdress);
 
 	std::map<uintptr_t, uintptr_t> _computedAddresses;
 	std::map<std::pair<int, int>, int> _arraySizes;

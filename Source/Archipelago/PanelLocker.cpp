@@ -1,6 +1,6 @@
 #include "PanelLocker.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
+void PanelLocker::DisableNonRandomizedPuzzles()
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -37,7 +37,7 @@ void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
 	disablePuzzle(0x0360E); //Keep Laser Hedges
 	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
 	
-	if(RiverShape) disablePuzzle(0x0042D); //Mountaintop River Shape
+	disablePuzzle(0x0042D); //Mountaintop River Shape
 
 	disablePuzzle(0x009B8); //Symmetry Island Scenery Outlines 1
 }
