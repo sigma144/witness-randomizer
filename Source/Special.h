@@ -68,6 +68,8 @@ public:
 
 	static void SkipPanel(int id);
 
+	static void SkipMetapuzzle();
+
 	static void DrawSimplePanel(int id);
 
 	void test(); //For testing/debugging purposes only

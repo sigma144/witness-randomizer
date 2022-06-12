@@ -1713,6 +1713,28 @@ void Special::SkipPanel(int id) {
 		DrawSimplePanel(0x01D3F);
 		return;
 	}
+
+	if (id == 0x09E86 || id == 0x09ED8) {
+		DrawSimplePanel(0x09E86);
+		DrawSimplePanel(0x09ED8);
+		return;
+	}
+
+	if (id == 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, 0x09FDA) { //make this only the big puzzle?
+		SkipMetapuzzle();
+		return;
+	}
+}
+
+void Special::SkipMetapuzzle() {
+	for (const auto id : { 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF }) {
+		DrawSimplePanel(id);
+	}
+
+	//Panel panel = Panel(0x09FDA);
+	//panel.Write(); // I have no idea why this works. But for some reason, drawing the simple panel isn't enough on its own. Reading and writing it, for some reason, makes it work??? Sigma explain
+
+	DrawSimplePanel(0x09FDA);
 }
 
 void Special::DrawSimplePanel(int id)
@@ -1725,6 +1747,7 @@ void Special::DrawSimplePanel(int id)
 	style &= ~Panel::Style::SYMMETRICAL;
 	style &= ~Panel::Style::HAS_TRIANGLES;
 	style &= ~Panel::Style::HAS_DOTS;
+	style &= ~Panel::Style::HAS_SHAPERS;
 	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
 
 	panel._memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
