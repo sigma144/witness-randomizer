@@ -263,7 +263,7 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 		0.1f, 0.1f, 0.3f, 0.1f, 0.5f, 0.1f, 0.7f, 0.1f, 0.9f, 0.1f, //bottom row
 		0.1f, 0.3f, 0.3f, 0.3f, 0.5f, 0.3f, 0.7f, 0.3f, 0.9f, 0.3f, //middle row
 		0.1f, 0.5f, 0.3f, 0.5f, 0.5f, 0.5f, 0.7f, 0.5f, 0.9f, 0.5f,  //top row
-		0.0f, 0.0f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
+		-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
 	};
 
 	//flag for each point
