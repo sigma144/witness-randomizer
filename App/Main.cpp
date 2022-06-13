@@ -500,7 +500,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 280, 130, 26, hwnd, (HMENU)IDC_RESTORE, hInstance, NULL);
 
-	CreateWindow(L"STATIC", L"If you crashed/closed the game and/or the randomizer and are attempting to reconnect, follow these steps:\n1. Press this restore button\n2. Restart both the game and the randomizer again. This is very important, do not skip!\n3. Connect again normally.",
+	CreateWindow(L"STATIC", L"If you crashed/closed the game and/or the randomizer and are attempting to reconnect, follow these steps:\n1. Press this restore button. Unpause the game if paused. \n2. Restart both the game and the randomizer again. This is very important, do not skip!\n3. Connect again normally.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 240, 430, 100, hwnd, NULL, hInstance, NULL);
 
