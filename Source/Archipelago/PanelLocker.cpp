@@ -57,7 +57,9 @@ void PanelLocker::disablePuzzle(int id) {
 
 	createText(id, "disabled", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
-	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f });
+	float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -157,7 +159,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
-		_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f });
+		_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / puzzle->path_width_scale });
 		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -225,7 +227,10 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 
 	_memory->WritePanelData<Color>(id, PATH_COLOR, { { 0.0f, 0.0f, 0.0f, 1.0f } });
 	_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
-	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.3f });
+
+	float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.3f / path_width_scale });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -251,7 +256,7 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 	puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
-	delete puzzle;
+	//delete puzzle;
 }
 
 void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB) {
