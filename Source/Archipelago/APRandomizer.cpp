@@ -191,7 +191,7 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 
 void APRandomizer::GenerateNormal() {
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
+		panelLocker->DisableNonRandomizedPuzzles();
 
 	if (EarlyUTM)
 		MakeEarlyUTM();
@@ -199,7 +199,7 @@ void APRandomizer::GenerateNormal() {
 
 void APRandomizer::GenerateHard() {
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(!EarlyUTM);
+		panelLocker->DisableNonRandomizedPuzzles();
 
 	if (EarlyUTM)
 		MakeEarlyUTM();
@@ -213,7 +213,7 @@ void APRandomizer::PreventSnipes()
 
 void APRandomizer::MakeEarlyUTM()
 {
-	Special::copyTarget(0x0042D, 0x021D7); // River Shape Early UTM
+	_memory->OpenDoor(0x2D73F);
 }
 
 void APRandomizer::SkipPuzzle()

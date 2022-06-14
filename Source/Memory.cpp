@@ -227,6 +227,45 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 	return reinterpret_cast<void*>(cumulativeAddress + final_offset);
 }
 
+void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
+	std::lock_guard<std::recursive_mutex> lock(mtx);
+
+	std::wstringstream os_;
+
+	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, id * 8, 0 }));
+
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xC4\x08" // add rsp,08
+		"\xFF\xD0" //call rax
+		"\x48\x83\xEC\x08" // sub rsp,08
+		"\xC3"; //ret
+
+	buffer[2] = functionAdress & 0xff; //address of laser activation function
+	buffer[3] = (functionAdress >> 8) & 0xff;
+	buffer[4] = (functionAdress >> 16) & 0xff;
+	buffer[5] = (functionAdress >> 24) & 0xff;
+	buffer[6] = (functionAdress >> 32) & 0xff;
+	buffer[7] = (functionAdress >> 40) & 0xff;
+	buffer[8] = (functionAdress >> 48) & 0xff;
+	buffer[9] = (functionAdress >> 56) & 0xff;
+	buffer[12] = offset & 0xff; //address of laser
+	buffer[13] = (offset >> 8) & 0xff;
+	buffer[14] = (offset >> 16) & 0xff;
+	buffer[15] = (offset >> 24) & 0xff;
+	buffer[16] = (offset >> 32) & 0xff;
+	buffer[17] = (offset >> 40) & 0xff;
+	buffer[18] = (offset >> 48) & 0xff;
+	buffer[19] = (offset >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+}
+
 int Memory::GLOBALS = 0;
 int Memory::RUNSPEED = 0;
 int Memory::ACCELERATION = 0;

@@ -33,8 +33,8 @@
 #define IDT_RANDOMIZED 0x409
 #define IDC_TOGGLELASERS 0x410
 #define IDC_TOGGLESNIPES 0x411
-#define IDC_RESTORE 0x420
 #define IDC_SKIPPUZZLE 0x421
+#define IDC_TAB 0x450
 
 #define IDC_ADD 0x301
 #define IDC_REMOVE 0x302
@@ -103,6 +103,13 @@ std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }
 std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
 float target;
 
+void focusEdit(HWND hwnd) {
+	SetFocus(hwnd);
+	int len = GetWindowTextLength(hwnd);
+	SendMessage(hwnd, EM_SETSEL, MAKELONG(len, len), MAKELONG(len, len));
+
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static bool seedIsRNG = false;
@@ -122,7 +129,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		switch (LOWORD(wParam)) {
 
-		//Test button  - general testing (debug mode only)
+		case IDC_TAB:
+			if(GetFocus() == hwndAddress){
+				focusEdit(hwndUser);
+			}
+			else if (GetFocus() == hwndUser) {
+				focusEdit(hwndPassword);
+			}
+			else {
+				focusEdit(hwndAddress);
+			}
+			break;
+
+			//Test button  - general testing (debug mode only)
 		case IDC_TEST:
 			generator->resetConfig();
 			generator->seed(static_cast<unsigned int>(time(NULL)));
@@ -132,10 +151,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_COLORBLIND:
 			colorblind = !IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
 			CheckDlgButton(hwnd, IDC_COLORBLIND, colorblind);
-			break;
-
-		case IDC_RESTORE:
-			randomizer->RestoreLineWidths();
 			break;
 
 		//Randomize button
@@ -383,8 +398,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	};
 	RegisterClassW(&wndClass);
 
-	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 380, nullptr, nullptr, hInstance, nullptr);
+	HWND hwnd = CreateWindowEx(WS_EX_CONTROLPARENT, WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
+      650, 200, 600, DEBUG ? 700 : 250, nullptr, nullptr, hInstance, nullptr);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -460,6 +475,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		180, 90, 400, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
+	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, KEY_EVENT); // Notify on text change
 
 	CreateWindow(L"STATIC", L"Enter slot name:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -481,19 +497,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 180, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
 
-	hwndSkip = CreateWindow(L"BUTTON", L"Skip Puzzle",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 210, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
-
-
-	hwndRestore = CreateWindow(L"BUTTON", L"Restore",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 310, 130, 26, hwnd, (HMENU)IDC_RESTORE, hInstance, NULL);
-
-	CreateWindow(L"STATIC", L"If you crashed/closed the game and/or the randomizer and are attempting to reconnect, follow these steps:\n1. Press this restore button\n2. Restart both the game and the randomizer again. This is very important, do not skip!\n3. Connect again normally.",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 270, 430, 100, hwnd, NULL, hInstance, NULL);
-
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		250, 215, 160, 16, hwnd, NULL, hInstance, NULL);
@@ -513,6 +516,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		}
 		configFile.close();
 	}
+
+	focusEdit(hwndAddress);
 
 	ShowWindow(hwndLoadingText, SW_HIDE);
 
@@ -648,11 +653,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
+	ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}};
+	const HACCEL hAccel = CreateAcceleratorTable(Accel, sizeof(Accel) / sizeof(ACCEL));
+
     MSG msg;
-    while (!GetMessage(&msg, nullptr, 0, 0) == 0)
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+	while (!GetMessage(&msg, nullptr, 0, 0) == 0)
+	{
+		if (!TranslateAccelerator(hwnd, hAccel, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
     }
 
     return (int) msg.wParam;

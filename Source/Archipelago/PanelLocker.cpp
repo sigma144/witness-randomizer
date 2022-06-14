@@ -1,6 +1,6 @@
 #include "PanelLocker.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
+void PanelLocker::DisableNonRandomizedPuzzles()
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -37,7 +37,7 @@ void PanelLocker::DisableNonRandomizedPuzzles(bool RiverShape)
 	disablePuzzle(0x0360E); //Keep Laser Hedges
 	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
 	
-	if(RiverShape) disablePuzzle(0x0042D); //Mountaintop River Shape
+	disablePuzzle(0x0042D); //Mountaintop River Shape
 
 	disablePuzzle(0x009B8); //Symmetry Island Scenery Outlines 1
 }
@@ -48,7 +48,7 @@ void PanelLocker::disablePuzzle(int id) {
 
 	disabledPuzzles.emplace_back(id);
 	
-	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
+	std::vector<float> intersections = { -0.3f, -0.3f, 1.0f, 1.0f };
 	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;	
@@ -57,7 +57,9 @@ void PanelLocker::disablePuzzle(int id) {
 
 	createText(id, "disabled", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 
-	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.5f });
+	float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -157,7 +159,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
-		_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.5f });
+		_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / puzzle->path_width_scale });
 		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -225,7 +227,10 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 
 	_memory->WritePanelData<Color>(id, PATH_COLOR, { { 0.0f, 0.0f, 0.0f, 1.0f } });
 	_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
-	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.3f });
+
+	float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.3f / path_width_scale });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections, true); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags, true); //flags for each point such as entrance or exit
@@ -262,7 +267,7 @@ void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 
 	puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
-	delete puzzle;
+	//delete puzzle;
 }
 
 void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB) {
@@ -274,7 +279,7 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 		0.1f, 0.1f, 0.3f, 0.1f, 0.5f, 0.1f, 0.7f, 0.1f, 0.9f, 0.1f, //bottom row
 		0.1f, 0.3f, 0.3f, 0.3f, 0.5f, 0.3f, 0.7f, 0.3f, 0.9f, 0.3f, //middle row
 		0.1f, 0.5f, 0.3f, 0.5f, 0.5f, 0.5f, 0.7f, 0.5f, 0.9f, 0.5f,  //top row
-		0.0f, 0.0f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
+		-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
 	};
 
 	//flag for each point

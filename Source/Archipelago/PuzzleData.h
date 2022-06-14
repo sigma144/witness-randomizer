@@ -32,6 +32,7 @@ struct PuzzleData
 		int grid_size_x;
 		int grid_size_y;
 		float path_width_scale;
+		float pattern_scale;
 		std::vector<float> dot_positions;
 		std::vector<int> dot_flags;
 		std::vector<int> dot_connections_a;

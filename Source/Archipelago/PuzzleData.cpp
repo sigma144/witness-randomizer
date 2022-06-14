@@ -4,6 +4,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	grid_size_x = _memory->ReadPanelData<int>(id, GRID_SIZE_X);
 	grid_size_y = _memory->ReadPanelData<int>(id, GRID_SIZE_Y);
 	path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	pattern_scale = _memory->ReadPanelData<float>(id, PATTERN_SCALE);
 	
 	int numberOfDots = _memory->ReadPanelData<int>(id, NUM_DOTS);
 	dot_positions = _memory->ReadArray<float>(id, DOT_POSITIONS, numberOfDots * 2);
@@ -107,6 +108,7 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WritePanelData<int>(id, GRID_SIZE_X, { grid_size_x });
 	_memory->WritePanelData<int>(id, GRID_SIZE_Y, { grid_size_y });
 	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { path_width_scale });
+	_memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale });
 	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(dot_flags.size()) }); //amount of intersections
 	_memory->WriteArray<float>(id, DOT_POSITIONS, dot_positions); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 	_memory->WriteArray<int>(id, DOT_FLAGS, dot_flags); //flags for each point such as entrance or exit
