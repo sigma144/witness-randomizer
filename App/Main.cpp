@@ -79,7 +79,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -235,7 +235,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				apRandomizer->GenerateHard();
 			else
 				apRandomizer->GenerateNormal();
-			apRandomizer->PostGeneration(hwndLoadingText);
+			apRandomizer->PostGeneration(hwndLoadingText, hwndSkip, hwndAvailableSkips);
 
 			break;
 		}
@@ -501,7 +501,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 210, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
 
+	EnableWindow(hwndSkip, false);
+
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
+		250, 185, 160, 16, hwnd, NULL, hInstance, NULL);
+
+	hwndAvailableSkips = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		250, 215, 160, 16, hwnd, NULL, hInstance, NULL);
 

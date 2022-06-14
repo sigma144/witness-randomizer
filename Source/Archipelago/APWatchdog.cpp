@@ -1,12 +1,15 @@
 #include "APWatchdog.h"
 #include "..\Quaternion.h"
 #include <thread>
+#include "../Panels.h"
+#include "SkipSpecialCases.h"
 
 void APWatchdog::action() {
 	CheckSolvedPanels();
 	HandleMovementSpeed();
 	HandlePowerSurge();
 	UpdateChallengeLock();
+	CheckIfCanSkipPuzzle();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -145,4 +148,51 @@ void APWatchdog::UpdateChallengeLock() {
 	{
 		WritePanelData<float>(0x0A332, POWER, { 0.0, 0.0 });
 	}
+}
+
+boolean APWatchdog::CheckIfCanSkipPuzzle() {
+	int id = _memory->GetActivePanel();
+
+	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(availablePuzzleSkips - skippedPuzzles)).c_str());
+
+	if (availablePuzzleSkips > skippedPuzzles && id != -1 && !skip_completelyExclude.count(id)) {
+		EnableWindow(skipButton, true);
+		return true;
+	}
+
+	EnableWindow(skipButton, false);
+
+	return false;
+}
+
+void APWatchdog::SkipPuzzle()
+{
+	int id = _memory->GetActivePanel();
+
+	if (!CheckIfCanSkipPuzzle()) return;
+
+	skippedPuzzles++;
+
+	Special::SkipPanel(id);
+
+	_memory->WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
+}
+
+void APWatchdog::SkipPreviouslySkippedPuzzles() {
+	for (int id : actuallyEveryPanel) {
+		__int32 skipped = _memory->ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+
+		if (skipped == PUZZLE_SKIPPED) {
+			Special::SkipPanel(id);
+			skippedPuzzles++;
+		}
+	}
+}
+
+void APWatchdog::AddPuzzleSkip() {
+	availablePuzzleSkips++;
+
+	std::wstringstream os_;
+	os_ << availablePuzzleSkips;
+	OutputDebugStringW(os_.str().c_str());
 }

@@ -2,12 +2,12 @@
 #include <vector>
 #include <set>
 
-const std::vector<float> horizontalLine = { 0.9f, 0.5f, 0.1f, 0.5f };
-const std::vector<float> pillarLine = { 0.9f, 0.5f, 0.7f, 0.5f, 0.5f, 0.5f, 0.3f, 0.5f, 0.1f, 0.5f };
-const std::vector<float> offsetline = { 0.2f, 0.9f, 0.2f, 0.1f };
-const std::vector<float> shortLineTop = { 0.5f, 0.9f, 0.5f, 0.7f };
+inline const std::vector<float> horizontalLine = { 0.9f, 0.5f, 0.1f, 0.5f };
+inline const std::vector<float> pillarLine = { 0.9f, 0.5f, 0.7f, 0.5f, 0.5f, 0.5f, 0.3f, 0.5f, 0.1f, 0.5f };
+inline const std::vector<float> offsetline = { 0.2f, 0.9f, 0.2f, 0.1f };
+inline const std::vector<float> shortLineTop = { 0.5f, 0.9f, 0.5f, 0.7f };
 
-const std::map<int, std::vector<float>> skip_specialLine = {
+inline const std::map<int, std::vector<float>> skip_specialLine = {
 	{0x0A15C, horizontalLine},
 	{0x09FFF, horizontalLine},
 	{0x0A15F, horizontalLine},
@@ -29,7 +29,7 @@ const std::map<int, std::vector<float>> skip_specialLine = {
 	{0x09DD5, pillarLine},
 };
 
-const std::set<int> skip_noLine = {
+inline const std::set<int> skip_noLine = {
 	0x0C373, // Patio Floor
 	0x17C31, // Desert Final Room Transparent Reflection
 	0x28A69, // Town Lattice
@@ -53,7 +53,7 @@ const std::set<int> skip_noLine = {
 	0x17CAA, // River to Monastery shortcut lattice
 };
 
-const std::set<int> skip_completelyExclude = {
+inline const std::set<int> skip_completelyExclude = {
 	//Already simplistic
 	
 	0x00064, 0x00182, // Entry Panels
@@ -101,7 +101,7 @@ const std::set<int> skip_completelyExclude = {
 
 };
 
-const std::set<int> skip_specialCase = {
+inline const std::set<int> skip_specialCase = {
 	0x09E86, 0x09ED8,
 
 	0x00A52, 0x00A57, 0x00A5B, 0x00A61, 0x00A64, 0x00A68, //Symmetry Laser Panels

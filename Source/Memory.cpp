@@ -230,8 +230,6 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 	std::lock_guard<std::recursive_mutex> lock(mtx);
 
-	std::wstringstream os_;
-
 	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, id * 8, 0 }));
 
 	unsigned char buffer[] =

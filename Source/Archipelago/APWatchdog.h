@@ -9,12 +9,20 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel) : Watchdog(1) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, HWND skipButton1, HWND availableSkips1) : Watchdog(1) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
 		finalPanel = lastPanel;
+		skipButton = skipButton1;
+		availableSkips = availableSkips1;
 	}
+
+	int skippedPuzzles = 0;
+	int availablePuzzleSkips = 0;
+
+	HWND skipButton;
+	HWND availableSkips;
 
 	virtual void action();
 
@@ -23,6 +31,10 @@ public:
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
+	void AddPuzzleSkip();
+	void SkipPuzzle();
+
+	void SkipPreviouslySkippedPuzzles();
 
 private:
 	APClient* ap;
@@ -43,6 +55,7 @@ private:
 	void HandleMovementSpeed();
 	void HandlePowerSurge();
 	void UpdateChallengeLock();
+	boolean CheckIfCanSkipPuzzle();
 };
 
 class APServerPoller : public Watchdog {

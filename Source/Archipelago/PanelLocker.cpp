@@ -250,21 +250,10 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 
-	std::wstringstream os_;
-	os_ << static_cast<int>(intersectionFlags.size());
-	os_ << "\n";
-	for (int i = intersections.size() - 1; i >= 0; i--)
-		os_ << intersections[i];
-	OutputDebugStringW(os_.str().c_str());
-
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
-	std::wstringstream os_;
-	os_ << std::hex << puzzle->id;
-	OutputDebugStringW(os_.str().c_str());
-
 	puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
 	//delete puzzle;

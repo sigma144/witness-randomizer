@@ -1832,11 +1832,6 @@ void Special::DrawSimplePanel(int id)
 
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 
-	std::wstringstream os_;
-	os_ << "HELLO-0";
-	OutputDebugStringW(os_.str().c_str());
-
-
 	//Figure out a way to have the randomizer not touch a skipped panel when rerandomizing?
 	//Not really necessary, actually, as you should never re-randomize while the game is already running with randomized panels. You should only re-randomize after the game was closed, and the vanilla panels were re-loaded.
 }

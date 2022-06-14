@@ -1,5 +1,4 @@
 #include "APRandomizer.h"
-#include "../Panels.h"
 
 bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
@@ -52,10 +51,11 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 				//Powerups
 			case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
-			case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
+			case ITEM_PUZZLE_SKIP:						async->AddPuzzleSkip(); break;
 
 				//Traps
 			case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
+			case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
 
 			default:
 				break;
@@ -161,15 +161,17 @@ std::string APRandomizer::buildUri(std::string& server)
 	return uri;
 }
 
-void APRandomizer::PostGeneration(HWND loadingHandle) {
+void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND availableSkips) {
+
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, skipButton, availableSkips);
+	async->SkipPreviouslySkippedPuzzles();
+
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
-
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel);
 
 	async->ResetPowerSurge();
 
@@ -217,30 +219,6 @@ void APRandomizer::MakeEarlyUTM()
 	_memory->OpenDoor(0x2D73F);
 }
 
-void APRandomizer::SkipPuzzle()
-{
-	int id = _memory->GetActivePanel();
-
-	if (id == -1) return;
-
-	if (false) //Needs to check whether the panel can be skipped!
-		return;
-
-	Special::SkipPanel(id);
-
-	_memory->WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
-
-	std::wstringstream os_;
-	os_ << "HELLO";
-	OutputDebugStringW(os_.str().c_str());
-}
-
-void APRandomizer::SkipPreviouslySkippedPuzzles() {
-	for (int id : actuallyEveryPanel) {
-		__int32 skipped = _memory->ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
-
-		if (skipped == PUZZLE_SKIPPED) {
-			Special::SkipPanel(id);
-		}
-	}
+void APRandomizer::SkipPuzzle() {
+	async->SkipPuzzle();
 }

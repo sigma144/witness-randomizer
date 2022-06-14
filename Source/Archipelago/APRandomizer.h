@@ -34,13 +34,12 @@ class APRandomizer {
 		bool randomizationFinished = false;
 
 		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
-		void PostGeneration(HWND loadingHandle);
+		void PostGeneration(HWND loadingHandle, HWND skipButton, HWND availableSkips);
 
 		void GenerateNormal();
 		void GenerateHard();
-		void SkipPuzzle();
 
-		void SkipPreviouslySkippedPuzzles();
+		void SkipPuzzle();
 
 	private:
 		std::map<int, int> panelIdToLocationId;
@@ -51,7 +50,7 @@ class APRandomizer {
 		PanelLocker* panelLocker;
 
 		APState state = APState();
-	
+
 		void PreventSnipes();
 
 		void MakeEarlyUTM();
