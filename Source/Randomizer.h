@@ -66,6 +66,7 @@ private:
 #define STROBE_COLOR_A 0x140 
 #define STROBE_COLOR_B 0x150 
 #define ERROR_COLOR 0x160 
+#define VIDEO_STATUS_COLOR 0x170
 #define PATTERN_POINT_COLOR 0x180 
 #define PATTERN_POINT_COLOR_A 0x190 
 #define PATTERN_POINT_COLOR_B 0x1A0 
@@ -126,3 +127,7 @@ private:
 #define OPEN_RATE 0xE0
 #define METADATA 0x13A // sizeof(short)
 #define HOTEL_EP_NAME 0x51E340
+
+
+
+#define PUZZLE_SKIPPED 762251260

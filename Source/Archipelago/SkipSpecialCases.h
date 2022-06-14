@@ -3,6 +3,7 @@
 #include <set>
 
 const std::vector<float> horizontalLine = { 0.9f, 0.5f, 0.1f, 0.5f };
+const std::vector<float> pillarLine = { 0.9f, 0.5f, 0.7f, 0.5f, 0.5f, 0.5f, 0.3f, 0.5f, 0.1f, 0.5f };
 const std::vector<float> offsetline = { 0.2f, 0.9f, 0.2f, 0.1f };
 const std::vector<float> shortLineTop = { 0.5f, 0.9f, 0.5f, 0.7f };
 
@@ -13,6 +14,19 @@ const std::map<int, std::vector<float>> skip_specialLine = {
 	{0x33Af5, offsetline},
 	{0x33AF7, offsetline},
 	{0x09F6E, shortLineTop},
+	{0x288EA, offsetline },
+	{0x288FC, offsetline },
+	{0x289E7, offsetline },
+	{0x288AA, offsetline },
+	{0x0383A, pillarLine},
+	{0x09E56, pillarLine},
+	{0x09E5A, pillarLine},
+	{0x33961, pillarLine},
+	{0x0383D, pillarLine},
+	{0x0383F, pillarLine},
+	{0x03859, pillarLine},
+	{0x339BB, pillarLine},
+	{0x09DD5, pillarLine},
 };
 
 const std::set<int> skip_noLine = {
@@ -43,7 +57,7 @@ const std::set<int> skip_completelyExclude = {
 	//Already simplistic
 	
 	0x00064, 0x00182, // Entry Panels
-	0x03481, 0x0339E, 0x03535, 0x03702, 0x03542, //Vault Boxes
+	0x03481, 0x0339E, 0x03535, 0x03702, 0x03542, 0x0356B, 0x2FAF6, //Vault Boxes
 	0x17CC8, 0x17CA6, 0x0A054, 0x17CDF, 0x09DB8, 0x17C95, //Boat Spawns
 	0x0360D, 0x03608, 0x03612, 0x032F5, 0x17CA4, 0x03616, 0x09DE0, 0x03615, 0x03613, //Lasers
 	//Not Shadows Laser, nor Keep Laser Panels
@@ -55,7 +69,7 @@ const std::set<int> skip_completelyExclude = {
 	0x09FA0, 0x09F86, 0x0C339, 0x09FAA, 0x0A249, 0x1C2DF, 0x1831E, 0x1C260, 0x1831C, 0x1C2F3, 0x1831D, 0x1C2B1, 0x1831B, 0x0A015,  
 	0x17CC4, 0x275ED, 0x03678, 0x03679, 0x03675, 0x03676, 0x17CAC, 0x03852, 0x03858, 0x38663, 0x275FA, 0x334DB, 0x334DC, 0x09E49,
 	0x0361B, 0x334D8, 0x2896A, 0x17D02, 0x03713, 0x00B10, 0x00C92, 0x09D9B, 0x17CAB, 0x337FA, 0x0A099, 0x34BC5, 0x34BC6, 0x17CBC,
-	0x2700B, 0x09EEB,
+	0x2700B, 0x09EEB, 0x334E1, 0x27732, 0x2773D, 0x3D9A6, 0x3D9A7, 0x3C113, 0x3C114, 0x3D9AA, 0x3D9A8, 0x3D9A9,
 
 	//Video Inputs
 	0x00815, 0x03553, 0x03552, 0x0354E, 0x03549, 0x0354F, 0x03545,
@@ -69,6 +83,7 @@ const std::set<int> skip_completelyExclude = {
 	0x17C04, 0x17E07, // Swamp Maze Controls
 	0x037FF, // Treehouse Bridge to Keep
 	0x09F7F, // Mountaintop Box Open
+	0x335AB, 0x335AC, 0x3369D, // Elevators in Caves 
 
 	//Complex issues arise, but could be changed
 	0x034E4, 0x034E3, //Sound room
@@ -79,6 +94,11 @@ const std::set<int> skip_completelyExclude = {
 	// Doesn't seem to work at all
 	0x079DF, // Town Triple Environmental
 	0x0C335, // Tutorial Pillar
+
+	// Challenge Puzzles crash the game
+
+	0x0A332, 0x0088E, 0x00BAF, 0x00BF3, 0x00C09, 0x00CDB, 0x0051F, 0x00524, 0x00CD4, 0x00CB9, 0x00CA1, 0x00C80, 0x00C68, 0x00C59, 0x00C22, 0x034F4, 0x034EC, 0x1C31A, 0x1C319,
+
 };
 
 const std::set<int> skip_specialCase = {

@@ -222,9 +222,18 @@ void APRandomizer::SkipPuzzle()
 
 	if (id == -1) return;
 
+	if (false) //Needs to check whether the panel can be skipped!
+		return;
+
 	Special::SkipPanel(id);
+
+	_memory->WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
 
 	std::wstringstream os_;
 	os_ << "HELLO";
 	OutputDebugStringW(os_.str().c_str());
+}
+
+void APRandomizer::SkipPreviouslySkippedPuzzles() {
+	
 }

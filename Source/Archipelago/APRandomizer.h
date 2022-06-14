@@ -40,6 +40,8 @@ class APRandomizer {
 		void GenerateHard();
 		void SkipPuzzle();
 
+		void SkipPreviouslySkippedPuzzles();
+
 	private:
 		std::map<int, int> panelIdToLocationId;
 		std::shared_ptr<Memory> _memory;

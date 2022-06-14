@@ -399,7 +399,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	RegisterClassW(&wndClass);
 
 	HWND hwnd = CreateWindowEx(WS_EX_CONTROLPARENT, WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 250, nullptr, nullptr, hInstance, nullptr);
+      650, 200, 600, DEBUG ? 700 : 280, nullptr, nullptr, hInstance, nullptr);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -496,6 +496,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hwndRandomize = CreateWindow(L"BUTTON", L"Connect",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 180, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
+
+	hwndSkip = CreateWindow(L"BUTTON", L"Skip Puzzle",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		450, 210, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
 
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
