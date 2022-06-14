@@ -1,4 +1,5 @@
 #include "APRandomizer.h"
+#include "../Panels.h"
 
 bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
@@ -235,5 +236,11 @@ void APRandomizer::SkipPuzzle()
 }
 
 void APRandomizer::SkipPreviouslySkippedPuzzles() {
-	
+	for (int id : actuallyEveryPanel) {
+		__int32 skipped = _memory->ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+
+		if (skipped == PUZZLE_SKIPPED) {
+			Special::SkipPanel(id);
+		}
+	}
 }
