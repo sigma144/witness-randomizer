@@ -18,6 +18,7 @@ class PanelLocker {
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		void SetItemReward(const int& id, const APClient::NetworkItem& item, const bool& receiving, const std::string& receivingPlayer, const std::string& itemName);
+		boolean PuzzleIsLocked(int id);
 
 	private:
 		std::vector<int> disabledPuzzles;

@@ -155,7 +155,20 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 
 	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(availablePuzzleSkips - skippedPuzzles)).c_str());
 
-	if (availablePuzzleSkips > skippedPuzzles && id != -1 && !skip_completelyExclude.count(id)) {
+	if (id == 0x0A3A8) {
+		id = 0x033EA;
+	}
+	if (id == 0x0A3B9) {
+		id = 0x01BE9;
+	}
+	if (id == 0x0A3BB) {
+		id = 0x01CD3;
+	}
+	if (id == 0x0A3AD) {
+		id = 0x01D3F;
+	}
+
+	if (availablePuzzleSkips > skippedPuzzles && id != -1 && !skip_completelyExclude.count(id) && !panelLocker->PuzzleIsLocked(id)) {
 		EnableWindow(skipButton, true);
 		return true;
 	}
@@ -191,8 +204,4 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 
 void APWatchdog::AddPuzzleSkip() {
 	availablePuzzleSkips++;
-
-	std::wstringstream os_;
-	os_ << availablePuzzleSkips;
-	OutputDebugStringW(os_.str().c_str());
 }

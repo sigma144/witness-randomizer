@@ -143,7 +143,6 @@ void Memory::findActivePanel() {
 }
 
 int Memory::GetActivePanel() {
-
 	return this->ReadData<int>(this->ACTIVEPANELOFFSETS, 1)[0] - 1;
 }
 

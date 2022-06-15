@@ -167,7 +167,7 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, skipButton, availableSkips);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
 	async->SkipPreviouslySkippedPuzzles();
 
 	if (UnlockSymbols)

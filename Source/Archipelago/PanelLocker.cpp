@@ -501,3 +501,7 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	decorations.insert(decorations.begin(), gridDecorations.begin(), gridDecorations.end());
 	decorationsFlags.insert(decorationsFlags.begin(), gridDecorationsFlags.begin(), gridDecorationsFlags.end());
 }
+
+boolean PanelLocker::PuzzleIsLocked(int id) {
+	return lockedPuzzles.count(id) != 0;
+}
