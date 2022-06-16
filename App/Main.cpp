@@ -35,6 +35,7 @@
 #define IDC_TOGGLESNIPES 0x411
 #define IDC_SKIPPUZZLE 0x421
 #define IDC_TAB 0x450
+#define IDC_RETURN 0x451
 
 #define IDC_ADD 0x301
 #define IDC_REMOVE 0x302
@@ -142,6 +143,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 			//Test button  - general testing (debug mode only)
+
 		case IDC_TEST:
 			generator->resetConfig();
 			generator->seed(static_cast<unsigned int>(time(NULL)));
@@ -152,6 +154,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			colorblind = !IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
 			CheckDlgButton(hwnd, IDC_COLORBLIND, colorblind);
 			break;
+
+		case IDC_RETURN:
+			if (GetFocus() != hwndUser && GetFocus() != hwndPassword) {
+				break;
+			}
 
 		//Randomize button
 		case IDC_RANDOMIZE:
@@ -663,7 +670,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
-	ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}};
+	ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}, { FVIRTKEY, VK_RETURN, IDC_RETURN} };
 	const HACCEL hAccel = CreateAcceleratorTable(Accel, sizeof(Accel) / sizeof(ACCEL));
 
     MSG msg;
