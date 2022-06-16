@@ -1782,7 +1782,9 @@ void Special::DrawSimplePanel(int id)
 		int seqLen = 0;
 		std::vector<int> seq = { };
 
-		panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 1.0f });
+		float path_width_scale = panel._memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+		panel._memory->WritePanelData<float>(id, PATTERN_SCALE, { 1.0f / path_width_scale });
 		panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
 		panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
 		panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);

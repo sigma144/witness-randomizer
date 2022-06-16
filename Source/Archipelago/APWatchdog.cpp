@@ -151,9 +151,14 @@ void APWatchdog::UpdateChallengeLock() {
 }
 
 boolean APWatchdog::CheckIfCanSkipPuzzle() {
-	int id = _memory->GetActivePanel();
-
 	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(availablePuzzleSkips - skippedPuzzles)).c_str());
+
+	if (availablePuzzleSkips <= skippedPuzzles) {
+		EnableWindow(skipButton, false);
+		return false;
+	}
+
+	int id = _memory->GetActivePanel();
 
 	if (id == 0x0A3A8) {
 		id = 0x033EA;
@@ -168,14 +173,20 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 		id = 0x01D3F;
 	}
 
-	if (availablePuzzleSkips > skippedPuzzles && id != -1 && !skip_completelyExclude.count(id) && !panelLocker->PuzzleIsLocked(id)) {
-		EnableWindow(skipButton, true);
-		return true;
+	if (id == -1 || skip_completelyExclude.count(id) || panelLocker->PuzzleIsLocked(id)) {
+		EnableWindow(skipButton, false);
+		return false;
 	}
 
-	EnableWindow(skipButton, false);
+	__int32 skipped = _memory->ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
-	return false;
+	if (skipped == PUZZLE_SKIPPED) {
+		EnableWindow(skipButton, false);
+		return false;
+	}
+
+	EnableWindow(skipButton, true);
+	return true;
 }
 
 void APWatchdog::SkipPuzzle()
@@ -189,6 +200,8 @@ void APWatchdog::SkipPuzzle()
 	Special::SkipPanel(id);
 
 	_memory->WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
+
+	CheckIfCanSkipPuzzle();
 }
 
 void APWatchdog::SkipPreviouslySkippedPuzzles() {
