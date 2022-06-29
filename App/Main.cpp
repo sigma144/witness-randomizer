@@ -80,7 +80,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -163,6 +163,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//Randomize button
 		case IDC_RANDOMIZE:
 		{
+			Memory::errorWindow = hwndRecentError;
+
 			bool rerandomize = false;
 			if (Special::ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
 				if (MessageBox(hwnd, L"Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", NULL, MB_YESNO) == IDYES) {
@@ -232,8 +234,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			randomizer->seed = seed;
 			randomizer->colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
 			randomizer->doubleMode = false;
-			if (hard) randomizer->GenerateHard(hwndLoadingText);
-			else randomizer->GenerateNormal(hwndLoadingText);
+//if (hard) randomizer->GenerateHard(hwndLoadingText);
+//else randomizer->GenerateNormal(hwndLoadingText);
 			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
 			SetWindowText(hwndRandomize, L"Randomized!");
@@ -406,7 +408,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	RegisterClassW(&wndClass);
 
 	HWND hwnd = CreateWindowEx(WS_EX_CONTROLPARENT, WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 280, nullptr, nullptr, hInstance, nullptr);
+      650, 200, 600, DEBUG ? 700 : 345, nullptr, nullptr, hInstance, nullptr);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -517,6 +519,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hwndAvailableSkips = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		250, 215, 160, 16, hwnd, NULL, hInstance, NULL);
+
+	hwndRecentError = CreateWindow(L"STATIC", L"Most Recent Error:",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
+		10, 245, 573, 60, hwnd, NULL, hInstance, NULL);
 
 	std::ifstream configFile("WRPGconfig.txt");
 	if (configFile.is_open()) {

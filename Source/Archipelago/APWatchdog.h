@@ -32,10 +32,12 @@ public:
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
+
 	void AddPuzzleSkip();
 	void SkipPuzzle();
-
 	void SkipPreviouslySkippedPuzzles();
+
+	void UnlockDoor(int id);
 
 private:
 	APClient* ap;
@@ -58,6 +60,24 @@ private:
 	void HandlePowerSurge();
 	void UpdateChallengeLock();
 	boolean CheckIfCanSkipPuzzle();
+
+	int GetActivePanel() {
+		try {
+			return _memory->GetActivePanel();
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Couldn't get active panel");
+		}
+	}
+
+	void WriteMovementSpeed(float currentSpeed) {
+		try {
+			return _memory->WriteMovementSpeed(currentSpeed);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Couldn't get active panel");
+		}
+	}
 };
 
 class APServerPoller : public Watchdog {

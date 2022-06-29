@@ -172,19 +172,19 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 
 void BridgeWatchdog::action()
 {
-	int length1 = _memory->ReadPanelData<int>(id1, TRACED_EDGES);
-	int length2 = _memory->ReadPanelData<int>(id2, TRACED_EDGES);
+	int length1 = ReadPanelData<int>(id1, TRACED_EDGES);
+	int length2 = ReadPanelData<int>(id2, TRACED_EDGES);
 	if (solLength1 > 0 && length1 == 0) {
-		_memory->WritePanelData<int>(id2, STYLE_FLAGS, { _memory->ReadPanelData<int>(id2, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id2, STYLE_FLAGS, { ReadPanelData<int>(id2, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
 	}
 	if (solLength2 > 0 && length2 == 0) {
-		_memory->WritePanelData<int>(id1, STYLE_FLAGS, { _memory->ReadPanelData<int>(id1, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id1, STYLE_FLAGS, { ReadPanelData<int>(id1, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
 	}
 	if (length1 != solLength1 && length1 > 0 && !checkTouch(id2)) {
-		_memory->WritePanelData<int>(id2, STYLE_FLAGS, { _memory->ReadPanelData<int>(id2, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id2, STYLE_FLAGS, { ReadPanelData<int>(id2, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
 	}
 	if (length2 != solLength2 && length2 > 0 && !checkTouch(id1)) {
-		_memory->WritePanelData<int>(id1, STYLE_FLAGS, { _memory->ReadPanelData<int>(id1, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id1, STYLE_FLAGS, { ReadPanelData<int>(id1, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
 	}
 	solLength1 = length1;
 	solLength2 = length2;
@@ -192,11 +192,11 @@ void BridgeWatchdog::action()
 
 bool BridgeWatchdog::checkTouch(int id)
 {
-	int length = _memory->ReadPanelData<int>(id, TRACED_EDGES);
+	int length = ReadPanelData<int>(id, TRACED_EDGES);
 	if (length == 0) return false;
-	int numIntersections = _memory->ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<int> intersectionFlags = _memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
-	std::vector<SolutionPoint> edges = _memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, length);
+	int numIntersections = ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersectionFlags = ReadArray<int>(id, DOT_FLAGS, numIntersections);
+	std::vector<SolutionPoint> edges = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, length);
 	for (const SolutionPoint& sp : edges) if (intersectionFlags[sp.pointA] == Decoration::Dot_Intersection || intersectionFlags[sp.pointB] == Decoration::Dot_Intersection) return true;
 	return false;
 }

@@ -19,22 +19,52 @@ public:
 	bool terminate;
 protected:
 	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
-		return _memory->ReadPanelData<T>(panel, offset, size);
+		try{
+			return _memory->ReadPanelData<T>(panel, offset, size);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Watchdog Read Problem");
+		}
 	}
 	template <class T> T ReadPanelData(int panel, int offset) {
-		return _memory->ReadPanelData<T>(panel, offset);
+		try {
+			return _memory->ReadPanelData<T>(panel, offset);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Watchdog Read Problem");
+		}
 	}
 	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) {
-		return _memory->ReadArray<T>(panel, offset, size);
+		try {
+			return _memory->ReadArray<T>(panel, offset, size);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Watchdog Read Array Problem");
+		}
 	}
 	template <class T> void WritePanelData(int panel, int offset, const std::vector<T>& data) {
-		return _memory->WritePanelData<T>(panel, offset, data);
+		try {
+			return _memory->WritePanelData<T>(panel, offset, data);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Watchdog Write Problem");
+		}
 	}
 	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data) {
-		return _memory->WriteArray<T>(panel, offset, data, false);
+		try {
+			return _memory->WriteArray<T>(panel, offset, data, false);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Watchdog Write Problem");
+		}
 	}
 	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
-		return _memory->WriteArray<T>(panel, offset, data, force);
+		try {
+			return _memory->WriteArray<T>(panel, offset, data, force);
+		}
+		catch (std::exception& e) {
+			OutputDebugStringW(L"Watchdog Write Problem");
+		}
 	}
 	std::shared_ptr<Memory> _memory;
 };

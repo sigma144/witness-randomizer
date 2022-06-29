@@ -140,28 +140,29 @@ public:
 	static int DECELERATION;
 	static bool showMsg;
 	static int globalsTests[3];
+	static HWND errorWindow;
 	bool retryOnFail = true;
 
 
 private:
 	template<class T>
 	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		std::vector<T> data;
 		data.resize(numItems);
 		if (Read(ComputeOffset(offsets), &data[0], sizeof(T) * numItems)) {
 			return data;
 		}
-		if (!showMsg) throw std::exception();
 		ThrowError(offsets, false);
 		return {};
 	}
 
 	template <class T>
 	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
 		if (Write(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
 			return;
 		}
-		if (!showMsg) throw std::exception();
 		ThrowError(offsets, true);
 	}
 

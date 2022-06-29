@@ -63,6 +63,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			if (item.item < ITEM_TEMP_SPEED_BOOST)
 				panelLocker->UpdatePuzzleLocks(state, item.item);
+
+			if (itemIdToDoorSet.count(item.item)) {
+				for (int doorHex : itemIdToDoorSet[item.item]) {
+					async->UnlockDoor(doorHex);
+				}
+			}
 		}
 	});
 
@@ -82,6 +88,15 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			int locationId = val;
 
 			panelIdToLocationId.insert({ panelId, locationId });
+		}
+
+		if (slotData.contains("item_id_to_door_hexes")) {
+			for (auto& [key, val] : slotData["item_id_to_door_hexes"].items()) {
+				int itemId = std::stoul(key, nullptr, 10);
+				std::set<int> v = val;
+
+				itemIdToDoorSet.insert({ itemId, v });
+			}
 		}
 
 		connected = true;
@@ -176,6 +191,7 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 	async->ResetPowerSurge();
 
 	randomizationFinished = true;
+	_memory->showMsg = false;
 
 	async->start();
 }

@@ -382,8 +382,6 @@ void PuzzleList::GenerateSwampN()
 	generator->pathWidth = 0.6f;
 	generator->setFlagOnce(Generate::Config::BigShapes);
 	generator->generate(0x181A9, Decoration::Poly, 2, Decoration::Gap, 12);
-	//Turn off bridge control until all previous puzzles are solved
-	specialCase->setTargetAndDeactivate(0x181A9, 0x00609);
 	//Red Panels
 	generator->resetConfig();
 	generator->setGridSize(4, 4);
@@ -1440,8 +1438,6 @@ void PuzzleList::GenerateSwampH()
 	generator->write(0x00609);
 	generator->write(0x18488);
 	generator->resetConfig();
-	//Turn off bridge control until all previous puzzles are solved
-	specialCase->setTargetAndDeactivate(0x181A9, 0x00609);
 	//Red Panels
 	generator->resetConfig();
 	generator->setGridSize(4, 4);

@@ -43,6 +43,7 @@ class APRandomizer {
 
 	private:
 		std::map<int, int> panelIdToLocationId;
+		std::map<int, std::set<int>> itemIdToDoorSet;
 		std::shared_ptr<Memory> _memory;
 
 		APClient* ap;

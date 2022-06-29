@@ -91,7 +91,7 @@ void APWatchdog::HandleMovementSpeed() {
 		currentSpeed = baseSpeed;
 	}
 
-	_memory->WriteMovementSpeed(currentSpeed);
+	WriteMovementSpeed(currentSpeed);
 }
 
 void APWatchdog::TriggerPowerSurge() {
@@ -158,7 +158,7 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 		return false;
 	}
 
-	int id = _memory->GetActivePanel();
+	int id = GetActivePanel();
 
 	if (id == 0x0A3A8) {
 		id = 0x033EA;
@@ -178,7 +178,7 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 		return false;
 	}
 
-	__int32 skipped = _memory->ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+	__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
 	if (skipped == PUZZLE_SKIPPED) {
 		EnableWindow(skipButton, false);
@@ -191,7 +191,7 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 
 void APWatchdog::SkipPuzzle()
 {
-	int id = _memory->GetActivePanel();
+	int id = GetActivePanel();
 
 	if (!CheckIfCanSkipPuzzle()) return;
 
@@ -199,14 +199,14 @@ void APWatchdog::SkipPuzzle()
 
 	Special::SkipPanel(id);
 
-	_memory->WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
+	WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
 
 	CheckIfCanSkipPuzzle();
 }
 
 void APWatchdog::SkipPreviouslySkippedPuzzles() {
 	for (int id : actuallyEveryPanel) {
-		__int32 skipped = _memory->ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+		__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
 		if (skipped == PUZZLE_SKIPPED) {
 			Special::SkipPanel(id);
@@ -217,4 +217,8 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 
 void APWatchdog::AddPuzzleSkip() {
 	availablePuzzleSkips++;
+}
+
+void APWatchdog::UnlockDoor(int id) {
+	_memory->OpenDoor(id);
 }

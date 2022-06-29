@@ -168,7 +168,19 @@ void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2&
 }
 
 void Memory::ThrowError(std::string message) {
-	if (!showMsg) throw std::exception(message.c_str());
+	if (!showMsg) {
+		if(errorWindow != NULL){
+			time_t now = time(NULL);
+			//char *str = asctime(localtime(&now));
+			tm now_tm = {};
+			char str[26] = {};
+			localtime_s(&now_tm, &now);
+			asctime_s(str, 26, &now_tm);
+			std::string str_r(str);
+			SetWindowText(errorWindow, (L"Most recent error on " + std::wstring(str_r.begin(), str_r.end()) + L"\n" + std::wstring(message.begin(), message.end())).c_str());
+		}
+		throw std::exception(message.c_str());
+	}
 	DWORD exitCode;
 	GetExitCodeProcess(_handle, &exitCode);
 	if (exitCode != STILL_ACTIVE) throw std::exception(message.c_str());
@@ -215,7 +227,6 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 			// If the address is not yet computed, then compute it.
 			uintptr_t computedAddress = 0;
 			if (!Read(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {
-				if (!showMsg) throw std::exception();
 				ThrowError(offsets, false);
 			}
 			_computedAddresses[cumulativeAddress] = computedAddress;
@@ -234,9 +245,9 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 	unsigned char buffer[] =
 		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
 		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
-		"\x48\x83\xC4\x08" // add rsp,08
+		"\x48\x83\xEC\x48" // sub rsp,48
 		"\xFF\xD0" //call rax
-		"\x48\x83\xEC\x08" // sub rsp,08
+		"\x48\x83\xC4\x48" // add rsp,48
 		"\xC3"; //ret
 
 	buffer[2] = functionAdress & 0xff; //address of laser activation function
@@ -269,6 +280,7 @@ int Memory::ACCELERATION = 0;
 int Memory::DECELERATION = 0;
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;
+HWND Memory::errorWindow = NULL;
 int Memory::globalsTests[3] = {
 	0x62D0A0, //Steam and Epic Games
 	0x62B0A0, //Good Old Games
