@@ -131,6 +131,8 @@ public:
 		CallVoidFunction(id, 0x14008EB60);
 	}
 
+	void DisplayHudMessage(std::string s);
+
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
@@ -181,6 +183,7 @@ private:
 	std::map<uintptr_t, uintptr_t> _computedAddresses;
 	std::map<std::pair<int, int>, int> _arraySizes;
 	uintptr_t _baseAddress = 0;
+	LPVOID _messageAddress = 0;
 	HANDLE _handle = nullptr;
 
 	friend class Randomizer;

@@ -274,6 +274,67 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
 }
 
+void Memory::DisplayHudMessage(std::string message) {
+	char buffer[1024];
+
+	if (!_messageAddress) {
+		_messageAddress = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+
+		/*
+		__int64 address = 0x1401E9E6C;
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
+		__int32 addressOf8 = 0x0032BEC8;
+
+		Write(addressPointer, &addressOf8, sizeof(addressOf8));*/
+	}
+
+	strcpy_s(buffer, message.c_str());
+
+	WriteProcessMemory(_handle, _messageAddress, buffer, sizeof(buffer), NULL);
+
+	std::wstringstream s;
+	s << _messageAddress;
+	OutputDebugStringW(s.str().c_str());
+
+
+
+
+	__int64 funcAdress = 0x1401E9E30;
+	__int64 messageAddress = reinterpret_cast<int>(_messageAddress);
+
+	unsigned char asmBuff[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	asmBuff[2] = funcAdress & 0xff; //address of laser activation function
+	asmBuff[3] = (funcAdress >> 8) & 0xff;
+	asmBuff[4] = (funcAdress >> 16) & 0xff;
+	asmBuff[5] = (funcAdress >> 24) & 0xff;
+	asmBuff[6] = (funcAdress >> 32) & 0xff;
+	asmBuff[7] = (funcAdress >> 40) & 0xff;
+	asmBuff[8] = (funcAdress >> 48) & 0xff;
+	asmBuff[9] = (funcAdress >> 56) & 0xff;
+	asmBuff[12] = messageAddress & 0xff; //address of laser
+	asmBuff[13] = (messageAddress >> 8) & 0xff;
+	asmBuff[14] = (messageAddress >> 16) & 0xff;
+	asmBuff[15] = (messageAddress >> 24) & 0xff;
+	asmBuff[16] = (messageAddress >> 32) & 0xff;
+	asmBuff[17] = (messageAddress >> 40) & 0xff;
+	asmBuff[18] = (messageAddress >> 48) & 0xff;
+	asmBuff[19] = (messageAddress >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(asmBuff);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, asmBuff, allocation_size, NULL);
+	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+}
+
 int Memory::GLOBALS = 0;
 int Memory::RUNSPEED = 0;
 int Memory::ACCELERATION = 0;

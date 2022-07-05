@@ -11,6 +11,7 @@ void APWatchdog::action() {
 	HandlePowerSurge();
 	UpdateChallengeLock();
 	CheckIfCanSkipPuzzle();
+	DisplayMessage();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -262,4 +263,19 @@ void APWatchdog::SeverDoor(int id) {
 		s << "Can't Sever Door " << std::hex << id << "!!!!\n";
 		OutputDebugStringW(s.str().c_str());
 	}
+}
+
+void APWatchdog::DisplayMessage() {
+	if (messageCounter > 0) {
+		messageCounter--;
+		return;
+	}
+
+	if (outstandingMessages.empty()) return;
+
+	std::string message = outstandingMessages.front();
+	outstandingMessages.pop();
+	_memory->DisplayHudMessage(message);
+	
+	messageCounter = 6;
 }

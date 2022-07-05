@@ -50,7 +50,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		FinalPanel = slotData["victory_location"];
 
 		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
-		UnlockSymbols = slotData.contains("shuffle_symbols") ? slotData["unlock_symbols"] == true : true;
+		UnlockSymbols = slotData.contains("shuffle_symbols") ? slotData["shuffle_symbols"] == true : true;
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
@@ -193,7 +193,10 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 	
 	SeverDoors();
 
+	OutputDebugStringW(L"Test");
+
 	if (UnlockSymbols)
+		OutputDebugStringW(L"Test2");
 		setPuzzleLocks(loadingHandle);
 
 	async->ResetPowerSurge();
@@ -202,6 +205,14 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 	_memory->showMsg = false;
 
 	async->start();
+
+	//async->queueMessage("I can display hud messages now.");
+
+	//async->queueMessage("This is really cool!!");
+
+	//async->queueMessage("Just some test messages to test the queueing system.");
+
+	//async->queueMessage("Wahoo!");
 }
 
 void APRandomizer::setPuzzleLocks(HWND loadingHandle) {

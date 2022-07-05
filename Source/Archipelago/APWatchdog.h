@@ -40,6 +40,9 @@ public:
 	void UnlockDoor(int id);
 	void SeverDoor(int id);
 
+	void queueMessage(std::string message) {
+		outstandingMessages.push(message);
+	}
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;
@@ -55,6 +58,11 @@ private:
 	float currentSpeed = 2.0f;
 	bool hasTemporarySpeedModdification = false;
 	std::chrono::system_clock::time_point temporarySpeedModdificationStartTime;
+
+	std::queue<std::string> outstandingMessages;
+	int messageCounter = 0;
+
+	void DisplayMessage();
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed();
