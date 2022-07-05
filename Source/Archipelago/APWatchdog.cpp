@@ -242,6 +242,15 @@ void APWatchdog::SeverDoor(int id) {
 			s << std::hex << conn.target_no;
 			OutputDebugStringW(s.str().c_str());
 
+			if (conn.target_no == ENTITY_NAME) {
+				std::stringstream stream;
+				stream << std::hex << conn.id;
+				std::string result(stream.str());
+				std::vector<char> v(result.begin(), result.end());
+
+				_memory->WriteArray<char>(conn.id, ENTITY_NAME, v);
+				continue;
+			}
 			_memory->WritePanelData<int>(conn.id, conn.target_no, { 0 });
 		}
 		return;

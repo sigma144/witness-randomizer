@@ -43,6 +43,8 @@ class APRandomizer {
 
 		void SeverDoors();
 
+		void unlockItem(int item);
+
 	private:
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;

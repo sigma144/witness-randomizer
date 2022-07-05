@@ -32,34 +32,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		}
 
 		for (const auto& item : items) {
-			switch (item.item) {
-				//Puzzle Symbols
-			case ITEM_DOTS:									state.unlockedDots = true;							break;
-			case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
-			case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
-			case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
-			case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
-			case ITEM_ERASOR:									state.unlockedErasers = true;						break;
-			case ITEM_TETRIS:									state.unlockedTetris = true;						break;
-			case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
-			case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
-			case ITEM_STARS:									state.unlockedStars = true;						break;
-			case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
-			case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
-			case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
-			case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
-
-				//Powerups
-			case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
-			case ITEM_PUZZLE_SKIP:						async->AddPuzzleSkip(); break;
-
-				//Traps
-			case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
-			case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
-
-			default:
-				break;
-			}
+			unlockItem(item.item);
 
 			if (item.item < ITEM_TEMP_SPEED_BOOST)
 				panelLocker->UpdatePuzzleLocks(state, item.item);
@@ -77,7 +50,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		FinalPanel = slotData["victory_location"];
 
 		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
-		UnlockSymbols = slotData.contains("unlock_symbols") ? slotData["unlock_symbols"] == true : true;
+		UnlockSymbols = slotData.contains("shuffle_symbols") ? slotData["unlock_symbols"] == true : true;
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
@@ -166,6 +139,33 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	}
 
 	return connected;
+}
+
+void APRandomizer::unlockItem(int item) {
+	switch (item) {
+		case ITEM_DOTS:									state.unlockedDots = true;							break;
+		case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
+		case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
+		case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
+		case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
+		case ITEM_ERASOR:									state.unlockedErasers = true;						break;
+		case ITEM_TETRIS:									state.unlockedTetris = true;						break;
+		case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
+		case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
+		case ITEM_STARS:									state.unlockedStars = true;						break;
+		case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
+		case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
+		case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
+		case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
+
+		//Powerups
+		case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
+		case ITEM_PUZZLE_SKIP:						async->AddPuzzleSkip(); break;
+
+		//Traps
+		case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
+		case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
+	}
 }
 
 std::string APRandomizer::buildUri(std::string& server)
