@@ -41,9 +41,12 @@ class APRandomizer {
 
 		void SkipPuzzle();
 
+		void SeverDoors();
+
 	private:
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
+		std::set<int> allDoors;
 		std::shared_ptr<Memory> _memory;
 
 		APClient* ap;

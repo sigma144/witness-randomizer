@@ -89,7 +89,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasStones = false;
 		hasColoredStones = true;
 	} 
-	else if (id == 0x17D9B || id == 0x17D99 || id == 0x17DAA) {
+	else if (id == 0x17D9B || id == 0x17D99 || id == 0x17DAA || id == 0x334D8) {
 		hasStones = true;
 		hasColoredStones = false;
 	}

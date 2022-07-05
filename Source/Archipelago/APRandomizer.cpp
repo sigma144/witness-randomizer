@@ -99,6 +99,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
+		if (slotData.contains("door_hexes")) {
+			for (int val : slotData["door_hexes"]) {
+				allDoors.insert(val);
+			}
+		}
+
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -184,6 +190,8 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
 	async->SkipPreviouslySkippedPuzzles();
+	
+	SeverDoors();
 
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
@@ -237,4 +245,10 @@ void APRandomizer::MakeEarlyUTM()
 
 void APRandomizer::SkipPuzzle() {
 	async->SkipPuzzle();
+}
+
+void APRandomizer::SeverDoors() {
+	for (int id : allDoors) {
+		async->SeverDoor(id);
+	}
 }

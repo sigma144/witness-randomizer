@@ -38,6 +38,7 @@ public:
 	void SkipPreviouslySkippedPuzzles();
 
 	void UnlockDoor(int id);
+	void SeverDoor(int id);
 
 private:
 	APClient* ap;

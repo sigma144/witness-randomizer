@@ -3,6 +3,7 @@
 #include <thread>
 #include "../Panels.h"
 #include "SkipSpecialCases.h"
+#include "DoorSevers.h"
 
 void APWatchdog::action() {
 	CheckSolvedPanels();
@@ -221,4 +222,35 @@ void APWatchdog::AddPuzzleSkip() {
 
 void APWatchdog::UnlockDoor(int id) {
 	_memory->OpenDoor(id);
+}
+
+void APWatchdog::SeverDoor(int id) {
+	_memory->WritePanelData<float>(0x0A171, 0x2C, { 14.7f });
+	_memory->WritePanelData<int>(0x0A171, NEEDS_REDRAW, { 1 });
+
+	if (severTargetsById.count(id)) {
+		std::wstringstream s;
+
+		s << "Severing Door " << std::hex << id << "!\n";
+		OutputDebugStringW(s.str().c_str());
+
+		std::vector<Connection> conns = severTargetsById[id];
+
+		for (auto& conn : conns) {
+			std::wstringstream s;
+
+			s << std::hex << conn.target_no;
+			OutputDebugStringW(s.str().c_str());
+
+			_memory->WritePanelData<int>(conn.id, conn.target_no, { 0 });
+		}
+		return;
+	}
+	else
+	{
+		std::wstringstream s;
+
+		s << "Can't Sever Door " << std::hex << id << "!!!!\n";
+		OutputDebugStringW(s.str().c_str());
+	}
 }
