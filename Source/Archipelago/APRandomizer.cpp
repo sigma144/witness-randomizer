@@ -31,6 +31,38 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
+		std::vector<int> receivedItems;
+		std::map<int, int> counts;
+
+		for(auto item : items){
+			if (mostRecentItemId >= item.index) continue;
+
+			mostRecentItemId = item.index;
+
+			int i = item.item;
+
+			if (counts.find(i) == counts.end()) {
+				counts[i] = 1;
+				receivedItems.emplace_back(i);
+			}
+
+			else {
+				counts[i]++;
+			}
+		}
+
+		for (int itemId : receivedItems) {
+			std::string count = "";
+
+			if (counts[itemId] > 1) {
+				count = " (x" + std::to_string(counts[itemId]) + ")";
+			}
+
+			async->queueMessage("Received " + ap->get_item_name(itemId) + count + ".");
+		}
+
+		_memory->WritePanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12, { mostRecentItemId });
+		
 		for (const auto& item : items) {
 			unlockItem(item.item);
 
@@ -78,6 +110,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
+		mostRecentItemId = _memory->ReadPanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12);
+
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -110,8 +144,18 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			return pair.second == item.location;
 		});
 
-		if (findResult != std::end(panelIdToLocationId))
-			panelLocker->SetItemReward(findResult->first, item, receiver == ap->get_player_number(), ap->get_player_alias(receiver), ap->get_item_name(item.item));
+		if (findResult == std::end(panelIdToLocationId)) return;
+
+		bool receiving = receiver == ap->get_player_number();
+
+		std::string player = ap->get_player_alias(receiver);
+		std::string itemName = ap->get_item_name(item.item);
+
+		if (!receiving) {
+			async->queueMessage("Sent " + itemName + " to " + player + ".");
+		}
+		
+		panelLocker->SetItemReward(findResult->first, item);
 	});
 
 	ap->set_data_package_changed_handler([&](const nlohmann::json& data) {
@@ -193,10 +237,7 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 	
 	SeverDoors();
 
-	OutputDebugStringW(L"Test");
-
 	if (UnlockSymbols)
-		OutputDebugStringW(L"Test2");
 		setPuzzleLocks(loadingHandle);
 
 	async->ResetPowerSurge();
@@ -205,14 +246,6 @@ void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND avai
 	_memory->showMsg = false;
 
 	async->start();
-
-	//async->queueMessage("I can display hud messages now.");
-
-	//async->queueMessage("This is really cool!!");
-
-	//async->queueMessage("Just some test messages to test the queueing system.");
-
-	//async->queueMessage("Wahoo!");
 }
 
 void APRandomizer::setPuzzleLocks(HWND loadingHandle) {

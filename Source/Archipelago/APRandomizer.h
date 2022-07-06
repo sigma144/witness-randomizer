@@ -30,6 +30,8 @@ class APRandomizer {
 		int MountainLasers = 7;
 		int ChallengeLasers = 11;
 
+		int mostRecentItemId = -1;
+
 		bool connected = false;
 		bool randomizationFinished = false;
 

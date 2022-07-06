@@ -186,35 +186,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	}
 }
 
-void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item, const bool& receiving, const std::string& receivingPlayer, const std::string& itemName) {
-	if (!_memory->ReadPanelData<int>(id, SOLVED)) //Setting item reward makes the puzzle unsolveable only do it on solved puzzles
-		return;
-
-	//Mountain combo panel & Mountain Bottom Layer Discard & Tutorial Back Left
-	if (id == 0x09FD2 || id == 0x17FA2 || id == 0x0A3B5)
-	{
-		return;
-		//Combo Panel: This fails as the last panel can be solved while yielding an error on one of the previus panels
-		//maybe check if staircase is opened
-		//Bottom Layer Discard: This panel opens a door on a timer. If you fail to go through the door in time, you will get locked.
-	}
-
-	std::vector<float> intersections = { 0.0f, 0.0f, 1.0f, 1.0f };
-	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
-	std::vector<int> connectionsA;
-	std::vector<int> connectionsB;
-
-	createCenteredText(id, receiving ? "received" : "sent", intersections, intersectionFlags, connectionsA, connectionsB, 0.03f, 0.13f);
-
-	std::vector<std::string> words = StringSplitter::split(itemName, ' ');
-	for (std::size_t i = 0; i < words.size() && i < 5; ++i)
-		createCenteredText(id, words[i], intersections, intersectionFlags, connectionsA, connectionsB, 0.22f + (0.1f * i), 0.3f + (0.1f * i));
-
-	if (!receiving) {
-		std::string player = receivingPlayer;
-		createCenteredText(id, "to " + player, intersections, intersectionFlags, connectionsA, connectionsB, 0.87f, 0.97f);
-	}
-
+void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item) {
 	Color backgroundColor;
 	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
 		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
@@ -224,32 +196,7 @@ void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item
 		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
 	else
 		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
-
-	_memory->WritePanelData<Color>(id, PATH_COLOR, { { 0.0f, 0.0f, 0.0f, 1.0f } });
 	_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
-
-	float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
-
-	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.3f / path_width_scale });
-	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
-	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections, true); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags, true); //flags for each point such as entrance or exit
-	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
-	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA, true); //start of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB, true); //end of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
-
-	std::vector<int> decorations;
-	std::vector<int> decorationsFlags;
-	//override decorations with invisiables triangles of size 0
-	int numDecorations = _memory->ReadPanelData<int>(id, NUM_DECORATIONS);
-		for (int i = 0; i < numDecorations; i++) {
-		decorations.emplace_back(Decoration::Triangle);
-		decorationsFlags.emplace_back(0);
-	}
-	_memory->WriteArray<int>(id, DECORATIONS, decorations);
-	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 

@@ -280,28 +280,22 @@ void Memory::DisplayHudMessage(std::string message) {
 	if (!_messageAddress) {
 		_messageAddress = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-
-		/*
 		__int64 address = 0x1401E9E6C;
 		LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 		__int32 addressOf8 = 0x0032BEC8;
 
-		Write(addressPointer, &addressOf8, sizeof(addressOf8));*/
+		Write(addressPointer, &addressOf8, sizeof(addressOf8));
 	}
 
 	strcpy_s(buffer, message.c_str());
 
 	WriteProcessMemory(_handle, _messageAddress, buffer, sizeof(buffer), NULL);
 
-	std::wstringstream s;
-	s << _messageAddress;
-	OutputDebugStringW(s.str().c_str());
-
 
 
 
 	__int64 funcAdress = 0x1401E9E30;
-	__int64 messageAddress = reinterpret_cast<int>(_messageAddress);
+	__int64 messageAddress = reinterpret_cast<__int64>(_messageAddress);
 
 	unsigned char asmBuff[] =
 		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
@@ -311,7 +305,7 @@ void Memory::DisplayHudMessage(std::string message) {
 		"\x48\x83\xC4\x48" // add rsp,48
 		"\xC3"; //ret
 
-	asmBuff[2] = funcAdress & 0xff; //address of laser activation function
+	asmBuff[2] = funcAdress & 0xff;
 	asmBuff[3] = (funcAdress >> 8) & 0xff;
 	asmBuff[4] = (funcAdress >> 16) & 0xff;
 	asmBuff[5] = (funcAdress >> 24) & 0xff;
@@ -319,7 +313,7 @@ void Memory::DisplayHudMessage(std::string message) {
 	asmBuff[7] = (funcAdress >> 40) & 0xff;
 	asmBuff[8] = (funcAdress >> 48) & 0xff;
 	asmBuff[9] = (funcAdress >> 56) & 0xff;
-	asmBuff[12] = messageAddress & 0xff; //address of laser
+	asmBuff[12] = messageAddress & 0xff;
 	asmBuff[13] = (messageAddress >> 8) & 0xff;
 	asmBuff[14] = (messageAddress >> 16) & 0xff;
 	asmBuff[15] = (messageAddress >> 24) & 0xff;

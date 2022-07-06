@@ -240,9 +240,6 @@ void APWatchdog::SeverDoor(int id) {
 		for (auto& conn : conns) {
 			std::wstringstream s;
 
-			s << std::hex << conn.target_no;
-			OutputDebugStringW(s.str().c_str());
-
 			if (conn.target_no == ENTITY_NAME) {
 				std::stringstream stream;
 				stream << std::hex << conn.id;
