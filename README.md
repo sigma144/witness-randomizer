@@ -2,7 +2,7 @@
 
 # Witness Random Puzzle Generator
 
-### [Click Here to Download (ver 1.3.0)](https://github.com/sigma144/witness-randomizer/releases/download/1.3.0/WitnessRPG1.3.0.zip)
+### [Click Here to Download (ver 1.3.1)](https://github.com/sigma144/witness-randomizer/releases/download/1.3.1/WitnessRPG1.3.1.zip)
 
 #### Randomizer Version 1.3 is out, which includes compatibility for Expert double rando! Double rando capability is also now included in the randomizer itself. This release has not been fully tested, so I will be actively monitoring for any issues/bugs that crop up. Big thank you to hatkirbyy who contributed the code for this release and got Expert working 😄
 
