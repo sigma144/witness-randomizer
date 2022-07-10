@@ -204,7 +204,7 @@ void APRandomizer::unlockItem(int item) {
 
 		//Powerups
 		case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
-		case ITEM_PUZZLE_SKIP:						async->AddPuzzleSkip(); break;
+		case ITEM_PUZZLE_SKIP:							async->AddPuzzleSkip(); break;
 
 		//Traps
 		case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
@@ -220,7 +220,7 @@ std::string APRandomizer::buildUri(std::string& server)
 		uri = "ws://" + uri;
 	if (uri.find(":") == std::string::npos)
 		uri = uri + ":38281";
-	else if (uri.rfind(":") == uri.length())
+	else if (uri.back() == ':')
 		uri = uri + "38281";
 
 	return uri;
