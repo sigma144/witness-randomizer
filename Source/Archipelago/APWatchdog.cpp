@@ -274,6 +274,11 @@ void APWatchdog::SeverDoor(int id) {
 	if (severTargetsById.count(id)) {
 		severedDoorsList.insert(id);
 
+		if (id == 0x01A0E) {
+			_memory->WritePanelData<int>(0x01A0F, TARGET, { 0x0360E + 1 });
+			return;
+		}
+
 		std::vector<Connection> conns = severTargetsById[id];
 
 		for (auto& conn : conns) {

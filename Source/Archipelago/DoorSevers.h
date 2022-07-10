@@ -74,7 +74,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x019B5, {{0x019DC, PANEL, TARGET }, /*{0x019DC, PANEL, MOUNT_PARENT_ID}*/ }}, // Shortcut
 	{0x019E6, {{0x019E7, PANEL, TARGET }, /*{0x019E7, PANEL, MOUNT_PARENT_ID}*/ }}, // Keep Hedge Maze 3 Exit
 	{0x0199A, {{0x019E7, PANEL, TARGET }, /*{0x019E7, PANEL, MOUNT_PARENT_ID}*/ }}, // Shortcut
-	{0x01A0E, {{0x01A0F, PANEL, TARGET }, /*{0x01A0F, PANEL, MOUNT_PARENT_ID}*/ }}, // Keep Hedge Maze 4 Exit
+	{0x01A0E, {}}, // Keep Hedge Maze 4 Exit
 
 	{0x01BEC, {{0x033EA, PANEL, TARGET }}}, // Keep Pressure Plates 1
 	{0x01BEA, {{0x01BE9, PANEL, TARGET }}}, // Keep Pressure Plates 2
