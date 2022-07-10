@@ -204,6 +204,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
 			int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+
 			if (lastSeed > 0 && !rerandomize && !DEBUG) {
 				if (seed != lastSeed) {
 					if (MessageBox(hwnd, L"This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?", NULL, MB_YESNO) == IDNO) {
@@ -234,8 +235,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			randomizer->seed = seed;
 			randomizer->colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
 			randomizer->doubleMode = false;
-			//if (hard) randomizer->GenerateHard(hwndLoadingText);
-			//else randomizer->GenerateNormal(hwndLoadingText);
+			if (hard) randomizer->GenerateHard(hwndLoadingText);
+			else randomizer->GenerateNormal(hwndLoadingText);
 			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
 			SetWindowText(hwndRandomize, L"Randomized!");

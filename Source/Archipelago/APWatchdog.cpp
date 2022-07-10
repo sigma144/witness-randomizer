@@ -12,6 +12,8 @@ void APWatchdog::action() {
 	UpdateChallengeLock();
 	CheckIfCanSkipPuzzle();
 	DisplayMessage();
+	DisableCollisions();
+	RefreshDoors();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -46,7 +48,25 @@ void APWatchdog::CheckSolvedPanels() {
 		int panelId = it->first;
 		int locationId = it->second;
 
-		if (ReadPanelData<int>(panelId, SOLVED))
+		if (panelId == 0x09FD2) {
+			int cableId = 0x09FCD;
+			int CABLE_POWER = 0xC4;
+
+			if (ReadPanelData<int>(cableId, CABLE_POWER))
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
+
+
+		else if (ReadPanelData<int>(panelId, SOLVED))
 		{
 			solvedLocations.push_back(locationId);
 
@@ -162,6 +182,10 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 
 	int id = GetActivePanel();
 
+	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), id) == actuallyEveryPanel.end()) {
+		return false;
+	}
+
 	if (id == 0x0A3A8) {
 		id = 0x033EA;
 	}
@@ -222,23 +246,59 @@ void APWatchdog::AddPuzzleSkip() {
 }
 
 void APWatchdog::UnlockDoor(int id) {
+	if (id == 0x0CF2A) {
+		disableCollisionList.insert(id);
+
+		_memory->WritePanelData<float>(0x17CAA, POSITION, { 36.694f, -41.883f, 16.570f });
+		_memory->WritePanelData<float>(0x17CAA, SCALE, { 1.2f });
+
+		_memory->UpdateEntityPosition(0x17CAA);
+	}
+
+	if (id == 0x0C310) {
+		_memory->WritePanelData<float>(0x02886, POSITION + 8, { 12.8f });
+
+		_memory->UpdateEntityPosition(0x02886);
+	}
+
+	if (id == 0x2D73F) {
+		_memory->WritePanelData<float>(0x021D7, POSITION + 8, { 10.0f });
+
+		_memory->UpdateEntityPosition(0x021D7);
+	}
+	refreshDoorsMap[id] = 10;
 	_memory->OpenDoor(id);
 }
 
 void APWatchdog::SeverDoor(int id) {
-	_memory->WritePanelData<float>(0x0A171, 0x2C, { 14.7f });
-	_memory->WritePanelData<int>(0x0A171, NEEDS_REDRAW, { 1 });
-
 	if (severTargetsById.count(id)) {
-		std::wstringstream s;
-
-		s << "Severing Door " << std::hex << id << "!\n";
-		OutputDebugStringW(s.str().c_str());
+		severedDoorsList.insert(id);
 
 		std::vector<Connection> conns = severTargetsById[id];
 
 		for (auto& conn : conns) {
-			std::wstringstream s;
+			if (id == 0x01954 || id == 0x018CE || id == 0x019D8 || id == 0x019B5 || id == 0x019E6 || id == 0x0199A || id == 0x18482 || id == 0x0A1D6)
+			{
+				DoubleDoorTargetHack(id);
+				continue;
+			}
+
+			if (conn.id == 0x28A0D) {
+				_memory->WritePanelData<float>(conn.id, POSITION, { -31.0f, 7.1f });
+
+				_memory->UpdateEntityPosition(conn.id);
+			}
+
+			if (conn.id == 0x17CAB) {
+				_memory->WritePanelData<float>(0x0026D, POWER, { 1.0f, 1.0f });
+				_memory->WritePanelData<int>(0x0026D, NEEDS_REDRAW, { 1 });
+			}
+
+			if (conn.id == 0x01D8D) {
+				_memory->WritePanelData<float>(conn.id, POSITION, { -57.8f, 157.2f, 3.45f });
+
+				_memory->UpdateEntityPosition(conn.id);
+			}
 
 			if (conn.target_no == ENTITY_NAME) {
 				std::stringstream stream;
@@ -257,8 +317,96 @@ void APWatchdog::SeverDoor(int id) {
 	{
 		std::wstringstream s;
 
-		s << "Can't Sever Door " << std::hex << id << "!!!!\n";
+		s << "Don't know how to Sever Door " << std::hex << id << "!!!!\n";
 		OutputDebugStringW(s.str().c_str());
+	}
+}
+
+void APWatchdog::DoubleDoorTargetHack(int id) {
+	if (id == 0x01954) { // Exit Door 1->2
+		if (severedDoorsList.count(0x018CE)) {
+			_memory->WritePanelData<int>(0x00139, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x00521, CABLE_TARGET_2, { 0 });
+		return;
+	}
+
+	if (id == 0x018CE) { // Shortcut Door 1
+		if (severedDoorsList.count(0x01954)) {
+			_memory->WritePanelData<int>(0x00139, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x00139, TARGET, { 0x01954 + 1 });
+		return;
+	}
+
+
+
+	if (id == 0x019D8) { // Exit Door 2->3
+		if (severedDoorsList.count(0x019B5)) {
+			_memory->WritePanelData<int>(0x019DC, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x00525, CABLE_TARGET_2, { 0 });
+		return;
+	}
+
+	if (id == 0x019B5) { // Shortcut Door 2
+		if (severedDoorsList.count(0x019D8)) {
+			_memory->WritePanelData<int>(0x019DC, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x019DC, TARGET, { 0x019D8 + 1 });
+		return;
+	}
+
+
+
+	if (id == 0x019E6) { // Exit Door 3->4
+		if (severedDoorsList.count(0x0199A)) {
+			_memory->WritePanelData<int>(0x019E7, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x00529, CABLE_TARGET_2, { 0 });
+		return;
+	}
+
+	if (id == 0x0199A) { // Shortcut Door 3
+		if (severedDoorsList.count(0x019E6)) {
+			_memory->WritePanelData<int>(0x019E7, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x019E7, TARGET, { 0x019E6 + 1 });
+		return;
+	}
+
+
+
+	if (id == 0x18482) { // Swamp Blue
+		if (severedDoorsList.count(0x0A1D6)) {
+			_memory->WritePanelData<int>(0x00E3A, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x00BDB, CABLE_TARGET_0, { 0 });
+		return;
+	}
+
+	if (id == 0x0A1D6) { // Swamp Purple
+		if (severedDoorsList.count(0x18482)) {
+			_memory->WritePanelData<int>(0x00E3A, TARGET, { 0 });
+			return;
+		}
+
+		_memory->WritePanelData<int>(0x2FD5F, CABLE_TARGET_1, { 0 });
+		return;
 	}
 }
 
@@ -275,4 +423,35 @@ void APWatchdog::DisplayMessage() {
 	_memory->DisplayHudMessage(message);
 	
 	messageCounter = 6;
+}
+
+void APWatchdog::DisableCollisions() {
+	for (int id : disableCollisionList) {
+		_memory->RemoveMesh(id);
+	}
+}
+
+void APWatchdog::RefreshDoors() {
+	for (const auto& p : refreshDoorsMap) {
+		int id = p.first;
+		int time = p.second;
+
+		if (time == 0) {
+			std::wstringstream s;
+			s << "Reloading Door " << std::hex << id << "!\n";
+			OutputDebugStringW(s.str().c_str());
+
+			_memory->UpdateEntityPosition(id);
+
+			refreshDoorsMap.erase(id);
+			continue;
+		}
+
+		std::wstringstream s;
+		s << "Refreshing Door " << std::hex << id << " in " << time << "seconds.\n";
+		OutputDebugStringW(s.str().c_str());
+		time--;
+		refreshDoorsMap[id] = time;
+	}
+	return;
 }

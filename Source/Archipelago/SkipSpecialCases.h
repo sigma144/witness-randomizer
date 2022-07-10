@@ -57,6 +57,7 @@ inline const std::set<int> skip_completelyExclude = {
 	0x00064, 0x00182, // Entry Panels
 	0x03481, 0x0339E, 0x03535, 0x03702, 0x03542, 0x0356B, 0x2FAF6, //Vault Boxes
 	0x17CC8, 0x17CA6, 0x0A054, 0x17CDF, 0x09DB8, 0x17C95, //Boat Spawns
+	0x34D96, 0x34C7F, //Boat Map & Speed
 	0x0360D, 0x03608, 0x03612, 0x032F5, 0x17CA4, 0x03616, 0x09DE0, 0x03615, 0x03613, //Lasers except Shadows & Keep
 
 	0x0042D, // Mountaintop River Shape
@@ -85,7 +86,7 @@ inline const std::set<int> skip_completelyExclude = {
 	//Complex issues arise, but could be changed
 	0x034E4, 0x034E3, //Sound room
 	0x0A3B5, // Tutorial Multi-Solution
-	0x000B0, 0x1C349, // Symmetry Entry Doors - You can just go thru the locks for some reason
+	0x1C349, // Symmetry Entry Doors - You can just go thru the locks for some reason
 
 
 	// Doesn't seem to work at all

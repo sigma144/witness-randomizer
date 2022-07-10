@@ -131,6 +131,11 @@ public:
 		CallVoidFunction(id, 0x14008EB60);
 	}
 
+	void UpdateEntityPosition(int id) {
+		CallVoidFunction(id, 0x140184F00); // Entity::has_moved_in_a_non_position_way - Still works even if it HAS moved in a non position way, for some reason :P
+	}
+	void RemoveMesh(int id);
+
 	void DisplayHudMessage(std::string s);
 
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }

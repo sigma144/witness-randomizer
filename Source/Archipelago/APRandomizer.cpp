@@ -35,9 +35,9 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		std::map<int, int> counts;
 
 		for(auto item : items){
-			if (mostRecentItemId >= item.index) continue;
+			if (mostRecentItemId >= item.index + 1) continue;
 
-			mostRecentItemId = item.index;
+			mostRecentItemId = item.index + 1;
 
 			int i = item.item;
 

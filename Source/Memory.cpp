@@ -275,6 +275,7 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 }
 
 void Memory::DisplayHudMessage(std::string message) {
+	std::lock_guard<std::recursive_mutex> lock(mtx);
 	char buffer[1024];
 
 	if (!_messageAddress) {
@@ -327,6 +328,16 @@ void Memory::DisplayHudMessage(std::string message) {
 	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	WriteProcessMemory(_handle, allocation_start, asmBuff, allocation_size, NULL);
 	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+}
+
+void Memory::RemoveMesh(int id) {
+	std::lock_guard<std::recursive_mutex> lock(mtx);
+	__int64 meshPointer = ReadPanelData<__int64>(id, 0x60); //Mesh
+	
+	__int64 buffer[1];
+	buffer[0] = 0;
+
+	__int64 collisionMesh = Write(reinterpret_cast<LPVOID>(meshPointer + 0x98), buffer, sizeof(buffer)); //Collision Mesh
 }
 
 int Memory::GLOBALS = 0;

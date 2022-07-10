@@ -55,7 +55,10 @@ private:
 	friend class APRandomizer;
 };
 
+#define POSITION 0x24
+#define SCALE 0x30
 #define ORIENTATION 0x34
+#define MESH 0x60
 #define PATH_COLOR 0xC0 
 #define REFLECTION_PATH_COLOR 0xD0 
 #define DOT_COLOR 0xF0 

@@ -40,6 +40,8 @@ public:
 	void UnlockDoor(int id);
 	void SeverDoor(int id);
 
+	void DoubleDoorTargetHack(int id);
+
 	void queueMessage(std::string message) {
 		outstandingMessages.push(message);
 	}
@@ -62,7 +64,16 @@ private:
 	std::queue<std::string> outstandingMessages;
 	int messageCounter = 0;
 
+	std::set<int> disableCollisionList;
+
+	std::set<int> severedDoorsList;
+	std::map<int, int> refreshDoorsMap;
+
 	void DisplayMessage();
+
+	void DisableCollisions();
+
+	void RefreshDoors();
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed();
