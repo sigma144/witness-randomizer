@@ -267,10 +267,11 @@ void APWatchdog::UnlockDoor(int id) {
 		_memory->UpdateEntityPosition(0x021D7);
 	}
 
-	for (int collisionId : doorCollisions[id]) {
-		collisionsToRefresh.insert(collisionId);
+	if (doorCollisions.find(id) != doorCollisions.end()){
+		for (int collisionId : doorCollisions[id]) {
+			collisionsToRefresh.push_back(collisionId);
+		}
 	}
-
 	_memory->OpenDoor(id);
 }
 
@@ -441,12 +442,19 @@ void APWatchdog::DisableCollisions() {
 }
 
 void APWatchdog::RefreshDoorCollisions() {
-	std::wstringstream s;
-
-	for (int collisionId : collisionsToRefresh) {
-		s << "0x" << std::hex << collisionId << ", ";
-		_memory->UpdateEntityPosition(collisionId);
+	if (collisionsToRefresh.size() == 0) {
+		return;
 	}
-	s << "\n";
-	OutputDebugStringW(s.str().c_str());
+
+	int amount = std::ceil(collisionsToRefresh.size() / 10);
+
+	for(int i = 0; i < amount; i++){
+		int collisionToUpdate = collisionsToRefresh.front();
+		collisionsToRefresh.pop_front();
+		collisionsToRefresh.push_back(collisionToUpdate);
+
+		_memory->UpdateEntityPosition(collisionToUpdate);
+	}
+
+	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }

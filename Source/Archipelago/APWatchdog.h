@@ -67,7 +67,7 @@ private:
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
-	std::set<int> collisionsToRefresh;
+	std::deque<int> collisionsToRefresh;
 
 	void DisplayMessage();
 
