@@ -67,13 +67,13 @@ private:
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
-	std::map<int, int> refreshDoorsMap;
+	std::set<int> collisionsToRefresh;
 
 	void DisplayMessage();
 
 	void DisableCollisions();
 
-	void RefreshDoors();
+	void RefreshDoorCollisions();
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed();

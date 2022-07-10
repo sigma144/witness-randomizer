@@ -13,7 +13,7 @@ void APWatchdog::action() {
 	CheckIfCanSkipPuzzle();
 	DisplayMessage();
 	DisableCollisions();
-	RefreshDoors();
+	RefreshDoorCollisions();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -266,7 +266,11 @@ void APWatchdog::UnlockDoor(int id) {
 
 		_memory->UpdateEntityPosition(0x021D7);
 	}
-	refreshDoorsMap[id] = 10;
+
+	for (int collisionId : doorCollisions[id]) {
+		collisionsToRefresh.insert(collisionId);
+	}
+
 	_memory->OpenDoor(id);
 }
 
@@ -436,27 +440,13 @@ void APWatchdog::DisableCollisions() {
 	}
 }
 
-void APWatchdog::RefreshDoors() {
-	for (const auto& p : refreshDoorsMap) {
-		int id = p.first;
-		int time = p.second;
+void APWatchdog::RefreshDoorCollisions() {
+	std::wstringstream s;
 
-		if (time == 0) {
-			std::wstringstream s;
-			s << "Reloading Door " << std::hex << id << "!\n";
-			OutputDebugStringW(s.str().c_str());
-
-			_memory->UpdateEntityPosition(id);
-
-			refreshDoorsMap.erase(id);
-			continue;
-		}
-
-		std::wstringstream s;
-		s << "Refreshing Door " << std::hex << id << " in " << time << "seconds.\n";
-		OutputDebugStringW(s.str().c_str());
-		time--;
-		refreshDoorsMap[id] = time;
+	for (int collisionId : collisionsToRefresh) {
+		s << "0x" << std::hex << collisionId << ", ";
+		_memory->UpdateEntityPosition(collisionId);
 	}
-	return;
+	s << "\n";
+	OutputDebugStringW(s.str().c_str());
 }
