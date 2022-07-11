@@ -34,6 +34,9 @@ protected:
 			OutputDebugStringW(L"Watchdog Read Problem");
 		}
 	}
+	template <class T> T ReadPanelDataIntentionallyUnsafe(int panel, int offset) {
+		return _memory->ReadPanelData<T>(panel, offset);
+	}
 	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) {
 		try {
 			return _memory->ReadArray<T>(panel, offset, size);

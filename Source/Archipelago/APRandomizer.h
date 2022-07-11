@@ -160,6 +160,9 @@ const int AllPuzzles[]{
 		// 0x1C349, // Symmetry Island Door 2. Doesn't work properly :(
 		0x01E5A, // Mill Entry Door Left
 		0x09E57, // Quarry Entry Gate 1
+
+		0x03678, 0x03679, 0x03675, 0x03676, 0x03677, // Mill Controls
+
 		0x0288C, // Treehouse Door 1&2
 		0x0A182, // Treehouse Door 3
 		0x2700B, // Treehouse Exterior Door Control
@@ -169,6 +172,7 @@ const int AllPuzzles[]{
 		0x09D9B, // Monastery Overhead Door Control
 		0x0056E, // Swamp Entry
 		0x17C2E, // Bunker Entry Door
+		0x09F7D, 0x0A010, 0x17E63, 0x0A079, // Bunker
 		0x17CAB, // Jungle Pop-up Wall
 		0x0C339, // Desert Surface Door
 		0x0A249, // Desert Pond Exit Door

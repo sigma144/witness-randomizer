@@ -35,7 +35,7 @@ void KeepWatchdog::action() {
 //Arrow Watchdog - To run the arrow puzzles
 
 void ArrowWatchdog::action() {
-	int length = ReadPanelData<int>(id, TRACED_EDGES);
+	int length = ReadPanelDataIntentionallyUnsafe<int>(id, TRACED_EDGES);
 	if (length != tracedLength) {
 		complete = false;
 	}
