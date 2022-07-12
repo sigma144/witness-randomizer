@@ -44,6 +44,9 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x17F3E, {{0x000B0, PANEL, TARGET }, /*{0x000B0, PANEL, MOUNT_PARENT_ID }*/}}, // Symmetry Island Door to Symmetry Island Lower
 	{0x18269, {{0x1C349, PANEL, TARGET }, /*{0x1C349, PANEL, MOUNT_PARENT_ID }*/}}, // Symmetry Island Door to Symmetry Island Upper
 
+	{0x03307, {{0x0330F, CABLE, CABLE_TARGET_0}}}, // Orchard Mid Gate
+	{0x03313, {{0x032FF, PANEL, TARGET}}}, // Orchard Mid Gate
+
 	{0x09FEE, {{0x0C339, PANEL, TARGET }}}, // Desert Door to Desert Flood Light Room
 	{0x0C2C3, {{0x0A02D, PANEL, TARGET }}}, // Desert Door to Pond Room
 	{0x0A24B, {{0x0A249, PANEL, TARGET }}}, // Desert Door to Water Levels Room
@@ -90,6 +93,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x0C153, {{0x00C92, PANEL, TARGET }}}, // Monastery Right Door
 	{0x03750, {{0x38F22, CABLE, CABLE_TARGET_1 }}}, // Monastery Door to Garden
 
+	{0x0A0C9, {{0x0A0C8, PANEL, TARGET }}}, // Cargo Box
 	{0x034F5, {{0x0351C, CABLE, CABLE_TARGET_0 }}}, // Town Wooden Roof Staircase
 	{0x28A61, {{0x28998, PANEL, TARGET }}}, // Town Tinted Door to RGB House
 	{0x2897B, {{0x034EB, CABLE, ENTITY_NAME }}}, // Town Tinted Door to RGB House

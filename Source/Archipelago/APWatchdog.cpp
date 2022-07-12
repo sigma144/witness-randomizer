@@ -65,6 +65,22 @@ void APWatchdog::CheckSolvedPanels() {
 			continue;
 		}
 
+		if (panelId == 0x17C34) {
+			int DOOR_OPEN = 0x1E4;
+
+			if (ReadPanelData<int>(0x2FAD4, DOOR_OPEN) && ReadPanelData<int>(0x2FAD6, DOOR_OPEN) && ReadPanelData<int>(0x2FAD7, DOOR_OPEN))
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
+
 
 		else if (ReadPanelData<int>(panelId, SOLVED))
 		{
@@ -437,7 +453,7 @@ void APWatchdog::DisplayMessage() {
 	outstandingMessages.pop();
 	_memory->DisplayHudMessage(message);
 	
-	messageCounter = 6;
+	messageCounter = 4;
 }
 
 void APWatchdog::DisableCollisions() {
