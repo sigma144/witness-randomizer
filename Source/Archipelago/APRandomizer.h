@@ -36,10 +36,10 @@ class APRandomizer {
 		bool randomizationFinished = false;
 
 		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
-		void PostGeneration(HWND loadingHandle, HWND skipButton, HWND availableSkips);
+		void PostGeneration(HWND loadingHandle);
 
-		void GenerateNormal();
-		void GenerateHard();
+		void GenerateNormal(HWND skipButton, HWND availableSkips);
+		void GenerateHard(HWND skipButton, HWND availableSkips);
 
 		void SkipPuzzle();
 

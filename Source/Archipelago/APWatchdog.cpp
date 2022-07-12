@@ -262,6 +262,17 @@ void APWatchdog::AddPuzzleSkip() {
 }
 
 void APWatchdog::UnlockDoor(int id) {
+	if (actuallyEveryPanel.count(id)) {
+		_memory->WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+		_memory->WritePanelData<int>(id, NEEDS_REDRAW, {1});
+		return;
+	}
+
+	if (allLasers.count(id)) {
+		_memory->ActivateLaser(id);
+		return;
+	}
+
 	if (id == 0x0CF2A) {
 		disableCollisionList.insert(id);
 
@@ -283,6 +294,8 @@ void APWatchdog::UnlockDoor(int id) {
 		_memory->UpdateEntityPosition(0x021D7);
 	}
 
+	collisionsToRefresh.push_back(id);
+
 	if (doorCollisions.find(id) != doorCollisions.end()){
 		for (int collisionId : doorCollisions[id]) {
 			collisionsToRefresh.push_back(collisionId);
@@ -292,6 +305,11 @@ void APWatchdog::UnlockDoor(int id) {
 }
 
 void APWatchdog::SeverDoor(int id) {
+	if (actuallyEveryPanel.count(id)) {
+		_memory->WritePanelData<float>(id, POWER, { 0.0f, 0.0f });
+		return;
+	}
+
 	if (severTargetsById.count(id)) {
 		severedDoorsList.insert(id);
 

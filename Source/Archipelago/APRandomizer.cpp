@@ -226,16 +226,14 @@ std::string APRandomizer::buildUri(std::string& server)
 	return uri;
 }
 
-void APRandomizer::PostGeneration(HWND loadingHandle, HWND skipButton, HWND availableSkips) {
+void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
+
 	async->SkipPreviouslySkippedPuzzles();
-	
-	SeverDoors();
 
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);
@@ -260,31 +258,26 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 	SetWindowText(loadingHandle, L"Done!");
 }
 
-void APRandomizer::GenerateNormal() {
-	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles();
+void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
+	SeverDoors();
 
-	if (EarlyUTM)
-		MakeEarlyUTM();
+	if (DisableNonRandomizedPuzzles)
+		panelLocker->DisableNonRandomizedPuzzles(allDoors);
 }
 
-void APRandomizer::GenerateHard() {
-	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles();
+void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
+	SeverDoors();
 
-	if (EarlyUTM)
-		MakeEarlyUTM();
+	if (DisableNonRandomizedPuzzles)
+		panelLocker->DisableNonRandomizedPuzzles(allDoors);
 }
 
 void APRandomizer::PreventSnipes()
 {
 	// Distance-gate shadows laser to prevent sniping through the bars
 	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.7 });
-}
-
-void APRandomizer::MakeEarlyUTM()
-{
-	_memory->OpenDoor(0x2D73F);
 }
 
 void APRandomizer::SkipPuzzle() {

@@ -1,6 +1,6 @@
 #include "PanelLocker.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles()
+void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -20,13 +20,13 @@ void PanelLocker::DisableNonRandomizedPuzzles()
 	Special::copyTarget(0x17C42, 0x09DE0);
 	Special::copyTarget(0x00A5B, 0x17CA4);
 
-	Special::setPower(0x17CA4, true);
-	Special::setPower(0x17CAB, true);
-	Special::setPower(0x28B39, true);
-	Special::setPower(0x00C92, true); //Monastary door right
-	Special::setPower(0x1972A, true); //Shadows avoid 4
+	for (int id : {0x17CA4, 0x17CAB, 0x28B39, 0x00C92, 0x0A8DC}) {
+		if (!exemptDoorPanels.count(id)) {
+			Special::setPower(id, true);
+		}
+	}
 
-	disablePuzzle(0x1972A); //Shadows
+	disablePuzzle(0x0A8DC); //Shadows
 	disablePuzzle(0x17C2E); //BNK3R door
 	disablePuzzle(0x00B10); //Monastary door left
 	disablePuzzle(0x00C92); //Monastary door right

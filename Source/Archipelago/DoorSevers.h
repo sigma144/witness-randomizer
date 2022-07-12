@@ -164,6 +164,86 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{ 0x27739, {{0x27732, PANEL, TARGET}} }, // Walkway to Theater
 	{ 0x27263, {{0x2773D, PANEL, TARGET}} }, // Walkway to Desert
 	{ 0x09E87, {{0x09E85, PANEL, TARGET}} }, // Walkway to Town
+
+
+
+
+	{ 0x01A54 , {} }, // Glass Factory Entry Door (Panel)
+	{ 0x000B0 , {{0x0343A, PANEL, TARGET}} }, // Symmetry Island Lower (Panel)
+	{ 0x1C349, {}}, // Symmetry Island Upper (Panel)
+
+	{ 0x0C339 , {{0x09F94, PANEL, TARGET}} }, // Desert Pond Room (Panel)
+	{ 0x1C2DF , {} }, // Desert Flood Room Controls
+	{ 0x1831E , {} }, // Desert Flood Room Controls
+	{ 0x1C260 , {} }, // Desert Flood Room Controls
+	{ 0x1831C , {} }, // Desert Flood Room Controls
+	{ 0x1C2F3 , {} }, // Desert Flood Room Controls
+	{ 0x1831D , {} }, // Desert Flood Room Controls
+	{ 0x1C2B1 , {} }, // Desert Flood Room Controls
+	{ 0x1831B , {} }, // Desert Flood Room Controls
+
+		//CONTROL PANEL RANDO
+		
+	{ 0x01E5A, {} }, // Mill Gate Left
+	{ 0x01E59 , {} }, // Mill Gate Right
+	{ 0x03678 ,{} }, // Quarry Mill Lower Ramp Control
+	{ 0x03675 , {} }, // Quarry Mill Upper Ramp Control
+	{ 0x03679, { {0x014E8, PANEL, TARGET} } }, // Quarry Mill Lower Elevator Control
+	{ 0x03676, {} }, // Quarry Mill Upper Elevator Control
+	
+	{ 0x03852, { {0x021C1, MULTIPANEL, MULTIPANEL_TARGET}} }, // Quarry Boathouse Ramp Height
+	{ 0x03858, {} }, // Quarry Boathouse Ramp Horizontal	 
+
+	{ 0x334DB, {}}, // Shadows Timer
+	{ 0x334DC, {}}, // Shadows Timer
+		
+	{ 0x00B10, {{0x00CAE, CABLE, CABLE_TARGET_1 }} }, // Monastery Left
+	{ 0x00C92, {} }, // Monastery Right
+
+	{ 0x28998, {} }, // Town RGB House
+	{ 0x28A0D, {} }, // Town Church
+	{ 0x28A79, {} }, // Town Maze Panel
+	{ 0x17F5F, {} }, // Windmill
+
+	{ 0x0288C, {} }, // Treehouse First Door
+	{ 0x02886, {} }, // Treehouse Second Door
+	{ 0x0A182, {} }, // Treehouse Third Door
+	{ 0x2700B, {} }, // Treehouse Timer 1
+	{ 0x334DC, {} }, // Treehouse Timer 2
+	{ 0x17CBC, {} }, // Treehouse Drop-Down
+
+	{ 0x17CAB, {{0x002C7, PANEL, TARGET}} }, // Jungle Popup Wall
+	{ 0x17C2E, {} }, // Bunker Entry Door
+	{ 0x0A099, {{0x09DAF, PANEL, TARGET}} }, // Bunker Tinted Door
+	{ 0x0A079, {{}} }, // Bunker Elevator
+	{ 0x0056E, {{}} }, // Swamp Entry 
+
+	{ 0x00609, {} }, // Swamp Slide Bridge
+	{ 0x18488, {} }, // Swamp Slide Bridge
+	{ 0x181F5, {} }, // Swamp Rotating Bridge
+	{ 0x17C0A, {} }, // Swamp Maze Control
+	{ 0x17E07, {} }, // Swamp Maze Control
+
+	{ 0x17CDF, {} }, // Boat
+	{ 0x17CC8, {} }, // Boat
+	{ 0x17CA6, {} }, // Boat
+	{ 0x09DB8, {} }, // Boat
+	{ 0x17C95, {} }, // Boat
+	{ 0x0A054, {} }, // Boat
+
+
+	// Lasers
+	{ 0x00509, {{0x0360D, PANEL, TARGET }} }, // Symmetry
+	{ 0x012FB, {{0x03608, PANEL, TARGET }} }, // Desert
+	{ 0x01539, {{0x03612, PANEL, TARGET }} }, // Quarry
+	{ 0x181B3, {{0x19650, PANEL, TARGET }} }, // Shadows
+	{ 0x014BB, {{0x0360E, PANEL, TARGET },{0x03317, PANEL, TARGET }} }, // Keep
+	{ 0x17C65, {{0x17CA4, PANEL, TARGET }} }, // Monastery
+	{ 0x032F9, {{0x032F5, PANEL, TARGET }} }, // Town
+	{ 0x00274, {{0x03616, PANEL, TARGET }} }, // Jungle
+	{ 0x0C2B2, {{0x09DE0, PANEL, TARGET }} }, // Bunker
+	{ 0x00BF6, {{0x03615, PANEL, TARGET }} }, // Swamp
+	{ 0x028A4, {{0x03613, PANEL, TARGET }} }, // Treehouse
 };
 
 std::map<int,std::vector<int>> doorCollisions =
@@ -174,7 +254,7 @@ std::map<int,std::vector<int>> doorCollisions =
 { 0x61a, { 0x2d774, 0x61b,}},
 { 0xb0c, { 0x37a3,}},
 { 0xc1c, { 0x2677a,}},
-{ 0x1317, { 0x277ab, 0x277a8, 0x277a6, 0x277aa, 0x277a9, 0x277a7,}},
+{ 0x1317, { 0x012FB, 0x277ab, 0x277a8, 0x277a6, 0x277aa, 0x277a9, 0x277a7,}},
 { 0x18ce, { 0x1aaeb,}},
 { 0x1954, { 0x1418d,}},
 { 0x199a, { 0x1aaed,}},
@@ -341,4 +421,18 @@ std::map<int,std::vector<int>> doorCollisions =
 { 0x38c10, { 0x33958, 0x33959, 0x27837, 0x3395a,}},
 { 0x391de, { 0x33aeb,}},
 { 0x3ccdf, { 0x2787c,}},
+};
+
+std::set<int> allLasers = {
+	0x00509,
+	0x012FB,
+	0x01539,
+	0x181B3,
+	0x014BB,
+	0x17C65,
+	0x032F9,
+	0x00274,
+	0x0C2B2,
+	0x00BF6,
+	0x028A4,
 };
