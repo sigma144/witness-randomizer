@@ -64,7 +64,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x17C50, {{0x021AE, PANEL, TARGET }}}, // Quarry Boathouse First Barrier
 	{0x3865F, {{0x38663, PANEL, TARGET }}}, // Quarry Boathouse Second Barrier
 
-	{0x19B24, {{0x0A3A9, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}, /*{0x334DB, PANEL, MOUNT_PARENT_ID}, {0x334DC, PANEL, MOUNT_PARENT_ID},*/ {0x334DB, PANEL, ENTITY_NAME}, {0x334DC, PANEL, ENTITY_NAME}}}, // Shadows Timed Door
+	{0x19B24, {{0x0A3A9, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}, {0x334DB, PANEL, TARGET}, {0x334DC, PANEL, TARGET}, {0x334DB, PANEL, ENTITY_NAME}, {0x334DC, PANEL, ENTITY_NAME}}}, // Shadows Timed Door
 	{0x194B2, {{0x1972F, PANEL, TARGET }}}, // Shadows Laser Right Door
 	{0x19665, {{0x197E5, PANEL, TARGET }}}, // Shadows Laser Left Door
 
@@ -137,7 +137,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x0C309, {{0x0288C, PANEL, TARGET}}}, // Treehouse Entry Door 1
 	{0x0C310, {{0x02886, PANEL, TARGET}, {0x02886, PANEL, MOUNT_PARENT_ID}}}, // Treehouse Entry Door 2
 	{0x0A181, {{0x0A182, PANEL, TARGET}}}, // Treehouse Entry Door 3
-	{0x0C323, {{0x034FC, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}, /*{0x334DB, PANEL, MOUNT_PARENT_ID}, {0x334DC, PANEL, MOUNT_PARENT_ID},*/ {0x2700B, PANEL, ENTITY_NAME}, {0x17CBC, PANEL, ENTITY_NAME}} }, // Treehouse Timed Door
+	{0x0C323, {{0x034FC, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}, {0x334DB, PANEL, TARGET}, {0x334DC, PANEL, TARGET}, {0x2700B, PANEL, ENTITY_NAME}, {0x17CBC, PANEL, ENTITY_NAME}} }, // Treehouse Timed Door
 	{0x0C32D, {{0x037FF, PANEL, TARGET}}}, // Treehouse Draw Bridge
 
 	{0x09E54, {{0x09EAF, PANEL, TARGET}, {0x09F6E, PANEL, TARGET}, {0x09E6B, PANEL, TARGET}, {0x09E7B, PANEL, TARGET}} }, // Mountain Door to 2nd Layer

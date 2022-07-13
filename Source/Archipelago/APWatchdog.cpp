@@ -485,12 +485,16 @@ void APWatchdog::RefreshDoorCollisions() {
 		return;
 	}
 
-	int amount = std::ceil(collisionsToRefresh.size() / 10);
+	int amount = std::ceil(collisionsToRefresh.size() / 10.0f);
 
 	for(int i = 0; i < amount; i++){
 		int collisionToUpdate = collisionsToRefresh.front();
 		collisionsToRefresh.pop_front();
 		collisionsToRefresh.push_back(collisionToUpdate);
+
+		std::wstringstream s;
+		s << std::hex << collisionToUpdate << "\n";
+		OutputDebugStringW(s.str().c_str());
 
 		_memory->UpdateEntityPosition(collisionToUpdate);
 	}
