@@ -528,7 +528,7 @@ void APWatchdog::RefreshDoorCollisions() {
 		//_memory->UpdateEntityPosition(collisionToUpdate);
 	}
 
-	OutputDebugStringW(L"-----");
+	OutputDebugStringW(L"-----\n");
 
 	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }
