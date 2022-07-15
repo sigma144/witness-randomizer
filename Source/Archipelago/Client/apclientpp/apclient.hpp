@@ -259,7 +259,7 @@ public:
     bool set_data_package_from_file(const std::string& path)
     {
         FILE* f;
-#if defined WIN32 || defined _WIN32
+#ifdef _MSC_VER
         if ((fopen_s(&f, path.c_str(), "rb")) != 0) {
 #else
         if ((f = fopen(path.c_str(), "rb")) == NULL) {
@@ -291,7 +291,7 @@ public:
     bool save_data_package(const std::string& path)
     {
         FILE* f;
-#if defined WIN32 || defined _WIN32
+#ifdef _MSC_VER
         if ((fopen_s(&f, path.c_str(), "wb")) != 0) {
 #else
         if ((f = fopen(path.c_str(), "wb")) == NULL) {
