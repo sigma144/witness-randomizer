@@ -66,8 +66,6 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 
 		if (panelId == 0x17C34) {
-			int DOOR_OPEN = 0x1E4;
-
 			if (ReadPanelData<int>(0x2FAD4, DOOR_OPEN) && ReadPanelData<int>(0x2FAD6, DOOR_OPEN) && ReadPanelData<int>(0x2FAD7, DOOR_OPEN))
 			{
 				solvedLocations.push_back(locationId);
@@ -273,6 +271,15 @@ void APWatchdog::UnlockDoor(int id) {
 		return;
 	}
 
+	// Is a door
+
+	if (ReadPanelData<int>(id, DOOR_OPEN)) {
+		std::wstringstream s;
+		s << std::hex << id << " is already open.\n";
+		OutputDebugStringW(s.str().c_str());
+		return;
+	}
+
 	if (id == 0x0CF2A) {
 		disableCollisionList.insert(id);
 
@@ -294,11 +301,10 @@ void APWatchdog::UnlockDoor(int id) {
 		_memory->UpdateEntityPosition(0x021D7);
 	}
 
-	collisionsToRefresh.push_back(id);
-
 	if (doorCollisions.find(id) != doorCollisions.end()){
 		for (int collisionId : doorCollisions[id]) {
-			collisionsToRefresh.push_back(collisionId);
+			collisionsToRefresh[collisionId] = 10;
+			collisionPositions[collisionId] = ReadPanelData<float>(collisionId, POSITION, 8);
 		}
 	}
 	_memory->OpenDoor(id);
@@ -485,19 +491,44 @@ void APWatchdog::RefreshDoorCollisions() {
 		return;
 	}
 
-	int amount = std::ceil(collisionsToRefresh.size() / 10.0f);
+	std::vector<float> playerPosition = _memory->ReadPlayerPosition();
 
-	for(int i = 0; i < amount; i++){
-		int collisionToUpdate = collisionsToRefresh.front();
-		collisionsToRefresh.pop_front();
-		collisionsToRefresh.push_back(collisionToUpdate);
+	std::wstringstream s;
+	s << playerPosition[0] << ", " << playerPosition[1] << ", " << playerPosition[2] << "\n";
+	OutputDebugStringW(s.str().c_str());
+
+	for(auto const& [collisionToUpdate, val] : collisionsToRefresh){
+		if (val > 0) {
+			collisionsToRefresh[collisionToUpdate] = val - 1;
+			continue;
+		}
+
+		std::vector<float> originalPosition = collisionPositions[collisionToUpdate];
+
+		if (pow(playerPosition[0] - originalPosition[0], 2) + pow(playerPosition[1] - originalPosition[1], 2) + pow(playerPosition[2] - originalPosition[2], 2) > 400) {
+			continue;
+		}
+
+		collisionsToRefresh.erase(collisionToUpdate);
+
+		std::vector<float> newPositions = ReadPanelData<float>(collisionToUpdate, POSITION, 8);
+
+		if (originalPosition != newPositions) {
+			continue;
+		}
 
 		std::wstringstream s;
-		s << std::hex << collisionToUpdate << "\n";
+		s << std::hex << collisionToUpdate << " didn't move!!! Updating manually...\n";
 		OutputDebugStringW(s.str().c_str());
 
 		_memory->UpdateEntityPosition(collisionToUpdate);
+
+		collisionsToRefresh[collisionToUpdate] = 10;
+
+		//_memory->UpdateEntityPosition(collisionToUpdate);
 	}
+
+	OutputDebugStringW(L"-----");
 
 	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }

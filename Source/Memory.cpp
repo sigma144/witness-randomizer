@@ -105,6 +105,15 @@ int Memory::findGlobals() {
 	return Memory::GLOBALS;
 }
 
+void Memory::findPlayerPosition() {
+	executeSigScan({ 0x84, 0xC0, 0x75, 0x59, 0xBA, 0x20, 0x00, 0x00, 0x00 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		// This int is actually desired_movement_direction, which immediately preceeds camera_position
+		this->CAMERAPOSITION = Memory::ReadStaticInt(offset, index + 0x19, data) + 0x10;
+
+		return true;
+	});
+}
+
 void Memory::findMovementSpeed() {
 	executeSigScan({ 0xF3, 0x0F, 0x59, 0xFD, 0xF3, 0x0F, 0x5C, 0xC8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		int found = 0;
@@ -342,6 +351,7 @@ void Memory::RemoveMesh(int id) {
 
 int Memory::GLOBALS = 0;
 int Memory::RUNSPEED = 0;
+int Memory::CAMERAPOSITION = 0;
 int Memory::ACCELERATION = 0;
 int Memory::DECELERATION = 0;
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};

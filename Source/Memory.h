@@ -25,6 +25,7 @@ public:
 	int findGlobals();
 	void findMovementSpeed();
 	void findActivePanel();
+	void findPlayerPosition();
 	int GetActivePanel();
 	static __int64 ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL = 4);
 	~Memory();
@@ -127,6 +128,10 @@ public:
 		this->WriteData<float>({ DECELERATION }, { this->ReadData<float>({DECELERATION}, 1)[0] * multiplier });
 	}
 
+	std::vector<float> ReadPlayerPosition() {
+		return this->ReadData<float>({ CAMERAPOSITION }, 3);
+	}
+
 	void OpenDoor(int id) {
 		CallVoidFunction(id, 0x14008EB60);
 	}
@@ -147,6 +152,7 @@ public:
 
 	static int GLOBALS;
 	static int RUNSPEED;
+	static int CAMERAPOSITION;
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
 	static int DECELERATION;

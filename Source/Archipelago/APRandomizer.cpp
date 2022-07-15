@@ -227,6 +227,13 @@ std::string APRandomizer::buildUri(std::string& server)
 }
 
 void APRandomizer::PostGeneration(HWND loadingHandle) {
+	int num_dec = _memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
+	std::vector<int> decorations = _memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
+
+	decorations[3] = 264;
+	decorations[12] = 264;
+
+	_memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
 
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
