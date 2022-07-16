@@ -307,13 +307,13 @@ void APWatchdog::UnlockDoor(int id) {
 			collisionPositions[collisionId] = ReadPanelData<float>(collisionId, POSITION, 8);
 		}
 	}
+
 	_memory->OpenDoor(id);
 }
 
 void APWatchdog::SeverDoor(int id) {
 	if (actuallyEveryPanel.count(id)) {
 		_memory->WritePanelData<float>(id, POWER, { 0.0f, 0.0f });
-		return;
 	}
 
 	if (severTargetsById.count(id)) {
@@ -491,7 +491,14 @@ void APWatchdog::RefreshDoorCollisions() {
 		return;
 	}
 
-	std::vector<float> playerPosition = _memory->ReadPlayerPosition();
+	std::vector<float> playerPosition;
+
+	try{
+		playerPosition = _memory->ReadPlayerPosition();
+	}
+	catch (std::exception e) {
+		return;
+	}
 
 	std::wstringstream s;
 	s << playerPosition[0] << ", " << playerPosition[1] << ", " << playerPosition[2] << "\n";
@@ -509,6 +516,10 @@ void APWatchdog::RefreshDoorCollisions() {
 			continue;
 		}
 
+		std::wstringstream s1;
+		s1 << std::hex << collisionToUpdate << " in range. Testing...\n";
+		OutputDebugStringW(s1.str().c_str());
+
 		collisionsToRefresh.erase(collisionToUpdate);
 
 		std::vector<float> newPositions = ReadPanelData<float>(collisionToUpdate, POSITION, 8);
@@ -523,7 +534,9 @@ void APWatchdog::RefreshDoorCollisions() {
 
 		_memory->UpdateEntityPosition(collisionToUpdate);
 
-		collisionsToRefresh[collisionToUpdate] = 10;
+		if(!knownIrrelevantCollisions.count(collisionToUpdate)){
+			collisionsToRefresh[collisionToUpdate] = 10;
+		}
 
 		//_memory->UpdateEntityPosition(collisionToUpdate);
 	}

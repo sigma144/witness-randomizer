@@ -190,7 +190,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{ 0x01E59 , {} }, // Mill Gate Right
 	{ 0x03678 ,{} }, // Quarry Mill Lower Ramp Control
 	{ 0x03675 , {} }, // Quarry Mill Upper Ramp Control
-	{ 0x03679, { {0x014E8, PANEL, TARGET} } }, // Quarry Mill Lower Elevator Control
+	{ 0x03679, {{0x014E8, PANEL, TARGET}} }, // Quarry Mill Lower Elevator Control
 	{ 0x03676, {} }, // Quarry Mill Upper Elevator Control
 	
 	{ 0x03852, { {0x021C1, MULTIPANEL, MULTIPANEL_TARGET}} }, // Quarry Boathouse Ramp Height
@@ -589,4 +589,16 @@ std::set<int> allLasers = {
 	0x0C2B2,
 	0x00BF6,
 	0x028A4,
+};
+
+std::set<int> knownIrrelevantCollisions = { // We will still update these collisions once for safety.
+	0x01e59,
+	0x01e5a,
+	0x01d8d,
+	0x28a0d,
+	0x17caa,
+	0x21d7,
+	0x2d740,
+	0x2d741,
+	0x2d743,
 };
