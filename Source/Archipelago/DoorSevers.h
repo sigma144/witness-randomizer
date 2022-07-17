@@ -217,8 +217,8 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{ 0x17CAB, {{0x002C7, PANEL, TARGET}} }, // Jungle Popup Wall
 	{ 0x17C2E, {} }, // Bunker Entry Door
 	{ 0x0A099, {{0x09DAF, PANEL, TARGET}} }, // Bunker Tinted Door
-	{ 0x0A079, {{}} }, // Bunker Elevator
-	{ 0x0056E, {{}} }, // Swamp Entry 
+	{ 0x0A079, {} }, // Bunker Elevator
+	{ 0x0056E, {} }, // Swamp Entry 
 
 	{ 0x00609, {} }, // Swamp Slide Bridge
 	{ 0x18488, {} }, // Swamp Slide Bridge
