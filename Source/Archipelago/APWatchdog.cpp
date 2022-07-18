@@ -79,7 +79,6 @@ void APWatchdog::CheckSolvedPanels() {
 			continue;
 		}
 
-
 		else if (ReadPanelData<int>(panelId, SOLVED))
 		{
 			solvedLocations.push_back(locationId);

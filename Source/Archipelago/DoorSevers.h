@@ -139,7 +139,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x0C309, {{0x0288C, PANEL, TARGET}}}, // Treehouse Entry Door 1
 	{0x0C310, {{0x02886, PANEL, TARGET}, {0x02886, PANEL, MOUNT_PARENT_ID}}}, // Treehouse Entry Door 2
 	{0x0A181, {{0x0A182, PANEL, TARGET}}}, // Treehouse Entry Door 3
-	{0x0C323, {{0x034FC, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}, {0x334DB, PANEL, TARGET}, {0x334DC, PANEL, TARGET}, {0x2700B, PANEL, ENTITY_NAME}, {0x17CBC, PANEL, ENTITY_NAME}} }, // Treehouse Timed Door
+	{0x0C323, {{0x034FC, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}, {0x2700B, PANEL, TARGET}, {0x17CBC, PANEL, TARGET}, {0x2700B, PANEL, ENTITY_NAME}, {0x17CBC, PANEL, ENTITY_NAME}} }, // Treehouse Timed Door
 	{0x0C32D, {{0x037FF, PANEL, TARGET}}}, // Treehouse Draw Bridge
 
 	{0x09E54, {{0x09EAF, PANEL, TARGET}, {0x09F6E, PANEL, TARGET}, {0x09E6B, PANEL, TARGET}, {0x09E7B, PANEL, TARGET}} }, // Mountain Door to 2nd Layer
@@ -601,4 +601,8 @@ std::set<int> knownIrrelevantCollisions = { // We will still update these collis
 	0x2d740,
 	0x2d741,
 	0x2d743,
+	0x0360b,
+	0x02886,
+	0x035c4,
+	0x0360c,
 };

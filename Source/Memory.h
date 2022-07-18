@@ -108,7 +108,14 @@ public:
 
 	template <class T>
 	T ReadPanelData(int panel, int offset) {
-		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, 1)[0];
+		std::vector<T> result = ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, 1);
+
+		if (result.size() == 0) {
+			std::exception e;
+			throw e;
+		}
+
+		return result[0];
 	}
 
 	template <class T>

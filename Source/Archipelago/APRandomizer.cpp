@@ -93,6 +93,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			int locationId = val;
 
 			panelIdToLocationId.insert({ panelId, locationId });
+			panelIdToLocationIdReverse.insert({ locationId, panelId });
 		}
 
 		if (slotData.contains("item_id_to_door_hexes")) {
@@ -150,12 +151,33 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 		std::string player = ap->get_player_alias(receiver);
 		std::string itemName = ap->get_item_name(item.item);
+		std::string locationName = ap->get_location_name(item.location);
 
 		if (!receiving) {
-			async->queueMessage("Sent " + itemName + " to " + player + ".");
+			bool hint = false;
+
+			for (auto textNode : msg) {
+				if (textNode.text.find("[Hint]") != std::string::npos) {
+					hint = true;
+				}
+			}
+
+			if (hint) {
+				async->queueMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
+			}
+			else {
+				int location = item.location;
+
+				if (panelIdToLocationIdReverse.count(location) && !_memory->ReadPanelData<int>(panelIdToLocationIdReverse[location], SOLVED)) {
+					async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".");
+				}
+				else
+				{
+					panelLocker->SetItemReward(findResult->first, item);
+					async->queueMessage("Sent " + itemName + " to " + player + ".");
+				}
+			}
 		}
-		
-		panelLocker->SetItemReward(findResult->first, item);
 	});
 
 	ap->set_data_package_changed_handler([&](const nlohmann::json& data) {
