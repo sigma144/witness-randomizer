@@ -102,6 +102,15 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	{
 		hasTriangles = true;
 	}
+	else if (id == 0x00A52 || id == 0x00A61 || id == 0x00A57 || id == 0x00A64 || id == 0x00A5B || id == 0x00A68) // These dots seem to get picked up as normal dots, not colored ones. Also, these panels should require Symmetry despite not having Symmetry on them.
+	{
+		hasDots = false;
+		hasColoredDots = true;
+		hasSymmetry = true;
+	}
+	else if (id == 0x03702) { // River Vault: The squares are drawn on and validated separately!
+		hasStones = true;
+	}
 }
 
 void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
