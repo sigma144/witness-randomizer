@@ -97,14 +97,30 @@ public:
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
 	}
 
-	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
+	template<class T>
+	std::vector<T> ReadExeData(int offset, size_t numItems) {
+		std::vector<T> data;
+		data.resize(numItems);
+		LPCVOID testing = reinterpret_cast<LPCVOID>((long long)offset + 0x140000000);
+		if (Read(reinterpret_cast<LPCVOID>((long long)offset + 0x140000000), &data[0], sizeof(T) * numItems)) {
+			return data;
+		}
+		if (!showMsg) throw std::exception();
+		std::vector<int> arr = { offset };
+		ThrowError(arr, false);
+		return {};
+	}
 
-	static int GLOBALS;
-	static bool showMsg;
-	static int globalsTests[3];
-	bool retryOnFail = true;
+	template <class T>
+	void WriteExeData(int offset, const std::vector<T>& data) {
+		if (Write(reinterpret_cast<LPVOID>((long long)offset + 0x140000000), &data[0], sizeof(T) * data.size())) {
+			return;
+		}
+		if (!showMsg) throw std::exception();
+		std::vector<int> arr = { offset };
+		ThrowError(arr, false);
+	}
 
-private:
 	template<class T>
 	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
 		std::vector<T> data;
@@ -125,6 +141,15 @@ private:
 		if (!showMsg) throw std::exception();
 		ThrowError(offsets, true);
 	}
+
+	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
+
+	static int GLOBALS;
+	static bool showMsg;
+	static int globalsTests[3];
+	bool retryOnFail = true;
+
+private:
 	void ThrowError(std::string message);
 	void ThrowError(const std::vector<int>& offsets, bool rw_flag);
 	void ThrowError();

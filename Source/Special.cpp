@@ -1459,6 +1459,85 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
+void Special::generateSoundWavePuzzle(int id, const std::vector<int> pitches)
+{
+	int len = static_cast<int>(pitches.size());
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<float> intersections;
+	std::vector<int> intersectionFlags;
+	std::vector<int> solution = { len*7, 3 };
+	float curve = 0.2f;
+	float height = 1.2f;
+	float pad = 0.1f;
+	//Add wave for each pitch
+	for (int i = 0; i < len; i++) {
+		std::vector<float> points = { i + 1 - curve, -height, i + curve, -height, (float)i, -height + curve,
+			(float)i, 0, (float)i, height - curve, i + curve, height, i + 1 - curve, height };
+		for (float f : points) {
+			intersections.emplace_back(f);
+		}
+		std::vector<int> ca = { 9, 0, 1, 2, 3, 4, 5, 6, 3 };
+		std::vector<int> cb = { 0, 1, 2, 3, 4, 5, 6, 11, 10 };
+		for (int i2 = 0; i2 < ca.size(); i2++) {
+			connectionsA.emplace_back(ca[i2] + i*7);
+			connectionsB.emplace_back(cb[i2] + i*7);
+		}
+		for (int i2 = 0; i2 < 7; i2++) {
+			intersectionFlags.emplace_back(INTERSECTION);
+		}
+		std::vector<int> seq = { 10 };
+		if (pitches[i] & IntersectionFlags::DOT_LARGE) {
+			if (pitches[i] == (i + 1 == len ? DOT_MEDIUM : pitches[i + 1]))
+				seq = { 2, 1, 0 };
+			else seq = { 2, 1, 0, 9, 10 };
+		}
+		if (pitches[i] & IntersectionFlags::DOT_SMALL) {
+			if (pitches[i] == (i + 1 == len ? DOT_MEDIUM : pitches[i + 1]))
+				seq = { 4, 5, 6 };
+			else seq = { 4, 5, 6, 11, 10 };
+		}
+		for (int i2 : seq) solution.emplace_back(i2 + i*7);
+	}
+	//Add final set of connections
+	std::vector<float> points = { -0.5f, 0, len + 0.5f, 0, (float)len, -height + curve, (float)len, 0, (float)len, height - curve };
+	for (float f : points) {
+		intersections.emplace_back(f);
+	}
+	for (int i : {len*7, len*7 + 1, len*7 + 2, len*7 + 3}) {
+		connectionsA.emplace_back(i);
+	}
+	for (int i : {3, len*7 + 3, len*7 + 3, len*7 + 4}) {
+		connectionsB.emplace_back(i);
+	}
+	for (int f : {(int)IntersectionFlags::STARTPOINT, (int)IntersectionFlags::ENDPOINT, 0, 0, 0}) {
+		intersectionFlags.emplace_back(f | IntersectionFlags::INTERSECTION);
+	}
+	solution.emplace_back(len * 7 + 1);
+	//Rescale coordinates
+	float minX = -0.5f; float maxX = len + 0.5f;
+	float minY = -height; float maxY = height;
+	float scale = 1 / (maxX - minX) * (1 - pad * 2);
+	for (int i = 0; i < intersections.size(); i += 2) {
+		intersections[i] = (intersections[i] - minX) * scale + pad;
+		intersections[i + 1] = intersections[i + 1] * scale + 0.5f;
+	}
+	//Write to RAM
+	Panel panel;
+	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { scale * 4 });
+	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	panel._memory->WriteArray<int>(id, SEQUENCE, solution);
+	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { static_cast<int>(solution.size()) });
+	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	//Start watchdog to play sounds
+	(new SoundWatchdog(id, pitches))->start();
+}
+
 void Special::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom) {
 	//012
@@ -1546,6 +1625,18 @@ void Special::drawGoodLuckPanel(int id)
 
 //For testing/debugging purposes only
 void Special::test() {
-
+	waveOutSetVolume(0, 0x1000);
+	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+	uintptr_t test = _memory->ReadData<uintptr_t>({ Memory::GLOBALS, 0x14 }, 1)[0];
+	uintptr_t test2 = _memory->ReadData<uintptr_t>({ Memory::GLOBALS, 0x18 }, 1)[0];
+	uintptr_t test3 = _memory->ReadData<uintptr_t>({ Memory::GLOBALS, 0x1C }, 1)[0];
+	std::vector<byte> test4 = _memory->ReadExeData<byte>(DO_SCRIPTED_SOUNDS, 1);
+	_memory->WriteExeData<byte>(DO_SCRIPTED_SOUNDS, { 0 });
+	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE });
+	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM });
+	//generateSoundWavePuzzle(0x002C4, { DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });
+	generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_MEDIUM, DOT_SMALL, DOT_MEDIUM, DOT_LARGE });
+	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });
+	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });
 }
 

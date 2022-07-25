@@ -68,7 +68,7 @@
 #define ARROW_UP_LEFT 0x706
 #define ARROW_DOWN_LEFT 0x707
 
-#define DEBUG false
+#define DEBUG true
 
 //Panel to edit
 int panel = 0x09E69;

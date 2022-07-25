@@ -244,3 +244,33 @@ void TownDoorWatchdog::action()
 		terminate = true;
 	}
 }
+
+void SoundWatchdog::action()
+{
+	if (state == 0) { //Waiting
+		int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
+		int tracedptr = ReadPanelData<int>(id, TRACED_EDGE_DATA);
+		if (numTraced > 0 && tracedptr) {
+			state = 1;
+			sleepTime = 0.4f;
+		}
+	}
+	if (state == 1) { //Chirping
+		int pitch = sequence[seqIndex];
+		if (pitch == IntersectionFlags::DOT_SMALL)
+			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-high.wav");
+		else if (pitch == IntersectionFlags::DOT_MEDIUM)
+			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-medium.wav");
+		else if (pitch == IntersectionFlags::DOT_LARGE)
+			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-low.wav");
+		seqIndex++;
+		if (seqIndex >= sequence.size()) {
+			state = 2;
+			sleepTime = 2.0f;
+			seqIndex = 0;
+		}
+	}
+	if (state == 2) { //Between sequences
+		state = 0;
+	}
+}

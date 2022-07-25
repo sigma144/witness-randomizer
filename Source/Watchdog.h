@@ -126,3 +126,21 @@ public:
 	TownDoorWatchdog() : Watchdog(0.2f) { }
 	virtual void action();
 };
+
+class SoundWatchdog : public Watchdog {
+public:
+	SoundWatchdog(int id, std::vector<int> sequence) : Watchdog(0.4f) {
+		this->id = id; this->sequence = sequence;
+		soundTime = 0; seqTime = 0; seqIndex = 0; state = 0;
+	}
+	void playSound(std::string filename) {
+		OutputDebugStringW(L"Playing sound\n");
+		OutputDebugStringW(std::wstring(filename.begin(), filename.end()).c_str());
+		PlaySound(std::wstring(filename.begin(), filename.end()).c_str(), NULL, SND_FILENAME | SND_ASYNC);
+	}
+	virtual void action();
+	int id, seqIndex;
+	int state;
+	std::vector<int> sequence;
+	double soundTime, seqTime;
+};
