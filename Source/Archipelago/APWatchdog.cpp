@@ -503,7 +503,12 @@ void APWatchdog::RefreshDoorCollisions() {
 	s << playerPosition[0] << ", " << playerPosition[1] << ", " << playerPosition[2] << "\n";
 	OutputDebugStringW(s.str().c_str());
 
-	for(auto const& [collisionToUpdate, val] : collisionsToRefresh){
+	for(auto const& p : collisionsToRefresh){
+		auto collisionToUpdate = p.first;
+		auto val = p.second;
+
+		if (val == -10) return;
+
 		if (val > 0) {
 			collisionsToRefresh[collisionToUpdate] = val - 1;
 			continue;
@@ -519,7 +524,7 @@ void APWatchdog::RefreshDoorCollisions() {
 		s1 << std::hex << collisionToUpdate << " in range. Testing...\n";
 		OutputDebugStringW(s1.str().c_str());
 
-		collisionsToRefresh.erase(collisionToUpdate);
+		collisionsToRefresh[collisionToUpdate] = -10;
 
 		std::vector<float> newPositions = ReadPanelData<float>(collisionToUpdate, POSITION, 8);
 
@@ -531,13 +536,26 @@ void APWatchdog::RefreshDoorCollisions() {
 		s << std::hex << collisionToUpdate << " didn't move!!! Updating manually...\n";
 		OutputDebugStringW(s.str().c_str());
 
-		_memory->UpdateEntityPosition(collisionToUpdate);
+		try {  
+			_memory->UpdateEntityPosition(collisionToUpdate);
+		}
+		catch (const std::exception& e) { 
+			collisionsToRefresh[collisionToUpdate] = 2;
+			return;
+		}
 
 		if(!knownIrrelevantCollisions.count(collisionToUpdate)){
 			collisionsToRefresh[collisionToUpdate] = 10;
 		}
+	}
 
-		//_memory->UpdateEntityPosition(collisionToUpdate);
+	for (auto it = collisionsToRefresh.cbegin(), next_it = it; it != collisionsToRefresh.cend(); it = next_it)
+	{
+		++next_it;
+		if (collisionsToRefresh[it->first] == -10)
+		{
+			collisionsToRefresh.erase(it);
+		}
 	}
 
 	OutputDebugStringW(L"-----\n");

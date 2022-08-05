@@ -114,6 +114,64 @@ void Memory::findPlayerPosition() {
 	});
 }
 
+void Memory::findImportantFunctionAddresses()
+{
+	//open door
+	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
+				this->openDoorFunction = _baseAddress + index - 2;
+				break;
+			}
+		}
+
+		return true;
+	});
+
+	//Update Entity Position
+	executeSigScan({ 0x44, 0x0F, 0xB6, 0xCA, 0x4C, 0x8D, 0x41, 0x34 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->updateEntityPositionFunction = _baseAddress + index;
+
+		return true;
+	});
+
+	//Activate Laser
+	executeSigScan({ 0x40, 0x53, 0x48, 0x83, 0xEC, 0x60, 0x83, 0xB9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->activateLaserFunction = _baseAddress + index;
+
+		return true;
+	});
+
+	//hudTime
+	executeSigScan({ 0x40, 0x53, 0x48, 0x83, 0xEC, 0x20, 0x83, 0x3D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->displayHudFunction = _baseAddress + index;
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // find the movss statement
+				this->hudTimePointer = _baseAddress + index + 2;
+
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->hudTimePointer), buff, sizeof(buff), NULL);
+
+				this->relativeAddressOf6 = buff[0];
+
+				uintptr_t addressOf1 = this->hudTimePointer + 4 + buff[0];
+
+				executeSigScan({ 0x00, 0x00, 0xC0, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+					this->relativeAddressOf6 += index;
+
+					return true;
+				}, addressOf1);
+
+				break;
+			}
+		}
+
+		return true;
+	});
+}
+
 void Memory::findMovementSpeed() {
 	executeSigScan({ 0xF3, 0x0F, 0x59, 0xFD, 0xF3, 0x0F, 0x5C, 0xC8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		int found = 0;
@@ -160,20 +218,24 @@ __int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>
 	return offset + index + bytesToEOL + *(int*)&data[index];
 }
 
-#define BUFFER_SIZE 0x10000 // 10 KB
-void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc) {
+#define BUFFER_SIZE 0x1000000 // 10 KB
+void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc, uintptr_t startAddress) {
 	std::vector<byte> buff;
 	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
 
-	for (uintptr_t i = _baseAddress; i < _baseAddress + 0x500000; i += BUFFER_SIZE) {
+	for (uintptr_t i = startAddress; i < startAddress + 0x50000000; i += BUFFER_SIZE) {
 		SIZE_T numBytesWritten;
 		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(i), &buff[0], buff.size(), &numBytesWritten)) continue;
 		buff.resize(numBytesWritten);
 		int index = find(buff, scanBytes);
 		if (index == -1) continue;
-		scanFunc(i - _baseAddress, index, buff); // We're expecting i to be relative to the base address here.
+		scanFunc(i - startAddress, index, buff); // We're expecting i to be relative to the base address here.
 		return;
 	}
+}
+
+void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc) {
+	executeSigScan(scanBytes, scanFunc, _baseAddress);
 }
 
 void Memory::ThrowError(std::string message) {
@@ -290,11 +352,11 @@ void Memory::DisplayHudMessage(std::string message) {
 	if (!_messageAddress) {
 		_messageAddress = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-		__int64 address = 0x1401E9E6C;
+		__int64 address = hudTimePointer;
 		LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
-		__int32 addressOf8 = 0x0032BEC8;
+		__int32 addressOf6 = relativeAddressOf6;
 
-		Write(addressPointer, &addressOf8, sizeof(addressOf8));
+		Write(addressPointer, &addressOf6, sizeof(addressOf6));
 	}
 
 	strcpy_s(buffer, message.c_str());
@@ -304,7 +366,7 @@ void Memory::DisplayHudMessage(std::string message) {
 
 
 
-	__int64 funcAdress = 0x1401E9E30;
+	__int64 funcAdress = displayHudFunction;
 	__int64 messageAddress = reinterpret_cast<__int64>(_messageAddress);
 
 	unsigned char asmBuff[] =
@@ -354,6 +416,14 @@ int Memory::RUNSPEED = 0;
 int Memory::CAMERAPOSITION = 0;
 int Memory::ACCELERATION = 0;
 int Memory::DECELERATION = 0;
+
+uint64_t Memory::relativeAddressOf6 = 0;
+uint64_t Memory::openDoorFunction = 0;
+uint64_t Memory::activateLaserFunction = 0;
+uint64_t Memory::hudTimePointer = 0;
+uint64_t Memory::updateEntityPositionFunction = 0;
+uint64_t Memory::displayHudFunction = 0;
+
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;
 HWND Memory::errorWindow = NULL;

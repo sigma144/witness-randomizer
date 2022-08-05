@@ -153,29 +153,27 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		std::string itemName = ap->get_item_name(item.item);
 		std::string locationName = ap->get_location_name(item.location);
 
-		if (!receiving) {
-			bool hint = false;
+		bool hint = false;
 
-			for (auto textNode : msg) {
-				if (textNode.text.find("[Hint]") != std::string::npos) {
-					hint = true;
-				}
+		for (auto textNode : msg) {
+			if (textNode.text.find("[Hint]") != std::string::npos) {
+				hint = true;
 			}
+		}
 
-			if (hint) {
-				async->queueMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
+		if (hint) {
+			async->queueMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
+		}
+		else {
+			int location = item.location;
+
+			if (panelIdToLocationIdReverse.count(location) && !_memory->ReadPanelData<int>(panelIdToLocationIdReverse[location], SOLVED)) {
+				async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".");
 			}
-			else {
-				int location = item.location;
-
-				if (panelIdToLocationIdReverse.count(location) && !_memory->ReadPanelData<int>(panelIdToLocationIdReverse[location], SOLVED)) {
-					async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".");
-				}
-				else
-				{
-					panelLocker->SetItemReward(findResult->first, item);
-					async->queueMessage("Sent " + itemName + " to " + player + ".");
-				}
+			else
+			{
+				panelLocker->SetItemReward(findResult->first, item);
+				if(!receiving) async->queueMessage("Sent " + itemName + " to " + player + ".");
 			}
 		}
 	});
@@ -250,12 +248,15 @@ std::string APRandomizer::buildUri(std::string& server)
 
 void APRandomizer::PostGeneration(HWND loadingHandle) {
 	int num_dec = _memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
-	std::vector<int> decorations = _memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
 
-	decorations[3] = 264;
-	decorations[12] = 264;
+	if(num_dec != 1){
+		std::vector<int> decorations = _memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
 
-	_memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
+		decorations[3] = 264;
+		decorations[12] = 264;
+
+		_memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
+	}
 
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 

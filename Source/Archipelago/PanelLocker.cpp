@@ -35,7 +35,6 @@ void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
 	disablePuzzle(0x00143); //Orchard Apple Tree 1
 	disablePuzzle(0x00139); //Keep Hedge Maze 1
 	disablePuzzle(0x0360E); //Keep Laser Hedges
-	disablePuzzle(0x15ADD); //River Rhombic Avoid Vault
 	
 	disablePuzzle(0x0042D); //Mountaintop River Shape
 

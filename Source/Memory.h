@@ -26,6 +26,7 @@ public:
 	void findMovementSpeed();
 	void findActivePanel();
 	void findPlayerPosition();
+	void findImportantFunctionAddresses();
 	int GetActivePanel();
 	static __int64 ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL = 4);
 	~Memory();
@@ -140,15 +141,15 @@ public:
 	}
 
 	void OpenDoor(int id) {
-		CallVoidFunction(id, 0x14008EB60);
+		CallVoidFunction(id, openDoorFunction);
 	}
 
 	void UpdateEntityPosition(int id) {
-		CallVoidFunction(id, 0x140184F00); // Entity::has_moved_in_a_non_position_way - Still works even if it HAS moved in a non position way, for some reason :P
+		CallVoidFunction(id, updateEntityPositionFunction); // Entity::has_moved_in_a_non_position_way - Still works even if it HAS moved in a non position way, for some reason :P
 	}
 
 	void ActivateLaser(int id) {
-		CallVoidFunction(id, 0x1400AF520);
+		CallVoidFunction(id, activateLaserFunction);
 	}
 
 	void RemoveMesh(int id);
@@ -160,6 +161,14 @@ public:
 	static int GLOBALS;
 	static int RUNSPEED;
 	static int CAMERAPOSITION;
+
+	static uint64_t openDoorFunction;
+	static uint64_t updateEntityPositionFunction;
+	static uint64_t activateLaserFunction;
+	static uint64_t hudTimePointer;
+	static uint64_t relativeAddressOf6;
+	static uint64_t displayHudFunction;
+
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
 	static int DECELERATION;
@@ -193,6 +202,7 @@ private:
 
 	using ScanFunc = std::function<void(__int64 offset, int index, const std::vector<byte>& data)>;
 	using ScanFunc2 = std::function<bool(__int64 offset, int index, const std::vector<byte>& data)>;
+	void executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc, uintptr_t startAddress);
 	void executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc);
 
 	void ThrowError(std::string message);

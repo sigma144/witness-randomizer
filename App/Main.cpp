@@ -426,6 +426,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	memory.findMovementSpeed();
 	memory.findActivePanel();
 	memory.findPlayerPosition();
+	memory.findImportantFunctionAddresses();
 
 	if (!Memory::GLOBALS) {
 		std::ifstream file("WRPGglobals.txt");
