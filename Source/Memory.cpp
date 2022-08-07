@@ -142,7 +142,7 @@ void Memory::findImportantFunctionAddresses()
 		return true;
 	});
 
-	//hudTime
+	//Display Hud + change hudTime
 	executeSigScan({ 0x40, 0x53, 0x48, 0x83, 0xEC, 0x20, 0x83, 0x3D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->displayHudFunction = _baseAddress + index;
 
