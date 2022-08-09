@@ -14,4 +14,7 @@ struct Random {
 		return abs((int)gen());
 	}
 
+	static int rand(int val) {
+		return rand() % val;
+	}
 };

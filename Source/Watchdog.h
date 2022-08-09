@@ -127,20 +127,41 @@ public:
 	virtual void action();
 };
 
+#define SW_WAITING 0
+#define SW_PLAYING 1
 class SoundWatchdog : public Watchdog {
 public:
-	SoundWatchdog(int id, std::vector<int> sequence) : Watchdog(0.4f) {
-		this->id = id; this->sequence = sequence;
-		soundTime = 0; seqTime = 0; seqIndex = 0; state = 0;
+	SoundWatchdog() : Watchdog(2.0f) {
+		this->sequence = sequence;
+		soundTime = 0; seqTime = 0; seqIndex = 0; state = SW_WAITING;
+		_memory = std::make_shared<Memory>("witness64_d3d11.exe");
+		junglePanels = {
+			0x002C4, // Jungle Waves 1
+			0x00767, // Jungle Waves 2
+			0x002C6, // Jungle Waves 3
+			0x0070E, // Jungle Waves 4
+			0x0070F, // Jungle Waves 5
+			0x0087D, // Jungle Waves 6
+			0x002C7, // Jungle Waves 7
+			0x0026D, // Jungle Dots 1
+			0x0026E, // Jungle Dots 2
+			0x0026F, // Jungle Dots 3
+			0x00C3F, // Jungle Dots 4
+			0x00C41, // Jungle Dots 5
+			0x014B2, // Jungle Dots 6
+		};
 	}
 	void playSound(std::string filename) {
 		OutputDebugStringW(L"Playing sound\n");
 		OutputDebugStringW(std::wstring(filename.begin(), filename.end()).c_str());
 		PlaySound(std::wstring(filename.begin(), filename.end()).c_str(), NULL, SND_FILENAME | SND_ASYNC);
 	}
+	int getClosestPanel();
 	virtual void action();
-	int id, seqIndex;
-	int state;
+	int seqIndex, state;
 	std::vector<int> sequence;
 	double soundTime, seqTime;
+	std::shared_ptr<Memory> _memory;
+	std::vector<int> junglePanels;
 };
+

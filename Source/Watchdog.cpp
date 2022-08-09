@@ -22,7 +22,7 @@ void Watchdog::run()
 //Keep Watchdog - Keep the big panel off until all panels are solved
 
 void KeepWatchdog::action() {
-	if (ReadPanelData<int>(0x01BE9, SOLVED)) {
+	if (ReadPanelData<int>(0x01BE9, HAS_EVER_BEEN_SOLVED)) {
 		WritePanelData<float>(0x03317, POWER, { 1, 1 });
 		WritePanelData<int>(0x03317, NEEDS_REDRAW, { 1 });
 		terminate = true;
@@ -204,7 +204,7 @@ bool BridgeWatchdog::checkTouch(int id)
 
 void TreehouseWatchdog::action()
 {
-	if (ReadPanelData<int>(0x03613, SOLVED)) {
+	if (ReadPanelData<int>(0x03613, HAS_EVER_BEEN_SOLVED)) {
 		WritePanelData<float>(0x17DAE, POWER, { 1.0f, 1.0f });
 		WritePanelData<int>(0x17DAE, NEEDS_REDRAW, { 1 });
 		terminate = true;
@@ -245,17 +245,40 @@ void TownDoorWatchdog::action()
 	}
 }
 
-void SoundWatchdog::action()
+int SoundWatchdog::getClosestPanel()
 {
-	if (state == 0) { //Waiting
-		int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
-		int tracedptr = ReadPanelData<int>(id, TRACED_EDGE_DATA);
-		if (numTraced > 0 && tracedptr) {
-			state = 1;
-			sleepTime = 0.4f;
+	std::vector<float> position = _memory->GetCameraPos();
+	int closest = 0;
+	float closestDist = 50;
+	for (int panel : junglePanels) {
+		float power = ReadPanelData<float>(panel, POWER);
+		std::vector<float> panelPos = _memory->ReadPanelData<float>(panel, POSITION, 3);
+		float dist2 = (position[0] - panelPos[0]) * (position[0] - panelPos[0]) +
+			(position[1] - panelPos[1]) * (position[1] - panelPos[1]) +
+			(position[2] - panelPos[2]) * (position[2] - panelPos[2]);
+		if (dist2 < closestDist) {
+			closestDist = dist2;
+			closest = panel;
 		}
 	}
-	if (state == 1) { //Chirping
+	return closest;
+}
+
+void SoundWatchdog::action()
+{
+	if (state == SW_WAITING) {
+		int closestPanel = getClosestPanel();
+		float power = ReadPanelData<float>(closestPanel, POWER);
+		if (power > 0) {
+			int seqLen = ReadPanelData<int>(closestPanel, DOT_SEQUENCE_LEN);
+			if (seqLen == 0) return;
+			sequence = ReadArray<int>(closestPanel, DOT_SEQUENCE, seqLen);
+			seqIndex = 0;
+			state = SW_PLAYING;
+			sleepTime = 0.3f;
+		}
+	}
+	if (state == SW_PLAYING) {
 		int pitch = sequence[seqIndex];
 		if (pitch == IntersectionFlags::DOT_SMALL)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-high.wav");
@@ -265,12 +288,8 @@ void SoundWatchdog::action()
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-low.wav");
 		seqIndex++;
 		if (seqIndex >= sequence.size()) {
-			state = 2;
+			state = SW_WAITING;
 			sleepTime = 2.0f;
-			seqIndex = 0;
 		}
-	}
-	if (state == 2) { //Between sequences
-		state = 0;
 	}
 }

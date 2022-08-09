@@ -161,7 +161,7 @@ void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 		offsets[TARGET] = sizeof(int);
 	}
 	if (flags & SWAP::AUDIO_NAMES) {
-		offsets[AUDIO_LOG_NAME] = sizeof(void*); //This isn't actually working 
+		offsets[AUDIOLOG_RECORDING_NAME] = sizeof(void*); //This isn't actually working 
 	}
 	if (flags & SWAP::COLORS) {
 		offsets[PATH_COLOR] = 16;

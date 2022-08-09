@@ -1459,7 +1459,23 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
-void Special::generateSoundWavePuzzle(int id, const std::vector<int> pitches)
+std::vector<int> Special::generateSoundPattern(int numPitches) {
+	std::vector<int> pitches = { DOT_SMALL, DOT_MEDIUM, DOT_LARGE };
+	for (int i = 3; i < numPitches; i++) {
+		pitches.emplace_back(DOT_SMALL << Random::rand(3));
+	}
+	for (int i = 0; i < numPitches; i++) {
+		std::swap(pitches[i], pitches[Random::rand(numPitches)]);
+	}
+	return pitches;
+}
+
+void Special::generateSoundWavePuzzle(int id, int numPitches)
+{
+	generateSoundWavePuzzle(id, generateSoundPattern(numPitches));
+}
+
+void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 {
 	int len = static_cast<int>(pitches.size());
 	std::vector<int> connectionsA;
@@ -1533,9 +1549,9 @@ void Special::generateSoundWavePuzzle(int id, const std::vector<int> pitches)
 	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
 	panel._memory->WriteArray<int>(id, SEQUENCE, solution);
 	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { static_cast<int>(solution.size()) });
+	panel._memory->WriteArray<int>(id, DOT_SEQUENCE, pitches);
+	panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { (int)pitches.size() });
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-	//Start watchdog to play sounds
-	(new SoundWatchdog(id, pitches))->start();
 }
 
 void Special::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
@@ -1622,21 +1638,47 @@ void Special::drawGoodLuckPanel(int id)
 	createText(id, "luck!", intersections, connectionsA, connectionsB, 0.2f, 0.8f, 0.77f, 0.93f);
 	drawText(id, intersections, connectionsA, connectionsB, { 0.66f, 0.62f, 0.66f, 0.69f, 0.32f, 0.69f, 0.51f, 0.51f, 0.32f, 0.32f, 0.66f, 0.32f, 0.66f, 0.39f });
 }
+//Adapted from https://github.com/Jarno458/The-Witness-Randomizer-for-Archipelago/blob/Remote_Activate_Lasers/Source/Memory.cpp#L150
+HANDLE Special::CallVoidFunction(long long function, long long param) {
+	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+	function += 0x140000000;
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xC4\x08" // add rsp,08
+		"\xFF\xD0" //call rax
+		"\x48\x83\xEC\x08" // sub rsp,08
+		"\xC3"; //ret
+	memcpy(&buffer[2], &function, 8);
+	memcpy(&buffer[12], &param, 8);
+	SECURITY_DESCRIPTOR desc = { 0, 0, THREAD_QUERY_INFORMATION, 0, 0, 0, 0 };
+	SECURITY_ATTRIBUTES attr = { 1, &desc, false };
+	LPVOID allocation_start = VirtualAllocEx(_memory->_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_memory->_handle, allocation_start, buffer, sizeof(buffer), NULL);
+	return CreateRemoteThread(_memory->_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+}
+
+template <class T> T Special::CallFunction(long long function, long long param) {
+	HANDLE thread = CallVoidFunction(function, param);
+	WaitForSingleObject(thread, 3000);
+	long long retCode = 0;
+	GetExitCodeThread(thread, (LPDWORD)&retCode);
+	T retVal = 0;
+	memcpy(&retVal, &retCode, sizeof(retVal));
+	return retVal;
+}
 
 //For testing/debugging purposes only
 void Special::test() {
-	waveOutSetVolume(0, 0x1000);
 	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
-	uintptr_t test = _memory->ReadData<uintptr_t>({ Memory::GLOBALS, 0x14 }, 1)[0];
-	uintptr_t test2 = _memory->ReadData<uintptr_t>({ Memory::GLOBALS, 0x18 }, 1)[0];
-	uintptr_t test3 = _memory->ReadData<uintptr_t>({ Memory::GLOBALS, 0x1C }, 1)[0];
+	waveOutSetVolume(0, 0x1000);
 	std::vector<byte> test4 = _memory->ReadExeData<byte>(DO_SCRIPTED_SOUNDS, 1);
 	_memory->WriteExeData<byte>(DO_SCRIPTED_SOUNDS, { 0 });
-	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE });
-	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM });
-	//generateSoundWavePuzzle(0x002C4, { DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });
-	generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_MEDIUM, DOT_SMALL, DOT_MEDIUM, DOT_LARGE });
-	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });
-	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });
+	generateSoundWavePuzzle(0x002C4, 4);
+	generateSoundWavePuzzle(0x00767, 5);
+	generateSoundWavePuzzle(0x002C6, 6);
+	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });*/
+	//Start watchdog to play sounds
+	(new SoundWatchdog())->start();
 }
 

@@ -161,6 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Objects.h" />
     <ClInclude Include="Generate.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />

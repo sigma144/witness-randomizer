@@ -59,6 +59,8 @@ public:
 	void createArrowPuzzle(int id, int x, int y, int dir, int ticks, const std::vector<Point>& gaps);
 	void createArrowSecretDoor(int id);
 	void generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType);
+	std::vector<int> generateSoundPattern(int numPitches);
+	void generateSoundWavePuzzle(int id, int numPitches);
 	void generateSoundWavePuzzle(int id, const std::vector<int> solution);
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);
@@ -101,6 +103,11 @@ public:
 		if (!power && hasBeenRandomized()) return; //Only deactivate on a fresh save file (since power state is preserved)
 		if (power) _memory->WritePanelData<float>(puzzle, POWER, { 1.0, 1.0 });
 		else _memory->WritePanelData<float>(puzzle, POWER, { 0.0, 0.0 });
+	}
+	static HANDLE CallVoidFunction(long long function, long long param); //Doesn't work
+	template <class T> static T CallFunction(long long function, long long param);
+	template <class T> static T CallFunction(long long function) {
+		return CallFunction<T>(function, 0);
 	}
 	template <class T> static std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
 		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->ReadPanelData<T>(panel, offset, size);
@@ -218,5 +225,3 @@ private:
 		return item;
 	}
 };
-
-#define DO_SCRIPTED_SOUNDS 0x61E8B0 

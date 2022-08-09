@@ -212,7 +212,7 @@ private:
 	Point get_sym_point(Point p) { return get_sym_point(p.first, p.second, symmetry); }
 	Point get_sym_point(Point p, Symmetry symmetry) { return get_sym_point(p.first, p.second, symmetry); }
 	Endpoint::Direction get_sym_dir(Endpoint::Direction direction, Symmetry symmetry) {
-		int dirIndex;
+		int dirIndex = 0;
 		if (direction == Endpoint::Direction::LEFT) dirIndex = 0;
 		if (direction == Endpoint::Direction::RIGHT) dirIndex = 1;
 		if (direction == Endpoint::Direction::UP) dirIndex = 2;
