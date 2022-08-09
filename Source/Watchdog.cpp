@@ -280,11 +280,11 @@ void SoundWatchdog::action()
 	}
 	if (state == SW_PLAYING) {
 		int pitch = sequence[seqIndex];
-		if (pitch == IntersectionFlags::DOT_SMALL)
+		if (pitch == 1)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-high.wav");
-		else if (pitch == IntersectionFlags::DOT_MEDIUM)
+		else if (pitch == 2)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-medium.wav");
-		else if (pitch == IntersectionFlags::DOT_LARGE)
+		else if (pitch == 3)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-low.wav");
 		seqIndex++;
 		if (seqIndex >= sequence.size()) {

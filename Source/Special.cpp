@@ -1460,9 +1460,9 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 }
 
 std::vector<int> Special::generateSoundPattern(int numPitches) {
-	std::vector<int> pitches = { DOT_SMALL, DOT_MEDIUM, DOT_LARGE };
+	std::vector<int> pitches = { 1, 2, 3 };
 	for (int i = 3; i < numPitches; i++) {
-		pitches.emplace_back(DOT_SMALL << Random::rand(3));
+		pitches.emplace_back(Random::rand(3) + 1);
 	}
 	for (int i = 0; i < numPitches; i++) {
 		std::swap(pitches[i], pitches[Random::rand(numPitches)]);
@@ -1477,6 +1477,11 @@ void Special::generateSoundWavePuzzle(int id, int numPitches)
 
 void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 {
+	for (int& i : pitches) {
+		if (i == DOT_SMALL) i = 3;
+		if (i == DOT_MEDIUM) i = 2;
+		if (i == DOT_LARGE) i = 1;
+	}
 	int len = static_cast<int>(pitches.size());
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;
@@ -1502,14 +1507,15 @@ void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 		for (int i2 = 0; i2 < 7; i2++) {
 			intersectionFlags.emplace_back(INTERSECTION);
 		}
+		intersectionFlags[intersectionFlags.size() - (2+(pitches[i]))] |= (0x1000 << pitches[i]) | IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
 		std::vector<int> seq = { 10 };
-		if (pitches[i] & IntersectionFlags::DOT_LARGE) {
-			if (pitches[i] == (i + 1 == len ? DOT_MEDIUM : pitches[i + 1]))
+		if (pitches[i] == 3) { //Low
+			if (pitches[i] == (i + 1 == len ? 2 : pitches[i + 1]))
 				seq = { 2, 1, 0 };
 			else seq = { 2, 1, 0, 9, 10 };
 		}
-		if (pitches[i] & IntersectionFlags::DOT_SMALL) {
-			if (pitches[i] == (i + 1 == len ? DOT_MEDIUM : pitches[i + 1]))
+		if (pitches[i] == 1) { //High
+			if (pitches[i] == (i + 1 == len ? 2: pitches[i + 1]))
 				seq = { 4, 5, 6 };
 			else seq = { 4, 5, 6, 11, 10 };
 		}
@@ -1551,6 +1557,8 @@ void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { static_cast<int>(solution.size()) });
 	panel._memory->WriteArray<int>(id, DOT_SEQUENCE, pitches);
 	panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { (int)pitches.size() });
+	panel._memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, { { 0.0f, 0.0f, 0.0f, 1.0f } });
+	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { Panel::Style::HAS_DOTS } );
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
@@ -1671,14 +1679,11 @@ template <class T> T Special::CallFunction(long long function, long long param) 
 //For testing/debugging purposes only
 void Special::test() {
 	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
-	waveOutSetVolume(0, 0x1000);
-	std::vector<byte> test4 = _memory->ReadExeData<byte>(DO_SCRIPTED_SOUNDS, 1);
+	waveOutSetVolume(0, 0x5000);
 	_memory->WriteExeData<byte>(DO_SCRIPTED_SOUNDS, { 0 });
 	generateSoundWavePuzzle(0x002C4, 4);
 	generateSoundWavePuzzle(0x00767, 5);
 	generateSoundWavePuzzle(0x002C6, 6);
-	//generateSoundWavePuzzle(0x002C4, { DOT_SMALL, DOT_LARGE, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM, DOT_MEDIUM });*/
-	//Start watchdog to play sounds
 	(new SoundWatchdog())->start();
 }
 
