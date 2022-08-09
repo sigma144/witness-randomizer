@@ -196,6 +196,7 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 	int id = GetActivePanel();
 
 	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), id) == actuallyEveryPanel.end()) {
+		EnableWindow(skipButton, false);
 		return false;
 	}
 
