@@ -1459,10 +1459,13 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
-std::vector<int> Special::generateSoundPattern(int numPitches) {
+std::vector<int> Special::generateSoundPattern(int numPitches, int numLong) {
 	std::vector<int> pitches = { 1, 2, 3 };
 	for (int i = 3; i < numPitches; i++) {
 		pitches.emplace_back(Random::rand(3) + 1);
+	}
+	for (int i = numPitches - numLong; i < numPitches; i++) {
+		pitches[i] |= SoundWatchdog::Flags::LONG;
 	}
 	for (int i = 0; i < numPitches; i++) {
 		std::swap(pitches[i], pitches[Random::rand(numPitches)]);
@@ -1470,17 +1473,17 @@ std::vector<int> Special::generateSoundPattern(int numPitches) {
 	return pitches;
 }
 
-void Special::generateSoundWavePuzzle(int id, int numPitches)
+void Special::generateSoundWavePuzzle(int id, int numPitches, int numLong)
 {
-	generateSoundWavePuzzle(id, generateSoundPattern(numPitches));
+	generateSoundWavePuzzle(id, generateSoundPattern(numPitches, numLong));
 }
 
 void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 {
 	for (int& i : pitches) {
-		if (i == DOT_SMALL) i = 3;
-		if (i == DOT_MEDIUM) i = 2;
-		if (i == DOT_LARGE) i = 1;
+		if ((i & 3) == DOT_SMALL) i = SoundWatchdog::Flags::HIGH;
+		if ((i & 3) == DOT_MEDIUM) i = SoundWatchdog::Flags::MEDIUM;
+		if ((i & 3) == DOT_LARGE) i = SoundWatchdog::Flags::LOW;
 	}
 	int len = static_cast<int>(pitches.size());
 	std::vector<int> connectionsA;
@@ -1491,10 +1494,13 @@ void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 	float curve = 0.2f;
 	float height = 1.2f;
 	float pad = 0.1f;
+	float x = 0;
 	//Add wave for each pitch
-	for (int i = 0; i < len; i++) {
-		std::vector<float> points = { i + 1 - curve, -height, i + curve, -height, (float)i, -height + curve,
-			(float)i, 0, (float)i, height - curve, i + curve, height, i + 1 - curve, height };
+	for (int i = 0; i < len; i++, x++) {
+		int isLong = pitches[i] & SoundWatchdog::LONG ? 2 : 1;
+		pitches[i] = pitches[i] & 3;
+		std::vector<float> points = { x + isLong - curve, -height, x + curve, -height, x, -height + curve,
+			x, 0, x, height - curve, x + curve, height, x + isLong - curve, height };
 		for (float f : points) {
 			intersections.emplace_back(f);
 		}
@@ -1507,22 +1513,23 @@ void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 		for (int i2 = 0; i2 < 7; i2++) {
 			intersectionFlags.emplace_back(INTERSECTION);
 		}
-		intersectionFlags[intersectionFlags.size() - (2+(pitches[i]))] |= (0x1000 << pitches[i]) | IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
+		intersectionFlags[intersectionFlags.size() - (2 + (pitches[i]))] |= (0x1000 << pitches[i]) | IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
 		std::vector<int> seq = { 10 };
-		if (pitches[i] == 3) { //Low
-			if (pitches[i] == (i + 1 == len ? 2 : pitches[i + 1]))
+		if (pitches[i] == SoundWatchdog::Flags::LOW) { //Low
+			if (pitches[i] == (i + 1 == len ? SoundWatchdog::Flags::MEDIUM : pitches[i + 1] & 3))
 				seq = { 2, 1, 0 };
 			else seq = { 2, 1, 0, 9, 10 };
 		}
-		if (pitches[i] == 1) { //High
-			if (pitches[i] == (i + 1 == len ? 2: pitches[i + 1]))
+		if (pitches[i] == SoundWatchdog::Flags::HIGH) { //High
+			if (pitches[i] == (i + 1 == len ? SoundWatchdog::Flags::MEDIUM : pitches[i + 1] & 3))
 				seq = { 4, 5, 6 };
 			else seq = { 4, 5, 6, 11, 10 };
 		}
 		for (int i2 : seq) solution.emplace_back(i2 + i*7);
+		if (isLong == 2) x++;
 	}
 	//Add final set of connections
-	std::vector<float> points = { -0.5f, 0, len + 0.5f, 0, (float)len, -height + curve, (float)len, 0, (float)len, height - curve };
+	std::vector<float> points = { -0.5f, 0, x + 0.5f, 0, x, -height + curve, x, 0, x, height - curve };
 	for (float f : points) {
 		intersections.emplace_back(f);
 	}
@@ -1537,13 +1544,15 @@ void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 	}
 	solution.emplace_back(len * 7 + 1);
 	//Rescale coordinates
-	float minX = -0.5f; float maxX = len + 0.5f;
+	float minX = -0.5f; float maxX = x + 0.5f;
 	float minY = -height; float maxY = height;
 	float scale = 1 / (maxX - minX) * (1 - pad * 2);
 	for (int i = 0; i < intersections.size(); i += 2) {
 		intersections[i] = (intersections[i] - minX) * scale + pad;
 		intersections[i + 1] = intersections[i + 1] * scale + 0.5f;
 	}
+	//Save sequence for watchdog access
+	SoundWatchdog::puzzleSounds.emplace(id, std::vector<std::vector<int>>({ pitches }));
 	//Write to RAM
 	Panel panel;
 	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { scale * 4 });
@@ -1558,7 +1567,7 @@ void Special::generateSoundWavePuzzle(int id, std::vector<int> pitches)
 	panel._memory->WriteArray<int>(id, DOT_SEQUENCE, pitches);
 	panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { (int)pitches.size() });
 	panel._memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, { { 0.0f, 0.0f, 0.0f, 1.0f } });
-	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { Panel::Style::HAS_DOTS } );
+	panel._memory->WritePanelData<int>(id, POWER_OFF_ON_FAIL, { 0 });
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
@@ -1681,9 +1690,9 @@ void Special::test() {
 	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
 	waveOutSetVolume(0, 0x5000);
 	_memory->WriteExeData<byte>(DO_SCRIPTED_SOUNDS, { 0 });
-	generateSoundWavePuzzle(0x002C4, 4);
-	generateSoundWavePuzzle(0x00767, 5);
-	generateSoundWavePuzzle(0x002C6, 6);
+	generateSoundWavePuzzle(0x002C4, 4, 1);
+	generateSoundWavePuzzle(0x00767, 5, 1);
+	generateSoundWavePuzzle(0x002C6, 6, 1);
 	(new SoundWatchdog())->start();
 }
 

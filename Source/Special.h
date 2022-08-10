@@ -59,8 +59,8 @@ public:
 	void createArrowPuzzle(int id, int x, int y, int dir, int ticks, const std::vector<Point>& gaps);
 	void createArrowSecretDoor(int id);
 	void generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType);
-	std::vector<int> generateSoundPattern(int numPitches);
-	void generateSoundWavePuzzle(int id, int numPitches);
+	std::vector<int> generateSoundPattern(int numPitches, int numLong);
+	void generateSoundWavePuzzle(int id, int numPitches, int numLong);
 	void generateSoundWavePuzzle(int id, const std::vector<int> solution);
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);

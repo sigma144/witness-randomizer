@@ -245,20 +245,23 @@ void TownDoorWatchdog::action()
 	}
 }
 
-int SoundWatchdog::getClosestPanel()
+std::vector<std::vector<int>> SoundWatchdog::getClosestPanelSounds()
 {
 	std::vector<float> position = _memory->GetCameraPos();
-	int closest = 0;
+	std::vector<std::vector<int>> closest = {};
 	float closestDist = 50;
-	for (int panel : junglePanels) {
+	for (std::pair<int, std::vector<std::vector<int>>> data : puzzleSounds) {
+		int panel = data.first;
+		std::vector<std::vector<int>> sounds = data.second;
 		float power = ReadPanelData<float>(panel, POWER);
+		if (power < 1) continue;
 		std::vector<float> panelPos = _memory->ReadPanelData<float>(panel, POSITION, 3);
 		float dist2 = (position[0] - panelPos[0]) * (position[0] - panelPos[0]) +
 			(position[1] - panelPos[1]) * (position[1] - panelPos[1]) +
 			(position[2] - panelPos[2]) * (position[2] - panelPos[2]);
 		if (dist2 < closestDist) {
 			closestDist = dist2;
-			closest = panel;
+			closest = sounds;
 		}
 	}
 	return closest;
@@ -267,12 +270,9 @@ int SoundWatchdog::getClosestPanel()
 void SoundWatchdog::action()
 {
 	if (state == SW_WAITING) {
-		int closestPanel = getClosestPanel();
-		float power = ReadPanelData<float>(closestPanel, POWER);
-		if (power > 0) {
-			int seqLen = ReadPanelData<int>(closestPanel, DOT_SEQUENCE_LEN);
-			if (seqLen == 0) return;
-			sequence = ReadArray<int>(closestPanel, DOT_SEQUENCE, seqLen);
+		std::vector<std::vector<int>> closest = getClosestPanelSounds();
+		if (closest.size() > 0) {
+			sequence = closest[0];
 			seqIndex = 0;
 			state = SW_PLAYING;
 			sleepTime = 0.3f;
@@ -280,11 +280,11 @@ void SoundWatchdog::action()
 	}
 	if (state == SW_PLAYING) {
 		int pitch = sequence[seqIndex];
-		if (pitch == 1)
+		if ((pitch & 3) == HIGH)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-high.wav");
-		else if (pitch == 2)
+		else if ((pitch & 3) == MEDIUM)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-medium.wav");
-		else if (pitch == 3)
+		else if ((pitch & 3) == LOW)
 			playSound("C:\\Users\\Brian\\Downloads\\WitnessRPG\\Sounds\\bird-low.wav");
 		seqIndex++;
 		if (seqIndex >= sequence.size()) {
@@ -293,3 +293,5 @@ void SoundWatchdog::action()
 		}
 	}
 }
+
+std::map<int, std::vector<std::vector<int>>> SoundWatchdog::puzzleSounds = { };

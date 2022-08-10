@@ -1496,21 +1496,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 				return false;
 			if (!((symbol >> 16) == 0x000F || (symbol >> 16) == 0x1111))
 				flatShapes = false;
-			//Attempt not to put shape symbols adjacent
-			Point pos;
-			for (int i = 0; i < 10; i++) {
-				if (open2.size() == 0) return false;
-				pos = pick_random(open2);
-				bool pass = true;
-				for (Point dir : _8DIRECTIONS2) {
-					Point p = pos + dir;
-					if (!off_edge(p) && get(p) & Decoration::Poly) {
-						pass = false;
-						break;
-					}
-				}
-				if (pass) break;
-			}
+			pos = pick_random(open2);
 			if (symbol & Decoration::Negative) set(pos, symbol | negativeColors[(colorIndexN++) % negativeColors.size()]);
 			else {
 				set(pos, symbol | colors[(colorIndex++) % colors.size()]);
