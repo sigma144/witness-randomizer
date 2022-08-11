@@ -84,7 +84,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x01BEC, {{0x033EA, PANEL, TARGET }}}, // Keep Pressure Plates 1
 	{0x01BEA, {{0x01BE9, PANEL, TARGET }}}, // Keep Pressure Plates 2
 	{0x01CD5, {{0x01CD3, PANEL, TARGET }}}, // Keep Pressure Plates 3
-	{0x01D40, {}}, // Keep Pressure Plates 4
+	{0x01D40, {{0x09E11, CABLE, CABLE_TARGET_0 }}}, // Keep Pressure Plates 4
 
 	{0x04F8F, {{0x0361B, PANEL, TARGET }}}, // Keep Tower Shortcut
 
