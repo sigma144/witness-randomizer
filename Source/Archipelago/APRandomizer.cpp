@@ -247,6 +247,8 @@ std::string APRandomizer::buildUri(std::string& server)
 }
 
 void APRandomizer::PostGeneration(HWND loadingHandle) {
+	// Bunker door colors
+
 	int num_dec = _memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
 
 	if(num_dec != 1){
@@ -257,6 +259,11 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 		_memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
 	}
+
+	// Challenge Timer Colors
+
+	_memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_A, { 0.0f, 1.0f, 1.0f, 1.0f });
+	_memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_B, { 1.0f, 1.0f, 0.0f, 1.0f });
 
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 

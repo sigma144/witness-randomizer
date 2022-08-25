@@ -150,11 +150,14 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		std::vector<int> decorationsFlags;
 		std::vector<int> polygons;
 
-		addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB);
+		addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB, id == 0x0A332);
 
-		addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons);
+		addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons, id == 0x0A332);
 
-		createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+
+		if(id != 0x0A332){
+			createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+		}
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
@@ -212,7 +215,7 @@ void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 	//delete puzzle;
 }
 
-void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB) {
+void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, bool vertical) {
 	//does not respect width/height but its hardcoded at a grid of 4/2
 
 	//panel coordinates go from 0,0 in bottom left to 1,1 in top right
@@ -223,6 +226,15 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 		0.1f, 0.5f, 0.3f, 0.5f, 0.5f, 0.5f, 0.7f, 0.5f, 0.9f, 0.5f,  //top row
 		-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
 	};
+
+	if (vertical) {
+		gridIntersections = {
+			0.35f, 0.1f, 0.35f, 0.3f, 0.35f, 0.5f, 0.35f, 0.7f, 0.35f, 0.9f, //bottom row
+			0.5f, 0.1f, 0.5f, 0.3f, 0.5f, 0.5f, 0.5f, 0.7f, 0.5f, 0.9f, //middle row
+			0.65f, 0.1f, 0.65f, 0.3f, 0.65f, 0.5f, 0.65f, 0.7f, 0.65f, 0.9f,  //top row
+			-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
+		};
+	}
 
 	//flag for each point
 	//must be half the size of gridIntersections as its one per intersection
@@ -296,7 +308,7 @@ void PanelLocker::createText(int id, std::string text, std::vector<float>& inter
 
 void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
-	std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons) {
+	std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons, bool vertical) {
 
 	//does not respect width/height but its hardcoded at a grid of 4/2
 	//stored the puzzle simnbols per grid section, from bottom to top from left to right so buttom left is decoration 0
@@ -354,7 +366,7 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	}
 
 	if (puzzle->hasTriangles && !state.unlockedTriangles) {
-		gridDecorations[column] = Decoration::Triangle2;
+		gridDecorations[column] = Decoration::Triangle2 | Decoration::Yellow;
 		column++;
 	}
 
@@ -387,11 +399,15 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 		float x = intersections[(column - 4) * 2];
 		int intersectionOffset = intersectionFlags.size();
 
+		float factor = 1.0f;
+		if (vertical) factor = 0.75f;
+
 		std::vector<float> symmetryIntersections = {
-			x + 0.05f, 0.35f, x + 0.08f, 0.35f, x + 0.12f, 0.35f, x + 0.15f, 0.35f, //bottom row
-			x + 0.05f, 0.40f, x + 0.08f, 0.40f, x + 0.12f, 0.40f, x + 0.15f, 0.40f, //middle row
-			x + 0.05f, 0.45f, x + 0.08f, 0.45f, x + 0.12f, 0.45f, x + 0.15f, 0.45f, //top row
+			x + 0.05f * factor, 0.35f, x + 0.08f * factor, 0.35f, x + 0.12f * factor, 0.35f, x + 0.15f * factor, 0.35f, //bottom row
+			x + 0.05f * factor, 0.40f, x + 0.08f * factor, 0.40f, x + 0.12f * factor, 0.40f, x + 0.15f * factor, 0.40f, //middle row
+			x + 0.05f * factor, 0.45f, x + 0.08f * factor, 0.45f, x + 0.12f * factor, 0.45f, x + 0.15f * factor, 0.45f, //top row
 		};
+
 		std::vector<int> symmetryIntersectionFlags = {
 			0, 0, 0, 0, //bottom row
 			0, 0, 0, 0, //middle row

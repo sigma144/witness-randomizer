@@ -199,6 +199,8 @@ const int AllPuzzles[]{
 		0x19797,	0x1979A,	0x197E0,	0x197E8,	0x197E5, //Shadow follow
 		0x09F7F, // Quary lazer panel
 		0x181F5, 0x18488, 0x17E2B, 0x17C0A, 0x17E07, // Swamp bridge controlls
+
+		0x0A332, // Challenge Timer
 };
 
 #define DATAPACKAGE_CACHE "ap_datapackage.json"
