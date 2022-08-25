@@ -273,20 +273,20 @@ void APWatchdog::UnlockDoor(int id) {
 
 	// Is a door
 
-	if (ReadPanelData<int>(id, DOOR_OPEN)) {
-		std::wstringstream s;
-		s << std::hex << id << " is already open.\n";
-		OutputDebugStringW(s.str().c_str());
-		return;
-	}
-
-	if (id == 0x0CF2A) {
+	if (id == 0x0CF2A) { // River to Garden door
 		disableCollisionList.insert(id);
 
 		_memory->WritePanelData<float>(0x17CAA, POSITION, { 36.694f, -41.883f, 16.570f });
 		_memory->WritePanelData<float>(0x17CAA, SCALE, { 1.2f });
 
 		_memory->UpdateEntityPosition(0x17CAA);
+	}
+
+	if (ReadPanelData<int>(id, DOOR_OPEN)) {
+		std::wstringstream s;
+		s << std::hex << id << " is already open.\n";
+		OutputDebugStringW(s.str().c_str());
+		return;
 	}
 
 	if (id == 0x0C310) {
