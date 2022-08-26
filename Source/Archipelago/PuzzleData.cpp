@@ -28,14 +28,14 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 			else
 				hasStones = true;
 		}
-		else if ((decorations[i] & 0x700) == Decoration::Shape::Star) {
+		else if ((decorations[i] & 0xF00) == Decoration::Shape::Star) {
 			hasStars = true;
 
 			bool sharesColorWithOtherShape = false;
 
 			for (int j = 0; j < numberOfDecorations; j++) {
-				if (((decorations[j] & 0x700) != 0) //check if any other simbol shares its color
-					&& ((decorations[j] & 0x700) != Decoration::Shape::Star)
+				if (((decorations[j] & 0xF00) != 0) //check if any other simbol shares its color
+					&& ((decorations[j] & 0xF00) != Decoration::Shape::Star)
 					&& ((decorations[j] & 0x00F) == (decorations[i] & 0x00F))) {
 
 					sharesColorWithOtherShape = true;
@@ -93,15 +93,6 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasStones = true;
 		hasColoredStones = false;
 	}
-	else if (id == 0x09E39 || id == 0x17F89) // These have sometimes shown "Star with other Symbol" despite not actually having that. No idea why...
-	{
-		hasStars = false;
-		hasStarsWithOtherSymbol = false;
-	}
-	else if (id == 0x0C373) // Patio Floor - In case we decide not to lock the Pillar itself, bc locking that looks pretty wonky (but technically works)
-	{
-		hasTriangles = true;
-	}
 	else if (id == 0x00A52 || id == 0x00A61 || id == 0x00A57 || id == 0x00A64 || id == 0x00A5B || id == 0x00A68) // These dots seem to get picked up as normal dots, not colored ones. Also, these panels should require Symmetry despite not having Symmetry on them.
 	{
 		hasDots = false;
@@ -111,7 +102,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	else if (id == 0x03702) { // River Vault: The squares are drawn on and validated separately!
 		hasStones = true;
 	}
-	else if (id == 0x0A332) {
+	else if (id == 0x0A332) { // Challenge timer (can't lock the individual challenge panels)
 		hasDots = true;
 		hasColoredDots = true;
 		hasStones = true;
