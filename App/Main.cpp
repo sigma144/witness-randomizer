@@ -330,15 +330,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		//Debug mode checkboxes
 		case IDC_ROTATED:
-			CheckDlgButton(hwnd, IDC_ROTATED, !IsDlgButtonChecked(hwnd, IDC_ROTATED));
+			CheckDlgButton(hwnd, IDC_ROTATED, ~IsDlgButtonChecked(hwnd, IDC_ROTATED));
 			break;
 
 		case IDC_NEGATIVE:
-			CheckDlgButton(hwnd, IDC_NEGATIVE, !IsDlgButtonChecked(hwnd, IDC_NEGATIVE));
+			CheckDlgButton(hwnd, IDC_NEGATIVE, ~IsDlgButtonChecked(hwnd, IDC_NEGATIVE));
 			break;
 
 		case IDC_SYMMETRYX:
-			CheckDlgButton(hwnd, IDC_SYMMETRYX, !IsDlgButtonChecked(hwnd, IDC_SYMMETRYX));
+			CheckDlgButton(hwnd, IDC_SYMMETRYX, ~IsDlgButtonChecked(hwnd, IDC_SYMMETRYX));
 			if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX) && IsDlgButtonChecked(hwnd, IDC_SYMMETRYY))
 				_panel->symmetry = Panel::Symmetry::Rotational;
 			else if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX))
@@ -350,7 +350,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDC_SYMMETRYY:
-			CheckDlgButton(hwnd, IDC_SYMMETRYY, !IsDlgButtonChecked(hwnd, IDC_SYMMETRYY));
+			CheckDlgButton(hwnd, IDC_SYMMETRYY, ~IsDlgButtonChecked(hwnd, IDC_SYMMETRYY));
 			if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX) && IsDlgButtonChecked(hwnd, IDC_SYMMETRYY))
 				_panel->symmetry = Panel::Symmetry::Rotational;
 			else if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX))
@@ -361,31 +361,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			_panel->Write(panel);
 			break;
 		//Tetris shape editing
-		case SHAPE_11: CheckDlgButton(hwnd, SHAPE_11, !IsDlgButtonChecked(hwnd, SHAPE_11)); currentShape ^= SHAPE_11; break;
-		case SHAPE_12: CheckDlgButton(hwnd, SHAPE_12, !IsDlgButtonChecked(hwnd, SHAPE_12)); currentShape ^= SHAPE_12; break;
-		case SHAPE_13: CheckDlgButton(hwnd, SHAPE_13, !IsDlgButtonChecked(hwnd, SHAPE_13)); currentShape ^= SHAPE_13; break;
-		case SHAPE_14: CheckDlgButton(hwnd, SHAPE_14, !IsDlgButtonChecked(hwnd, SHAPE_14)); currentShape ^= SHAPE_14; break;
-		case SHAPE_21: CheckDlgButton(hwnd, SHAPE_21, !IsDlgButtonChecked(hwnd, SHAPE_21)); currentShape ^= SHAPE_21; break;
-		case SHAPE_22: CheckDlgButton(hwnd, SHAPE_22, !IsDlgButtonChecked(hwnd, SHAPE_22)); currentShape ^= SHAPE_22; break;
-		case SHAPE_23: CheckDlgButton(hwnd, SHAPE_23, !IsDlgButtonChecked(hwnd, SHAPE_23)); currentShape ^= SHAPE_23; break;
-		case SHAPE_24: CheckDlgButton(hwnd, SHAPE_24, !IsDlgButtonChecked(hwnd, SHAPE_24)); currentShape ^= SHAPE_24; break;
-		case SHAPE_31: CheckDlgButton(hwnd, SHAPE_31, !IsDlgButtonChecked(hwnd, SHAPE_31)); currentShape ^= SHAPE_31; break;
-		case SHAPE_32: CheckDlgButton(hwnd, SHAPE_32, !IsDlgButtonChecked(hwnd, SHAPE_32)); currentShape ^= SHAPE_32; break;
-		case SHAPE_33: CheckDlgButton(hwnd, SHAPE_33, !IsDlgButtonChecked(hwnd, SHAPE_33)); currentShape ^= SHAPE_33; break;
-		case SHAPE_34: CheckDlgButton(hwnd, SHAPE_34, !IsDlgButtonChecked(hwnd, SHAPE_34)); currentShape ^= SHAPE_34; break;
-		case SHAPE_41: CheckDlgButton(hwnd, SHAPE_41, !IsDlgButtonChecked(hwnd, SHAPE_41)); currentShape ^= SHAPE_41; break;
-		case SHAPE_42: CheckDlgButton(hwnd, SHAPE_42, !IsDlgButtonChecked(hwnd, SHAPE_42)); currentShape ^= SHAPE_42; break;
-		case SHAPE_43: CheckDlgButton(hwnd, SHAPE_43, !IsDlgButtonChecked(hwnd, SHAPE_43)); currentShape ^= SHAPE_43; break;
-		case SHAPE_44: CheckDlgButton(hwnd, SHAPE_44, !IsDlgButtonChecked(hwnd, SHAPE_44)); currentShape ^= SHAPE_44; break;
+		case SHAPE_11: CheckDlgButton(hwnd, SHAPE_11, ~IsDlgButtonChecked(hwnd, SHAPE_11)); currentShape ^= SHAPE_11; break;
+		case SHAPE_12: CheckDlgButton(hwnd, SHAPE_12, ~IsDlgButtonChecked(hwnd, SHAPE_12)); currentShape ^= SHAPE_12; break;
+		case SHAPE_13: CheckDlgButton(hwnd, SHAPE_13, ~IsDlgButtonChecked(hwnd, SHAPE_13)); currentShape ^= SHAPE_13; break;
+		case SHAPE_14: CheckDlgButton(hwnd, SHAPE_14, ~IsDlgButtonChecked(hwnd, SHAPE_14)); currentShape ^= SHAPE_14; break;
+		case SHAPE_21: CheckDlgButton(hwnd, SHAPE_21, ~IsDlgButtonChecked(hwnd, SHAPE_21)); currentShape ^= SHAPE_21; break;
+		case SHAPE_22: CheckDlgButton(hwnd, SHAPE_22, ~IsDlgButtonChecked(hwnd, SHAPE_22)); currentShape ^= SHAPE_22; break;
+		case SHAPE_23: CheckDlgButton(hwnd, SHAPE_23, ~IsDlgButtonChecked(hwnd, SHAPE_23)); currentShape ^= SHAPE_23; break;
+		case SHAPE_24: CheckDlgButton(hwnd, SHAPE_24, ~IsDlgButtonChecked(hwnd, SHAPE_24)); currentShape ^= SHAPE_24; break;
+		case SHAPE_31: CheckDlgButton(hwnd, SHAPE_31, ~IsDlgButtonChecked(hwnd, SHAPE_31)); currentShape ^= SHAPE_31; break;
+		case SHAPE_32: CheckDlgButton(hwnd, SHAPE_32, ~IsDlgButtonChecked(hwnd, SHAPE_32)); currentShape ^= SHAPE_32; break;
+		case SHAPE_33: CheckDlgButton(hwnd, SHAPE_33, ~IsDlgButtonChecked(hwnd, SHAPE_33)); currentShape ^= SHAPE_33; break;
+		case SHAPE_34: CheckDlgButton(hwnd, SHAPE_34, ~IsDlgButtonChecked(hwnd, SHAPE_34)); currentShape ^= SHAPE_34; break;
+		case SHAPE_41: CheckDlgButton(hwnd, SHAPE_41, ~IsDlgButtonChecked(hwnd, SHAPE_41)); currentShape ^= SHAPE_41; break;
+		case SHAPE_42: CheckDlgButton(hwnd, SHAPE_42, ~IsDlgButtonChecked(hwnd, SHAPE_42)); currentShape ^= SHAPE_42; break;
+		case SHAPE_43: CheckDlgButton(hwnd, SHAPE_43, ~IsDlgButtonChecked(hwnd, SHAPE_43)); currentShape ^= SHAPE_43; break;
+		case SHAPE_44: CheckDlgButton(hwnd, SHAPE_44, ~IsDlgButtonChecked(hwnd, SHAPE_44)); currentShape ^= SHAPE_44; break;
 		//Arrow direction selection
-		case ARROW_UP_LEFT: CheckDlgButton(hwnd, ARROW_UP_LEFT, !IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)) currentDir = ARROW_UP_LEFT; break;
-		case ARROW_UP: CheckDlgButton(hwnd, ARROW_UP, !IsDlgButtonChecked(hwnd, ARROW_UP)); if (IsDlgButtonChecked(hwnd, ARROW_UP)) currentDir = ARROW_UP; break;
-		case ARROW_UP_RIGHT: CheckDlgButton(hwnd, ARROW_UP_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)) currentDir = ARROW_UP_RIGHT; break;
-		case ARROW_LEFT: CheckDlgButton(hwnd, ARROW_LEFT, !IsDlgButtonChecked(hwnd, ARROW_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_LEFT)) currentDir = ARROW_LEFT; break;
-		case ARROW_RIGHT: CheckDlgButton(hwnd, ARROW_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_RIGHT)) currentDir = ARROW_RIGHT; break;
-		case ARROW_DOWN_LEFT: CheckDlgButton(hwnd, ARROW_DOWN_LEFT, !IsDlgButtonChecked(hwnd, ARROW_DOWN_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_LEFT)) currentDir = ARROW_DOWN_LEFT; break;
-		case ARROW_DOWN: CheckDlgButton(hwnd, ARROW_DOWN, !IsDlgButtonChecked(hwnd, ARROW_DOWN)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN)) currentDir = ARROW_DOWN; break;
-		case ARROW_DOWN_RIGHT: CheckDlgButton(hwnd, ARROW_DOWN_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)) currentDir = ARROW_DOWN_RIGHT; break;
+		case ARROW_UP_LEFT: CheckDlgButton(hwnd, ARROW_UP_LEFT, ~IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)) currentDir = ARROW_UP_LEFT; break;
+		case ARROW_UP: CheckDlgButton(hwnd, ARROW_UP, ~IsDlgButtonChecked(hwnd, ARROW_UP)); if (IsDlgButtonChecked(hwnd, ARROW_UP)) currentDir = ARROW_UP; break;
+		case ARROW_UP_RIGHT: CheckDlgButton(hwnd, ARROW_UP_RIGHT, ~IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)) currentDir = ARROW_UP_RIGHT; break;
+		case ARROW_LEFT: CheckDlgButton(hwnd, ARROW_LEFT, ~IsDlgButtonChecked(hwnd, ARROW_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_LEFT)) currentDir = ARROW_LEFT; break;
+		case ARROW_RIGHT: CheckDlgButton(hwnd, ARROW_RIGHT, ~IsDlgButtonChecked(hwnd, ARROW_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_RIGHT)) currentDir = ARROW_RIGHT; break;
+		case ARROW_DOWN_LEFT: CheckDlgButton(hwnd, ARROW_DOWN_LEFT, ~IsDlgButtonChecked(hwnd, ARROW_DOWN_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_LEFT)) currentDir = ARROW_DOWN_LEFT; break;
+		case ARROW_DOWN: CheckDlgButton(hwnd, ARROW_DOWN, ~IsDlgButtonChecked(hwnd, ARROW_DOWN)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN)) currentDir = ARROW_DOWN; break;
+		case ARROW_DOWN_RIGHT: CheckDlgButton(hwnd, ARROW_DOWN_RIGHT, ~IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)) currentDir = ARROW_DOWN_RIGHT; break;
 		}
 	}
     return DefWindowProc(hwnd, message, wParam, lParam);
@@ -650,7 +650,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	UpdateWindow(hwnd);
 
     MSG msg;
-    while (!GetMessage(&msg, nullptr, 0, 0) == 0)
+    while (~GetMessage(&msg, nullptr, 0, 0) == 0)
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
