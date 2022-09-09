@@ -139,6 +139,11 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			return;
 
 		const APClient::NetworkItem item = *networkItem;
+
+		while (ap->get_item_name(item.item) == "Unknown") {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
 		const int receiver = *receivingPlayer;
 
 		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {

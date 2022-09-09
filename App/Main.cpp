@@ -34,6 +34,7 @@
 #define IDC_TOGGLELASERS 0x410
 #define IDC_TOGGLESNIPES 0x411
 #define IDC_SKIPPUZZLE 0x421
+#define IDC_LOADCREDENTIALS 0x422
 #define IDC_TAB 0x450
 #define IDC_RETURN 0x451
 
@@ -80,13 +81,17 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError, hwndLoadCredentials;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
 std::shared_ptr<Generate> generator = std::make_shared<Generate>();
 std::shared_ptr<Special> specialCase = std::make_shared<Special>(generator);
 std::vector<byte> bytes;
+
+std::vector<int> addressPanels = { 0x09FA0, 0x09F86, 0x0C339, 0x09FAA, 0x0A249, 0x1C2DF, 0x1831E, 0x1C260, 0x1831C, 0x1C2F3, 0x1831D, 0x1C2B1, 0x1831B, 0x0A015 };
+std::vector<int> userPanels = { 0x17CC4, 0x275ED, 0x03678, 0x03679, 0x03675, 0x03676, 0x17CAC, 0x03852, 0x03858, 0x38663, 0x275FA, 0x334DB, 0x334DC, 0x09E49 };
+std::vector<int> passwordPanels = { 0x0361B, 0x334D8, 0x2896A, 0x17D02, 0x03713, 0x00B10, 0x00C92, 0x09D9B, 0x17CAB, 0x337FA, 0x0A099, 0x34BC5, 0x34BC6, 0x17CBC };
 
 int ctr = 0;
 TCHAR text[30];
@@ -221,6 +226,71 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				else break;
 			}
+
+
+
+			std::vector<char> addressArray;
+
+			for (auto letter : address) {
+				addressArray.push_back(letter);
+			}
+
+			addressArray.push_back(0);
+
+			for (int i = 0; i < addressArray.size(); i++) {
+				int panel = i / 16;
+				int offset = i % 16;
+
+				if (offset == 0) {
+					Special::WritePanelData(addressPanels[panel], VIDEO_STATUS_COLOR + 12, 0);
+				}
+
+				Special::WritePanelData(addressPanels[panel], VIDEO_STATUS_COLOR+offset, addressArray[i]);
+			}
+
+
+
+			std::vector<char> userArray;
+
+			for (auto letter : user) {
+				userArray.push_back(letter);
+			}
+
+			userArray.push_back(0);
+
+			for (int i = 0; i < userArray.size(); i++) {
+				int panel = i / 16;
+				int offset = i % 16;
+
+				if (offset == 0) {
+					Special::WritePanelData(userPanels[panel], VIDEO_STATUS_COLOR + 12, 0);
+				}
+
+				Special::WritePanelData(userPanels[panel], VIDEO_STATUS_COLOR + offset, userArray[i]);
+			}
+
+
+
+			std::vector<char> passwordArray;
+
+			for (auto letter : password) {
+				passwordArray.push_back(letter);
+			}
+
+			passwordArray.push_back(0);
+
+			for (int i = 0; i < passwordArray.size(); i++) {
+				int panel = i / 16;
+				int offset = i % 16;
+
+				if (offset == 0) {
+					Special::WritePanelData(passwordPanels[panel], VIDEO_STATUS_COLOR + 12, 0);
+				}
+
+				Special::WritePanelData(passwordPanels[panel], VIDEO_STATUS_COLOR + offset, passwordArray[i]);
+			}
+
+
 			
 			EnableWindow(hwndColorblind, false);
 			if (colorblind) {
@@ -254,6 +324,85 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			apRandomizer->SkipPuzzle();
 			break;
 
+		case IDC_LOADCREDENTIALS:
+		{
+			SetWindowText(hwndAddress, L"");
+			SetWindowText(hwndUser, L"");
+			SetWindowText(hwndPassword, L"");
+
+
+			std::vector<char> addressCharArray;
+
+			for (int i = 0; true; i++) {
+				int panel = i / 16;
+				int offset = i % 16;
+
+				if (offset == 0) {
+					if (Special::ReadPanelData<float>(addressPanels[panel], VIDEO_STATUS_COLOR + 12) == 1.0f) {
+						break;
+					};
+				}
+
+				char newChar = Special::ReadPanelData<char>(addressPanels[panel], VIDEO_STATUS_COLOR + offset);
+
+				if (newChar == 0) break;
+				addressCharArray.push_back(newChar);
+			}
+
+			std::wstring parsedAddress(addressCharArray.begin(), addressCharArray.end());
+
+			SetWindowText(hwndAddress, parsedAddress.c_str());
+
+
+
+			std::vector<char> userCharArray;
+
+			for (int i = 0; true; i++) {
+				int panel = i / 16;
+				int offset = i % 16;
+
+				if (offset == 0) {
+					if (Special::ReadPanelData<float>(userPanels[panel], VIDEO_STATUS_COLOR + 12) == 1.0f) {
+						break;
+					};
+				}
+
+				char newChar = Special::ReadPanelData<char>(userPanels[panel], VIDEO_STATUS_COLOR + offset);
+
+				if (newChar == 0) break;
+				userCharArray.push_back(newChar);
+			}
+
+			std::wstring parsedUser(userCharArray.begin(), userCharArray.end());
+
+			SetWindowText(hwndUser, parsedUser.c_str());
+
+
+
+			std::vector<char> passwordCharArray;
+
+			for (int i = 0; true; i++) {
+				int panel = i / 16;
+				int offset = i % 16;
+
+				if (offset == 0) {
+					if (Special::ReadPanelData<float>(passwordPanels[panel], VIDEO_STATUS_COLOR + 12) == 1.0f) {
+						break;
+					};
+				}
+
+				char newChar = Special::ReadPanelData<char>(passwordPanels[panel], VIDEO_STATUS_COLOR + offset);
+
+				if (newChar == 0) break;
+				passwordCharArray.push_back(newChar);
+			}
+
+			std::wstring parsedPassword(passwordCharArray.begin(), passwordCharArray.end());
+
+			SetWindowText(hwndPassword, parsedPassword.c_str());
+
+			break;
+		}
 		//Add a symbol to the puzzle (debug mode only)
 		case IDC_ADD:
 			memset(&text, 0, sizeof(text));
@@ -512,6 +661,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hwndSkip = CreateWindow(L"BUTTON", L"Skip Puzzle",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		450, 210, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
+
+	hwndLoadCredentials = CreateWindow(L"BUTTON", L"Load Credentials",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		10, 180, 130, 26, hwnd, (HMENU)IDC_LOADCREDENTIALS, hInstance, NULL);
 
 	EnableWindow(hwndSkip, false);
 

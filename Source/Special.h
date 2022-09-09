@@ -117,6 +117,9 @@ public:
 	template <class T> static std::vector<T> ReadArray(int panel, int offset, int size) {
 		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->ReadArray<T>(panel, offset, size);
 	}
+	static void WritePanelData(int panel, int offset, char data) {
+		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WritePanelData<char>(panel, offset, { data });
+	}
 	static void WritePanelData(int panel, int offset, int data) {
 		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WritePanelData<int>(panel, offset, { data });
 	}

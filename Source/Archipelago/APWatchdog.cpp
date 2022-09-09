@@ -19,24 +19,24 @@ void APWatchdog::action() {
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
 
-	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelData<int>(finalPanel, SOLVED) && !isCompleted) {
+	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelDataIntentionallyUnsafe<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
 	if (finalPanel == 0x09F7F && !isCompleted)
 	{
-		float power = ReadPanelData<float>(0x17C34, POWER);
+		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17C34, POWER);
 
-		if (power != 0.0f) {
+		if (power > 0.0f) {
 			isCompleted = true;
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
 	if (finalPanel == 0xFFF00 && !isCompleted)
 	{
-		float power = ReadPanelData<float>(0x17FA2, POWER);
+		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17FA2, POWER);
 
-		if (power != 0.0f) {
+		if (power > 0.0f) {
 			isCompleted = true;
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
