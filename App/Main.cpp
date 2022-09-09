@@ -241,6 +241,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				int panel = i / 16;
 				int offset = i % 16;
 
+				if (panel > addressPanels.size()) break;
+
 				if (offset == 0) {
 					Special::WritePanelData(addressPanels[panel], VIDEO_STATUS_COLOR + 12, 0);
 				}
@@ -262,6 +264,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				int panel = i / 16;
 				int offset = i % 16;
 
+				if (panel > userPanels.size()) break;
+
 				if (offset == 0) {
 					Special::WritePanelData(userPanels[panel], VIDEO_STATUS_COLOR + 12, 0);
 				}
@@ -282,6 +286,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			for (int i = 0; i < passwordArray.size(); i++) {
 				int panel = i / 16;
 				int offset = i % 16;
+
+				if (panel > passwordPanels.size()) break;
 
 				if (offset == 0) {
 					Special::WritePanelData(passwordPanels[panel], VIDEO_STATUS_COLOR + 12, 0);
@@ -337,6 +343,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				int panel = i / 16;
 				int offset = i % 16;
 
+				if (panel > addressPanels.size()) break;
+
 				if (offset == 0) {
 					if (Special::ReadPanelData<float>(addressPanels[panel], VIDEO_STATUS_COLOR + 12) == 1.0f) {
 						break;
@@ -361,6 +369,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				int panel = i / 16;
 				int offset = i % 16;
 
+				if (panel > userPanels.size()) break;
+
 				if (offset == 0) {
 					if (Special::ReadPanelData<float>(userPanels[panel], VIDEO_STATUS_COLOR + 12) == 1.0f) {
 						break;
@@ -384,6 +394,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			for (int i = 0; true; i++) {
 				int panel = i / 16;
 				int offset = i % 16;
+
+				if (panel > passwordPanels.size()) break;
 
 				if (offset == 0) {
 					if (Special::ReadPanelData<float>(passwordPanels[panel], VIDEO_STATUS_COLOR + 12) == 1.0f) {
