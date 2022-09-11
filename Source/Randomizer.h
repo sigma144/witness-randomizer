@@ -55,7 +55,7 @@ private:
 	friend class APRandomizer;
 };
 
-#define BOAT_DELTA_SPEED 0xD8
+#define BOAT_DELTA_SPEED 0xD4
 #define POSITION 0x24
 #define SCALE 0x30
 #define ORIENTATION 0x34

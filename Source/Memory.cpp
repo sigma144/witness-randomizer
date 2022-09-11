@@ -172,7 +172,7 @@ void Memory::findImportantFunctionAddresses()
 	});
 
 	executeSigScan({0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x40, 0x0F, 0x29, 0x74, 0x24, 0x30, 0x8B, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->displayHudFunction = _baseAddress + index;
+		this->setBoatSpeed = _baseAddress + index;
 
 		for (; index < data.size(); index++) {
 			  

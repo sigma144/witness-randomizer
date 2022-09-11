@@ -73,7 +73,7 @@ void Randomizer::AdjustSpeed() {
 	_memory->WritePanelData<float>(0x17F02, OPEN_RATE, { 0.15f }); // Ramp Position, 4x
 	_memory->WritePanelData<float>(0x17C50, OPEN_RATE, { 0.3f }); //Boathouse Barrier, 2x
 
-	_memory->WritePanelData<float>(0x00030, BOAT_DELTA_SPEED, { 0.5f }); // Boat accel, ~3x
+	_memory->WritePanelData<float>(0x00030, BOAT_DELTA_SPEED, { 1.0f }); // Boat accel, ~3x
 
 	_memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Quarry Elevator, 4x
 	_memory->WritePanelData<float>(0x0A069, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
