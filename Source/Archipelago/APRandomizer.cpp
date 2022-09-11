@@ -14,7 +14,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 4});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 5});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -274,8 +274,21 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 
-
 	async->SkipPreviouslySkippedPuzzles();
+
+	if (FinalPanel == 0x09F7F) {
+		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
+	}
+	else if (FinalPanel == 0xFFF00) {
+		Special::writeGoalCondition(0x0042D, " Goal:", "Box Long", MountainLasers, ChallengeLasers);
+	}
+	else if (FinalPanel == 0x3D9A9) {
+		Special::writeGoalCondition(0x0042D, " Goal:", "Elevator", MountainLasers, ChallengeLasers);
+	}
+	else if (FinalPanel == 0x0356B) {
+		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", MountainLasers, ChallengeLasers);
+	}
+	
 
 	if (UnlockSymbols)
 		setPuzzleLocks(loadingHandle);

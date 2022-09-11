@@ -72,6 +72,48 @@ void Randomizer::AdjustSpeed() {
 	_memory->WritePanelData<float>(0x17C6A, OPEN_RATE, { 0.25f }); // Ramp Angle, 5x
 	_memory->WritePanelData<float>(0x17F02, OPEN_RATE, { 0.15f }); // Ramp Position, 4x
 	_memory->WritePanelData<float>(0x17C50, OPEN_RATE, { 0.3f }); //Boathouse Barrier, 2x
+
+	_memory->WritePanelData<float>(0x00030, BOAT_DELTA_SPEED, { 0.5f }); // Boat accel, ~3x
+
+	_memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Quarry Elevator, 4x
+	_memory->WritePanelData<float>(0x0A069, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A06A, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A06B, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A06C, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A070, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A071, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A072, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A073, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A074, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A075, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A076, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	_memory->WritePanelData<float>(0x0A077, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+
+	_memory->WritePanelData<float>(0x38ACB, OPEN_RATE, { 1.0f }); // UTM Elevator
+
+
+	_memory->WritePanelData<float>(0x09DA0, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E02, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E03, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E15, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E16, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E1D, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E1E, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F21, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F2A, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F2B, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F3C, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F3D, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x09F3E, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x0C160, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x0C161, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	_memory->WritePanelData<float>(0x0C164, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
 }
 
 void Randomizer::RandomizeDesert() {

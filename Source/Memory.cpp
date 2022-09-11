@@ -170,6 +170,113 @@ void Memory::findImportantFunctionAddresses()
 
 		return true;
 	});
+
+	executeSigScan({0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x40, 0x0F, 0x29, 0x74, 0x24, 0x30, 0x8B, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->displayHudFunction = _baseAddress + index;
+
+		for (; index < data.size(); index++) {
+			  
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x04) { // find the movss statement
+				this->boatSpeed4 = _baseAddress + index + 7;
+
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->boatSpeed4), buff, sizeof(buff), NULL);
+
+				this->relativeBoatSpeed4Address = buff[0];
+
+				uintptr_t boatSpeed4Address = this->boatSpeed4 + 4 + buff[0];
+
+				executeSigScan({ 0x00, 0x00, 0xC0, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+					this->relativeBoatSpeed4Address += index;
+
+					__int32 urelativeBoatSpeed4Address = this->relativeBoatSpeed4Address;
+					__int64 address = this->boatSpeed4;
+					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
+
+
+					Write(addressPointer, &urelativeBoatSpeed4Address, sizeof(urelativeBoatSpeed4Address));
+
+					return true;
+				}, boatSpeed4Address);
+			}
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x03) { // find the movss statement
+				this->boatSpeed3 = _baseAddress + index + 7;
+
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->boatSpeed3), buff, sizeof(buff), NULL);
+
+				this->relativeBoatSpeed3Address = buff[0];
+
+				uintptr_t boatSpeed3Address = this->boatSpeed3 + 4 + buff[0];
+
+				executeSigScan({ 0x00, 0x00, 0x40, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+					this->relativeBoatSpeed3Address += index;
+
+					__int32 urelativeBoatSpeed3Address = this->relativeBoatSpeed3Address;
+					__int64 address = this->boatSpeed3;
+					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
+
+
+					Write(addressPointer, &urelativeBoatSpeed3Address, sizeof(urelativeBoatSpeed3Address));
+
+					return true;
+					}, boatSpeed3Address);
+			}
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x02) { // find the movss statement
+				this->boatSpeed2 = _baseAddress + index + 7;
+
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->boatSpeed2), buff, sizeof(buff), NULL);
+
+				this->relativeBoatSpeed2Address = buff[0];
+
+				uintptr_t boatSpeed2Address = this->boatSpeed2 + 4 + buff[0];
+
+				executeSigScan({ 0x00, 0x00, 0xA0, 0x3f }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+					this->relativeBoatSpeed2Address += index;
+
+					__int32 urelativeBoatSpeed2Address = this->relativeBoatSpeed2Address;
+					__int64 address = this->boatSpeed2;
+					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
+
+
+					Write(addressPointer, &urelativeBoatSpeed2Address, sizeof(urelativeBoatSpeed2Address));
+
+					return true;
+					}, boatSpeed2Address);
+			}
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x01) { // find the movss statement
+				this->boatSpeed1 = _baseAddress + index + 7;
+
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->boatSpeed1), buff, sizeof(buff), NULL);
+
+				this->relativeBoatSpeed1Address = buff[0];
+
+				uintptr_t boatSpeed1Address = this->boatSpeed1 + 4 + buff[0];
+
+				executeSigScan({ 0x00, 0x00, 0x00, 0x3f }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+					this->relativeBoatSpeed1Address += index;
+
+					__int32 urelativeBoatSpeed1Address = this->relativeBoatSpeed1Address;
+					__int64 address = this->boatSpeed1;
+					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
+
+
+					Write(addressPointer, &urelativeBoatSpeed1Address, sizeof(urelativeBoatSpeed1Address));
+
+					return true;
+					}, boatSpeed1Address);
+				break;
+			}
+		}
+
+		return true;
+	});
 }
 
 void Memory::findMovementSpeed() {
@@ -423,6 +530,15 @@ uint64_t Memory::activateLaserFunction = 0;
 uint64_t Memory::hudTimePointer = 0;
 uint64_t Memory::updateEntityPositionFunction = 0;
 uint64_t Memory::displayHudFunction = 0;
+uint64_t Memory::setBoatSpeed = 0;
+uint64_t Memory::boatSpeed4 = 0;
+uint64_t Memory::boatSpeed3 = 0;
+uint64_t Memory::boatSpeed2 = 0;
+uint64_t Memory::boatSpeed1 = 0;
+uint64_t Memory::relativeBoatSpeed4Address = 0;
+uint64_t Memory::relativeBoatSpeed3Address = 0;
+uint64_t Memory::relativeBoatSpeed2Address = 0;
+uint64_t Memory::relativeBoatSpeed1Address = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

@@ -1505,7 +1505,8 @@ void Special::createText(int id, std::string text, std::vector<float>& intersect
 		{ '!',{ 1,4,7 } },
 		{ ' ',{ } },
 		{ '.',{ 7 } },
-		{ '-',{ 3,5 } }
+		{ '-',{ 3,5 } },
+		{ ':',{ 4,7 } }
 	};
 
 	float spacingX = (right - left) / (text.size() * 3 - 1);
@@ -1517,7 +1518,7 @@ void Special::createText(int id, std::string text, std::vector<float>& intersect
 			int n = coords[c][j];
 			intersections.emplace_back((n % 3 + i * 3) * spacingX + left);
 			intersections.emplace_back(1 - ((2 - n / 3) * spacingY + bottom));
-			if (j > 0 && !(c == '!' && j == 2)) {
+			if (j > 0 && !(c == '!' && j == 2) && !(c == ':')) {
 				connectionsA.emplace_back(static_cast<int>(intersections.size()) / 2 - 2);
 				connectionsB.emplace_back(static_cast<int>(intersections.size()) / 2 - 1);
 			}
@@ -1836,6 +1837,29 @@ void Special::DrawSimplePanel(int id)
 
 	//Figure out a way to have the randomizer not touch a skipped panel when rerandomizing?
 	//Not really necessary, actually, as you should never re-randomize while the game is already running with randomized panels. You should only re-randomize after the game was closed, and the vanilla panels were re-loaded.
+}
+
+void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, int mountain_lasers, int challenge_lasers)
+{
+	std::vector<float> intersections;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+
+	if (goal1 != ""){
+		createText(id, goal1, intersections, connectionsA, connectionsB, 0.5f - goal1.size() * 0.04f, 0.5f + goal1.size() * 0.04f, 0.05f, 0.20f);
+	}
+
+	createText(id, goal2, intersections, connectionsA, connectionsB, 0.5f - goal2.size() * 0.04f, 0.5f + goal2.size() * 0.04f, 0.25f, 0.4f);
+
+	std::string lasersString1 = " Lasers:";
+	std::string lasersString2 = std::to_string(mountain_lasers) + " - " + std::to_string(challenge_lasers);
+	createText(id, lasersString1, intersections, connectionsA, connectionsB, 0.5f - lasersString1.size() * 0.04f, 0.5f + lasersString1.size() * 0.04f, 0.6f, 0.75f);
+	createText(id, lasersString2, intersections, connectionsA, connectionsB, 0.5f - lasersString2.size() * 0.04f, 0.5f + lasersString2.size() * 0.04f, 0.8f, 0.95f);
+
+	drawText(id, intersections, connectionsA, connectionsB, { 0.1f, 0.5f, 0.9f, 0.5f });
+
+	WritePanelData(id, PATH_WIDTH_SCALE, 0.4f);
+	WritePanelData(id, NEEDS_REDRAW, { 1 });
 }
 
 //For testing/debugging purposes only

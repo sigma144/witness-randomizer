@@ -168,6 +168,15 @@ public:
 	static uint64_t hudTimePointer;
 	static uint64_t relativeAddressOf6;
 	static uint64_t displayHudFunction;
+	static uint64_t setBoatSpeed;
+	static uint64_t boatSpeed4;
+	static uint64_t boatSpeed3;
+	static uint64_t boatSpeed2;
+	static uint64_t boatSpeed1;
+	static uint64_t relativeBoatSpeed4Address;
+	static uint64_t relativeBoatSpeed3Address;
+	static uint64_t relativeBoatSpeed2Address;
+	static uint64_t relativeBoatSpeed1Address;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;

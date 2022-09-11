@@ -423,7 +423,6 @@ public:
             _ws->send(packet.dump());
         } else {
             _checkQueue.insert(locations.begin(), locations.end());
-            // FIXME: this needs to be sent at some point
         }
         return true;
     }
@@ -440,7 +439,6 @@ public:
             _ws->send(packet.dump());
         } else {
             _scoutQueue.insert(locations.begin(), locations.end());
-            // FIXME: this needs to be sent at some point
         }
         return true;
     }
@@ -784,6 +782,25 @@ private:
                         if (!checkedLocations.empty())
                             _hOnLocationChecked(checkedLocations);
                     }
+
+                    //Send the checks and scouts queued if any
+                    if (!_checkQueue.empty()) {
+                        std::list<int64_t> queuedChecks;
+                        for (int64_t location : _checkQueue) {
+                            queuedChecks.push_back(location);
+                        }
+                        _checkQueue.clear();
+                        LocationChecks(queuedChecks);
+                    }
+                    if (!_scoutQueue.empty()) {
+                        std::list<int64_t> queuedScouts;
+                        for (int64_t location : _scoutQueue) {
+                            queuedScouts.push_back(location);
+                        }
+                        _scoutQueue.clear();
+                        LocationScouts(queuedScouts);
+                    }
+        
                 }
                 else if (cmd == "ReceivedItems") {
                     std::list<NetworkItem> items;
