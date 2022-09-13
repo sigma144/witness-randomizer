@@ -172,36 +172,37 @@ void Memory::findImportantFunctionAddresses()
 	});
 
 	//Boat speed
+	//Find Entity_Boat::set_speed
 	executeSigScan({0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x40, 0x0F, 0x29, 0x74, 0x24, 0x30, 0x8B, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->setBoatSpeed = _baseAddress + index;
 
-		for (; index < data.size(); index++) {
+		for (; index < data.size(); index++) { // We now need to look for "cmp edi 04", "cmp edi 03", "cmp edi 02", and "cmp edi 01"
 			  
-			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x04) { // find the movss statement
-				this->boatSpeed4 = _baseAddress + index + 7;
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x04) { // find cmp edi 04 (Will only comment the rest once as it's the same for the other 3)
+				this->boatSpeed4 = _baseAddress + index + 7; // movss xmm0 ->register<- is 7 bytes later
 
 				int buff[1];
 
-				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->boatSpeed4), buff, sizeof(buff), NULL);
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->boatSpeed4), buff, sizeof(buff), NULL); // Read the current address of the constant loaded into xmm0 relative to the instruction
 
-				this->relativeBoatSpeed4Address = buff[0];
+				this->relativeBoatSpeed4Address = buff[0]; // This is now the address of the constant !!relative to the movss instruction!!
 
-				uintptr_t boatSpeed4Address = this->boatSpeed4 + 4 + buff[0];
+				uintptr_t boatSpeed4Address = this->boatSpeed4 + 4 + buff[0]; // This is the *absolute* address.
 
-				executeSigScan({ 0x00, 0x00, 0xC0, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-					this->relativeBoatSpeed4Address += index;
+				executeSigScan({ 0x00, 0x00, 0xC0, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) { // Find a 0x04C00000 (6.0f) near the memory location of the original constant.
+					this->relativeBoatSpeed4Address += index; // Use this 6.0f as the new address to load into xmm0
 
 					__int32 urelativeBoatSpeed4Address = this->relativeBoatSpeed4Address;
 					__int64 address = this->boatSpeed4;
 					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 
 
-					Write(addressPointer, &urelativeBoatSpeed4Address, sizeof(urelativeBoatSpeed4Address));
+					Write(addressPointer, &urelativeBoatSpeed4Address, sizeof(urelativeBoatSpeed4Address)); // Write the new relative address into the "movss xmm0 [address]" statement.
 
 					return true;
-				}, boatSpeed4Address);
+				}, boatSpeed4Address); // Start this Sigscan for a new constant at the location of the original constant to find one "nearby"
 			}
-			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x03) { // find the movss statement
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x03) { // find cmp edi 03
 				this->boatSpeed3 = _baseAddress + index + 7;
 
 				int buff[1];
@@ -225,7 +226,7 @@ void Memory::findImportantFunctionAddresses()
 					return true;
 					}, boatSpeed3Address);
 			}
-			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x02) { // find the movss statement
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x02) { // find cmp edi 02
 				this->boatSpeed2 = _baseAddress + index + 7;
 
 				int buff[1];
@@ -249,7 +250,7 @@ void Memory::findImportantFunctionAddresses()
 					return true;
 					}, boatSpeed2Address);
 			}
-			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x01) { // find the movss statement
+			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x01) { // find cmp edi 01
 				this->boatSpeed1 = _baseAddress + index + 7;
 
 				int buff[1];
