@@ -186,6 +186,16 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	}
 }
 
+void PanelLocker::PermanentlyUnlockPuzzle(int id) {
+	if (lockedPuzzles.count(id) == 1) {
+		PuzzleData* puzzle = lockedPuzzles[id];
+		unlockPuzzle(puzzle);
+	}
+	else {
+		
+	}
+}
+
 void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item) {
 	Color backgroundColor;
 	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)

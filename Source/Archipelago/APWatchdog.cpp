@@ -100,8 +100,15 @@ void APWatchdog::MarkLocationChecked(int locationId)
 	auto it = panelIdToLocationId.begin();
 	while (it != panelIdToLocationId.end())
 	{
-		if (it->second == locationId)
+		if (it->second == locationId) {
+			if (!ReadPanelData<int>(it->first, SOLVED)) {
+				if(panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
+				Special::SkipPanel(it->first);
+				WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
+			}
+
 			it = panelIdToLocationId.erase(it);
+		}
 		else
 			it++;
 	}
