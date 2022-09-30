@@ -1795,9 +1795,6 @@ void PuzzleList::GenerateTownH()
 		Decoration::Star | Decoration::Color::Black, 4, Decoration::Star | Decoration::Color::White, 5);
 	//Church Star Door
 	specialCase->generateColorFilterPuzzle(0x28A0D, { 5, 5 }, { { Decoration::Star | 1, 6 }, { Decoration::Star | 2, 6 }, { Decoration::Star | 3, 6 }, { Decoration::Star | 4, 6 } }, { 1, 1, 0, 0 }, false);
-	//Mess with targets
-	specialCase->copyTarget(0x03C08, 0x28A0D); specialCase->copyTarget(0x28A0D, 0x28998);
-	specialCase->setTargetAndDeactivate(0x28998, 0x28A0D); specialCase->setTargetAndDeactivate(0x03C0C, 0x03C08);
 	specialCase->setPower(0x28A69, false); (new TownDoorWatchdog())->start();
 	//Soundproof Room
 	std::vector<int> allPitches = { DOT_SMALL, DOT_SMALL, DOT_MEDIUM, DOT_MEDIUM, DOT_LARGE, DOT_LARGE };

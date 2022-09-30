@@ -81,7 +81,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		Seed = slotData["seed"];
 		FinalPanel = slotData["victory_location"];
 
-		Hard = slotData.contains("hard_mode") ? slotData["hard_mode"] == true : false;
+		Hard = slotData.contains("puzzle_randomization") ? slotData["puzzle_randomization"] == 1 : false;
 		UnlockSymbols = slotData.contains("shuffle_symbols") ? slotData["shuffle_symbols"] == true : true;
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
@@ -324,6 +324,12 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
 	SeverDoors();
+
+	//Mess with Town targets
+	Special::copyTarget(0x03C08, 0x28A0D); Special::copyTarget(0x28A0D, 0x28998);
+	Special::setTargetAndDeactivate(0x28998, 0x28A0D); Special::setTargetAndDeactivate(0x03C0C, 0x03C08);
+
+	// TODO: Open first door
 
 	if (DisableNonRandomizedPuzzles)
 		panelLocker->DisableNonRandomizedPuzzles(allDoors);

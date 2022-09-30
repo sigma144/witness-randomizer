@@ -68,6 +68,7 @@ class APRandomizer {
 };
 
 const int AllPuzzles[]{
+		0x00293, 0x00295, 0x002C2, 0x0A3B5, 0x0A3B2, 0x03629, // Tutorial
 		0x0C373, // Tutorial Patio Floor
 		0x0C335, // Tutorial Pillar??
 		0x0A171, 0x04CA4, // Tutorial Secret back area
