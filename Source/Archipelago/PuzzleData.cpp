@@ -68,8 +68,17 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
   	if (_memory->ReadPanelData<int>(id, REFLECTION_DATA))
 		hasSymmetry = true;
 
+	int dotAmount = 0;
+	int pointsToConsider = numberOfDots;
+
 	for (int i = 0; i < numberOfDots; i++)	{
+		if (dot_flags[i] == 0x500000) {
+			pointsToConsider -= 1;
+		}
+
 		if (dot_flags[i] & DOT) {
+			dotAmount++;
+
 			if (dot_flags[i] & DOT_IS_BLUE || dot_flags[i] & DOT_IS_ORANGE)
 				hasColoredDots = true;
 			else if (dot_flags[i] & DOT_IS_INVISIBLE)
@@ -79,6 +88,10 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 			else
 				hasDots = true;
 		}
+	}
+
+	if ((float) dotAmount / (float) numberOfDots >= 0.9) {
+		hasFullDots = true;
 	}
 
 	if (id == 0x17C2E) { //Greenhouse bunker door

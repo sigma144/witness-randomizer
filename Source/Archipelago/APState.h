@@ -24,6 +24,7 @@ class APState
 #define ITEM_OFFSET 158000
 const int ITEM_DOTS = ITEM_OFFSET + 0;
 const int ITEM_COLORED_DOTS = ITEM_DOTS + 1;
+const int ITEM_FULL_DOTS = ITEM_DOTS + 2;
 const int ITEM_SOUND_DOTS = ITEM_DOTS + 5;
 const int ITEM_INVISIBLE_DOTS = ITEM_DOTS + 6;
 const int ITEM_SYMMETRY = ITEM_OFFSET + 10;

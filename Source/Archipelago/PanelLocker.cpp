@@ -78,6 +78,7 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 			//Puzzle Symbols
 			case ITEM_DOTS:							if (puzzle->hasDots) puzzlesToUpdate.push_back(puzzle);							break;
 			case ITEM_COLORED_DOTS:					if (puzzle->hasColoredDots) puzzlesToUpdate.push_back(puzzle);					break;
+			case ITEM_FULL_DOTS:					if (puzzle->hasFullDots) puzzlesToUpdate.push_back(puzzle);						break;
 			case ITEM_SOUND_DOTS:					if (puzzle->hasSoundDots) puzzlesToUpdate.push_back(puzzle);					break;
 			case ITEM_INVISIBLE_DOTS:				if (puzzle->hasInvisibleDots) puzzlesToUpdate.push_back(puzzle);				break;
 			case ITEM_SYMMETRY:						if (puzzle->hasSymmetry) puzzlesToUpdate.push_back(puzzle);						break;

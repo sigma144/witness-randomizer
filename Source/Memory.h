@@ -144,6 +144,8 @@ public:
 		CallVoidFunction(id, openDoorFunction);
 	}
 
+	void PowerNext(int source, int target);
+
 	void UpdateEntityPosition(int id) {
 		CallVoidFunction(id, updateEntityPositionFunction); // Entity::has_moved_in_a_non_position_way - Still works even if it HAS moved in a non position way, for some reason :P
 	}
@@ -162,6 +164,7 @@ public:
 	static int RUNSPEED;
 	static int CAMERAPOSITION;
 
+	static uint64_t powerNextFunction;
 	static uint64_t openDoorFunction;
 	static uint64_t updateEntityPositionFunction;
 	static uint64_t activateLaserFunction;

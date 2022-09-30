@@ -28,6 +28,7 @@ struct PuzzleData
 		bool hasSoundDots = false;
 		bool hasArrows = false;
 		bool hasSymmetry = false;
+		bool hasFullDots = false;
 
 		int grid_size_x;
 		int grid_size_y;
