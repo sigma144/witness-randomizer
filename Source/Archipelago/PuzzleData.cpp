@@ -72,7 +72,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	int pointsToConsider = numberOfDots;
 
 	for (int i = 0; i < numberOfDots; i++)	{
-		if (dot_flags[i] == 0x500000) {
+		if (dot_flags[i] & 0x100000) {
 			pointsToConsider -= 1;
 		}
 
@@ -90,7 +90,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		}
 	}
 
-	if ((float) dotAmount / (float) numberOfDots >= 0.9) {
+	if ((float) dotAmount / (float) pointsToConsider >= 0.9) {
 		hasFullDots = true;
 	}
 

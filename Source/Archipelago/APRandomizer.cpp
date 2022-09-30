@@ -248,6 +248,7 @@ void APRandomizer::unlockItem(int item) {
 		case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
 		case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
 		case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
+		case ITEM_ARROWS: state.unlockedArrows = true; break;
 
 		//Powerups
 		case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
