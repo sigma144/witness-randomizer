@@ -50,6 +50,7 @@ class APRandomizer {
 	private:
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
+		std::map<int, std::vector<int>> progressiveItems;
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> allDoors;
 		std::shared_ptr<Memory> _memory;

@@ -18,6 +18,7 @@ class APState
 		bool unlockedInvisibleDots = false;
 		bool unlockedArrows = false;
 		bool unlockedSymmetry = false;
+		bool unlockedFullDots = false;
 };
 
 //Puzzle Symbols

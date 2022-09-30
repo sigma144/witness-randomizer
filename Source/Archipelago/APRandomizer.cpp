@@ -31,49 +31,61 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
-		std::vector<int> receivedItems;
-		std::map<int, int> counts;
-
-		for(auto item : items){
-			if (mostRecentItemId >= item.index + 1) continue;
-
-			mostRecentItemId = item.index + 1;
-
-			int i = item.item;
-
-			if (counts.find(i) == counts.end()) {
-				counts[i] = 1;
-				receivedItems.emplace_back(i);
-			}
-
-			else {
-				counts[i]++;
-			}
-		}
-
-		for (int itemId : receivedItems) {
-			std::string count = "";
-
-			if (counts[itemId] > 1) {
-				count = " (x" + std::to_string(counts[itemId]) + ")";
-			}
-
-			async->queueMessage("Received " + ap->get_item_name(itemId) + count + ".");
-		}
+		std::vector<std::string> receivedItems;
+		std::map<std::string, int> counts;
 
 		_memory->WritePanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12, { mostRecentItemId });
 		
 		for (const auto& item : items) {
-			unlockItem(item.item);
+			int realitem = item.item;
+
+			if (progressiveItems.count(realitem)) {
+				realitem = progressiveItems[realitem][0];
+				progressiveItems[item.item].erase(progressiveItems[item.item].begin());
+			}
+
+			unlockItem(realitem);
 
 			if (item.item < ITEM_TEMP_SPEED_BOOST)
-				panelLocker->UpdatePuzzleLocks(state, item.item);
+				panelLocker->UpdatePuzzleLocks(state, realitem);
 
-			if (itemIdToDoorSet.count(item.item)) {
-				for (int doorHex : itemIdToDoorSet[item.item]) {
+			if (itemIdToDoorSet.count(realitem)) {
+				for (int doorHex : itemIdToDoorSet[realitem]) {
 					async->UnlockDoor(doorHex);
 				}
 			}
+
+
+
+
+			if (mostRecentItemId >= item.index + 1) continue;
+
+			mostRecentItemId = item.index + 1;
+
+			std::string name = ap->get_item_name(item.item);
+
+			if (realitem != item.item) {
+				name += " (" + ap->get_item_name(realitem) + ")";
+			}
+
+			if (counts.find(name) == counts.end()) {
+				counts[name] = 1;
+				receivedItems.emplace_back(name);
+			}
+
+			else {
+				counts[name]++;
+			}
+		}
+
+		for (std::string name : receivedItems) {
+			std::string count = "";
+
+			if (counts[name] > 1) {
+				count = " (x" + std::to_string(counts[name]) + ")";
+			}
+
+			async->queueMessage("Received " + name + count + ".");
 		}
 	});
 
@@ -87,6 +99,15 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
+
+		if (slotData.contains("progressive_item_lists")) {
+			for (auto& [key, val] : slotData["progressive_item_lists"].items()) {
+				int itemId = std::stoul(key, nullptr, 10);
+				std::vector<int> v = val;
+
+				progressiveItems.insert({ itemId, v });
+			}
+		}
 
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
 			int panelId = std::stoul(key, nullptr, 16);
@@ -214,6 +235,7 @@ void APRandomizer::unlockItem(int item) {
 	switch (item) {
 		case ITEM_DOTS:									state.unlockedDots = true;							break;
 		case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
+		case ITEM_FULL_DOTS:									state.unlockedFullDots = true;							break;
 		case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
 		case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
 		case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;

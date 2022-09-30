@@ -129,6 +129,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		|| (puzzle->hasTriangles && !state.unlockedTriangles)
 		|| (puzzle->hasDots && !state.unlockedDots)
 		|| (puzzle->hasColoredDots && !state.unlockedColoredDots)
+		|| (puzzle->hasFullDots && !state.unlockedFullDots)
 		//|| (puzzle->hasInvisibleDots && !state.unlockedInvisibleDots) //NYI
 		|| (puzzle->hasSoundDots && !state.unlockedSoundDots)
 		|| (puzzle->hasArrows && !state.unlockedArrows)
@@ -391,6 +392,13 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 			intersectionFlags[8] = IntersectionFlags::DOT | IntersectionFlags::DOT_LARGE;
 		}
 	}
+
+	if (puzzle->hasFullDots && !state.unlockedFullDots) {
+		for (int i = 0; i < 15; i++) {
+			intersectionFlags[i] |= IntersectionFlags::DOT;
+		}
+	}
+
 	else if (puzzle->hasInvisibleDots && !state.unlockedInvisibleDots) {
 		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
 		intersectionFlags[12] = IntersectionFlags::DOT;
