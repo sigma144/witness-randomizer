@@ -14,6 +14,7 @@ void APWatchdog::action() {
 	DisplayMessage();
 	DisableCollisions();
 	RefreshDoorCollisions();
+	AudioLogPlaying();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -569,4 +570,21 @@ void APWatchdog::RefreshDoorCollisions() {
 	OutputDebugStringW(L"-----\n");
 
 	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
+}
+
+void APWatchdog::AudioLogPlaying() {
+	std::string line1 = "";
+	std::string line2 = "";
+	std::string line3 = "";
+
+	for (int id : audioLogs) {
+		if (ReadPanelData<int>(id, AUDIO_LOG_IS_PLAYING)) {
+			if (audioLogMessages.count(id)) {
+				_memory->DisplaySubtitles(audioLogMessages[id][0], audioLogMessages[id][1], audioLogMessages[id][2]);
+				return;
+			}
+		}
+	}
+
+	_memory->DisplaySubtitles("", "", "");
 }

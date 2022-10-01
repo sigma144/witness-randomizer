@@ -158,6 +158,8 @@ public:
 
 	void DisplayHudMessage(std::string s);
 
+	void DisplaySubtitles(std::string line1, std::string line2, std::string line3);
+
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
@@ -180,6 +182,9 @@ public:
 	static uint64_t relativeBoatSpeed3Address;
 	static uint64_t relativeBoatSpeed2Address;
 	static uint64_t relativeBoatSpeed1Address;
+	static uint64_t displaySubtitlesFunction;
+	static uint64_t displaySubtitlesFunction2;
+	static uint64_t displaySubtitlesFunction3;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
@@ -229,6 +234,7 @@ private:
 	std::map<std::pair<int, int>, int> _arraySizes;
 	uintptr_t _baseAddress = 0;
 	LPVOID _messageAddress = 0;
+	LPVOID _subtitlesStuff = 0;
 	HANDLE _handle = nullptr;
 
 	friend class Randomizer;

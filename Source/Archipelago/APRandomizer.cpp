@@ -126,6 +126,15 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
+		if (slotData.contains("log_ids_to_hints")) {
+			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
+				int logId = std::stoul(key, nullptr, 10);
+				std::vector<std::string> v = val;
+
+				audioLogMessages.insert({ logId, v });
+			}
+		}
+
 		if (slotData.contains("door_hexes")) {
 			for (int val : slotData["door_hexes"]) {
 				allDoors.insert(val);
@@ -337,7 +346,7 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -345,7 +354,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages);
 	SeverDoors();
 
 	//Mess with Town targets
