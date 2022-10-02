@@ -129,9 +129,18 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		if (slotData.contains("log_ids_to_hints")) {
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
-				std::vector<std::string> v = val;
-
-				audioLogMessages.insert({ logId, v });
+				std::vector<std::string> message;
+				int64_t location_id_in_this_world = -1;
+				for (int i = 0; i < val.size(); i++) {
+					if (i < 3) {
+						message.push_back(val[i]);
+					}
+					else {
+						location_id_in_this_world = val[i];
+					}
+				}
+				
+				audioLogMessages.insert({ logId, std::pair(message, location_id_in_this_world) });
 			}
 		}
 
@@ -320,6 +329,8 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	else if (FinalPanel == 0x0356B) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", MountainLasers, ChallengeLasers);
 	}
+
+	_memory->DisplaySubtitles("", "", "");
 	
 
 	if (UnlockSymbols)

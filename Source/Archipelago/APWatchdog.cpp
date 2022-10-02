@@ -580,7 +580,11 @@ void APWatchdog::AudioLogPlaying() {
 	for (int id : audioLogs) {
 		if (ReadPanelData<int>(id, AUDIO_LOG_IS_PLAYING)) {
 			if (audioLogMessages.count(id)) {
-				_memory->DisplaySubtitles(audioLogMessages[id][0], audioLogMessages[id][1], audioLogMessages[id][2]);
+				_memory->DisplaySubtitles(audioLogMessages[id].first[0], audioLogMessages[id].first[1], audioLogMessages[id].first[2]);
+				int64_t loc_id = audioLogMessages[id].second;
+				if (loc_id != -1) {
+					ap->LocationScouts({ loc_id });
+				}
 				return;
 			}
 		}

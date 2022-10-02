@@ -9,7 +9,7 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::vector<std::string>> a) : Watchdog(1) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a) : Watchdog(1) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -26,7 +26,7 @@ public:
 	HWND skipButton;
 	HWND availableSkips;
 
-	std::map<int, std::vector<std::string>> audioLogMessages;
+	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages;
 
 	virtual void action();
 
