@@ -581,18 +581,35 @@ void APWatchdog::AudioLogPlaying() {
 	std::string line2 = "";
 	std::string line3 = "";
 
+	mostRecentAudioLog.second -= 1;
+
 	for (int id : audioLogs) {
 		if (ReadPanelData<int>(id, AUDIO_LOG_IS_PLAYING)) {
-			if (audioLogMessages.count(id)) {
-				_memory->DisplaySubtitles(audioLogMessages[id].first[0], audioLogMessages[id].first[1], audioLogMessages[id].first[2]);
-				int64_t loc_id = audioLogMessages[id].second;
-				if (loc_id != -1) {
-					ap->LocationScouts({ loc_id });
+			if (mostRecentAudioLog.first != id) {
+				mostRecentAudioLog = { id, 12 };
+
+				if (audioLogMessages.count(id)) {
+					_memory->DisplaySubtitles(audioLogMessages[id].first[0], audioLogMessages[id].first[1], audioLogMessages[id].first[2]);
+					int64_t loc_id = audioLogMessages[id].second;
+					if (loc_id != -1) {
+						ap->LocationScouts({ loc_id });
+					}
+					return;
 				}
+			}
+
+			else if (mostRecentAudioLog.second > 0) {
+				return;
+			}
+
+			else {
+				_memory->DisplaySubtitles("", "", "");
 				return;
 			}
 		}
 	}
+
+	mostRecentAudioLog = { 0, 0 };
 
 	_memory->DisplaySubtitles("", "", "");
 }

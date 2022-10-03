@@ -73,6 +73,8 @@ private:
 	std::map<int,int> collisionsToRefresh;
 	std::map<int, std::vector<float>> collisionPositions;
 
+	std::pair<int, int> mostRecentAudioLog = { 0, 0 };
+
 	void DisplayMessage();
 
 	void DisableCollisions();
