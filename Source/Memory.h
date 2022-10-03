@@ -144,6 +144,10 @@ public:
 		CallVoidFunction(id, openDoorFunction);
 	}
 
+	void InitPanel(int id) {
+		CallVoidFunction(id, initPanelFunction);
+	}
+
 	void PowerNext(int source, int target);
 
 	void UpdateEntityPosition(int id) {
@@ -167,6 +171,7 @@ public:
 	static int CAMERAPOSITION;
 
 	static uint64_t powerNextFunction;
+	static uint64_t initPanelFunction;
 	static uint64_t openDoorFunction;
 	static uint64_t updateEntityPositionFunction;
 	static uint64_t activateLaserFunction;

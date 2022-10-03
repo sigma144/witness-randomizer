@@ -208,6 +208,10 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 		return false;
 	}
 
+	if (id == 0x1C349) {
+		if (!ReadPanelData<int>(0x28AE8, DOOR_OPEN)) return false;
+	}
+
 	if (id == 0x0A3A8) {
 		id = 0x033EA;
 	}

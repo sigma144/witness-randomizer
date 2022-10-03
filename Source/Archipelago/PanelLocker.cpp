@@ -172,11 +172,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
 		_memory->WriteArray<int>(id, DECORATIONS, decorations);
 		_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-		if (polygons.size() > 0) { //TODO maybe just always write ?
-			_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
-			_memory->WriteArray<int>(id, COLORED_REGIONS, polygons);
-			_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
-		}
+		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
+		_memory->WriteArray<int>(id, COLORED_REGIONS, polygons, true);
 		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
 	else if (isLocked) {

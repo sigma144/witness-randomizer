@@ -128,6 +128,13 @@ void Memory::findImportantFunctionAddresses()
 		return true;
 	});
 
+	//init panel
+	executeSigScan({ 0x48, 0x89, 0x74, 0x24, 0x48, 0xFF, 0xC9, 0x8D, 0x70, 0xFF, 0x48, 0x89, 0x7C }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->initPanelFunction = _baseAddress + index - 0x32;
+
+		return true;
+	});
+
 	//display subtitles
 	executeSigScan({ 0x48, 0x89, 0xB4, 0x24, 0xC8, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x4B, 0x08, 0x4C, 0x8D, 0x84, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->displaySubtitlesFunction = _baseAddress + index - 9;
@@ -528,7 +535,9 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 
 	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
-	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
 }
 
 void Memory::DisplayHudMessage(std::string message) {
@@ -767,6 +776,7 @@ int Memory::DECELERATION = 0;
 
 uint64_t Memory::relativeAddressOf6 = 0;
 uint64_t Memory::powerNextFunction = 0;
+uint64_t Memory::initPanelFunction = 0;
 uint64_t Memory::openDoorFunction = 0;
 uint64_t Memory::activateLaserFunction = 0;
 uint64_t Memory::hudTimePointer = 0;

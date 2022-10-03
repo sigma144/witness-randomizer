@@ -72,12 +72,12 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	int pointsToConsider = numberOfDots;
 
 	for (int i = 0; i < numberOfDots; i++)	{
-		if (dot_flags[i] & GAP || dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT) {
+		if (dot_flags[i] & GAP || dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT || dot_flags[i] & NO_POINT) {
 			pointsToConsider -= 1;
 		}
 
 		if (dot_flags[i] & DOT) {
-			if (!(dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT)) {
+			if (!(dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT || dot_flags[i] & NO_POINT)) {
 				dotAmount++;
 			}
 
@@ -143,7 +143,7 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
-	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size()) });
+	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size() / 4) });
 	_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions, true);
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }

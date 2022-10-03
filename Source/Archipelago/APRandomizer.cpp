@@ -369,6 +369,10 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
+	for (int panel : AllPuzzles) {
+		_memory->InitPanel(panel);
+	}
+
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages);
 	SeverDoors();
 
@@ -377,6 +381,10 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
+	for (int panel : AllPuzzles) {
+		_memory->InitPanel(panel);
+	}
+
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages);
 	SeverDoors();
 

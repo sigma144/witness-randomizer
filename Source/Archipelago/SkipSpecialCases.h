@@ -86,7 +86,6 @@ inline const std::set<int> skip_completelyExclude = {
 	//Complex issues arise, but could be changed
 	0x034E4, 0x034E3, //Sound room
 	0x0A3B5, // Tutorial Multi-Solution
-	0x1C349, // Symmetry Entry Doors - You can just go thru the locks for some reason
 
 
 	// Doesn't seem to work at all
