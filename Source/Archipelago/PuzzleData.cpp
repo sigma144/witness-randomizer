@@ -72,12 +72,14 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	int pointsToConsider = numberOfDots;
 
 	for (int i = 0; i < numberOfDots; i++)	{
-		if (dot_flags[i] & 0x100000) {
+		if (dot_flags[i] & GAP || dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT) {
 			pointsToConsider -= 1;
 		}
 
 		if (dot_flags[i] & DOT) {
-			dotAmount++;
+			if (!(dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT)) {
+				dotAmount++;
+			}
 
 			if (dot_flags[i] & DOT_IS_BLUE || dot_flags[i] & DOT_IS_ORANGE)
 				hasColoredDots = true;

@@ -640,6 +640,10 @@ void Memory::DisplaySubtitles(std::string line1, std::string line2, std::string 
 
 		WriteProcessMemory(_handle, addressPointer2, asmBuff2, sizeof(asmBuff2) - 1, NULL);
 
+		while (this->ReadData<__int64>({ 0x62d4e8 }, 1)[0] == 0) { // 0 means subtitles aren't loaded yet
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
 		__int64 addressOfSectionHashtable = this->ReadData<__int64>({ 0x62d4e8 }, 1)[0];
 		__int64 hashtablePlus8 = addressOfSectionHashtable + 8;
 		__int64 nameOfClip = reinterpret_cast<__int64>(_subtitlesStuff);

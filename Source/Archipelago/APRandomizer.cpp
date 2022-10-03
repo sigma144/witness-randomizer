@@ -62,6 +62,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			mostRecentItemId = item.index + 1;
 
+			int counter = 10; //Try for 10 seconds to see if something else than "Unknown" shows up
+			while (ap->get_item_name(item.item) == "Unknown" && counter > 0) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+				counter--;
+			}
+
 			std::string name = ap->get_item_name(item.item);
 
 			if (realitem != item.item) {
@@ -179,8 +185,14 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 		const APClient::NetworkItem item = *networkItem;
 
-		while (ap->get_item_name(item.item) == "Unknown") {
+		while (!randomizationFinished) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
+		int counter = 10; //Try for 10 seconds to see if something else than "Unknown" shows up
+		while (ap->get_item_name(item.item) == "Unknown" && counter > 0) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			counter--;
 		}
 
 		const int receiver = *receivingPlayer;
