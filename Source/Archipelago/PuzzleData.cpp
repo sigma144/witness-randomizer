@@ -19,7 +19,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	decoration_flags = _memory->ReadArray<int>(id, DECORATION_FLAGS, numberOfDecorations);
 
 	int numberColoredRegions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
-	colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions);
+	colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions * 4);
 
 	for (int i = 0; i < numberOfDecorations; i++) {
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
@@ -144,6 +144,6 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WriteArray<int>(id, DECORATIONS, decorations);
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
 	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size()) });
-	_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions);
+	_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions, true);
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
