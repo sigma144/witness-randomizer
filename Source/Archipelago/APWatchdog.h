@@ -30,7 +30,7 @@ public:
 
 	virtual void action();
 
-	void MarkLocationChecked(int locationId);
+	void MarkLocationChecked(int locationId, bool collect);
 	void ApplyTemporarySpeedBoost();
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();

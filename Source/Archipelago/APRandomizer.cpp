@@ -23,7 +23,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		}
 
 		for (const auto& locationId : locations)
-			async->MarkLocationChecked(locationId);
+			async->MarkLocationChecked(locationId, this->Collect);
 	});
 
 	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {

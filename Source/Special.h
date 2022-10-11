@@ -66,11 +66,23 @@ public:
 	static void drawGoodLuckPanel(int id);
     static void SetRequiredLasers(int mountain, int challenge);
 
-	static void SkipPanel(int id);
+	static void SkipPanel(int id) {
+		SkipPanel(id, "Skipped", false);
+	}
 
-	static void SkipMetapuzzle();
+	static void SkipPanel(int id, bool kickOut) {
+		SkipPanel(id, "Skipped", kickOut);
+	}
 
-	static void DrawSimplePanel(int id);
+	static void SkipPanel(int id, std::string text) {
+		SkipPanel(id, text, false);
+	}
+
+	static void SkipPanel(int id, std::string text, bool kickOut);
+
+	static void SkipMetapuzzle(std::string text, bool kickOut);
+
+	static void DrawSimplePanel(int id, std::string text, bool kickOut);
 
 	static void writeGoalCondition(int id, std::string goal1, std::string goal2, int mountain_lasers, int challenge_lasers);
 

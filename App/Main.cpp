@@ -49,6 +49,7 @@
 #define IDC_DIFFICULTY_EXPERT 0x502
 #define IDC_COLORBLIND 0x503
 #define IDC_DOUBLE 0x504
+#define IDC_COLLECT 0x550
 
 #define SHAPE_11 0x1000
 #define SHAPE_12 0x2000
@@ -81,7 +82,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError, hwndLoadCredentials;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError, hwndLoadCredentials, hwndCollect;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -104,6 +105,7 @@ int currentDir;
 int lastSeed;
 bool lastHard;
 bool colorblind;
+bool collect;
 std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24, SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
 std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }; //L-shape
 std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
@@ -160,6 +162,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CheckDlgButton(hwnd, IDC_COLORBLIND, colorblind);
 			break;
 
+		case IDC_COLLECT:
+			collect = !IsDlgButtonChecked(hwnd, IDC_COLLECT);
+			CheckDlgButton(hwnd, IDC_COLLECT, collect);
+			break;
+
 		case IDC_RETURN:
 			if (GetFocus() != hwndUser && GetFocus() != hwndPassword) {
 				break;
@@ -194,6 +201,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			std::string password = Converty::WideToUtf8(widePassword);
 
 			randomizer->seedIsRNG = false;
+
+			apRandomizer->Collect = collect;
 
 			if (!apRandomizer->Connect(hwnd, address, user, password))
 				break;
@@ -296,23 +305,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				Special::WritePanelData(passwordPanels[panel], VIDEO_STATUS_COLOR + offset, passwordArray[i]);
 			}
 
-
+			std::remove("WRPGconfig.txt");
+			std::ofstream out("WRPGconfig.txt");
 			
 			EnableWindow(hwndColorblind, false);
 			if (colorblind) {
-				std::ofstream out("WRPGconfig.txt");
 				out << "colorblind:true" << std::endl;
-				out.close();
 			}
 			else {
-				std::remove("WRPGconfig.txt");
+				out << "colorblind:false" << std::endl;
 			}
+			if (collect) {
+				out << "collect:true" << std::endl;
+			}
+			else {
+				out << "collect:false" << std::endl;
+			}
+
+			out.close();
+
 			SetWindowText(hwndRandomize, L"Randomizing...");
 			randomizer->seed = seed;
 			randomizer->colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
 			randomizer->doubleMode = false;
-			if (hard) randomizer->GenerateHard(hwndLoadingText);
-			else randomizer->GenerateNormal(hwndLoadingText);
+			//if (hard) randomizer->GenerateHard(hwndLoadingText);
+			//else randomizer->GenerateNormal(hwndLoadingText);
 			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
 			SetWindowText(hwndRandomize, L"Randomized!");
@@ -633,6 +650,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		10, 35, 570, 50, hwnd, (HMENU)IDC_COLORBLIND, hInstance, NULL);
 
+	hwndCollect = CreateWindow(L"BUTTON", L"\"!collect\" Support: Puzzles that are locations will be \"skipped\" if those locations are collected / co-oped.",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		10, 90, 570, 35, hwnd, (HMENU)IDC_COLLECT, hInstance, NULL);
+
 #if _DEBUG
 	auto defaultAddress = L"localhost";
 	auto defaultUser = L"Witness";
@@ -643,54 +664,54 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	CreateWindow(L"STATIC", L"Enter an AP address:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 95, 160, 16, hwnd, NULL, hInstance, NULL);
+		10, 135, 160, 16, hwnd, NULL, hInstance, NULL);
 	hwndAddress = CreateWindow(MSFTEDIT_CLASS, defaultAddress,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		180, 90, 400, 26, hwnd, NULL, hInstance, NULL);
+		180, 130, 400, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, KEY_EVENT); // Notify on text change
 
 	CreateWindow(L"STATIC", L"Enter slot name:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 125, 160, 16, hwnd, NULL, hInstance, NULL);
+		10, 165, 160, 16, hwnd, NULL, hInstance, NULL);
 	hwndUser = CreateWindow(MSFTEDIT_CLASS, defaultUser,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		180, 120, 400, 26, hwnd, NULL, hInstance, NULL);
+		180, 160, 400, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndUser, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
 	CreateWindow(L"STATIC", L"Enter password:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 155, 160, 16, hwnd, NULL, hInstance, NULL);
+		10, 195, 160, 16, hwnd, NULL, hInstance, NULL);
 	hwndPassword = CreateWindow(MSFTEDIT_CLASS, L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		180, 150, 400, 26, hwnd, NULL, hInstance, NULL);
+		180, 190, 400, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndPassword, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
 	hwndRandomize = CreateWindow(L"BUTTON", L"Connect",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 180, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
+		450, 220, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
 
 	hwndSkip = CreateWindow(L"BUTTON", L"Skip Puzzle",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 210, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
+		450, 250, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
 
 	hwndLoadCredentials = CreateWindow(L"BUTTON", L"Load Credentials",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		10, 180, 130, 26, hwnd, (HMENU)IDC_LOADCREDENTIALS, hInstance, NULL);
+		10, 220, 130, 26, hwnd, (HMENU)IDC_LOADCREDENTIALS, hInstance, NULL);
 
 	EnableWindow(hwndSkip, false);
 
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		250, 185, 160, 16, hwnd, NULL, hInstance, NULL);
+		250, 225, 160, 16, hwnd, NULL, hInstance, NULL);
 
 	hwndAvailableSkips = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		250, 215, 160, 16, hwnd, NULL, hInstance, NULL);
+		250, 255, 160, 16, hwnd, NULL, hInstance, NULL);
 
 	hwndRecentError = CreateWindow(L"STATIC", L"Most Recent Error:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 245, 573, 60, hwnd, NULL, hInstance, NULL);
+		10, 285, 573, 60, hwnd, NULL, hInstance, NULL);
 
 	std::ifstream configFile("WRPGconfig.txt");
 	if (configFile.is_open()) {
@@ -704,6 +725,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		if (settings.count("colorblind") && settings["colorblind"] == "true") {
 			colorblind = true;
 			CheckDlgButton(hwnd, IDC_COLORBLIND, true);
+		}
+		if (settings.count("collect") && settings["collect"] == "true") {
+			collect = true;
+			CheckDlgButton(hwnd, IDC_COLLECT, true);
 		}
 		configFile.close();
 	}

@@ -96,16 +96,17 @@ void APWatchdog::CheckSolvedPanels() {
 		ap->LocationChecks(solvedLocations);
 }
 
-void APWatchdog::MarkLocationChecked(int locationId)
+void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 {
 	auto it = panelIdToLocationId.begin();
 	while (it != panelIdToLocationId.end())
 	{
 		if (it->second == locationId) {
-			if (!ReadPanelData<int>(it->first, SOLVED)) {
+			if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
 				if(panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-				Special::SkipPanel(it->first);
+				Special::SkipPanel(it->first, "Collected", false);
 				WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
+				WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
 			}
 
 			it = panelIdToLocationId.erase(it);
@@ -232,7 +233,7 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 
 	__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
-	if (skipped == PUZZLE_SKIPPED) {
+	if (skipped == PUZZLE_SKIPPED || skipped == COLLECTED) {
 		EnableWindow(skipButton, false);
 		return false;
 	}
@@ -249,7 +250,7 @@ void APWatchdog::SkipPuzzle()
 
 	skippedPuzzles++;
 
-	Special::SkipPanel(id);
+	Special::SkipPanel(id, true);
 
 	WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
 
@@ -263,6 +264,9 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 		if (skipped == PUZZLE_SKIPPED) {
 			Special::SkipPanel(id);
 			skippedPuzzles++;
+		}
+		else if (skipped == COLLECTED) {
+			Special::SkipPanel(id, "Collected", false);
 		}
 	}
 }

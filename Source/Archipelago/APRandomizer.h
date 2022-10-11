@@ -22,6 +22,7 @@ class APRandomizer {
 
 		int Seed = 0;
 		int FinalPanel = 0;
+		bool Collect = false;
 
 		bool Hard = false;
 		bool UnlockSymbols = false;

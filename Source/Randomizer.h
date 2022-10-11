@@ -135,3 +135,4 @@ private:
 
 
 #define PUZZLE_SKIPPED 762251260
+#define COLLECTED 342198657

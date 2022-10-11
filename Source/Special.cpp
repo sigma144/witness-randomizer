@@ -7,6 +7,7 @@
 #include "Archipelago/SkipSpecialCases.h"
 #include "Quaternion.h"
 #include "../App/Version.h"
+#include <thread>
 
 void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
 	do {
@@ -1670,75 +1671,75 @@ void Special::SetRequiredLasers(int mountain, int challenge) {
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
-void Special::SkipPanel(int id) {
+void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	if (skip_specialCase.count(id) == 0) {
-		DrawSimplePanel(id);
+		DrawSimplePanel(id, text, kickOut);
 		return;
 	}
 
 	//Symmetry Blue/Yellow panels before laser
 
 	if (id == 0x00A52 || id == 0x00A61) {
-		DrawSimplePanel(0x00A52);
-		DrawSimplePanel(0x00A61);
+		DrawSimplePanel(0x00A52, text, kickOut);
+		DrawSimplePanel(0x00A61, text, kickOut);
 		return;
 	}
 
 	if (id == 0x00A57 || id == 0x00A64) {
-		DrawSimplePanel(0x00A57);
-		DrawSimplePanel(0x00A64);
+		DrawSimplePanel(0x00A57, text, kickOut);
+		DrawSimplePanel(0x00A64, text, kickOut);
 		return;
 	}
 
 	if (id == 0x00A5B || id == 0x00A68) {
-		DrawSimplePanel(0x00A5B);
-		DrawSimplePanel(0x00A68);
+		DrawSimplePanel(0x00A5B, text, kickOut);
+		DrawSimplePanel(0x00A68, text, kickOut);
 		return;
 	}
 
 	//Keep Pressure Plates
 
 	if (id == 0x0A3A8) {
-		DrawSimplePanel(0x033EA);
+		DrawSimplePanel(0x033EA, text, kickOut);
 		return;
 	}
 	if (id == 0x0A3B9) {
-		DrawSimplePanel(0x01BE9);
+		DrawSimplePanel(0x01BE9, text, kickOut);
 		return;
 	}
 	if (id == 0x0A3BB) {
-		DrawSimplePanel(0x01CD3);
+		DrawSimplePanel(0x01CD3, text, kickOut);
 		return;
 	}
 	if (id == 0x0A3AD) {
-		DrawSimplePanel(0x01D3F);
+		DrawSimplePanel(0x01D3F, text, kickOut);
 		return;
 	}
 
 	if (id == 0x09E86 || id == 0x09ED8) {
-		DrawSimplePanel(0x09E86);
-		DrawSimplePanel(0x09ED8);
+		DrawSimplePanel(0x09E86, text, kickOut);
+		DrawSimplePanel(0x09ED8, text, kickOut);
 		return;
 	}
 
 	if (id == 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, 0x09FDA) { //make this only the big puzzle?
-		SkipMetapuzzle();
+		SkipMetapuzzle(text, kickOut);
 		return;
 	}
 }
 
-void Special::SkipMetapuzzle() {
+void Special::SkipMetapuzzle(std::string text, bool kickOut) {
 	for (const auto id : { 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF }) {
-		DrawSimplePanel(id);
+		DrawSimplePanel(id, text, kickOut);
 	}
 
 	//Panel panel = Panel(0x09FDA);
 	//panel.Write(); // I have no idea why this works. But for some reason, drawing the simple panel isn't enough on its own. Reading and writing it, for some reason, makes it work??? Sigma explain
 
-	DrawSimplePanel(0x09FDA);
+	DrawSimplePanel(0x09FDA, text, kickOut);
 }
 
-void Special::DrawSimplePanel(int id)
+void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 {
 	if (skip_completelyExclude.count(id)) return;
 
@@ -1753,16 +1754,22 @@ void Special::DrawSimplePanel(int id)
 
 	panel._memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
 
+	float width = 1.0f;
+
 
 	if (!skip_noLine.count(id)) {
 		std::vector<float> intersections;
 		std::vector<int> connectionsA;
 		std::vector<int> connectionsB;
 
-		std::vector<float> finalLine = { 0.5f, 0.9f, 0.5f, 0.1f };
+		std::vector<float> finalLine = { 0.13f, 0.3f, 0.88f, 0.3f };
 
 		if (skip_specialLine.count(id)) {
 			finalLine = skip_specialLine.at(id);
+		}
+		else {
+			width = 0.5f;
+			createText(id, text, intersections, connectionsA, connectionsB, 0.5f - text.size() * 0.049f, 0.5f + text.size() * 0.049f, 0.2f, 0.4f);
 		}
 
 		std::vector<int> intersectionFlags;
@@ -1785,7 +1792,7 @@ void Special::DrawSimplePanel(int id)
 
 		float path_width_scale = panel._memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
 
-		panel._memory->WritePanelData<float>(id, PATTERN_SCALE, { 1.0f / path_width_scale });
+		panel._memory->WritePanelData<float>(id, PATTERN_SCALE, { width / path_width_scale });
 		panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
 		panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
 		panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
@@ -1833,7 +1840,31 @@ void Special::DrawSimplePanel(int id)
 	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
 
+	if (text == "Collected") {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+	}
+	else if (text == "Skipped") {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+	}
+
+	panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+	panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
+	panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+
+	if (kickOut) {
+		float panelDistance = panel._memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
+
+		panel._memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.0001f });
+
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		panel._memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { panelDistance });
+		panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	}
 
 	//Figure out a way to have the randomizer not touch a skipped panel when rerandomizing?
 	//Not really necessary, actually, as you should never re-randomize while the game is already running with randomized panels. You should only re-randomize after the game was closed, and the vanilla panels were re-loaded.
