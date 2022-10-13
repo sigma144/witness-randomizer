@@ -6,6 +6,7 @@
 #include "..\Generate.h"
 #include "APRandomizer.h"
 #include "..\DateTime.h"
+#include "nlohmann\json.hpp"
 
 class APWatchdog : public Watchdog {
 public:
@@ -48,6 +49,8 @@ public:
 	void queueMessage(std::string message) {
 		outstandingMessages.push(message);
 	}
+
+	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;
@@ -75,6 +78,8 @@ private:
 
 	std::pair<int, int> mostRecentAudioLog = { 0, 0 };
 
+	int storageCheckCounter = 3;
+
 	void DisplayMessage();
 
 	void DisableCollisions();
@@ -87,6 +92,12 @@ private:
 	void HandleMovementSpeed();
 	void HandlePowerSurge();
 	void UpdateChallengeLock();
+
+	void CheckLasers();
+
+	std::map<std::string, int> laserIDsToLasers;
+	std::list<std::string> laserIDs;
+
 	boolean CheckIfCanSkipPuzzle();
 
 	int GetActivePanel() {

@@ -179,6 +179,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
 	});
 
+	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
+		async->HandleLaserResponse(response, Collect);
+	});
+
 	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
 		if (!receivingPlayer || !networkItem || networkItem->player != ap->get_player_number())
 			return;

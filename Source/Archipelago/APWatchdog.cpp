@@ -15,6 +15,15 @@ void APWatchdog::action() {
 	DisableCollisions();
 	RefreshDoorCollisions();
 	AudioLogPlaying();
+
+	if (storageCheckCounter <= 0) {
+		CheckLasers();
+		storageCheckCounter = 10;
+	}
+	else
+	{
+		storageCheckCounter--;
+	}
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -616,4 +625,62 @@ void APWatchdog::AudioLogPlaying() {
 	mostRecentAudioLog = { 0, 0 };
 
 	_memory->DisplaySubtitles("", "", "");
+}
+
+void APWatchdog::CheckLasers() {
+	if (laserIDsToLasers.empty()) {
+		int pNO = ap->get_player_number();
+
+		for (int laser : allLasers) {
+			std::string laserID = std::to_string(pNO) + "-" + std::to_string(laser);
+
+			laserIDsToLasers[laserID] = laser;
+			laserIDs.push_back(laserID);
+
+			APClient::DataStorageOperation operation;
+			operation.operation = "default";
+			operation.value = false;
+
+			std::list<APClient::DataStorageOperation> operations;
+
+			operations.push_back(operation);
+
+			nlohmann::json a;
+		
+			ap->Set(laserID, a, false, operations);
+		}
+	}
+
+	auto laserStates = ap->Get(laserIDs);
+}
+
+void APWatchdog::HandleLaserResponse(const std::map <std::string, nlohmann::json> response, bool collect) {
+	for (auto& [key, value] : response) {
+		int playerNo = std::stoi(key.substr(0, key.find("-")));
+		int laserNo = std::stoi(key.substr(key.find("-") + 1, key.length()));
+
+		bool laserActiveAccordingToDataPackage = value == true;
+
+		bool laserActiveInGame = ReadPanelData<int>(laserNo, LASER_TARGET) != 0;
+
+		if (laserActiveInGame == laserActiveAccordingToDataPackage) continue;
+
+		if (laserActiveInGame) {
+			APClient::DataStorageOperation operation;
+			operation.operation = "replace";
+			operation.value = true;
+
+			std::list<APClient::DataStorageOperation> operations;
+			operations.push_back(operation);
+
+			ap->Set(key, NULL, false, operations);
+		}
+
+		else if(collect)
+		{
+			if (laserNo == 0x012FB) _memory->OpenDoor(0x01317);
+			_memory->ActivateLaser(laserNo);
+			queueMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
+		}
+	}
 }

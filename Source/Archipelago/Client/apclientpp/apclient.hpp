@@ -15,6 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <string>
 #include <list>
 #include <set>
+#include <map>
 #if __cplusplus == 201703L || (defined __has_include && __has_include(<optional>))
 #include <optional>
 #elif defined __has_include && __has_include(<experimental/optional>)
@@ -42,6 +43,7 @@ protected:
     typedef nlohmann::json json;
     typedef valijson::adapters::NlohmannJsonAdapter JsonSchemaAdapter;
     typedef wswrap::WS WS;
+
     static int64_t stoi64(const std::string& s) {
         return std::stoll(s);
     }
@@ -49,7 +51,7 @@ protected:
 public:
     static constexpr int64_t INVALID_NAME_ID = std::numeric_limits<int64_t>::min();
 
-    APClient(const std::string& uuid, const std::string& game, const std::string& uri="ws://localhost:38281")
+    APClient(const std::string& uuid, const std::string& game, const std::string& uri = "ws://localhost:38281")
     {
         // fix up URI (add ws:// and default port if none is given)
         // TODO: move this to the front-end once we have wss:// and ws://
@@ -62,8 +64,8 @@ public:
             } else {
                 _uri = uri;
             }
-            auto pColon = _uri.find(":", p+3);
-            auto pSlash = _uri.find("/", p+3);
+            auto pColon = _uri.find(":", p + 3);
+            auto pSlash = _uri.find("/", p + 3);
             if (pColon == _uri.npos || (pSlash != _uri.npos && pColon > pSlash)) {
                 auto tmp = _uri.substr(0, pSlash) + ":38281";
                 if (pSlash != _uri.npos) tmp += _uri.substr(pSlash);
@@ -78,6 +80,8 @@ public:
         };
         valijson::SchemaParser parser;
         parser.populateSchema(JsonSchemaAdapter(_packetSchemaJson), _packetSchema);
+        parser.populateSchema(JsonSchemaAdapter(_retrievedSchemaJson), _commandSchemas["Retrieved"]);
+        parser.populateSchema(JsonSchemaAdapter(_setReplySchemaJson), _commandSchemas["SetReply"]);
         connect_socket();
     }
 
@@ -109,10 +113,10 @@ public:
     };
 
     enum ItemFlags {
-       FLAG_NONE = 0,
-       FLAG_ADVANCEMENT = 1,
-       FLAG_NEVER_EXCLUDE = 2,
-       FLAG_TRAP = 4,
+        FLAG_NONE = 0,
+        FLAG_ADVANCEMENT = 1,
+        FLAG_NEVER_EXCLUDE = 2,
+        FLAG_TRAP = 4,
     };
 
     struct NetworkItem {
@@ -145,10 +149,16 @@ public:
 
         friend void to_json(nlohmann::json& j, const Version& ver)
         {
-            j = nlohmann::json{{"major", ver.ma}, {"minor", ver.mi}, {"build", ver.build}, {"class", "Version"}};
+            j = nlohmann::json{
+                {"major", ver.ma},
+                {"minor", ver.mi},
+                {"build", ver.build},
+                {"class", "Version"}
+            };
         }
 
-        static Version from_json(const nlohmann::json& j) {
+        static Version from_json(const nlohmann::json& j)
+        {
             return {
                 j.value("major", 0),
                 j.value("minor", 0),
@@ -158,13 +168,26 @@ public:
 
         constexpr bool operator<(const Version& other)
         {
-            return (ma<other.ma) || (ma==other.ma && mi<other.mi) ||
-                   (ma==other.ma && mi==other.mi && build<other.build);
+            return (ma < other.ma) || (ma == other.ma && mi < other.mi) ||
+                   (ma == other.ma && mi == other.mi && build < other.build);
         }
 
         constexpr bool operator>=(const Version& other)
         {
-            return !(*this<other);
+            return !(*this < other);
+        }
+    };
+
+    struct DataStorageOperation {
+        std::string operation;
+        json value;
+
+        friend void to_json(nlohmann::json &j, const DataStorageOperation &op)
+        {
+            j = nlohmann::json{
+                {"operation", op.operation},
+                {"value", op.value}
+            };
         }
     };
 
@@ -236,6 +259,16 @@ public:
     void set_location_checked_handler(std::function<void(const std::list<int64_t>&)> f)
     {
         _hOnLocationChecked = f;
+    }
+
+    void set_retrieved_handler(std::function<void(const std::map<std::string,json>&)> f)
+    {
+        _hOnRetrieved = f;
+    }
+
+    void set_set_reply_handler(std::function<void(const std::string&, const json&, const json&)> f)
+    {
+        _hOnSetReply = f;
     }
 
     void set_data_package(const json& data)
@@ -327,10 +360,8 @@ public:
     * Return APClient::INVALID_NAME_ID when undefined*/
     int64_t get_location_id(const std::string& name) const
     {
-        if (_dataPackage["games"].contains(_game))
-        {
-            for (const auto& pair : _dataPackage["games"][_game]["location_name_to_id"].items())
-            {
+        if (_dataPackage["games"].contains(_game)) {
+            for (const auto& pair: _dataPackage["games"][_game]["location_name_to_id"].items()) {
                 if (pair.key() == name) return pair.value().get<int64_t>();
             }
         }
@@ -349,17 +380,15 @@ public:
     * Return APClient::INVALID_NAME_ID when undefined*/
     int64_t get_item_id(const std::string& name) const
     {
-        if (_dataPackage["games"].contains(_game))
-        {
-            for (const auto& pair : _dataPackage["games"][_game]["item_name_to_id"].items())
-            {
+        if (_dataPackage["games"].contains(_game)) {
+            for (const auto& pair: _dataPackage["games"][_game]["item_name_to_id"].items()) {
                 if (pair.key() == name) return pair.value().get<int64_t>();
             }
         }
         return INVALID_NAME_ID;
     }
 
-    std::string render_json(const std::list<TextNode>& msg, RenderFormat fmt=RenderFormat::TEXT)
+    std::string render_json(const std::list<TextNode>& msg, RenderFormat fmt = RenderFormat::TEXT)
     {
         // TODO: implement RenderFormat::HTML
         if (fmt == RenderFormat::HTML)
@@ -396,8 +425,7 @@ public:
                 if (color.empty() && colorIsSet) {
                     out += color2ansi(""); // reset color
                     colorIsSet = false;
-                }
-                else if (!color.empty()) {
+                } else if (!color.empty()) {
                     out += color2ansi(color);
                     colorIsSet = true;
                 }
@@ -460,7 +488,7 @@ public:
     }
 
     bool ConnectSlot(const std::string& name, const std::string& password, int items_handling,
-                     const std::list<std::string>& tags = {}, const Version& ver = {0,2,6})
+                     const std::list<std::string>& tags = {}, const Version& ver = {0, 2, 6})
     {
         if (_state < State::SOCKET_CONNECTED) return false;
         _slot = name;
@@ -481,13 +509,13 @@ public:
     }
 
 #if defined __cpp_lib_optional || defined __cpp_lib_experimental_optional
-    #if defined __cpp_lib_optional
+#   if defined __cpp_lib_optional
     template<class T>
     using optional = std::optional<T>;
-    #else
+#   else
     template<class T>
     using optional = std::experimental::optional<T>;
-    #endif
+#   endif
 
     bool ConnectUpdate(optional<int> items_handling, optional<const std::list<std::string>> tags)
     {
@@ -525,10 +553,9 @@ public:
         auto packet = json{{
             {"cmd", "GetDataPackage"},
         }};
-        if (_serverVersion >= Version{0,3,2}) {
+        if (_serverVersion >= Version{0, 3, 2}) {
             if (!include.empty()) packet[0]["games"] = include; // new since 0.3.2
-        }
-        else {
+        } else {
             if (!exclude.empty()) packet[0]["exclusions"] = exclude; // backward compatibility; deprecated in 0.3.2
         }
         // TODO: drop support for "exclusions" 2023
@@ -564,6 +591,46 @@ public:
         auto packet = json{{
             {"cmd", "Say"},
             {"text", text},
+        }};
+        debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
+        _ws->send(packet.dump());
+        return true;
+    }
+
+    bool Get(const std::list<std::string>& keys)
+    {
+        if (_state < State::SLOT_CONNECTED) return false;
+        auto packet = json{{
+            {"cmd", "Get"},
+            {"keys", keys},
+        }};
+        debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
+        _ws->send(packet.dump());
+        return true;
+    }
+
+    bool Set(const std::string& key, const json& dflt, bool want_reply,
+             const std::list<DataStorageOperation>& operations)
+    {
+        if (_state < State::SLOT_CONNECTED) return false;
+        auto packet = json{{
+           {"cmd", "Set"},
+           {"key", key},
+           {"default", dflt},
+           {"want_reply", want_reply},
+           {"operations", operations}
+        }};
+        debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
+        _ws->send(packet.dump());
+        return true;
+    }
+
+    bool SetNotify(const std::list<std::string>& keys)
+    {
+        if (_state < State::SLOT_CONNECTED) return false;
+        auto packet = json{{
+            {"cmd", "SetNotify"},
+            {"keys", keys},
         }};
         debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
         _ws->send(packet.dump());
@@ -693,6 +760,12 @@ private:
             for (auto& command: packet) {
                 std::string cmd = command["cmd"];
                 JsonSchemaAdapter commandAdapter(command);
+                auto schemaIt = _commandSchemas.find(cmd);
+                if (schemaIt != _commandSchemas.end()) {
+                    if (!validator.validate(schemaIt->second, commandAdapter, nullptr)) {
+                        throw std::runtime_error("Command validation failed");
+                    }
+                }
 #ifdef APCLIENT_DEBUG
                 const size_t maxDumpLen = 512;
                 auto dump = command.dump().substr(0, maxDumpLen);
@@ -891,6 +964,19 @@ private:
                 else if (cmd == "Bounced") {
                     if (_hOnBounced) _hOnBounced(command);
                 }
+                else if (cmd == "Retrieved") {
+                    if (_hOnRetrieved) {
+                        std::map<std::string, json> keys;
+                        for (auto& pair: command["keys"].items())
+                            keys[pair.key()] = pair.value();
+                        _hOnRetrieved(keys);
+                    }
+                }
+                else if (cmd == "SetReply") {
+                    if (_hOnSetReply) {
+                        _hOnSetReply(command["key"].get<std::string>(), command["value"], command["original_value"]);
+                    }
+                }
                 else {
                     debug("unhandled cmd");
                 }
@@ -982,6 +1068,8 @@ private:
     std::function<void(const std::list<TextNode>&, const NetworkItem*, const int*)> _hOnPrintJson = nullptr;
     std::function<void(const json&)> _hOnBounced = nullptr;
     std::function<void(const std::list<int64_t>&)> _hOnLocationChecked = nullptr;
+    std::function<void(const std::map<std::string, json>&)> _hOnRetrieved = nullptr;
+    std::function<void(const std::string&, const json&, const json&)> _hOnSetReply = nullptr;
 
     unsigned long _lastSocketConnect;
     unsigned long _socketReconnectInterval = 1500;
@@ -1012,6 +1100,22 @@ private:
         }
     })"_json;
     valijson::Schema _packetSchema;
+
+    const json _retrievedSchemaJson = R"({
+        "type": "object",
+        "properties": {
+            "keys": { "type": "object" }
+        },
+        "required": [ "keys" ]
+    })"_json;
+    const json _setReplySchemaJson = R"({
+        "type": "object",
+        "properties": {
+            "key": { "type": "string" }
+        },
+        "required": [ "key", "value", "original_value" ]
+    })"_json;
+    std::map<std::string, valijson::Schema> _commandSchemas;
 };
 
 #endif // _APCLIENT_HPP
