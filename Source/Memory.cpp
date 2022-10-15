@@ -320,6 +320,19 @@ void Memory::findImportantFunctionAddresses()
 
 		return true;
 	});
+
+	executeSigScan({ 0xF3, 0x0F, 0x59, 0xF0, 0xF3, 0x41, 0x0F, 0x58, 0xF0, 0x0F, 0x2F, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		__int64 comissStatement = _baseAddress + index + 0xE;
+
+		char asmBuff[] = // Bypass the upper bound check (comiss) for the boat speed
+			"\x38\xC0\x90\x90\x90\x90\x90"; //cmp al,al
+
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(comissStatement);
+
+		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+
+		return true;
+	});
 }
 
 void Memory::findMovementSpeed() {
