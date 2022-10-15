@@ -1507,7 +1507,8 @@ void Special::createText(int id, std::string text, std::vector<float>& intersect
 		{ ' ',{ } },
 		{ '.',{ 7 } },
 		{ '-',{ 3,5 } },
-		{ ':',{ 4,7 } }
+		{ ':',{ 4,7 } },
+		{ '/', {6,1} },
 	};
 
 	float spacingX = (right - left) / (text.size() * 3 - 1);

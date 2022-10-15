@@ -93,6 +93,7 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 			case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
 			case ITEM_SQUARES: if (puzzle->hasStones || puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);			break;
 			case ITEM_ARROWS: if (puzzle->hasArrows) puzzlesToUpdate.push_back(puzzle);			break;
+			case LASER_CHECK: if (puzzle->id == 0x0A332)  puzzlesToUpdate.push_back(puzzle); break;
 
 			default:																																			break;
 		}
@@ -134,7 +135,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		//|| (puzzle->hasInvisibleDots && !state.unlockedInvisibleDots) //NYI
 		|| (puzzle->hasSoundDots && !state.unlockedSoundDots)
 		|| (puzzle->hasArrows && !state.unlockedArrows)
-		|| (puzzle->hasSymmetry && !state.unlockedSymmetry))
+		|| (puzzle->hasSymmetry && !state.unlockedSymmetry)
+		|| (puzzle->needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers))
 	{
 		//puzzle should be locked
 		if (!isLocked)
@@ -156,7 +158,25 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons, id == 0x0A332);
 
 
-		if(id != 0x0A332){
+		if (id == 0x0A332) {
+			int currentIntersections = intersections.size();		
+
+			std::string laserText = std::to_string(state.activeLasers);
+			laserText += "/";
+			laserText += std::to_string(state.requiredChallengeLasers);
+			
+			createText(id, laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.31f, 0.05f, 0.42f, 0.58f);
+
+			int newIntersections = intersections.size();
+
+			for (int i = currentIntersections; i < newIntersections; i += 2) {
+				float x = intersections[i];
+				intersections[i] = intersections[i + 1];
+				intersections[i + 1] = x;
+			}
+		}
+		else
+		{
 			createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 		}
 
@@ -237,9 +257,9 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 
 	if (vertical) {
 		gridIntersections = {
-			0.35f, 0.1f, 0.35f, 0.3f, 0.35f, 0.5f, 0.35f, 0.7f, 0.35f, 0.9f, //bottom row
-			0.5f, 0.1f, 0.5f, 0.3f, 0.5f, 0.5f, 0.5f, 0.7f, 0.5f, 0.9f, //middle row
-			0.65f, 0.1f, 0.65f, 0.3f, 0.65f, 0.5f, 0.65f, 0.7f, 0.65f, 0.9f,  //top row
+			0.35f, 0.37f, 0.35f, 0.52f, 0.35f, 0.67f, 0.35f, 0.82f, 0.35f, 0.97f, //bottom row
+			0.495f, 0.37f, 0.495f, 0.52f, 0.495f, 0.67f, 0.495f, 0.82f, 0.495f, 0.97f, //middle row
+			0.64f, 0.37f, 0.64f, 0.52f, 0.64f, 0.67f, 0.64f, 0.82f, 0.64f, 0.97f,  //top row
 			-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
 		};
 	}

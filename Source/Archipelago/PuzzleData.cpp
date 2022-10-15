@@ -126,6 +126,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasSymmetry = true;
 		hasStars = true;
 		hasTetris = true;
+		needsChallengeLasers = true;
 	}
 }
 

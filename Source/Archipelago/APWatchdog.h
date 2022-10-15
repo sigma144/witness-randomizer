@@ -10,7 +10,7 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a) : Watchdog(1) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState s) : Watchdog(1) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -19,6 +19,7 @@ public:
 		availableSkips = availableSkips1;
 		panelLocker = p;
 		audioLogMessages = a;
+		state = s;
 	}
 
 	int skippedPuzzles = 0;
@@ -26,6 +27,8 @@ public:
 
 	HWND skipButton;
 	HWND availableSkips;
+
+	APState state;
 
 	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages;
 
@@ -70,6 +73,8 @@ private:
 	std::queue<std::string> outstandingMessages;
 	int messageCounter = 0;
 
+	bool laserRequirementMet = false;
+
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
@@ -91,7 +96,6 @@ private:
 	void CheckSolvedPanels();
 	void HandleMovementSpeed();
 	void HandlePowerSurge();
-	void UpdateChallengeLock();
 
 	void CheckLasers();
 

@@ -9,7 +9,6 @@ void APWatchdog::action() {
 	CheckSolvedPanels();
 	HandleMovementSpeed();
 	HandlePowerSurge();
-	UpdateChallengeLock();
 	CheckIfCanSkipPuzzle();
 	DisplayMessage();
 	DisableCollisions();
@@ -188,18 +187,6 @@ void APWatchdog::ResetPowerSurge() {
 			WritePanelData<float>(panelId, POWER, powerValues);
 			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 });
 		}
-	}
-}
-
-void APWatchdog::UpdateChallengeLock() {
-	float power = ReadPanelData<float>(0x17FA2, POWER); //Challenge is supposed to unlock when the long solution of the box is solved, which activates the Mountain Bottom Layer Discard
-
-	if (power != 0.0f) {
-		WritePanelData<float>(0x0A332, POWER, { 1.0, 1.0 });
-	}
-	else
-	{
-		WritePanelData<float>(0x0A332, POWER, { 0.0, 0.0 });
 	}
 }
 
@@ -628,6 +615,24 @@ void APWatchdog::AudioLogPlaying() {
 }
 
 void APWatchdog::CheckLasers() {
+	int laserCount = 0;
+	
+	for (int laser : allLasers) {
+		if (ReadPanelData<int>(laser, LASER_TARGET)) {
+			laserCount += 1;
+		}
+	}
+
+	if (laserCount != state.activeLasers) {
+		state.activeLasers = laserCount;
+		panelLocker->UpdatePuzzleLock(state, 0x0A332);
+
+		if (laserCount >= state.requiredChallengeLasers && !laserRequirementMet) {
+			queueMessage("Challenge Timer: Laser requirement met!");
+			laserRequirementMet = true;
+		}
+	}
+
 	if (laserIDsToLasers.empty()) {
 		int pNO = ap->get_player_number();
 
