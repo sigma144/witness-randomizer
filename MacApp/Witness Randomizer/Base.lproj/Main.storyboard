@@ -1,7 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="11134" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="21506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11134"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21506"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--Application-->
@@ -673,7 +675,7 @@
                         <outlet property="delegate" destination="Voe-Tx-rLC" id="PrD-fu-P6m"/>
                     </connections>
                 </application>
-                <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModuleProvider="target"/>
+                <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="Witness_Randomizer" customModuleProvider="target"/>
                 <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
                 <customObject id="Ady-hI-5gd" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -683,11 +685,11 @@
         <scene sceneID="R2V-B0-nI4">
             <objects>
                 <windowController id="B8D-0N-5wS" sceneMemberID="viewController">
-                    <window key="window" title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="IQv-IB-iLA">
-                        <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
-                        <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-                        <rect key="contentRect" x="196" y="240" width="480" height="270"/>
+                    <window key="window" title="Witness Randomizer" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="IQv-IB-iLA">
+                        <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
+                        <rect key="contentRect" x="196" y="240" width="580" height="270"/>
                         <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
+                        <value key="minSize" type="size" width="580" height="270"/>
                         <connections>
                             <outlet property="delegate" destination="B8D-0N-5wS" id="98r-iN-zZc"/>
                         </connections>
@@ -698,20 +700,165 @@
                 </windowController>
                 <customObject id="Oky-zY-oP4" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="250"/>
+            <point key="canvasLocation" x="75" y="264"/>
         </scene>
         <!--View Controller-->
         <scene sceneID="hIz-AP-VOD">
             <objects>
-                <viewController id="XfG-lQ-9wD" customClass="ViewController" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="XfG-lQ-9wD" customClass="ViewController" customModule="Witness_Randomizer" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="m2S-Jp-Qdl">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
+                        <rect key="frame" x="0.0" y="0.0" width="589" height="211"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <subviews>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="a3A-80-3qT">
+                                <rect key="frame" x="81" y="175" width="100" height="16"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Difficulty mode:" id="BL0-2D-9qy">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="AO8-or-aQR">
+                                <rect key="frame" x="68" y="25" width="113" height="16"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="Randomizer seed:" id="CT5-XQ-6Qh">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ngK-zr-Zrt">
+                                <rect key="frame" x="187" y="22" width="96" height="21"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="96" id="tpl-xr-wpZ"/>
+                                </constraints>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6rH-07-khF">
+                                    <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="2mO-X3-Eay"/>
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nEU-hm-HKr">
+                                <rect key="frame" x="474" y="13" width="102" height="32"/>
+                                <buttonCell key="cell" type="push" title="Generate..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Ykn-UP-jv7">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                    <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                                </buttonCell>
+                            </button>
+                            <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="51i-8D-PO3">
+                                <rect key="frame" x="187" y="127" width="382" height="64"/>
+                                <subviews>
+                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7yq-Sc-uDP">
+                                        <rect key="frame" x="-2" y="47" width="108" height="18"/>
+                                        <buttonCell key="cell" type="radio" title="Normal Mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="IAa-4t-uM0">
+                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="onDifficultyModeSelect:" target="XfG-lQ-9wD" id="w4H-Fb-Odb"/>
+                                        </connections>
+                                    </button>
+                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oFH-ec-NkC">
+                                        <rect key="frame" x="-2" y="23" width="103" height="18"/>
+                                        <buttonCell key="cell" type="radio" title="Expert Mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6be-7J-Qya">
+                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="onDifficultyModeSelect:" target="XfG-lQ-9wD" id="AYe-JE-OzF"/>
+                                        </connections>
+                                    </button>
+                                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Pdg-AA-EHR">
+                                        <rect key="frame" x="-2" y="0.0" width="386" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="382" id="cdD-6o-a80"/>
+                                        </constraints>
+                                        <textFieldCell key="cell" selectable="YES" placeholderString="A description of the difficulty mode will go here when selected." id="1n4-cb-dLe">
+                                            <font key="font" metaFont="system"/>
+                                            <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                </subviews>
+                                <visibilityPriorities>
+                                    <integer value="1000"/>
+                                    <integer value="1000"/>
+                                    <integer value="1000"/>
+                                </visibilityPriorities>
+                                <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
+                                    <real value="3.4028234663852886e+38"/>
+                                    <real value="3.4028234663852886e+38"/>
+                                </customSpacing>
+                            </stackView>
+                            <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dUy-rZ-Dui">
+                                <rect key="frame" x="187" y="65" width="382" height="40"/>
+                                <subviews>
+                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ztm-Zn-fkF">
+                                        <rect key="frame" x="-2" y="23" width="230" height="18"/>
+                                        <buttonCell key="cell" type="check" title="Accommodate for color blindness" bezelStyle="regularSquare" imagePosition="left" inset="2" id="6PB-xG-mRf">
+                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                    </button>
+                                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mU9-9d-gw8">
+                                        <rect key="frame" x="-2" y="-1" width="187" height="18"/>
+                                        <buttonCell key="cell" type="check" title="Shuffle location of puzzles" bezelStyle="regularSquare" imagePosition="left" inset="2" id="JxE-hM-q4v">
+                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                    </button>
+                                </subviews>
+                                <visibilityPriorities>
+                                    <integer value="1000"/>
+                                    <integer value="1000"/>
+                                </visibilityPriorities>
+                                <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
+                                    <real value="3.4028234663852886e+38"/>
+                                </customSpacing>
+                            </stackView>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="y2S-Cs-2Qu">
+                                <rect key="frame" x="64" y="89" width="117" height="16"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Additional options:" id="vmQ-Ny-WXV">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="51i-8D-PO3" secondAttribute="trailing" constant="20" symbolic="YES" id="0x0-Z9-C0F"/>
+                            <constraint firstItem="51i-8D-PO3" firstAttribute="leading" secondItem="a3A-80-3qT" secondAttribute="trailing" constant="8" symbolic="YES" id="AOz-wH-YxM"/>
+                            <constraint firstItem="dUy-rZ-Dui" firstAttribute="top" secondItem="51i-8D-PO3" secondAttribute="bottom" constant="22" id="QcB-b7-P9D"/>
+                            <constraint firstItem="dUy-rZ-Dui" firstAttribute="top" secondItem="y2S-Cs-2Qu" secondAttribute="top" id="S1F-s1-Kmp"/>
+                            <constraint firstItem="ngK-zr-Zrt" firstAttribute="leading" secondItem="AO8-or-aQR" secondAttribute="trailing" constant="8" symbolic="YES" id="Wx4-C1-ptp"/>
+                            <constraint firstAttribute="bottom" secondItem="nEU-hm-HKr" secondAttribute="bottom" constant="20" symbolic="YES" id="Znj-Ob-zX6"/>
+                            <constraint firstAttribute="trailing" secondItem="nEU-hm-HKr" secondAttribute="trailing" constant="20" symbolic="YES" id="a4C-rq-VQR"/>
+                            <constraint firstItem="AO8-or-aQR" firstAttribute="firstBaseline" secondItem="ngK-zr-Zrt" secondAttribute="firstBaseline" id="dPn-F7-A5X"/>
+                            <constraint firstItem="dUy-rZ-Dui" firstAttribute="width" secondItem="51i-8D-PO3" secondAttribute="width" id="dcY-Xe-zAs"/>
+                            <constraint firstItem="ngK-zr-Zrt" firstAttribute="top" secondItem="dUy-rZ-Dui" secondAttribute="bottom" constant="22" id="fWy-RW-cvO"/>
+                            <constraint firstItem="ngK-zr-Zrt" firstAttribute="leading" secondItem="AO8-or-aQR" secondAttribute="trailing" constant="8" symbolic="YES" id="hy6-ev-aDa"/>
+                            <constraint firstItem="51i-8D-PO3" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" constant="20" symbolic="YES" id="kNz-JE-57i"/>
+                            <constraint firstItem="a3A-80-3qT" firstAttribute="top" secondItem="51i-8D-PO3" secondAttribute="top" id="kvO-GB-tPf"/>
+                            <constraint firstItem="ngK-zr-Zrt" firstAttribute="leading" secondItem="dUy-rZ-Dui" secondAttribute="leading" id="lZu-L6-pgZ"/>
+                            <constraint firstItem="nEU-hm-HKr" firstAttribute="bottom" secondItem="ngK-zr-Zrt" secondAttribute="bottom" constant="2" id="qiu-Lb-bQw"/>
+                            <constraint firstAttribute="trailing" secondItem="dUy-rZ-Dui" secondAttribute="trailing" constant="20" symbolic="YES" id="sPF-L8-fES"/>
+                            <constraint firstItem="dUy-rZ-Dui" firstAttribute="leading" secondItem="y2S-Cs-2Qu" secondAttribute="trailing" constant="8" symbolic="YES" id="zsb-gQ-gK7"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="difficultyLabel" destination="Pdg-AA-EHR" id="GgO-KH-LdO"/>
+                        <outlet property="difficultyRadioExpert" destination="oFH-ec-NkC" id="v4p-vI-IAK"/>
+                        <outlet property="difficultyRadioNormal" destination="7yq-Sc-uDP" id="Ugb-wM-xJS"/>
+                    </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="655"/>
+            <point key="canvasLocation" x="748" y="255"/>
         </scene>
     </scenes>
 </document>

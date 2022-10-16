@@ -11,6 +11,9 @@
 		9518340C28FB6B7200D2D9D3 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9518340B28FB6B7200D2D9D3 /* ViewController.swift */; };
 		9518340E28FB6B7300D2D9D3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9518340D28FB6B7300D2D9D3 /* Assets.xcassets */; };
 		9518341128FB6B7300D2D9D3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9518340F28FB6B7300D2D9D3 /* Main.storyboard */; };
+		95B36FDE28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B36FDD28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift */; };
+		95B36FE028FB70E300A8BD9F /* RandomizerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B36FDF28FB70E300A8BD9F /* RandomizerViewModel.swift */; };
+		95B36FE328FB80EE00A8BD9F /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 95B36FE528FB80EE00A8BD9F /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +23,9 @@
 		9518340D28FB6B7300D2D9D3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9518341028FB6B7300D2D9D3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9518341228FB6B7300D2D9D3 /* Witness_Randomizer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Witness_Randomizer.entitlements; sourceTree = "<group>"; };
+		95B36FDD28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WitnessRandomizerSettings.swift; sourceTree = "<group>"; };
+		95B36FDF28FB70E300A8BD9F /* RandomizerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RandomizerViewModel.swift; sourceTree = "<group>"; };
+		95B36FE428FB80EE00A8BD9F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +42,7 @@
 		951833FD28FB6B7200D2D9D3 = {
 			isa = PBXGroup;
 			children = (
+				95B36FDF28FB70E300A8BD9F /* RandomizerViewModel.swift */,
 				9518340828FB6B7200D2D9D3 /* Witness Randomizer */,
 				9518340728FB6B7200D2D9D3 /* Products */,
 			);
@@ -57,6 +64,8 @@
 				9518340D28FB6B7300D2D9D3 /* Assets.xcassets */,
 				9518340F28FB6B7300D2D9D3 /* Main.storyboard */,
 				9518341228FB6B7300D2D9D3 /* Witness_Randomizer.entitlements */,
+				95B36FDD28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift */,
+				95B36FE528FB80EE00A8BD9F /* Localizable.strings */,
 			);
 			path = "Witness Randomizer";
 			sourceTree = "<group>";
@@ -120,6 +129,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9518340E28FB6B7300D2D9D3 /* Assets.xcassets in Resources */,
+				95B36FE328FB80EE00A8BD9F /* Localizable.strings in Resources */,
 				9518341128FB6B7300D2D9D3 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -132,7 +142,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				9518340C28FB6B7200D2D9D3 /* ViewController.swift in Sources */,
+				95B36FDE28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift in Sources */,
 				9518340A28FB6B7200D2D9D3 /* AppDelegate.swift in Sources */,
+				95B36FE028FB70E300A8BD9F /* RandomizerViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,6 +157,14 @@
 				9518341028FB6B7300D2D9D3 /* Base */,
 			);
 			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		95B36FE528FB80EE00A8BD9F /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				95B36FE428FB80EE00A8BD9F /* en */,
+			);
+			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
