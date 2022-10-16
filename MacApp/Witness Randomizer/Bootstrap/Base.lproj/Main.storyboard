@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21506"/>
+        <capability name="Image references" minToolsVersion="12.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -684,12 +685,35 @@
         <!--Window Controller-->
         <scene sceneID="R2V-B0-nI4">
             <objects>
-                <windowController id="B8D-0N-5wS" sceneMemberID="viewController">
-                    <window key="window" title="Witness Randomizer" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="IQv-IB-iLA">
+                <windowController id="B8D-0N-5wS" customClass="MainWindow" customModule="Witness_Randomizer" customModuleProvider="target" sceneMemberID="viewController">
+                    <window key="window" title="Witness Randomizer" subtitle="Awaiting generation" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" toolbarStyle="unified" id="IQv-IB-iLA">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
                         <rect key="contentRect" x="196" y="240" width="580" height="270"/>
                         <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
                         <value key="minSize" type="size" width="580" height="270"/>
+                        <toolbar key="toolbar" implicitIdentifier="61CE21A6-9C81-4A64-8636-4CB3AF1E8778" allowsUserCustomization="NO" displayMode="iconAndLabel" sizeMode="regular" id="KJv-d5-hq5">
+                            <allowedToolbarItems>
+                                <toolbarItem implicitItemIdentifier="64596DBA-52B2-43C5-8870-DBA6442C13C6" label="Generate" paletteLabel="Generate" sizingBehavior="auto" id="A3B-Om-NOL">
+                                    <nil key="toolTip"/>
+                                    <imageReference key="image" image="wand.and.stars" catalog="system" symbolScale="large"/>
+                                    <button key="view" id="4aw-Te-kzW">
+                                        <rect key="frame" x="4" y="14" width="49" height="48"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="3Yf-Zt-BFe">
+                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                            <imageReference key="image" image="wand.and.stars" catalog="system" symbolScale="large"/>
+                                        </buttonCell>
+                                    </button>
+                                    <connections>
+                                        <action selector="onClickGenerate:" target="B8D-0N-5wS" id="vWe-9g-rMI"/>
+                                    </connections>
+                                </toolbarItem>
+                            </allowedToolbarItems>
+                            <defaultToolbarItems>
+                                <toolbarItem reference="A3B-Om-NOL"/>
+                            </defaultToolbarItems>
+                        </toolbar>
                         <connections>
                             <outlet property="delegate" destination="B8D-0N-5wS" id="98r-iN-zZc"/>
                         </connections>
@@ -707,11 +731,11 @@
             <objects>
                 <viewController id="XfG-lQ-9wD" customClass="ViewController" customModule="Witness_Randomizer" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="m2S-Jp-Qdl">
-                        <rect key="frame" x="0.0" y="0.0" width="589" height="211"/>
+                        <rect key="frame" x="0.0" y="0.0" width="589" height="209"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="a3A-80-3qT">
-                                <rect key="frame" x="81" y="175" width="100" height="16"/>
+                                <rect key="frame" x="81" y="173" width="100" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Difficulty mode:" id="BL0-2D-9qy">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -719,7 +743,7 @@
                                 </textFieldCell>
                             </textField>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="AO8-or-aQR">
-                                <rect key="frame" x="68" y="25" width="113" height="16"/>
+                                <rect key="frame" x="68" y="23" width="113" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Randomizer seed:" id="CT5-XQ-6Qh">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -727,7 +751,7 @@
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ngK-zr-Zrt">
-                                <rect key="frame" x="187" y="22" width="96" height="21"/>
+                                <rect key="frame" x="187" y="20" width="96" height="21"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="96" id="tpl-xr-wpZ"/>
                                 </constraints>
@@ -741,21 +765,8 @@
                                     <action selector="onRandomSeedChange:" target="XfG-lQ-9wD" id="dIm-2t-OOg"/>
                                 </connections>
                             </textField>
-                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nEU-hm-HKr">
-                                <rect key="frame" x="474" y="13" width="102" height="32"/>
-                                <buttonCell key="cell" type="push" title="Generate..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Ykn-UP-jv7">
-                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                    <font key="font" metaFont="system"/>
-                                    <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                                </buttonCell>
-                                <connections>
-                                    <action selector="onSubmitGenerate:" target="XfG-lQ-9wD" id="hcJ-sN-EDK"/>
-                                </connections>
-                            </button>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="51i-8D-PO3">
-                                <rect key="frame" x="187" y="127" width="382" height="64"/>
+                                <rect key="frame" x="187" y="125" width="382" height="64"/>
                                 <subviews>
                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7yq-Sc-uDP">
                                         <rect key="frame" x="-2" y="47" width="108" height="18"/>
@@ -801,7 +812,7 @@ DQ
                                 </customSpacing>
                             </stackView>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dUy-rZ-Dui">
-                                <rect key="frame" x="187" y="65" width="382" height="40"/>
+                                <rect key="frame" x="187" y="63" width="382" height="40"/>
                                 <subviews>
                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ztm-Zn-fkF">
                                         <rect key="frame" x="-2" y="23" width="230" height="18"/>
@@ -834,7 +845,7 @@ DQ
                                 </customSpacing>
                             </stackView>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="y2S-Cs-2Qu">
-                                <rect key="frame" x="64" y="89" width="117" height="16"/>
+                                <rect key="frame" x="64" y="87" width="117" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Additional options:" id="vmQ-Ny-WXV">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -844,12 +855,11 @@ DQ
                         </subviews>
                         <constraints>
                             <constraint firstAttribute="trailing" secondItem="51i-8D-PO3" secondAttribute="trailing" constant="20" symbolic="YES" id="0x0-Z9-C0F"/>
+                            <constraint firstAttribute="bottom" secondItem="ngK-zr-Zrt" secondAttribute="bottom" constant="20" symbolic="YES" id="8Xr-dL-cpN"/>
                             <constraint firstItem="51i-8D-PO3" firstAttribute="leading" secondItem="a3A-80-3qT" secondAttribute="trailing" constant="8" symbolic="YES" id="AOz-wH-YxM"/>
                             <constraint firstItem="dUy-rZ-Dui" firstAttribute="top" secondItem="51i-8D-PO3" secondAttribute="bottom" constant="22" id="QcB-b7-P9D"/>
                             <constraint firstItem="dUy-rZ-Dui" firstAttribute="top" secondItem="y2S-Cs-2Qu" secondAttribute="top" id="S1F-s1-Kmp"/>
                             <constraint firstItem="ngK-zr-Zrt" firstAttribute="leading" secondItem="AO8-or-aQR" secondAttribute="trailing" constant="8" symbolic="YES" id="Wx4-C1-ptp"/>
-                            <constraint firstAttribute="bottom" secondItem="nEU-hm-HKr" secondAttribute="bottom" constant="20" symbolic="YES" id="Znj-Ob-zX6"/>
-                            <constraint firstAttribute="trailing" secondItem="nEU-hm-HKr" secondAttribute="trailing" constant="20" symbolic="YES" id="a4C-rq-VQR"/>
                             <constraint firstItem="AO8-or-aQR" firstAttribute="firstBaseline" secondItem="ngK-zr-Zrt" secondAttribute="firstBaseline" id="dPn-F7-A5X"/>
                             <constraint firstItem="dUy-rZ-Dui" firstAttribute="width" secondItem="51i-8D-PO3" secondAttribute="width" id="dcY-Xe-zAs"/>
                             <constraint firstItem="ngK-zr-Zrt" firstAttribute="top" secondItem="dUy-rZ-Dui" secondAttribute="bottom" constant="22" id="fWy-RW-cvO"/>
@@ -857,7 +867,6 @@ DQ
                             <constraint firstItem="51i-8D-PO3" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" constant="20" symbolic="YES" id="kNz-JE-57i"/>
                             <constraint firstItem="a3A-80-3qT" firstAttribute="top" secondItem="51i-8D-PO3" secondAttribute="top" id="kvO-GB-tPf"/>
                             <constraint firstItem="ngK-zr-Zrt" firstAttribute="leading" secondItem="dUy-rZ-Dui" secondAttribute="leading" id="lZu-L6-pgZ"/>
-                            <constraint firstItem="nEU-hm-HKr" firstAttribute="bottom" secondItem="ngK-zr-Zrt" secondAttribute="bottom" constant="2" id="qiu-Lb-bQw"/>
                             <constraint firstAttribute="trailing" secondItem="dUy-rZ-Dui" secondAttribute="trailing" constant="20" symbolic="YES" id="sPF-L8-fES"/>
                             <constraint firstItem="dUy-rZ-Dui" firstAttribute="leading" secondItem="y2S-Cs-2Qu" secondAttribute="trailing" constant="8" symbolic="YES" id="zsb-gQ-gK7"/>
                         </constraints>
@@ -873,7 +882,10 @@ DQ
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="748" y="255"/>
+            <point key="canvasLocation" x="753" y="243"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="wand.and.stars" catalog="system" width="21" height="20"/>
+    </resources>
 </document>
