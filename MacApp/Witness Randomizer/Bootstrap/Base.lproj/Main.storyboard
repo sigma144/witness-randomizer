@@ -697,8 +697,8 @@
                                     <nil key="toolTip"/>
                                     <imageReference key="image" image="wand.and.stars" catalog="system" symbolScale="large"/>
                                     <button key="view" id="4aw-Te-kzW">
-                                        <rect key="frame" x="4" y="14" width="49" height="48"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <rect key="frame" x="18" y="14.5" width="21" height="20"/>
+                                        <autoresizingMask key="autoresizingMask"/>
                                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="3Yf-Zt-BFe">
                                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                             <font key="font" metaFont="system"/>
