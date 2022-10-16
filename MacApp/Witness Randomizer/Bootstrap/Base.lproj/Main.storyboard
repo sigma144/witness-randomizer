@@ -731,12 +731,15 @@
                                 <constraints>
                                     <constraint firstAttribute="width" constant="96" id="tpl-xr-wpZ"/>
                                 </constraints>
-                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6rH-07-khF">
+                                <textFieldCell key="cell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" usesSingleLineMode="YES" id="6rH-07-khF">
                                     <numberFormatter key="formatter" formatterBehavior="default10_4" numberStyle="decimal" formatWidth="-1" minimumIntegerDigits="1" maximumIntegerDigits="2000000000" maximumFractionDigits="3" id="2mO-X3-Eay"/>
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
+                                <connections>
+                                    <action selector="onRandomSeedChange:" target="XfG-lQ-9wD" id="dIm-2t-OOg"/>
+                                </connections>
                             </textField>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nEU-hm-HKr">
                                 <rect key="frame" x="474" y="13" width="102" height="32"/>
@@ -747,6 +750,9 @@
 DQ
 </string>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="onSubmitGenerate:" target="XfG-lQ-9wD" id="hcJ-sN-EDK"/>
+                                </connections>
                             </button>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="51i-8D-PO3">
                                 <rect key="frame" x="187" y="127" width="382" height="64"/>
@@ -803,6 +809,9 @@ DQ
                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                             <font key="font" metaFont="system"/>
                                         </buttonCell>
+                                        <connections>
+                                            <action selector="onColorblindToggle:" target="XfG-lQ-9wD" id="Ex5-Xp-UmS"/>
+                                        </connections>
                                     </button>
                                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mU9-9d-gw8">
                                         <rect key="frame" x="-2" y="-1" width="187" height="18"/>
@@ -810,6 +819,9 @@ DQ
                                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                             <font key="font" metaFont="system"/>
                                         </buttonCell>
+                                        <connections>
+                                            <action selector="onDoubleToggle:" target="XfG-lQ-9wD" id="sfv-Dr-4kU"/>
+                                        </connections>
                                     </button>
                                 </subviews>
                                 <visibilityPriorities>
@@ -851,9 +863,12 @@ DQ
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="checkColorblindMode" destination="Ztm-Zn-fkF" id="9YY-OX-vta"/>
+                        <outlet property="checkDoubleMode" destination="mU9-9d-gw8" id="Tut-mM-CMK"/>
                         <outlet property="difficultyLabel" destination="Pdg-AA-EHR" id="GgO-KH-LdO"/>
                         <outlet property="difficultyRadioExpert" destination="oFH-ec-NkC" id="v4p-vI-IAK"/>
                         <outlet property="difficultyRadioNormal" destination="7yq-Sc-uDP" id="Ugb-wM-xJS"/>
+                        <outlet property="textRandomSeed" destination="ngK-zr-Zrt" id="cYE-ko-hbJ"/>
                     </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>

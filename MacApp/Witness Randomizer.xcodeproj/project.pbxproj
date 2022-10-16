@@ -42,7 +42,6 @@
 		951833FD28FB6B7200D2D9D3 = {
 			isa = PBXGroup;
 			children = (
-				95B36FDF28FB70E300A8BD9F /* RandomizerViewModel.swift */,
 				9518340828FB6B7200D2D9D3 /* Witness Randomizer */,
 				9518340728FB6B7200D2D9D3 /* Products */,
 			);
@@ -59,15 +58,48 @@
 		9518340828FB6B7200D2D9D3 /* Witness Randomizer */ = {
 			isa = PBXGroup;
 			children = (
-				9518340928FB6B7200D2D9D3 /* AppDelegate.swift */,
-				9518340B28FB6B7200D2D9D3 /* ViewController.swift */,
+				95B36FE928FC577E00A8BD9F /* Models */,
+				95B36FE828FC577A00A8BD9F /* View Models */,
+				95B36FE728FC577500A8BD9F /* Views */,
+				95B36FE628FC576A00A8BD9F /* Bootstrap */,
 				9518340D28FB6B7300D2D9D3 /* Assets.xcassets */,
-				9518340F28FB6B7300D2D9D3 /* Main.storyboard */,
 				9518341228FB6B7300D2D9D3 /* Witness_Randomizer.entitlements */,
-				95B36FDD28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift */,
 				95B36FE528FB80EE00A8BD9F /* Localizable.strings */,
 			);
 			path = "Witness Randomizer";
+			sourceTree = "<group>";
+		};
+		95B36FE628FC576A00A8BD9F /* Bootstrap */ = {
+			isa = PBXGroup;
+			children = (
+				9518340F28FB6B7300D2D9D3 /* Main.storyboard */,
+				9518340928FB6B7200D2D9D3 /* AppDelegate.swift */,
+			);
+			path = Bootstrap;
+			sourceTree = "<group>";
+		};
+		95B36FE728FC577500A8BD9F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				9518340B28FB6B7200D2D9D3 /* ViewController.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		95B36FE828FC577A00A8BD9F /* View Models */ = {
+			isa = PBXGroup;
+			children = (
+				95B36FDF28FB70E300A8BD9F /* RandomizerViewModel.swift */,
+			);
+			path = "View Models";
+			sourceTree = "<group>";
+		};
+		95B36FE928FC577E00A8BD9F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				95B36FDD28FB6DDF00A8BD9F /* WitnessRandomizerSettings.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -227,6 +259,7 @@
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = "";
 			};
 			name = Debug;
 		};
@@ -280,6 +313,7 @@
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = "";
 			};
 			name = Release;
 		};
