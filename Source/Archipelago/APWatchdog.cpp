@@ -3,7 +3,6 @@
 #include <thread>
 #include "../Panels.h"
 #include "SkipSpecialCases.h"
-#include "DoorSevers.h"
 
 void APWatchdog::action() {
 	CheckSolvedPanels();
@@ -23,6 +22,13 @@ void APWatchdog::action() {
 	{
 		storageCheckCounter--;
 	}
+
+	CheckImportantCollisionCubes();
+}
+
+void APWatchdog::start() {
+	(new AudioLogMessageDisplayer(&this->audioLogMessageBuffer))->start();
+	Watchdog::start();
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -581,37 +587,24 @@ void APWatchdog::AudioLogPlaying() {
 	std::string line2 = "";
 	std::string line3 = "";
 
-	mostRecentAudioLog.second -= 1;
-
 	for (int id : audioLogs) {
 		if (ReadPanelData<int>(id, AUDIO_LOG_IS_PLAYING)) {
-			if (mostRecentAudioLog.first != id) {
-				mostRecentAudioLog = { id, 12 };
+			if (currentAudioLog != id) {
+				currentAudioLog = id;
 
 				if (audioLogMessages.count(id)) {
-					_memory->DisplaySubtitles(audioLogMessages[id].first[0], audioLogMessages[id].first[1], audioLogMessages[id].first[2]);
-					int64_t loc_id = audioLogMessages[id].second;
-					if (loc_id != -1) {
-						ap->LocationScouts({ loc_id });
-					}
-					return;
+					std::vector<std::string> message = audioLogMessages[id].first;
+
+					audioLogMessageBuffer[100] = { message[0], message[1], message[2], 12.0f, true};
+				}
+				else if (audioLogMessageBuffer.count(100)) {
+					audioLogMessageBuffer.erase(100);
 				}
 			}
 
-			else if (mostRecentAudioLog.second > 0) {
-				return;
-			}
-
-			else {
-				_memory->DisplaySubtitles("", "", "");
-				return;
-			}
+			return;
 		}
 	}
-
-	mostRecentAudioLog = { 0, 0 };
-
-	_memory->DisplaySubtitles("", "", "");
 }
 
 void APWatchdog::CheckLasers() {
@@ -687,5 +680,52 @@ void APWatchdog::HandleLaserResponse(const std::map <std::string, nlohmann::json
 			_memory->ActivateLaser(laserNo);
 			queueMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
 		}
+	}
+}
+
+void APWatchdog::CheckImportantCollisionCubes() {
+	std::vector<float> playerPosition;
+
+	try {
+		playerPosition = _memory->ReadPlayerPosition();
+	}
+	catch (std::exception e) {
+		return;
+	}
+
+	// bonsai panel dots requirement
+	if (panelLocker->PuzzleIsLocked(0x09d9b) && bonsaiCollisionCube.containsPoint(playerPosition)) {
+		audioLogMessageBuffer[50] = { "", "Needs Dots.", "", 1.3f, false };
+	}
+}
+
+void AudioLogMessageDisplayer::action() {
+	bool displayingMessage = false;
+
+	auto it = audioLogMessageBuffer->begin();
+	while (it != audioLogMessageBuffer->end())
+	{
+		int priority = it->first;
+		AudioLogMessage* message = &it->second;
+
+
+
+		if (!displayingMessage || message->countWhileOutprioritized) message->time -= 0.1f;
+
+		if (message->time < 0) {
+			it = audioLogMessageBuffer->erase(it);
+			continue;
+		}
+		else
+		{
+			if (!displayingMessage) _memory->DisplaySubtitles(message->line1, message->line2, message->line3);
+			displayingMessage = true;
+		}
+
+		++it;
+	}
+
+	if (!displayingMessage) {
+		_memory->DisplaySubtitles("", "", "");
 	}
 }

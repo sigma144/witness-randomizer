@@ -4,9 +4,21 @@
 #include <chrono>
 #include "..\Watchdog.h"
 #include "..\Generate.h"
-#include "APRandomizer.h"
 #include "..\DateTime.h"
 #include "nlohmann\json.hpp"
+#include "APGameData.h"
+#include "APState.h"
+#include "PanelLocker.h"
+
+struct AudioLogMessage {
+	std::string line1;
+	std::string line2;
+	std::string line3;
+	
+	float time;
+
+	bool countWhileOutprioritized;
+};
 
 class APWatchdog : public Watchdog {
 public:
@@ -22,6 +34,8 @@ public:
 		state = s;
 	}
 
+	virtual void start();
+
 	int skippedPuzzles = 0;
 	int availablePuzzleSkips = 0;
 
@@ -29,8 +43,6 @@ public:
 	HWND availableSkips;
 
 	APState state;
-
-	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages;
 
 	virtual void action();
 
@@ -73,6 +85,8 @@ private:
 	std::queue<std::string> outstandingMessages;
 	int messageCounter = 0;
 
+	std::map<int, AudioLogMessage> audioLogMessageBuffer;
+
 	bool laserRequirementMet = false;
 
 	std::set<int> disableCollisionList;
@@ -80,8 +94,6 @@ private:
 	std::set<int> severedDoorsList;
 	std::map<int,int> collisionsToRefresh;
 	std::map<int, std::vector<float>> collisionPositions;
-
-	std::pair<int, int> mostRecentAudioLog = { 0, 0 };
 
 	int storageCheckCounter = 3;
 
@@ -99,8 +111,17 @@ private:
 
 	void CheckLasers();
 
+	void CheckImportantCollisionCubes();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
+
+	int currentAudioLog = -1;
+
+	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
+
+	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
+
 
 	boolean CheckIfCanSkipPuzzle();
 
@@ -135,4 +156,15 @@ public:
 
 private:
 	APClient* ap;
+};
+
+class AudioLogMessageDisplayer : public Watchdog {
+public:
+	AudioLogMessageDisplayer(std::map<int, AudioLogMessage>* audioLogMessageBuffer) : Watchdog(0.1f) {
+		this->audioLogMessageBuffer = audioLogMessageBuffer;
+	}
+	virtual void action();
+
+private:
+	std::map<int, AudioLogMessage>* audioLogMessageBuffer;
 };

@@ -173,7 +173,7 @@
   <ItemGroup>
     <ClInclude Include="Archipelago\APState.h" />
     <ClInclude Include="Archipelago\APRandomizer.h" />
-    <ClInclude Include="Archipelago\DoorSevers.h" />
+    <ClInclude Include="Archipelago\APGameData.h" />
     <ClInclude Include="Archipelago\PuzzleData.h" />
     <ClInclude Include="Archipelago\PanelLocker.h" />
     <ClInclude Include="Archipelago\APWatchdog.h" />
