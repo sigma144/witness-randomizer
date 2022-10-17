@@ -114,7 +114,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasColoredDots = true;
 		hasSymmetry = true;
 	}
-	else if (id == 0x03702) { // River Vault: The squares are drawn on and validated separately!
+	else if (id == 0x15ADD) { // River Vault: The squares are drawn on and validated separately!
 		hasStones = true;
 	}
 	else if (id == 0x0A332) { // Challenge timer (can't lock the individual challenge panels)

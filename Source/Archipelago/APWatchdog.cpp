@@ -694,8 +694,16 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 	// bonsai panel dots requirement
-	if (panelLocker->PuzzleIsLocked(0x09d9b) && bonsaiCollisionCube.containsPoint(playerPosition)) {
+	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
 		audioLogMessageBuffer[50] = { "", "Needs Dots.", "", 0.8f, false };
+	}
+
+	if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
+		audioLogMessageBuffer[50] = { "", "Needs Dots, Black/White Squares.", "", 0.8f, false };
+	}
+
+	if (bunkerPuzzlesCube.containsPoint(playerPosition) && !(state.unlockedColoredStones && state.unlockedStones)) {
+		audioLogMessageBuffer[50] = { "", "Panels in the Bunker need", "Black/White Squares, Colored Squares.", 0.8f, false };
 	}
 }
 

@@ -121,6 +121,9 @@ private:
 	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
+	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
+	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5);
+	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2, -96.3, 5.8, 172.3, -101.1, 11.5);
 
 
 	boolean CheckIfCanSkipPuzzle();
