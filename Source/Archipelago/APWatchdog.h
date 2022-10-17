@@ -22,7 +22,7 @@ struct AudioLogMessage {
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState s) : Watchdog(1) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState s) : Watchdog(0.5f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -95,7 +95,7 @@ private:
 	std::map<int,int> collisionsToRefresh;
 	std::map<int, std::vector<float>> collisionPositions;
 
-	int storageCheckCounter = 3;
+	int storageCheckCounter = 6;
 
 	void DisplayMessage();
 

@@ -16,7 +16,7 @@ void APWatchdog::action() {
 
 	if (storageCheckCounter <= 0) {
 		CheckLasers();
-		storageCheckCounter = 10;
+		storageCheckCounter = 20;
 	}
 	else
 	{
@@ -495,7 +495,7 @@ void APWatchdog::DisplayMessage() {
 	outstandingMessages.pop();
 	_memory->DisplayHudMessage(message);
 	
-	messageCounter = 4;
+	messageCounter = 8;
 }
 
 void APWatchdog::DisableCollisions() {
@@ -695,7 +695,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	// bonsai panel dots requirement
 	if (panelLocker->PuzzleIsLocked(0x09d9b) && bonsaiCollisionCube.containsPoint(playerPosition)) {
-		audioLogMessageBuffer[50] = { "", "Needs Dots.", "", 1.3f, false };
+		audioLogMessageBuffer[50] = { "", "Needs Dots.", "", 0.8f, false };
 	}
 }
 
