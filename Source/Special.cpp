@@ -1044,6 +1044,9 @@ void Special::generateMountainFloor()
 	int rotateIndex = Random::rand() % 3;
 	for (int i = 0; i < 4; i++) {
 		int symbol = generator->get(floorPos[i]);
+
+		correctShapesById[ids[i]] = symbol;
+
 		//Convert to shape
 		Shape shape;
 		for (int j = 0; j < 16; j++) {
@@ -1127,6 +1130,8 @@ void Special::generateMountainFloorH()
 	int combine = 0;
 	for (int i = 0; i < 4; i++) {
 		int symbol = generator->get(floorPos[i]);
+
+		correctShapesById[ids[i]] = symbol;
 		//Convert to shape
 		Shape shape;
 		for (int j = 0; j < 16; j++) {
@@ -1723,21 +1728,59 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
-	if (id == 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, 0x09FDA) { //make this only the big puzzle?
-		SkipMetapuzzle(text, kickOut);
+	if (id == 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF) { //make this only the big puzzle?
+		SkipMetapuzzle(id, text, kickOut);
 		return;
 	}
 }
 
-void Special::SkipMetapuzzle(std::string text, bool kickOut) {
-	for (const auto id : { 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF }) {
-		DrawSimplePanel(id, text, kickOut);
+void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
+	int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
+	std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
+
+	for (int i = 0; i < dec.size(); i++) {
+		dec[i] &= ~0x00001000;
+
+		int decoration = dec[i];
+		int correctShape = correctShapesById[id];
+
+		if (decoration != correctShape) {
+			dec[i] = 0;
+		}
+
+		WriteArray(id, DECORATIONS, dec);
 	}
+
+	Panel panel;
+
+	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
+
+
+	if (text == "Collected") {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+	}
+	else if (text == "Skipped") {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+	}
+
+	panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+	panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
+	panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+
+	int style = panel._style = panel._memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	style &= ~Panel::Style::HAS_ERASERS;
+	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
+
+	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+
 
 	//Panel panel = Panel(0x09FDA);
 	//panel.Write(); // I have no idea why this works. But for some reason, drawing the simple panel isn't enough on its own. Reading and writing it, for some reason, makes it work??? Sigma explain
 
-	DrawSimplePanel(0x09FDA, text, kickOut);
+	//DrawSimplePanel(0x09FDA, text, kickOut);
 }
 
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
@@ -1899,3 +1942,4 @@ void Special::test() {
 
 }
 
+std::map<int, int> Special::correctShapesById = {};

@@ -3,11 +3,13 @@
 #include <set>
 
 inline const std::vector<float> horizontalLine = { 0.9f, 0.5f, 0.1f, 0.5f };
+inline const std::vector<float> verticalLine = { 0.5f, 0.9f, 0.5f, 0.1f };
 inline const std::vector<float> pillarLine = { 0.9f, 0.5f, 0.7f, 0.5f, 0.5f, 0.5f, 0.3f, 0.5f, 0.1f, 0.5f };
 inline const std::vector<float> offsetline = { 0.2f, 0.9f, 0.2f, 0.1f };
 inline const std::vector<float> shortLineTop = { 0.5f, 0.9f, 0.5f, 0.7f };
 
 inline const std::map<int, std::vector<float>> skip_specialLine = {
+	{0x18076, verticalLine},
 	{0x0A15C, horizontalLine},
 	{0x09FFF, horizontalLine},
 	{0x0A15F, horizontalLine},
@@ -54,11 +56,13 @@ inline const std::set<int> skip_noLine = {
 };
 
 inline const std::set<int> skip_completelyExclude = {
+	0x0c373, // Patio Floor (EP)
+
 	0x00064, 0x00182, // Entry Panels
 	0x03481, 0x0339E, 0x03535, 0x03702, 0x03542, 0x0356B, 0x2FAF6, //Vault Boxes
 	0x17CC8, 0x17CA6, 0x0A054, 0x17CDF, 0x09DB8, 0x17C95, //Boat Spawns
 	0x34D96, 0x34C7F, //Boat Map & Speed
-	0x0360D, 0x03608, 0x03612, 0x032F5, 0x17CA4, 0x03616, 0x09DE0, 0x03615, 0x03613, //Lasers except Shadows & Keep
+	0x0360D, 0x03608, 0x032F5, 0x17CA4, 0x03616, 0x09DE0, 0x03615, 0x03613, //Lasers except Shadows & Keep
 
 	0x0042D, // Mountaintop River Shape
 

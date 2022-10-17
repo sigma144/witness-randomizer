@@ -126,7 +126,7 @@ private:
 	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2, -96.3, 5.8, 172.3, -101.1, 11.5);
 
 
-	boolean CheckIfCanSkipPuzzle();
+	int CheckIfCanSkipPuzzle();
 
 	int GetActivePanel() {
 		try {

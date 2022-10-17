@@ -196,23 +196,56 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-boolean APWatchdog::CheckIfCanSkipPuzzle() {
+int APWatchdog::CheckIfCanSkipPuzzle() {
 	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(availablePuzzleSkips - skippedPuzzles)).c_str());
 
-	if (availablePuzzleSkips <= skippedPuzzles) {
-		EnableWindow(skipButton, false);
-		return false;
-	}
+
 
 	int id = GetActivePanel();
 
 	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), id) == actuallyEveryPanel.end()) {
 		EnableWindow(skipButton, false);
-		return false;
+		return -1;
+	}
+
+	// Evaluate Cost
+
+	int cost = 1;
+
+
+	if (id == 0x03612) {
+		if (ReadPanelData<int>(0x288E9, DOOR_OPEN) && ReadPanelData<int>(0x28AD4, DOOR_OPEN)) {
+			EnableWindow(skipButton, false);
+			return -1;
+		}
+		else
+		{
+			audioLogMessageBuffer[49] = { "", "Skipping this panel costs", "1 Puzzle Skip per unopened latch.", 0.8f, true };
+		}
+
+		if (!ReadPanelData<int>(0x288E9, DOOR_OPEN) && !ReadPanelData<int>(0x28AD4, DOOR_OPEN)) {
+			cost = 2;
+		}
 	}
 
 	if (id == 0x1C349) {
-		if (!ReadPanelData<int>(0x28AE8, DOOR_OPEN)) return false;
+		if (ReadPanelData<int>(0x28AE8, DOOR_OPEN)) {
+			EnableWindow(skipButton, false);
+			return -1;
+		}
+		else
+		{
+			audioLogMessageBuffer[49] = { "", "Skipping this panel costs", "2 Puzzle Skips.", 0.8f, true };
+		}
+
+		cost = 2;
+	}
+
+	// Cost Evaluated
+
+	if (availablePuzzleSkips - cost < skippedPuzzles) {
+		EnableWindow(skipButton, false);
+		return -1;
 	}
 
 	if (id == 0x0A3A8) {
@@ -230,31 +263,60 @@ boolean APWatchdog::CheckIfCanSkipPuzzle() {
 
 	if (id == -1 || skip_completelyExclude.count(id) || panelLocker->PuzzleIsLocked(id)) {
 		EnableWindow(skipButton, false);
-		return false;
+		return -1;
 	}
 
 	__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
-	if (skipped == PUZZLE_SKIPPED || skipped == COLLECTED) {
+	if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED) {
 		EnableWindow(skipButton, false);
-		return false;
+		return -1;
 	}
 
+	// Puzzle can be skipped from here on out, calculate cost
+
 	EnableWindow(skipButton, true);
-	return true;
+	return cost;
 }
 
 void APWatchdog::SkipPuzzle()
 {
 	int id = GetActivePanel();
 
-	if (!CheckIfCanSkipPuzzle()) return;
+	int cost = CheckIfCanSkipPuzzle();
 
-	skippedPuzzles++;
+	if (cost == -1) return;
+
+	skippedPuzzles+= cost;
+
+	// Special Skipping Animations
+
+	if (id == 0x03612) {
+		if (!ReadPanelData<int>(0x288E9, DOOR_OPEN))
+		{
+			_memory->OpenDoor(0x288E9);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+		if (!ReadPanelData<int>(0x28AD4, DOOR_OPEN))
+		{
+			_memory->OpenDoor(0x28AD4);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+	}
+
+	if (id == 0x1C349) {
+		_memory->OpenDoor(0x28AE8);
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+		_memory->OpenDoor(0x28AED);
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
+
+	// Special Skipping Animations Done
 
 	Special::SkipPanel(id, true);
 
-	WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Videos can't be skipped, so this should be safe.
+	WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + cost }); // Videos can't be skipped, so this should be safe.
 
 	CheckIfCanSkipPuzzle();
 }
@@ -263,9 +325,9 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 	for (int id : actuallyEveryPanel) {
 		__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
-		if (skipped == PUZZLE_SKIPPED) {
+		if (skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
 			Special::SkipPanel(id);
-			skippedPuzzles++;
+			skippedPuzzles += skipped - PUZZLE_SKIPPED;
 		}
 		else if (skipped == COLLECTED) {
 			Special::SkipPanel(id, "Collected", false);

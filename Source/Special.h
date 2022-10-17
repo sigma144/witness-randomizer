@@ -19,6 +19,7 @@ template <class T> struct MemoryWrite {
 class Special {
 
 public:
+	static std::map<int, int> correctShapesById;
 
 	Special(std::shared_ptr<Generate> generator) {
 		this->generator = generator;
@@ -80,7 +81,7 @@ public:
 
 	static void SkipPanel(int id, std::string text, bool kickOut);
 
-	static void SkipMetapuzzle(std::string text, bool kickOut);
+	static void SkipMetapuzzle(int id, std::string text, bool kickOut);
 
 	static void DrawSimplePanel(int id, std::string text, bool kickOut);
 
