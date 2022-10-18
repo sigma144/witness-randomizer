@@ -1728,7 +1728,7 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
-	if (id == 0x09FC1, 0x09F8E, 0x09F01, 0x09EFF) { //make this only the big puzzle?
+	if (id == 0x09FC1 || id == 0x09F8E || id == 0x09F01 || id == 0x09EFF) { //make this only the big puzzle?
 		SkipMetapuzzle(id, text, kickOut);
 		return;
 	}
@@ -1738,18 +1738,94 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
 	std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
 
+	int correctShape = correctShapesById[id];
+
+	int likelyShape = -1;
+	int definitelyShape = -1;
+
+	bool hardMode = ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0;
+
 	for (int i = 0; i < dec.size(); i++) {
-		dec[i] &= ~0x00001000;
-
 		int decoration = dec[i];
-		int correctShape = correctShapesById[id];
 
-		if (decoration != correctShape) {
-			dec[i] = 0;
+		if ((decoration & ~0x1000) == correctShape) definitelyShape = i;
+		if (decoration & 0x1000) definitelyShape = i;
+
+		dec[i] = 0;
+
+
+	}
+
+	if (definitelyShape != -1 && !hardMode) {
+		dec[definitelyShape] = correctShape;
+	}
+	else {
+		Shape shape;
+		for (int j = 0; j < 16; j++) {
+			if (correctShape & (1 << (j + 16))) {
+				shape.emplace(Point((j % 4) * 2 + 1, 8 - ((j / 4) * 2 + 1)));
+			}
 		}
 
-		WriteArray(id, DECORATIONS, dec);
+		//normalize Shape
+
+		int leftBound = 100;
+		int upBound = 100;
+		int rightBound = -1;
+		int downBound = -1;
+
+		for(Point p : shape){
+			leftBound = std::min(p.first, leftBound);
+			upBound = std::min(p.second, upBound);
+			rightBound = std::max(p.first, rightBound);
+			downBound = std::max(p.second, downBound);
+		}
+
+		Shape normalizedShape;
+
+		for (Point p : shape) {
+			p.first -= leftBound;
+			p.first /= 2;
+			p.second -= upBound;
+			p.second /= 2;
+
+			normalizedShape.emplace(p);
+		}
+
+		rightBound -= leftBound;
+		rightBound /= 2;
+		downBound -= upBound;
+		downBound /= 2;
+
+		auto first = normalizedShape.begin();
+		Point chosenPoint = *first;
+
+		int y = downBound - chosenPoint.second;
+		
+		int x = chosenPoint.first;
+
+		if (id == 0x9f01 || id == 0x9f8e) {
+			x = 3 - rightBound + chosenPoint.first;
+
+			if (rightBound == 2 && downBound == 3) {
+				x -= 1;
+			}
+		}
+		else if (rightBound == 2 && downBound == 3) {
+			x += 1;
+		}
+
+		if (rightBound == 3 && downBound == 2) {
+			y += 1;
+		}
+
+		int position = x + y * 4;
+
+		dec[position] = correctShape;
 	}
+	
+
+	WriteArray(id, DECORATIONS, dec);
 
 	Panel panel;
 
