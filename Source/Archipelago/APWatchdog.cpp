@@ -241,6 +241,22 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 		cost = 2;
 	}
 
+	if (id == 0x09FDA) { // Metapuzzle
+		for (int id : {0x09FC1, 0x09F8E, 0x09F01, 0x09EFF}) {
+			__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+
+			if (skipped < PUZZLE_SKIPPED || skipped > PUZZLE_SKIPPED_MAX) {
+				if(!metaPuzzleMessageHasBeenDisplayed) audioLogMessageBuffer[49] = { "", "Skipping this panel requires", "Skipping all the small puzzles.", 8.0f, true };
+				metaPuzzleMessageHasBeenDisplayed = true;
+				EnableWindow(skipButton, false);
+				return -1;
+				break;
+			}
+		}
+
+		cost = 1;
+	}
+
 	// Cost Evaluated
 
 	if (availablePuzzleSkips - cost < skippedPuzzles) {

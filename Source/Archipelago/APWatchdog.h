@@ -125,6 +125,8 @@ private:
 	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5);
 	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2, -96.3, 5.8, 172.3, -101.1, 11.5);
 
+	bool metaPuzzleMessageHasBeenDisplayed = false;
+
 
 	int CheckIfCanSkipPuzzle();
 
