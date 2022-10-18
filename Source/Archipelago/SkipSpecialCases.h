@@ -10,16 +10,17 @@ inline const std::vector<float> shortLineTop = { 0.5f, 0.9f, 0.5f, 0.7f };
 
 inline const std::map<int, std::vector<float>> skip_specialLine = {
 	{0x18076, verticalLine},
+	{0x28B39, verticalLine},
+	{0x193A7, verticalLine},
+	{0x193AA, verticalLine},
+	{0x193AB, verticalLine},
+	{0x193A6, verticalLine},
 	{0x0A15C, horizontalLine},
 	{0x09FFF, horizontalLine},
 	{0x0A15F, horizontalLine},
 	{0x33Af5, offsetline},
 	{0x33AF7, offsetline},
 	{0x09F6E, shortLineTop},
-	{0x288EA, offsetline },
-	{0x288FC, offsetline },
-	{0x289E7, offsetline },
-	{0x288AA, offsetline },
 	{0x0383A, pillarLine},
 	{0x09E56, pillarLine},
 	{0x09E5A, pillarLine},
@@ -93,12 +94,14 @@ inline const std::set<int> skip_completelyExclude = {
 
 
 	// Doesn't seem to work at all
-	0x079DF, // Town Triple Environmental
+	// Town Triple Environmental
 	0x0C335, // Tutorial Pillar
 
 	// Challenge Puzzles crash the game
 
 	0x0A332, 0x0088E, 0x00BAF, 0x00BF3, 0x00C09, 0x00CDB, 0x0051F, 0x00524, 0x00CD4, 0x00CB9, 0x00CA1, 0x00C80, 0x00C68, 0x00C59, 0x00C22, 0x034F4, 0x034EC, 0x1C31A, 0x1C319,
+
+	0x01983, 0x01987, // Peekaboo
 
 };
 

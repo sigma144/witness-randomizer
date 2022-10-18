@@ -40,14 +40,23 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			int realitem = item.item;
 
 			if (progressiveItems.count(realitem)) {
+				if (progressiveItems[realitem].size() == 0) {
+					continue;
+				}
+
 				realitem = progressiveItems[realitem][0];
 				progressiveItems[item.item].erase(progressiveItems[item.item].begin());
 			}
 
-			unlockItem(realitem);
+			bool unlockLater = false;
 
-			if (item.item < ITEM_TEMP_SPEED_BOOST)
+			if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE) {
+				unlockItem(realitem);
 				panelLocker->UpdatePuzzleLocks(state, realitem);
+			}
+			else {
+				unlockLater = true;
+			}
 
 			if (itemIdToDoorSet.count(realitem)) {
 				for (int doorHex : itemIdToDoorSet[realitem]) {
@@ -60,7 +69,13 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			if (mostRecentItemId >= item.index + 1) continue;
 
+			if (unlockLater) {
+				unlockItem(realitem);
+			}
+
 			mostRecentItemId = item.index + 1;
+
+			_memory->WritePanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12, { mostRecentItemId });
 
 			int counter = 10; //Try for 10 seconds to see if something else than "Unknown" shows up
 			while (ap->get_item_name(item.item) == "Unknown" && counter > 0) {
@@ -396,7 +411,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 		_memory->InitPanel(panel);
 	}
 
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, &state);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -408,7 +423,7 @@ void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 		_memory->InitPanel(panel);
 	}
 
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, &state);
 	SeverDoors();
 
 	//Mess with Town targets

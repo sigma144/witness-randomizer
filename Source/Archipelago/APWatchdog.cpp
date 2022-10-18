@@ -5,8 +5,20 @@
 #include "SkipSpecialCases.h"
 
 void APWatchdog::action() {
-	CheckSolvedPanels();
 	HandleMovementSpeed();
+	DisplayAudioLogMessage();
+
+	if (halfSecondCounter > 0) {
+		halfSecondCounter -= 1;
+		return;
+	}
+	else
+	{
+		halfSecondCounter = 4;
+	}
+
+	CheckSolvedPanels();
+
 	HandlePowerSurge();
 	CheckIfCanSkipPuzzle();
 	DisplayMessage();
@@ -26,9 +38,35 @@ void APWatchdog::action() {
 	CheckImportantCollisionCubes();
 }
 
-void APWatchdog::start() {
-	(new AudioLogMessageDisplayer(&this->audioLogMessageBuffer))->start();
-	Watchdog::start();
+void APWatchdog::DisplayAudioLogMessage() {
+	bool displayingMessage = false;
+
+	auto it = audioLogMessageBuffer.begin();
+	while (it != audioLogMessageBuffer.end())
+	{
+		int priority = it->first;
+		AudioLogMessage* message = &it->second;
+
+
+
+		if (!displayingMessage || message->countWhileOutprioritized) message->time -= 0.1f;
+
+		if (message->time < 0) {
+			it = audioLogMessageBuffer.erase(it);
+			continue;
+		}
+		else
+		{
+			if (!displayingMessage) _memory->DisplaySubtitles(message->line1, message->line2, message->line3);
+			displayingMessage = true;
+		}
+
+		++it;
+	}
+
+	if (!displayingMessage) {
+		_memory->DisplaySubtitles("", "", "");
+	}
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -131,25 +169,52 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 }
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
-	temporarySpeedModdificationStartTime = std::chrono::system_clock::now();
-	currentSpeed = baseSpeed * 2.0f;
-	hasTemporarySpeedModdification = true;
+	speedTime += 30.0f;
 }
 
 void APWatchdog::ApplyTemporarySlow() {
-	temporarySpeedModdificationStartTime = std::chrono::system_clock::now();
-	currentSpeed = baseSpeed * 0.4f;
-	hasTemporarySpeedModdification = true;
+	speedTime -= 30.0f;
 }
 
-void APWatchdog::HandleMovementSpeed() {
-	if (hasTemporarySpeedModdification && DateTime::since(temporarySpeedModdificationStartTime).count() > 30000) {
-		hasTemporarySpeedModdification = false;
 
-		currentSpeed = baseSpeed;
+void APWatchdog::HandleMovementSpeed() {
+	if (!hasEverModifiedSpeed) {
+		temporarySpeedModificationTime = std::chrono::system_clock::now();
+		hasEverModifiedSpeed = true;
 	}
 
-	WriteMovementSpeed(currentSpeed);
+	auto rightnow = std::chrono::system_clock::now();
+
+	std::chrono::duration<float> elapsed_seconds = rightnow - temporarySpeedModificationTime;
+	float secondsInFloat = elapsed_seconds.count();
+
+	temporarySpeedModificationTime = rightnow;
+
+	if (speedTime == 0.0f) {
+		WriteMovementSpeed(baseSpeed);
+		audioLogMessageBuffer[100000] = { "", "", "", 0.8f, true };
+		return;
+	}
+
+	int speedTimeInt = (int) std::round((std::abs(speedTime) + 0.49f));
+
+	if (speedTime > 0.0f) {
+		audioLogMessageBuffer[100000] = { "", "", "Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.", 0.8f, true};
+
+		WriteMovementSpeed(2.0f * baseSpeed);
+		if (speedTime - secondsInFloat < 0.0f) speedTime = 0.0f;
+		else speedTime -= secondsInFloat;
+		return;
+	}
+	
+	if (speedTime < 0.0f) {
+		audioLogMessageBuffer[100000] = { "", "", "Slowness active for " + std::to_string(speedTimeInt) + " seconds.", 0.8f, true };
+
+		WriteMovementSpeed(0.6f * baseSpeed);
+		if (speedTime + secondsInFloat > 0.0f) speedTime = 0.0f;
+		else speedTime += secondsInFloat;
+		return;
+	}
 }
 
 void APWatchdog::TriggerPowerSurge() {
@@ -694,11 +759,11 @@ void APWatchdog::CheckLasers() {
 		}
 	}
 
-	if (laserCount != state.activeLasers) {
-		state.activeLasers = laserCount;
-		panelLocker->UpdatePuzzleLock(state, 0x0A332);
+	if (laserCount != state->activeLasers) {
+		state->activeLasers = laserCount;
+		panelLocker->UpdatePuzzleLock(*state, 0x0A332);
 
-		if (laserCount >= state.requiredChallengeLasers && !laserRequirementMet) {
+		if (laserCount >= state->requiredChallengeLasers && !laserRequirementMet) {
 			queueMessage("Challenge Timer: Laser requirement met!");
 			laserRequirementMet = true;
 		}
@@ -776,42 +841,15 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		audioLogMessageBuffer[50] = { "", "Needs Dots.", "", 0.8f, false };
 	}
 
+	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
+		audioLogMessageBuffer[50] = { "", "Stone Pillar needs Triangles.", "", 0.8f, false };
+	}
+
 	if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
 		audioLogMessageBuffer[50] = { "", "Needs Dots, Black/White Squares.", "", 0.8f, false };
 	}
 
-	if (bunkerPuzzlesCube.containsPoint(playerPosition) && !(state.unlockedColoredStones && state.unlockedStones)) {
+	if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
 		audioLogMessageBuffer[50] = { "", "Panels in the Bunker need", "Black/White Squares, Colored Squares.", 0.8f, false };
-	}
-}
-
-void AudioLogMessageDisplayer::action() {
-	bool displayingMessage = false;
-
-	auto it = audioLogMessageBuffer->begin();
-	while (it != audioLogMessageBuffer->end())
-	{
-		int priority = it->first;
-		AudioLogMessage* message = &it->second;
-
-
-
-		if (!displayingMessage || message->countWhileOutprioritized) message->time -= 0.1f;
-
-		if (message->time < 0) {
-			it = audioLogMessageBuffer->erase(it);
-			continue;
-		}
-		else
-		{
-			if (!displayingMessage) _memory->DisplaySubtitles(message->line1, message->line2, message->line3);
-			displayingMessage = true;
-		}
-
-		++it;
-	}
-
-	if (!displayingMessage) {
-		_memory->DisplaySubtitles("", "", "");
 	}
 }

@@ -22,7 +22,7 @@ struct AudioLogMessage {
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState s) : Watchdog(0.5f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -34,15 +34,13 @@ public:
 		state = s;
 	}
 
-	virtual void start();
-
 	int skippedPuzzles = 0;
 	int availablePuzzleSkips = 0;
 
 	HWND skipButton;
 	HWND availableSkips;
 
-	APState state;
+	APState* state;
 
 	virtual void action();
 
@@ -74,13 +72,16 @@ private:
 	int finalPanel;
 	bool isCompleted = false;
 
+	int halfSecondCounter = 0;
+
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
 
 	float baseSpeed = 2.0f;
 	float currentSpeed = 2.0f;
 	bool hasTemporarySpeedModdification = false;
-	std::chrono::system_clock::time_point temporarySpeedModdificationStartTime;
+	std::chrono::system_clock::time_point temporarySpeedModificationTime;
+	bool hasEverModifiedSpeed = false;
 
 	std::queue<std::string> outstandingMessages;
 	int messageCounter = 0;
@@ -97,11 +98,14 @@ private:
 
 	int storageCheckCounter = 6;
 
+	float speedTime = 0.0f;
+
 	void DisplayMessage();
 
 	void DisableCollisions();
 
 	void AudioLogPlaying();
+	void DisplayAudioLogMessage();
 
 	void RefreshDoorCollisions();
 
@@ -124,6 +128,7 @@ private:
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
 	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5);
 	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2, -96.3, 5.8, 172.3, -101.1, 11.5);
+	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9, 5, -148, -154.8, 9);
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 
@@ -161,15 +166,4 @@ public:
 
 private:
 	APClient* ap;
-};
-
-class AudioLogMessageDisplayer : public Watchdog {
-public:
-	AudioLogMessageDisplayer(std::map<int, AudioLogMessage>* audioLogMessageBuffer) : Watchdog(0.1f) {
-		this->audioLogMessageBuffer = audioLogMessageBuffer;
-	}
-	virtual void action();
-
-private:
-	std::map<int, AudioLogMessage>* audioLogMessageBuffer;
 };
