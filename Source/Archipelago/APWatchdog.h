@@ -64,6 +64,13 @@ public:
 	}
 
 	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
+
+	void InfiniteChallenge(bool enable) {
+		_memory->SetInfiniteChallenge(enable);
+
+		if (enable) queueMessage("Challenge Timer disabled.");
+		if (!enable) queueMessage("Challenge Timer reenabled.");
+	}
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;

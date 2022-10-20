@@ -21,6 +21,7 @@ class APState
 		bool unlockedFullDots = false;
 		int activeLasers = 0;
 		int requiredChallengeLasers = 11;
+		int requiredMountainLasers = 7;
 };
 
 //Puzzle Symbols

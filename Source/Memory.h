@@ -158,6 +158,8 @@ public:
 		CallVoidFunction(id, activateLaserFunction);
 	}
 
+	void SetInfiniteChallenge(bool enable);
+
 	void RemoveMesh(int id);
 
 	void DisplayHudMessage(std::string s);
@@ -190,6 +192,9 @@ public:
 	static uint64_t displaySubtitlesFunction;
 	static uint64_t displaySubtitlesFunction2;
 	static uint64_t displaySubtitlesFunction3;
+	static uint64_t _recordPlayerUpdate;
+	static uint64_t _getSoundFunction;
+	static uint64_t _bytesLengthChallenge;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;

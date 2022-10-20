@@ -30,6 +30,7 @@ struct PuzzleData
 		bool hasSymmetry = false;
 		bool hasFullDots = false;
 		bool needsChallengeLasers = false;
+		bool needsMountainLasers = false;
 
 		int grid_size_x;
 		int grid_size_y;

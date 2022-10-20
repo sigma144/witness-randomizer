@@ -762,9 +762,9 @@ void APWatchdog::CheckLasers() {
 	if (laserCount != state->activeLasers) {
 		state->activeLasers = laserCount;
 		panelLocker->UpdatePuzzleLock(*state, 0x0A332);
+		panelLocker->UpdatePuzzleLock(*state, 0x3D9A9);
 
 		if (laserCount >= state->requiredChallengeLasers && !laserRequirementMet) {
-			queueMessage("Challenge Timer: Laser requirement met!");
 			laserRequirementMet = true;
 		}
 	}

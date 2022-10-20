@@ -50,6 +50,7 @@
 #define IDC_COLORBLIND 0x503
 #define IDC_DOUBLE 0x504
 #define IDC_COLLECT 0x550
+#define IDC_CHALLENGE 0x560
 
 #define SHAPE_11 0x1000
 #define SHAPE_12 0x2000
@@ -82,7 +83,7 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError, hwndLoadCredentials, hwndCollect;
+HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError, hwndLoadCredentials, hwndCollect, hwndChallenge;
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -106,6 +107,7 @@ int lastSeed;
 bool lastHard;
 bool colorblind;
 bool collect;
+bool challenge;
 std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24, SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
 std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }; //L-shape
 std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
@@ -165,6 +167,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_COLLECT:
 			collect = !IsDlgButtonChecked(hwnd, IDC_COLLECT);
 			CheckDlgButton(hwnd, IDC_COLLECT, collect);
+			break;
+
+		case IDC_CHALLENGE:
+			challenge = !IsDlgButtonChecked(hwnd, IDC_CHALLENGE);
+			if(apRandomizer->InfiniteChallenge(challenge)) CheckDlgButton(hwnd, IDC_CHALLENGE, challenge);
 			break;
 
 		case IDC_RETURN:
@@ -334,6 +341,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
 			SetWindowText(hwndRandomize, L"Randomized!");
+
+			EnableWindow(hwndChallenge, true);
 
 			if (hard)
 				apRandomizer->GenerateHard(hwndSkip, hwndAvailableSkips);
@@ -655,6 +664,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		10, 90, 570, 35, hwnd, (HMENU)IDC_COLLECT, hInstance, NULL);
 
+	hwndChallenge = CreateWindow(L"BUTTON", L"Disable Challenge Timer",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		10, 262, 185, 17, hwnd, (HMENU)IDC_CHALLENGE, hInstance, NULL);
+
 #if _DEBUG
 	auto defaultAddress = L"localhost";
 	auto defaultUser = L"Witness";
@@ -701,6 +714,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		10, 220, 130, 26, hwnd, (HMENU)IDC_LOADCREDENTIALS, hInstance, NULL);
 
 	EnableWindow(hwndSkip, false);
+	EnableWindow(hwndChallenge, false);
 
 	hwndLoadingText = CreateWindow(L"STATIC", L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,

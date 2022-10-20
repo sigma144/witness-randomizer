@@ -128,6 +128,9 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasTetris = true;
 		needsChallengeLasers = true;
 	}
+	else if (id == 0x3D9A9) { // Challenge timer (can't lock the individual challenge panels)
+		needsMountainLasers = true;
+	}
 }
 
 void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {

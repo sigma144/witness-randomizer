@@ -764,6 +764,7 @@ const inline int AllPuzzles[]{
 		0x181F5, 0x18488, 0x17E2B, 0x17C0A, 0x17E07, // Swamp bridge controlls
 
 		0x0A332, // Challenge Timer
+		0x3D9A9,
 };
 
 class CollisionCube

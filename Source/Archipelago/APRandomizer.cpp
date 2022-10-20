@@ -141,6 +141,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		}
 
 		state.requiredChallengeLasers = ChallengeLasers;
+		state.requiredMountainLasers = MountainLasers;
 
 		if (slotData.contains("progressive_item_lists")) {
 			for (auto& [key, val] : slotData["progressive_item_lists"].items()) {
@@ -450,4 +451,9 @@ void APRandomizer::SeverDoors() {
 	for (int id : allDoors) {
 		async->SeverDoor(id);
 	}
+}
+
+bool APRandomizer::InfiniteChallenge(bool enable) {
+	if(randomizationFinished) async->InfiniteChallenge(enable);
+	return randomizationFinished;
 }

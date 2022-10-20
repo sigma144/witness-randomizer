@@ -85,7 +85,7 @@ int find(const std::vector<byte> &data, const std::vector<byte> &search) {
 
 int Memory::findGlobals() {
 	const std::vector<byte> scanBytes = {0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10};
-	#define BUFFER_SIZE 0x10000 // 10 KB
+	#define BUFFER_SIZE 0x100000 // 100 KB
 	std::vector<byte> buff;
 	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
 
@@ -114,13 +114,134 @@ void Memory::findPlayerPosition() {
 	});
 }
 
-void Memory::findImportantFunctionAddresses()
-{
+void Memory::SetInfiniteChallenge(bool enable) {
+	if (_bytesLengthChallenge == 0) { //first time, find the music file in memory
+		char buffer[128];
+		std::string name = "peer_gynt";
+
+		memset(buffer, 0, sizeof(buffer));
+
+		strcpy_s(buffer, name.c_str());
+
+		auto challengeStuff = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		__int64 soundName = reinterpret_cast<__int64>(challengeStuff);
+		__int64 returnAddress = soundName + 0x20;
+
+		WriteProcessMemory(_handle, challengeStuff, buffer, sizeof(buffer), NULL);
+
+		uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, 0x00BFF * 8, 0 }));
+
+		char asmBuff[] =
+			"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax, function address
+			"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx, address of record player
+			"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx, string name of sound
+			"\x49\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov r8, 0 (necessary for call)
+			"\x48\x83\xEC\x48" // sub rsp, 48
+			"\xFF\xD0" // call rax
+			"\x48\x83\xC4\x48" // add rsp, 48
+			"\x48\xBB\x00\x00\x00\x00\x00\x00\x00\x00" //mov rbx, return address
+			"\x48\x89\x03" // mov [rbx],rax
+			"\xC3"; // ret
+
+		asmBuff[2] = _getSoundFunction & 0xff;
+		asmBuff[3] = (_getSoundFunction >> 8) & 0xff;
+		asmBuff[4] = (_getSoundFunction >> 16) & 0xff;
+		asmBuff[5] = (_getSoundFunction >> 24) & 0xff;
+		asmBuff[6] = (_getSoundFunction >> 32) & 0xff;
+		asmBuff[7] = (_getSoundFunction >> 40) & 0xff;
+		asmBuff[8] = (_getSoundFunction >> 48) & 0xff;
+		asmBuff[9] = (_getSoundFunction >> 56) & 0xff;
+		asmBuff[12] = offset & 0xff;
+		asmBuff[13] = (offset >> 8) & 0xff;
+		asmBuff[14] = (offset >> 16) & 0xff;
+		asmBuff[15] = (offset >> 24) & 0xff;
+		asmBuff[16] = (offset >> 32) & 0xff;
+		asmBuff[17] = (offset >> 40) & 0xff;
+		asmBuff[18] = (offset >> 48) & 0xff;
+		asmBuff[19] = (offset >> 56) & 0xff;
+		asmBuff[22] = soundName & 0xff;
+		asmBuff[23] = (soundName >> 8) & 0xff;
+		asmBuff[24] = (soundName >> 16) & 0xff;
+		asmBuff[25] = (soundName >> 24) & 0xff;
+		asmBuff[26] = (soundName >> 32) & 0xff;
+		asmBuff[27] = (soundName >> 40) & 0xff;
+		asmBuff[28] = (soundName >> 48) & 0xff;
+		asmBuff[29] = (soundName >> 56) & 0xff;
+
+		asmBuff[52] = returnAddress & 0xff;
+		asmBuff[53] = (returnAddress >> 8) & 0xff;
+		asmBuff[54] = (returnAddress >> 16) & 0xff;
+		asmBuff[55] = (returnAddress >> 24) & 0xff;
+		asmBuff[56] = (returnAddress >> 32) & 0xff;
+		asmBuff[57] = (returnAddress >> 40) & 0xff;
+		asmBuff[58] = (returnAddress >> 48) & 0xff;
+		asmBuff[59] = (returnAddress >> 56) & 0xff;
+
+		SIZE_T allocation_size = sizeof(asmBuff);
+
+		LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		WriteProcessMemory(_handle, allocation_start, asmBuff, allocation_size, NULL);
+		HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+		WaitForSingleObject(thread, INFINITE);
+
+		__int64 sound_object[1];
+		SIZE_T numBytesWritten;
+		ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(returnAddress), sound_object, 8, &numBytesWritten);
+
+		_bytesLengthChallenge = sound_object[0] + 0x28;
+	}
+
+	if (enable) {
+		char asmBuff[] = "\xEB\x07\x66\x90";
+
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(_recordPlayerUpdate);
+
+		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+
+		char asmBuff2[] = "\x00\x00\x00"; // Length of song to 0
+
+		LPVOID addressPointer2 = reinterpret_cast<LPVOID>(_bytesLengthChallenge);
+
+		WriteProcessMemory(_handle, addressPointer2, asmBuff2, sizeof(asmBuff2) - 1, NULL);
+
+
+	}
+	else {
+		char asmBuff[] = "\x48\x8B\x4B\x18";
+
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(_recordPlayerUpdate);
+
+		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+
+		char asmBuff2[] = "\x67\xB1\x26"; // Length of song to original length
+
+		LPVOID addressPointer2 = reinterpret_cast<LPVOID>(_bytesLengthChallenge);
+
+		WriteProcessMemory(_handle, addressPointer2, asmBuff2, sizeof(asmBuff2) - 1, NULL);
+	}
+}
+
+void Memory::findImportantFunctionAddresses(){
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x49, 0x8B, 0xF8, 0x48, 0x8B, 0xF2, 0x48, 0x8B, 0xD9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->_getSoundFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
+	
+
+	executeSigScan({ 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0xE9, 0xB3 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->_recordPlayerUpdate = _baseAddress + offset + index - 0x0C;
+
+		return true;
+	});
+
 	//open door
 	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
-				this->openDoorFunction = _baseAddress + index - 2;
+				this->openDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
 		}
@@ -130,21 +251,21 @@ void Memory::findImportantFunctionAddresses()
 
 	//init panel
 	executeSigScan({ 0x48, 0x89, 0x74, 0x24, 0x48, 0xFF, 0xC9, 0x8D, 0x70, 0xFF, 0x48, 0x89, 0x7C }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->initPanelFunction = _baseAddress + index - 0x32;
+		this->initPanelFunction = _baseAddress + offset + index - 0x32;
 
 		return true;
 	});
 
 	//display subtitles
 	executeSigScan({ 0x48, 0x89, 0xB4, 0x24, 0xC8, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x4B, 0x08, 0x4C, 0x8D, 0x84, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->displaySubtitlesFunction = _baseAddress + index - 9;
+		this->displaySubtitlesFunction = _baseAddress + offset + index - 9;
 
 		return true;
 	});
 
 	//display subtitles2
 	executeSigScan({ 0xF3, 0x0F, 0x10, 0x8C, 0x24, 0xE0, 0x00, 0x00, 0x00, 0x8B, 0xCE, 0x4C, 0x8B, 0xC0, 0x48, 0x89, 0xBC }, [this](__int64 offset, int index, const std::vector<byte>& data) { 
-		this->displaySubtitlesFunction2 = _baseAddress + index;
+		this->displaySubtitlesFunction2 = _baseAddress + offset + index;
 		
 		return true;
 	});
@@ -153,7 +274,7 @@ void Memory::findImportantFunctionAddresses()
 	executeSigScan({0xC4, 0xD0, 0x00, 0x00, 0x00, 0x41, 0x5E, 0x5F, 0x5D, 0xC3 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index] == 0x48  && data[index + 1] == 0x89 && data[index + 2] == 0x5C) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
-				this->displaySubtitlesFunction3 = _baseAddress + index;
+				this->displaySubtitlesFunction3 = _baseAddress + offset + index;
 				break;
 			}
 		}
@@ -164,32 +285,32 @@ void Memory::findImportantFunctionAddresses()
 
 	//Update Entity Position
 	executeSigScan({ 0x44, 0x0F, 0xB6, 0xCA, 0x4C, 0x8D, 0x41, 0x34 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->updateEntityPositionFunction = _baseAddress + index;
+		this->updateEntityPositionFunction = _baseAddress + offset + index;
 
 		return true;
 	});
 
 	//Update Entity Position
 	executeSigScan({ 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0x42, 0x18, 0x48, 0x8B, 0xFA, 0x48, 0x85, 0xC0, 0x0F, 0x84 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->powerNextFunction = _baseAddress + index - 8;
+		this->powerNextFunction = _baseAddress + offset + index - 8;
 
 		return true;
 	});
 
 	//Activate Laser
 	executeSigScan({ 0x40, 0x53, 0x48, 0x83, 0xEC, 0x60, 0x83, 0xB9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->activateLaserFunction = _baseAddress + index;
+		this->activateLaserFunction = _baseAddress + offset + index;
 
 		return true;
 	});
 
 	//Display Hud + change hudTime
 	executeSigScan({ 0x40, 0x53, 0x48, 0x83, 0xEC, 0x20, 0x83, 0x3D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->displayHudFunction = _baseAddress + index;
+		this->displayHudFunction = _baseAddress + offset + index;
 
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // find the movss statement
-				this->hudTimePointer = _baseAddress + index + 2;
+				this->hudTimePointer = _baseAddress + offset + index + 2;
 
 				int buff[1];
 
@@ -215,12 +336,12 @@ void Memory::findImportantFunctionAddresses()
 	//Boat speed
 	//Find Entity_Boat::set_speed
 	executeSigScan({0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x40, 0x0F, 0x29, 0x74, 0x24, 0x30, 0x8B, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		this->setBoatSpeed = _baseAddress + index;
+		this->setBoatSpeed = _baseAddress + offset + index;
 
 		for (; index < data.size(); index++) { // We now need to look for "cmp edi 04", "cmp edi 03", "cmp edi 02", and "cmp edi 01"
 			  
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x04) { // find cmp edi 04 (Will only comment the rest once as it's the same for the other 3)
-				this->boatSpeed4 = _baseAddress + index + 7; // movss xmm0 ->register<- is 7 bytes later
+				this->boatSpeed4 = _baseAddress + offset + index + 7; // movss xmm0 ->register<- is 7 bytes later
 
 				int buff[1];
 
@@ -244,7 +365,7 @@ void Memory::findImportantFunctionAddresses()
 				}, boatSpeed4Address); // Start this Sigscan for a new constant at the location of the original constant to find one "nearby"
 			}
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x03) { // find cmp edi 03
-				this->boatSpeed3 = _baseAddress + index + 7;
+				this->boatSpeed3 = _baseAddress + offset + index + 7;
 
 				int buff[1];
 
@@ -268,7 +389,7 @@ void Memory::findImportantFunctionAddresses()
 					}, boatSpeed3Address);
 			}
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x02) { // find cmp edi 02
-				this->boatSpeed2 = _baseAddress + index + 7;
+				this->boatSpeed2 = _baseAddress + offset + index + 7;
 
 				int buff[1];
 
@@ -292,7 +413,7 @@ void Memory::findImportantFunctionAddresses()
 					}, boatSpeed2Address);
 			}
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x01) { // find cmp edi 01
-				this->boatSpeed1 = _baseAddress + index + 7;
+				this->boatSpeed1 = _baseAddress + offset + index + 7;
 
 				int buff[1];
 
@@ -322,7 +443,7 @@ void Memory::findImportantFunctionAddresses()
 	});
 
 	executeSigScan({ 0xF3, 0x0F, 0x59, 0xF0, 0xF3, 0x41, 0x0F, 0x58, 0xF0, 0x0F, 0x2F, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		__int64 comissStatement = _baseAddress + index + 0xE;
+		__int64 comissStatement = _baseAddress + offset + index + 0xE;
 
 		char asmBuff[] = // Bypass the upper bound check (comiss) for the boat speed
 			"\x38\xC0\x90\x90\x90\x90\x90"; //cmp al,al
@@ -381,12 +502,12 @@ __int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>
 	return offset + index + bytesToEOL + *(int*)&data[index];
 }
 
-#define BUFFER_SIZE 0x1000000 // 10 KB
+#define BUFFER_SIZE 0x10000
 void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc, uintptr_t startAddress) {
 	std::vector<byte> buff;
 	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
 
-	for (uintptr_t i = startAddress; i < startAddress + 0x50000000; i += BUFFER_SIZE) {
+	for (uintptr_t i = startAddress; i < startAddress + 0x200000000; i += BUFFER_SIZE) {
 		SIZE_T numBytesWritten;
 		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(i), &buff[0], buff.size(), &numBytesWritten)) continue;
 		buff.resize(numBytesWritten);
@@ -807,6 +928,9 @@ uint64_t Memory::relativeBoatSpeed1Address = 0;
 uint64_t Memory::displaySubtitlesFunction = 0;
 uint64_t Memory::displaySubtitlesFunction2 = 0;
 uint64_t Memory::displaySubtitlesFunction3 = 0;
+uint64_t Memory::_recordPlayerUpdate = 0;
+uint64_t Memory::_getSoundFunction = 0;
+uint64_t Memory::_bytesLengthChallenge = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

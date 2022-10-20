@@ -93,7 +93,7 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 			case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
 			case ITEM_SQUARES: if (puzzle->hasStones || puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);			break;
 			case ITEM_ARROWS: if (puzzle->hasArrows) puzzlesToUpdate.push_back(puzzle);			break;
-			case LASER_CHECK: if (puzzle->id == 0x0A332)  puzzlesToUpdate.push_back(puzzle); break;
+			case LASER_CHECK: if (puzzle->id == 0x0A332 || puzzle->id == 0x3D9A9)  puzzlesToUpdate.push_back(puzzle); break;
 
 			default:																																			break;
 		}
@@ -136,7 +136,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		|| (puzzle->hasSoundDots && !state.unlockedSoundDots)
 		|| (puzzle->hasArrows && !state.unlockedArrows)
 		|| (puzzle->hasSymmetry && !state.unlockedSymmetry)
-		|| (puzzle->needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers))
+		|| (puzzle->needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers)
+		|| (puzzle->needsMountainLasers && state.activeLasers < state.requiredMountainLasers))
 	{
 		//puzzle should be locked
 		if (!isLocked)
@@ -144,6 +145,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 		const int width = 4;
 		const int height = 2;
+
+		float pattern_scale = 0.5f;
 
 		std::vector<float> intersections;
 		std::vector<int> intersectionFlags;
@@ -153,36 +156,48 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		std::vector<int> decorationsFlags;
 		std::vector<int> polygons;
 
-		addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB, id == 0x0A332);
-
-		addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons, id == 0x0A332);
-
-
-		if (id == 0x0A332) {
-			int currentIntersections = intersections.size();		
-
+ 		if (id == 0x3D9A9) {
 			std::string laserText = std::to_string(state.activeLasers);
 			laserText += "/";
-			laserText += std::to_string(state.requiredChallengeLasers);
-			
-			createText(id, laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.31f, 0.05f, 0.42f, 0.58f);
+			laserText += std::to_string(state.requiredMountainLasers);
+			std::string laserText2 = "Lasers:";
 
-			int newIntersections = intersections.size();
+			pattern_scale = 0.3f;
 
-			for (int i = currentIntersections; i < newIntersections; i += 2) {
-				float x = intersections[i];
-				intersections[i] = intersections[i + 1];
-				intersections[i + 1] = x;
-			}
+			createText(id, laserText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - laserText2.size() * 0.029f, 0.515f + laserText2.size() * 0.029f, 0.38f, 0.47f);
+			createText(id, laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - laserText.size() * 0.029f, 0.5f + laserText.size() * 0.029f, 0.53f, 0.62f);
 		}
-		else
-		{
-			createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+		else {
+			addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB, id == 0x0A332);
+
+			addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons, id == 0x0A332);
+		
+			if (id == 0x0A332) {
+				int currentIntersections = intersections.size();
+
+				std::string laserText = std::to_string(state.activeLasers);
+				laserText += "/";
+				laserText += std::to_string(state.requiredChallengeLasers);
+
+				createText(id, laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.31f, 0.05f, 0.42f, 0.58f);
+
+				int newIntersections = intersections.size();
+
+				for (int i = currentIntersections; i < newIntersections; i += 2) {
+					float x = intersections[i];
+					intersections[i] = intersections[i + 1];
+					intersections[i + 1] = x;
+				}
+			}
+			else
+			{
+				createText(id, "missing", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
+			}
 		}
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
 		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
-		_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / puzzle->path_width_scale });
+		_memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale / puzzle->path_width_scale });
 		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
