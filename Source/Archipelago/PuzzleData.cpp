@@ -128,8 +128,11 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		hasTetris = true;
 		needsChallengeLasers = true;
 	}
-	else if (id == 0x3D9A9) { // Challenge timer (can't lock the individual challenge panels)
+	else if (id == 0x3D9A9) { // Elevator
 		needsMountainLasers = true;
+	}
+	else if (id == 0x09FDC || id == 0x09FF7 || id == 0x09F82 || id == 0x09FF8 || id == 0x09D9F || id == 0x0A01B || id == 0x0A01F || id == 0x17E67 || id == 0x0A079) { // Bunker Panels don't pick up their white squares
+		hasStones = true;
 	}
 }
 
