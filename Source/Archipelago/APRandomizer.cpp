@@ -169,6 +169,20 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
+		if (slotData.contains("door_hexes_in_the_pool")) {
+			for (int key : slotData["door_hexes_in_the_pool"]) {
+				doorsActuallyInTheItemPool.insert(key);
+			}
+		}
+		else
+		{
+			for (auto& [key, val] : itemIdToDoorSet) {
+				for(int door : val){
+					doorsActuallyInTheItemPool.insert(door);
+				}
+			}
+		}
+
 		if (slotData.contains("log_ids_to_hints")) {
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
@@ -184,12 +198,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				}
 				
 				audioLogMessages.insert({ logId, std::pair(message, location_id_in_this_world) });
-			}
-		}
-
-		if (slotData.contains("door_hexes")) {
-			for (int val : slotData["door_hexes"]) {
-				allDoors.insert(val);
 			}
 		}
 
@@ -416,7 +424,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(allDoors);
+		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
@@ -434,7 +442,7 @@ void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 	_memory->PowerNext(0x03629, 0x36);
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(allDoors);
+		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
 }
 
 void APRandomizer::PreventSnipes()
@@ -448,7 +456,7 @@ void APRandomizer::SkipPuzzle() {
 }
 
 void APRandomizer::SeverDoors() {
-	for (int id : allDoors) {
+	for (int id : doorsActuallyInTheItemPool) {
 		async->SeverDoor(id);
 	}
 }
