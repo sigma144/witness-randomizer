@@ -48,6 +48,8 @@ class APRandomizer {
 
 		bool InfiniteChallenge(bool enable);
 
+		void Init();
+
 	private:
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
