@@ -186,10 +186,33 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 	{
 		if (it->second == locationId) {
 			if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
-				if(panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-				Special::SkipPanel(it->first, "Collected", false);
-				WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
-				WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+				if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61) {
+					std::vector<int> bridgePanels;
+					if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
+					else if (it->first == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
+					else if (it->first == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
+					else if (it->first == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
+					else if (it->first == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
+					else if (it->first == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
+
+					if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
+					Special::SkipPanel(it->first, "Collected", false);
+					WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); 
+
+					for (int panel : bridgePanels) {
+						if (ReadPanelData<int>(panel, SOLVED)) continue;
+						
+						if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
+						Special::SkipPanel(panel, "Collected", false);
+						WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
+					}
+				}
+				else{
+					if(panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
+					Special::SkipPanel(it->first, "Collected", false);
+					WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
+					WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+				}
 			}
 
 			it = panelIdToLocationId.erase(it);
