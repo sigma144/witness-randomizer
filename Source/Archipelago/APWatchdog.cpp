@@ -78,7 +78,7 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0x09F7F && !isCompleted)
 	{
-		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17C34, POWER);
+		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17C6C, CABLE_POWER);
 
 		if (power > 0.0f) {
 			isCompleted = true;
@@ -87,7 +87,7 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0xFFF00 && !isCompleted)
 	{
-		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17FA2, POWER);
+		float power = ReadPanelDataIntentionallyUnsafe<float>(0x1800F, CABLE_POWER);
 
 		if (power > 0.0f) {
 			isCompleted = true;
@@ -103,7 +103,38 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (panelId == 0x09FD2) {
 			int cableId = 0x09FCD;
-			int CABLE_POWER = 0xC4;
+
+			if (ReadPanelData<int>(cableId, CABLE_POWER))
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
+
+		if (panelId == 0x034E3) {
+			int cableId = 0x034EB;
+
+			if (ReadPanelData<int>(cableId, CABLE_POWER))
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
+
+		if (panelId == 0x014D1) {
+			int cableId = 0x00BED;
 
 			if (ReadPanelData<int>(cableId, CABLE_POWER))
 			{

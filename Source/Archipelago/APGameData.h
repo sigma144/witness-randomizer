@@ -14,6 +14,8 @@
 #define CABLE_TARGET_1 0xD0
 #define CABLE_TARGET_2 0xD4
 
+#define CABLE_POWER 0xC4
+
 #define LASER_TARGET 0xD0
 
 #define CABLE_COLOR_R 0x158
@@ -102,7 +104,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x0A0C9, {{0x0A0C8, PANEL, TARGET }}}, // Cargo Box
 	{0x034F5, {{0x0351C, CABLE, CABLE_TARGET_0 }}}, // Town Wooden Roof Staircase
 	{0x28A61, {{0x28998, PANEL, TARGET }}}, // Town Tinted Door to RGB House
-	{0x2897B, {{0x034EB, CABLE, ENTITY_NAME }}}, // Town Tinted Door to RGB House
+	{0x2897B, {{0x034EB, CABLE, CABLE_TARGET_0}, {0x034EB, CABLE, CABLE_COLOR_R}, {0x034EB, CABLE, CABLE_COLOR_G}, {0x034EB, CABLE, CABLE_COLOR_B}} }, // Town RGB Staircase
 	{0x03BB0, {{0x28A0D, PANEL, TARGET }, {0x28A0D, PANEL, MOUNT_PARENT_ID }}}, // Town Door to Church
 	{0x28AA2, {{0x28A79, PANEL, TARGET }}}, // Maze Staircase
 	{0x1845B, {{0x17F5F, PANEL, TARGET }, /*{0x17F5F, PANEL, MOUNT_PARENT_ID }*/}}, // Windmill Door
@@ -132,7 +134,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 
 	{0x18507, {{0x00bc9, CABLE, CABLE_TARGET_0}}}, // Door to Broken Shapers
 	{0x183F2, {{0x00596, PANEL, TARGET}}}, // Red Pump
-	{0x305D5, {{0x014c4, MULTIPANEL, MULTIPANEL_TARGET}}}, // Red Exit
+	{0x305D5, {{0x00BED, CABLE, CABLE_TARGET_0}, {0x00BED, CABLE, CABLE_COLOR_R}, {0x00BED, CABLE, CABLE_COLOR_G}, {0x00BED, CABLE, CABLE_COLOR_B}} }, // Red Exit
 
 	{0x18482, {{0x00E3A, PANEL, TARGET}}}, // Blue Pump
 	{0x0A1D6, {{0x00E3A, PANEL, TARGET}}}, // Purple Pump
