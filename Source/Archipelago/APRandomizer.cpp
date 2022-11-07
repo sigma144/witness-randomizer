@@ -32,7 +32,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		}
 
 		std::vector<std::string> receivedItems;
-		std::map<std::string, int> counts;
+		std::map<std::string, int> itemCounts;
+		std::map<std::string, std::array<float, 3>> itemColors;
 
 		_memory->WritePanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12, { mostRecentItemId });
 		
@@ -89,24 +90,27 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				name += " (" + ap->get_item_name(realitem) + ")";
 			}
 
-			if (counts.find(name) == counts.end()) {
-				counts[name] = 1;
+			// Track the quantity of this item received in this batch.
+			if (itemCounts.find(name) == itemCounts.end()) {
+				itemCounts[name] = 1;
 				receivedItems.emplace_back(name);
 			}
-
 			else {
-				counts[name]++;
+				itemCounts[name]++;
 			}
+
+			// Assign a color to the item.
+			itemColors[name] = getColorForItem(item);
 		}
 
 		for (std::string name : receivedItems) {
+			// If we received more than one of an item in this batch, add the quantity to the output string.
 			std::string count = "";
-
-			if (counts[name] > 1) {
-				count = " (x" + std::to_string(counts[name]) + ")";
+			if (itemCounts[name] > 1) {
+				count = " (x" + std::to_string(itemCounts[name]) + ")";
 			}
 
-			async->queueMessage("Received " + name + count + ".");
+			async->queueMessage("Received " + name + count + ".", itemColors[name]);
 		}
 	});
 
@@ -273,12 +277,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			int location = item.location;
 
 			if (panelIdToLocationIdReverse.count(location) && !_memory->ReadPanelData<int>(panelIdToLocationIdReverse[location], SOLVED)) {
-				async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".");
+				async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorForItem(item));
 			}
 			else
 			{
 				panelLocker->SetItemReward(findResult->first, item);
-				if(!receiving) async->queueMessage("Sent " + itemName + " to " + player + ".");
+				if(!receiving) async->queueMessage("Sent " + itemName + " to " + player + ".", getColorForItem(item));
 			}
 		}
 	});
@@ -462,4 +466,23 @@ void APRandomizer::SeverDoors() {
 bool APRandomizer::InfiniteChallenge(bool enable) {
 	if(randomizationFinished) async->InfiniteChallenge(enable);
 	return randomizationFinished;
+}
+
+std::array<float, 3> APRandomizer::getColorForItem(const APClient::NetworkItem& item)
+{
+	// Pick the appropriate color for this item based on its progression flags. Colors are loosely based on AP codes but somewhat
+	//   paler to match the Witness aesthetic. See https://github.com/ArchipelagoMW/Archipelago/blob/main/NetUtils.py for details.
+	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+		return { 0.82f, 0.76f, 0.96f };
+	}
+	else if (item.flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+		// NOTE: "never exclude" here maps onto "useful" in the AP source.
+		return { 0.68f, 0.75f, 0.94f };
+	}
+	else if (item.flags & APClient::ItemFlags::FLAG_TRAP) {
+		return { 1.f, 0.7f, 0.67f };
+	}
+	else {
+		return { 0.81f, 1.f, 1.f };
+	}
 }

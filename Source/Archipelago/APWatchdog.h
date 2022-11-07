@@ -10,6 +10,11 @@
 #include "APState.h"
 #include "PanelLocker.h"
 
+struct HudMessage {
+	std::string text;
+	std::array<float, 3> rgbColor;
+};
+
 struct AudioLogMessage {
 	std::string line1;
 	std::string line2;
@@ -59,7 +64,19 @@ public:
 
 	void DoubleDoorTargetHack(int id);
 
-	void queueMessage(std::string message) {
+	void queueMessage(std::string text) {
+		HudMessage message;
+		message.text = text;
+		message.rgbColor = { 1.0f, 1.0f, 1.0f };
+
+		outstandingMessages.push(message);
+	}
+
+	void queueMessage(std::string text, std::array<float, 3> rgbColor) {
+		HudMessage message;
+		message.text = text;
+		message.rgbColor = rgbColor;
+
 		outstandingMessages.push(message);
 	}
 
@@ -90,7 +107,7 @@ private:
 	std::chrono::system_clock::time_point temporarySpeedModificationTime;
 	bool hasEverModifiedSpeed = false;
 
-	std::queue<std::string> outstandingMessages;
+	std::queue<HudMessage> outstandingMessages;
 	int messageCounter = 0;
 
 	std::map<int, AudioLogMessage> audioLogMessageBuffer;

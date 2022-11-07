@@ -162,7 +162,7 @@ public:
 
 	void RemoveMesh(int id);
 
-	void DisplayHudMessage(std::string s);
+	void DisplayHudMessage(std::string message, std::array<float, 3> rgbColor);
 
 	void DisplaySubtitles(std::string line1, std::string line2, std::string line3);
 
@@ -180,6 +180,7 @@ public:
 	static uint64_t hudTimePointer;
 	static uint64_t relativeAddressOf6;
 	static uint64_t displayHudFunction;
+	static uint64_t hudMessageColorAddresses[3]; // addresses of constant floats used for HUD message coloring
 	static uint64_t setBoatSpeed;
 	static uint64_t boatSpeed4;
 	static uint64_t boatSpeed3;

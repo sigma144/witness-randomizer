@@ -688,9 +688,9 @@ void APWatchdog::DisplayMessage() {
 
 	if (outstandingMessages.empty()) return;
 
-	std::string message = outstandingMessages.front();
+	HudMessage message = outstandingMessages.front();
 	outstandingMessages.pop();
-	_memory->DisplayHudMessage(message);
+	_memory->DisplayHudMessage(message.text, message.rgbColor);
 	
 	messageCounter = 8;
 }
