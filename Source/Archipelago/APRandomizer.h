@@ -70,6 +70,8 @@ class APRandomizer {
 		void setPuzzleLocks(HWND loadingHandle);
 
 		std::string buildUri(std::string& server);
+
+		std::array<float, 3> getColorForItem(const APClient::NetworkItem& item);
 };
 
 #define DATAPACKAGE_CACHE "ap_datapackage.json"
