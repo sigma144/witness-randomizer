@@ -436,6 +436,7 @@ void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 	//Mess with Town targets
 	Special::copyTarget(0x03C08, 0x28A0D); Special::copyTarget(0x28A0D, 0x28998);
 	Special::setTargetAndDeactivate(0x28998, 0x28A0D); Special::setTargetAndDeactivate(0x03C0C, 0x03C08);
+	Special::setPower(0x28A69, false);
 
 	_memory->PowerNext(0x03629, 0x36);
 
