@@ -20,8 +20,6 @@ This project was originally started by [NewSoupVi](https://github.com/newsoupvi)
 
 ## Witness Random Puzzle Generator
 
-#### Randomizer Version 1.2 is finally out! It includes numerous puzzle tweaks, nerfs, and bug fixes. Full change log coming shortly
-
 The Witness Random Puzzle Generator takes most of the puzzles in Jonathan Blow's "The Witness" and makes them into new, randomly generated puzzles. The mod requires the game in order to function. No game files will be altered, as the randomizer works enterly in RAM. This mod uses WinAPI, so it is only compatible with Microsoft Windows. There is a program you can use that might make it work with Linux; see https://marugawa.dk/witness-randomizer-on-linux for more details.
 
 This project is a fork of jbzdarkid's puzzle randomizer at https://github.com/jbzdarkid/witness-randomizer. His discoveries about how puzzle data is encoded in The Witness were invaluable to this project, so a huge thank you to jbzdarkid for his contributions.

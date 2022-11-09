@@ -1536,11 +1536,11 @@ void PuzzleList::GenerateSwampH()
 	generator->setGridSize(5, 5);
 	generator->pathWidth = 0.6f;
 	generator->setFlag(Generate::Config::BigShapes);
-	generator->generate(0x00001, Decoration::Dot_Intersection, 49, Decoration::Poly, 2, Decoration::Poly | Decoration::Negative, 1, Decoration::Start, 1);
-	generator->generate(0x014D2, Decoration::Dot_Intersection, 49, Decoration::Poly, 2, Decoration::Poly | Decoration::Negative, 2, Decoration::Start, 1);
+	generator->generate(0x00001, Decoration::Dot_Intersection, 36, Decoration::Poly, 2, Decoration::Poly | Decoration::Negative, 1, Decoration::Start, 1);
+	generator->generate(0x014D2, Decoration::Dot_Intersection, 36, Decoration::Poly, 2, Decoration::Poly | Decoration::Negative, 2, Decoration::Start, 1);
 	generator->removeFlag(Generate::Config::BigShapes);
-	generator->generate(0x014D4, Decoration::Dot_Intersection, 49, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Start, 1);
-	generator->generate(0x014D1, Decoration::Dot_Intersection, 49, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 2, Decoration::Start, 1);
+	generator->generate(0x014D4, Decoration::Dot_Intersection, 36, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Start, 1);
+	generator->generate(0x014D1, Decoration::Dot_Intersection, 36, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 2, Decoration::Start, 1);
 	//Modify Swamp Island
 	generator->resetConfig();
 	generator->initPanel(0x17C0A);
@@ -2036,7 +2036,7 @@ void PuzzleList::GenerateMountainH()
 	specialCase->initPillarSymmetry(generator, 0x0383F, Panel::Symmetry::PillarParallel);
 	generator->generate(0x0383F, Decoration::Triangle | Decoration::Color::Orange, 8);
 	specialCase->initPillarSymmetry(generator, 0x09E56, Panel::Symmetry::PillarHorizontal);
-	generator->generate(0x09E56, Decoration::Triangle | Decoration::Color::Orange, 4, Decoration::Dot_Intersection, 45);
+	generator->generate(0x09E56, Decoration::Triangle | Decoration::Color::Orange, 4, Decoration::Dot_Intersection, 36);
 	generator->setFlagOnce(Generate::Config::RequireCombineShapes);
 	generator->setGridSize(6, 4);
 	specialCase->initPillarSymmetry(generator, 0x03859, Panel::Symmetry::PillarRotational);
@@ -2124,7 +2124,7 @@ void PuzzleList::GenerateCavesH()
 	generator->setGridSize(5, 5);
 	generator->pathWidth = 0.85f;
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
-	generator->generate(0x32962, Decoration::Dot_Intersection, 49, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Start, 1);
+	generator->generate(0x32962, Decoration::Dot_Intersection, 36, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Start, 1);
 	generator->setFlagOnce(Generate::Config::ResetColors);
 	generator->setFlagOnce(Generate::Config::TreehouseLayout);
 	generator->setFlagOnce(Generate::Config::BigShapes);
@@ -2156,7 +2156,7 @@ void PuzzleList::GenerateCavesH()
 		{ Decoration::Eraser | Decoration::Color::White, 1 } }, Decoration::Triangle); 
 	generator->removeFlag(Generate::Config::DecorationsOnly);
 	generator->setFlagOnce(Generate::Config::RequireCancelShapes);
-	specialCase->generateCenterPerspective(0x288AA, { { Decoration::Dot_Intersection, 49 },{ Decoration::Poly, 2 },
+	specialCase->generateCenterPerspective(0x288AA, { { Decoration::Dot_Intersection, 36 },{ Decoration::Poly, 2 },
 		{ Decoration::Poly | Decoration::Negative | Decoration::Color::Blue, 4 } }, Decoration::Poly);
 
 	//Full Dots + Arrows
