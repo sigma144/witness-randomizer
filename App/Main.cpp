@@ -341,8 +341,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			if (hard) randomizer->GenerateHard(hwndLoadingText);
 			else randomizer->GenerateNormal(hwndLoadingText);
-			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
 			SetWindowText(hwndRandomize, L"Randomized!");
 
 			EnableWindow(hwndChallenge, true);
@@ -351,6 +349,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				apRandomizer->GenerateHard(hwndSkip, hwndAvailableSkips);
 			else
 				apRandomizer->GenerateNormal(hwndSkip, hwndAvailableSkips);
+
+			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
+			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
+
 			apRandomizer->PostGeneration(hwndLoadingText);
 
 			break;
