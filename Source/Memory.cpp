@@ -83,6 +83,27 @@ int find(const std::vector<byte> &data, const std::vector<byte> &search) {
 	return -1;
 }
 
+std::vector<int> findAll(const std::vector<byte>& sourceData, const std::vector<byte>& searchSequence) {
+	std::vector<int> foundIndices;
+	for (int sourceIndex = 0; sourceIndex < sourceData.size() - searchSequence.size(); sourceIndex++) {
+		bool foundMatch = true;
+
+		for (int comparisonIndex = 0; comparisonIndex < searchSequence.size(); comparisonIndex++) {
+			if (sourceData[sourceIndex + comparisonIndex] != searchSequence[comparisonIndex])
+			{
+				foundMatch = false;
+				break;
+			}
+		}
+
+		if (foundMatch) {
+			foundIndices.push_back(sourceIndex);
+		}
+	}
+
+	return foundIndices;
+}
+
 int Memory::findGlobals() {
 	const std::vector<byte> scanBytes = {0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10};
 	#define BUFFER_SIZE 0x100000 // 100 KB
@@ -328,6 +349,36 @@ void Memory::findImportantFunctionAddresses(){
 
 				break;
 			}
+		}
+
+		return true;
+	});
+
+	// Find hud_draw_headline and its three hardcoded float values for R, G, and B.
+	executeSigScan({ 0x48, 0x83, 0xEC, 0x68, 0xF2, 0x0F, 0x10, 0x05 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		// hud_draw_headline draws text twice: once for black text to use as a drop shadow and once using values that are assigned at runtime from hardcoded values. We need to
+		//   find the addresses of the three hardcoded values (which are all 1.0f) and store them off to be overwritten in the future.
+		uint64_t functionAddress = _baseAddress + offset + index;
+
+		// Read the function into memory to ensure that we have the entire function call. This is necessary in case the executeSigScan call found the function very, very close
+		//   to the end of its buffer.
+		const int functionSize = 0x200;
+		std::vector<byte> functionBody;
+		functionBody.resize(functionSize);
+
+		SIZE_T numBytesWritten;
+		ReadProcessMemory(_handle, reinterpret_cast<void*>(functionAddress), &functionBody[0], functionSize, &numBytesWritten);
+
+		// Find all three instances of 1.0f. (0x3f800000)
+		std::vector<int> foundIndices = findAll(functionBody, { 0x00, 0x00, 0x80, 0x3f });
+		if (foundIndices.size() != 3) {
+			return false;
+		}
+
+		// Assign values relative to the base function address.
+		for (int colorIndex = 0; colorIndex < 3; colorIndex++)
+		{
+			hudMessageColorAddresses[colorIndex] = functionAddress + foundIndices[colorIndex];
 		}
 
 		return true;
@@ -674,7 +725,7 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 	WaitForSingleObject(thread, INFINITE);
 }
 
-void Memory::DisplayHudMessage(std::string message) {
+void Memory::DisplayHudMessage(std::string message, std::array<float, 3> rgbColor) {
 	std::lock_guard<std::recursive_mutex> lock(mtx);
 	char buffer[1024];
 
@@ -692,8 +743,15 @@ void Memory::DisplayHudMessage(std::string message) {
 
 	WriteProcessMemory(_handle, _messageAddress, buffer, sizeof(buffer), NULL);
 
+	// Write the message's color values to the addresses of the constants we previously found.
+	const SIZE_T colorSize = sizeof(float);
+	for (int colorIndex = 0; colorIndex < 3; colorIndex++)
+	{
+		void* writeAddress = reinterpret_cast<void*>(hudMessageColorAddresses[colorIndex]);
+		void* readAddress = reinterpret_cast<void*>(&rgbColor[colorIndex]);
 
-
+		WriteProcessMemory(_handle, writeAddress, readAddress, colorSize, NULL);
+	}
 
 	__int64 funcAdress = displayHudFunction;
 	__int64 messageAddress = reinterpret_cast<__int64>(_messageAddress);
@@ -916,6 +974,7 @@ uint64_t Memory::activateLaserFunction = 0;
 uint64_t Memory::hudTimePointer = 0;
 uint64_t Memory::updateEntityPositionFunction = 0;
 uint64_t Memory::displayHudFunction = 0;
+uint64_t Memory::hudMessageColorAddresses[3] = {0,0,0};
 uint64_t Memory::setBoatSpeed = 0;
 uint64_t Memory::boatSpeed4 = 0;
 uint64_t Memory::boatSpeed3 = 0;
