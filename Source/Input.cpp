@@ -3,7 +3,7 @@
 #include "Utilities.h"
 
 
-#define PRINT_KEYSTATE_DEBUG 1
+#define PRINT_KEYSTATE_DEBUG 0
 
 InputWatchdog* InputWatchdog::_singleton = nullptr;
 
