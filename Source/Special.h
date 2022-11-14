@@ -193,7 +193,7 @@ public:
 		itemb.resize(sizeof(T));
 		std::memcpy(&itemb[0], &item, sizeof(T));
 		for (address = startAddress; address < startAddress + length; address += 1024) {
-			if (!memory.Read(reinterpret_cast<LPCVOID>(address), &bytes[0], 1024))
+			if (!memory.ReadAbsolute(reinterpret_cast<LPCVOID>(address), &bytes[0], 1024))
 				continue;
 			for (int i = 0; i < bytes.size() - itemb.size(); i += sizeof(T)) {
 				if (std::equal(bytes.begin() + i, bytes.begin() + i + sizeof(T), itemb.begin()))
@@ -212,7 +212,7 @@ public:
 		itemb.resize(sizeof(T) - 1);
 		std::memcpy(&itemb[0], &item, sizeof(T) - 1);
 		for (address = startAddress; address < startAddress + length; address += 1024) {
-			if (!memory.Read(reinterpret_cast<LPCVOID>(address), &bytes[0], 1024))
+			if (!memory.ReadAbsolute(reinterpret_cast<LPCVOID>(address), &bytes[0], 1024))
 				continue;
 			for (int i = 0; i < bytes.size() - itemb.size() + 1; i += sizeof(T)) {
 				if (std::equal(bytes.begin() + i, bytes.begin() + i + sizeof(T) - 1, itemb.begin()))
