@@ -18,6 +18,7 @@
 #include "PuzzleList.h"
 #include "Watchdog.h"
 #include "Random.h"
+#include "Input.h"
 
 #include "Converty.h"
 #include "Archipelago/APRandomizer.h"
@@ -355,6 +356,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			apRandomizer->PostGeneration(hwndLoadingText);
 
+			InputWatchdog::get()->start();
+
 			break;
 		}
 
@@ -646,6 +649,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		}
 	}
 	Memory::showMsg = true;
+
+	InputWatchdog::initialize();
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
 	//int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
