@@ -619,6 +619,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		catch (std::exception) { Memory::GLOBALS = 0; }
 	}
 
+	memory.findGamelibRenderer();
 	memory.findMovementSpeed();
 	memory.findActivePanel();
 	memory.findPlayerPosition();

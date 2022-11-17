@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #ifndef INPUT_KEYSTATE_SIZE
+// The size of the Keyboard::key_state array, which in the most recent build is an int[256]. Note that this differs from the PDB build.
 #define INPUT_KEYSTATE_SIZE 0x200
 #endif
 
@@ -180,15 +181,12 @@ private:
 	InputWatchdog();
 
 	static InputWatchdog* _singleton;
-	
-	// The address on the heap of the current state of the keyboard.
-	uint64_t keyStateAddress = 0;
 
 	// The raw state data retrieved from game memory. Updated once per tick.
 	int32_t currentKeyState[INPUT_KEYSTATE_SIZE];
 
 	// Finds the address of the keyboard state in game memory.
-	bool findKeyStateAddress();
+	uint64_t findKeyStateAddress();
 
 	std::shared_ptr<class Memory> memory;
 

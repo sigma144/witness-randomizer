@@ -23,6 +23,7 @@ public:
 
 	Memory(const std::string& processName);
 	int findGlobals();
+	void findGamelibRenderer();
 	void findMovementSpeed();
 	void findActivePanel();
 	void findPlayerPosition();
@@ -181,9 +182,17 @@ public:
 
 	void DisplaySubtitles(std::string line1, std::string line2, std::string line3);
 
+	// Given a list of offsets, computes an address in memory by recursively dereferencing pointers at each offset, starting at the program's
+	//   root index. For example, if you wish to compute GLOBAL_VALUE::pointerA->pointerB, then you would pass the address of GLOBAL_VALUE
+	//   relative to the program's root, then the offset of pointerA in that structure, then the offset of pointerB in pointerA's structure.
+	// Caches values for quick lookup.
+	void* ComputeOffset(std::vector<int> offsets);
+
+	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
+	static int GAMELIB_RENDERER;
 	static int RUNSPEED;
 	static int CAMERAPOSITION;
 
@@ -257,8 +266,6 @@ private:
 	void ThrowError(std::string message);
 	void ThrowError(const std::vector<int>& offsets, bool rw_flag);
 	void ThrowError();
-
-	void* ComputeOffset(std::vector<int> offsets);
 
 	void CallVoidFunction(int id, uint64_t functionAdress);
 

@@ -92,6 +92,30 @@ int Memory::findGlobals() {
 	return Memory::GLOBALS;
 }
 
+void Memory::findGamelibRenderer()
+{
+	// Find the pointer to gamelib_renderer. A reliable access point to this is in Overlay::begin().
+	const std::vector<byte> gamelibSearchBytes = {
+		0x45, 0x33, 0xC9,
+		0x89, 0x41, 0x40,
+		0x48, 0x8B, 0x0D  // <- MOV RCX, qword ptr [next 4 bytes]
+	};
+
+	uint64_t pointerLocation = executeSigScan(gamelibSearchBytes) + gamelibSearchBytes.size();
+
+	// Read the literal value passed to the MOV operation.
+	if (!ReadRelative(reinterpret_cast<void*>(pointerLocation), &GAMELIB_RENDERER, sizeof(uint64_t))) {
+		throw "Unable to dereference gamelib_render.";
+		GAMELIB_RENDERER = 0;
+		return;
+	}
+	
+	// Since referencing global values is a relative operation, our final address is equal to the offset passed to the MOV operation, plus the address
+	//   of the instruction immediately after the call. Note that since pointerLocation is an offset relative to the program's base address, this final
+	//   value is itself relative to the base address.
+	GAMELIB_RENDERER += pointerLocation + 0x4;
+}
+
 void Memory::findPlayerPosition() {
 	executeSigScan({ 0x84, 0xC0, 0x75, 0x59, 0xBA, 0x20, 0x00, 0x00, 0x00 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		// This int is actually desired_movement_direction, which immediately preceeds camera_position
@@ -949,6 +973,7 @@ void Memory::RemoveMesh(int id) {
 std::recursive_mutex Memory::mtx = std::recursive_mutex();
 
 int Memory::GLOBALS = 0;
+int Memory::GAMELIB_RENDERER = 0;
 int Memory::RUNSPEED = 0;
 int Memory::CAMERAPOSITION = 0;
 int Memory::ACCELERATION = 0;
