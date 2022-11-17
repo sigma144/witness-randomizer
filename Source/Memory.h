@@ -16,13 +16,14 @@
 class Memory
 {
 private:
-	std::recursive_mutex mtx;
+	static std::recursive_mutex mtx;
 
 public:
 
 
 	Memory(const std::string& processName);
 	int findGlobals();
+	void findGamelibRenderer();
 	void findMovementSpeed();
 	void findActivePanel();
 	void findPlayerPosition();
@@ -45,7 +46,14 @@ public:
 		return AllocArray<T>(id, static_cast<int>(numItems));
 	}
 
-	bool Read(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
+	// Reads data from program memory relative to the base address of the program.
+	bool ReadRelative(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
+		lpBaseAddress = reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(lpBaseAddress) + _baseAddress);
+		return ReadAbsolute(lpBaseAddress, lpBuffer, nSize);
+	}
+
+	// Reads data from memory at the specified address.
+	bool ReadAbsolute(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
 
 		if (!retryOnFail) return ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
@@ -57,8 +65,16 @@ public:
 		return false;
 	}
 
-	bool Write(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
+	// Writes data to program memory relative to the base address of the program.
+	bool WriteRelative(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
+		lpBaseAddress = reinterpret_cast<LPVOID>(reinterpret_cast<uintptr_t>(lpBaseAddress) + _baseAddress);
+		return WriteAbsolute(lpBaseAddress, lpBuffer, nSize);
+	}
+
+	// Writes data to memory at the specified address.
+	bool WriteAbsolute(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		if (!retryOnFail) return WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
 		for (int i = 0; i < 10000; i++) {
 			if (WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
@@ -166,9 +182,17 @@ public:
 
 	void DisplaySubtitles(std::string line1, std::string line2, std::string line3);
 
+	// Given a list of offsets, computes an address in memory by recursively dereferencing pointers at each offset, starting at the program's
+	//   root index. For example, if you wish to compute GLOBAL_VALUE::pointerA->pointerB, then you would pass the address of GLOBAL_VALUE
+	//   relative to the program's root, then the offset of pointerA in that structure, then the offset of pointerB in pointerA's structure.
+	// Caches values for quick lookup.
+	void* ComputeOffset(std::vector<int> offsets);
+
+	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
 	static int GLOBALS;
+	static int GAMELIB_RENDERER;
 	static int RUNSPEED;
 	static int CAMERAPOSITION;
 
@@ -205,6 +229,15 @@ public:
 	static HWND errorWindow;
 	bool retryOnFail = true;
 
+	// Scan the process's memory for the given signature, returning the address of the first byte of the signature relative to startAddress if found,
+	//   or UINT64_MAX if not.
+	// If scanFunc is provided, calls it when a match is found, and if it returns false, discards the match and continues searching.
+	// If startAddress is not provided, starts searching (and returns addresses relative to) _baseAddress.
+	using SigScanDelegate = std::function<bool(uint64_t offset, int index, const std::vector<byte>& data)>;
+	uint64_t executeSigScan(const std::vector<byte>& signatureBytes, const SigScanDelegate& scanFunc, uint64_t startAddress);
+	uint64_t executeSigScan(const std::vector<byte>& signatureBytes, const SigScanDelegate& scanFunc);
+	uint64_t executeSigScan(const std::vector<byte>& signatureBytes, uint64_t startAddress);
+	uint64_t executeSigScan(const std::vector<byte>& signatureBytes);
 
 private:
 	template<class T>
@@ -212,7 +245,7 @@ private:
 		std::lock_guard<std::recursive_mutex> lock(mtx);
 		std::vector<T> data;
 		data.resize(numItems);
-		if (Read(ComputeOffset(offsets), &data[0], sizeof(T) * numItems)) {
+		if (ReadAbsolute(ComputeOffset(offsets), &data[0], sizeof(T) * numItems)) {
 			return data;
 		}
 		ThrowError(offsets, false);
@@ -222,22 +255,17 @@ private:
 	template <class T>
 	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
-		if (Write(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
+		if (WriteAbsolute(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
 			return;
 		}
 		ThrowError(offsets, true);
 	}
 
-	using ScanFunc = std::function<void(__int64 offset, int index, const std::vector<byte>& data)>;
-	using ScanFunc2 = std::function<bool(__int64 offset, int index, const std::vector<byte>& data)>;
-	void executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc, uintptr_t startAddress);
-	void executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc);
+
 
 	void ThrowError(std::string message);
 	void ThrowError(const std::vector<int>& offsets, bool rw_flag);
 	void ThrowError();
-
-	void* ComputeOffset(std::vector<int> offsets);
 
 	void CallVoidFunction(int id, uint64_t functionAdress);
 
