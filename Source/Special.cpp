@@ -1929,6 +1929,8 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 		panel._memory->WritePanelData<INT64>(id, DOT_SEQUENCE_REFLECTION, { 0 });
 		panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { 0 });
 		panel._memory->WritePanelData<INT64>(id, DOT_SEQUENCE, { 0 });
+
+		panel._memory->WritePanelData<int>(id, TRACED_EDGES, { 0 });
 	}
 
 	else
@@ -1992,8 +1994,6 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	}
 	panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
 	if(id != 0x28998) panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
-
-	panel._memory->WritePanelData<int>(id, TRACED_EDGES, { 0 });
 
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 

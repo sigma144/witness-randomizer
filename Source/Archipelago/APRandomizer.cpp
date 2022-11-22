@@ -124,7 +124,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
-		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
+		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
+		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
 
 		if (!UnlockSymbols) {
 			state.unlockedArrows = true;
@@ -451,7 +452,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, Hard, &state);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -459,7 +460,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, Hard, &state);
 	SeverDoors();
 
 	//Mess with Town targets

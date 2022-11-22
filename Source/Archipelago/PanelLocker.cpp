@@ -143,6 +143,43 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		if (!isLocked)
 			lockedPuzzles.insert({ id, puzzle });
 
+		if (id == 0x03612 || id == 0x1C349) { // Quarry Laser Panel & Symmetry Island Upper
+			int num_dec = _memory->ReadPanelData<int>(id, NUM_DOTS);
+			std::vector<int> dec = _memory->ReadArray<int>(id, DOT_FLAGS, num_dec);
+
+			for (int i = 0; i < num_dec; i++) {
+				if (dec[i] == 0x600002) dec[i] = 0;
+			}
+
+			_memory->WriteArray(id, DOT_FLAGS, dec);
+			_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+			return;
+		}
+
+		if (id == 0x01983) {
+			if (_memory->ReadPanelData<float>(0x0C179, 0xE0) < 0.0001f) return;
+
+			while (_memory->ReadPanelData<int>(0x0C179, 0x1e4)) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			}
+
+			_memory->WritePanelData<float>(0x0C179, 0xE0, { 0.000001f });
+			_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
+			return;
+		}
+
+		if (id == 0x01987) {
+			if (_memory->ReadPanelData<float>(0x0C19D, 0xE0) < 0.0001f) return;
+
+			while (_memory->ReadPanelData<int>(0x0C19D, 0x1e4)) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			}
+
+			_memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.000001f });
+			_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
+			return;
+		}
+
 		const int width = 4;
 		const int height = 2;
 
@@ -232,7 +269,25 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id) {
 }
 
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
-	puzzle->Restore(_memory);
+	if (puzzle->id == 0x01983) {
+		while (_memory->ReadPanelData<int>(0x0C179, 0x1d4)) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
+		_memory->WritePanelData<float>(0x0C179, 0xE0, { 0.2300000042f });
+		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
+	}
+
+	else if (puzzle->id == 0x01987) {
+		while (_memory->ReadPanelData<int>(0x0C19D, 0x1d4)) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
+		_memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.2300000042f });
+		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
+	}
+
+	else puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
 	//delete puzzle;
 }

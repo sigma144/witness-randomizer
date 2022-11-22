@@ -25,6 +25,7 @@
 #define CABLE_COLOR_B 0x160
 
 #define DOOR_OPEN 0x1E4
+#define DOOR_OPEN_RATE 0xE0
 
 #define MULTIPANEL_TARGET 0xD4
 #define MOUNT_PARENT_ID 0x80
@@ -634,6 +635,8 @@ inline std::map<int, std::string> laserNames = {
 };
 
 const inline int AllPuzzles[]{
+		0x01983, 0x01987, //Peekaboos
+
 		0x00293, 0x00295, 0x002C2, 0x0A3B5, 0x0A3B2, 0x03629, // Tutorial
 		0x0C373, // Tutorial Patio Floor
 		0x0C335, // Tutorial Pillar??
@@ -659,6 +662,7 @@ const inline int AllPuzzles[]{
 		0x021B3, 0x021B4, 0x021B0, 0x021AF, 0x021AE, // Quarry Eraser + Shapes
 		0x021B5, 0x021B6, 0x021B7, 0x021BB, 0x09DB5, 0x09DB1, 0x3C124, // Quarry + Stars
 		0x09DB3, 0x09DB4, 0x0A3CB, 0x0A3CC, 0x0A3D0, // Quarry Eraser + Stars + Shapes
+		0x03612, // Quarry Laser
 		0x00469, 0x00472, 0x00262, 0x00474, 0x00553, 0x0056F, // Swamp First row
 		0x00390, 0x010CA, 0x00983, 0x00984, 0x00986, 0x00985, 0x00987, 0x181A9, // Swamp Second Row
 		0x00609, // Swamp Bridge controll
@@ -724,7 +728,7 @@ const inline int AllPuzzles[]{
 		//Doors
 		0x01A54, // Glass Factory Entry
 		0x000B0, // Symmetry Island Door 1
-		// 0x1C349, // Symmetry Island Door 2. Doesn't work properly :(
+		0x1C349, // Symmetry Island Door 2.
 		0x01E5A, // Mill Entry Door Left
 		0x09E57, // Quarry Entry Gate 1
 

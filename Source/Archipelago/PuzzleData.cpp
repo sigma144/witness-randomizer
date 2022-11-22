@@ -21,6 +21,18 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	int numberColoredRegions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
 	colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions * 4);
 
+
+	if (id == 0x01983) {
+		hasTetris = true;
+		hasStars = true;
+		return;
+	}
+	if (id == 0x01987) {
+		hasDots = true;
+		hasColoredStones = true;
+		return;
+	}
+
 	for (int i = 0; i < numberOfDecorations; i++) {
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
 			if ((decorations[i] & 0x00F) != Decoration::Color::White && (decorations[i] & 0x00F) != Decoration::Color::Black)
