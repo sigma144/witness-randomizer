@@ -164,6 +164,7 @@ enum InteractionState {
 	Walking,	// Free look.
 	Focusing,	// Cursor shown, but no puzzle selected
 	Solving,	// Actively solving a puzzle
+	Cutscene,	// In the ending cutscene
 	Menu		// A menu is shown and blocking game input
 };
 
@@ -207,7 +208,8 @@ private:
 
 	std::shared_ptr<class Memory> memory;
 
-	void findGlobalOffsets();
+	void findInteractModeOffset();
+	void findMenuOpenOffset();
 
 	uint64_t interactModeOffset;
 	uint64_t menuOpenOffset;

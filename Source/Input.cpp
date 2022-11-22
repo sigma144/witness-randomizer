@@ -20,7 +20,9 @@ InputWatchdog* InputWatchdog::get() {
 
 InputWatchdog::InputWatchdog() : Watchdog(0.01f) {
 	memory = std::make_shared<Memory>("witness64_d3d11.exe");
-	findGlobalOffsets();
+
+	findInteractModeOffset();
+	findMenuOpenOffset();
 }
 
 void InputWatchdog::action() {
@@ -37,14 +39,17 @@ InteractionState InputWatchdog::getInteractionState() const {
 	if (currentMenuOpenPercent >= 1.f) {
 		return InteractionState::Menu;
 	}
-	else if (currentInteractMode == 0x0) {
-		return InteractionState::Focusing;
-	}
-	else if (currentInteractMode == 0x1) {
-		return InteractionState::Solving;
-	}
 	else {
-		return InteractionState::Walking;
+		switch (currentInteractMode) {
+		case 0x0:
+			return InteractionState::Focusing;
+		case 0x1:
+			return InteractionState::Solving;
+		case 0x2:
+			return InteractionState::Walking;
+		case 0x3:
+			return InteractionState::Cutscene;
+		}
 	}
 }
 
@@ -106,11 +111,11 @@ void InputWatchdog::updateKeyState() {
 void InputWatchdog::updateInteractionState() {
 	InteractionState oldState = getInteractionState();
 
-	if (!memory->ReadRelative(reinterpret_cast<void*>(interactModeOffset), &currentInteractMode, sizeof(int32_t))) {
+	if (interactModeOffset == 0 || !memory->ReadRelative(reinterpret_cast<void*>(interactModeOffset), &currentInteractMode, sizeof(int32_t))) {
 		currentInteractMode = 0x2; // fall back to not solving
 	}
 
-	if (!memory->ReadRelative(reinterpret_cast<void*>(menuOpenOffset), &currentMenuOpenPercent, sizeof(float))) {
+	if (menuOpenOffset == 0 || !memory->ReadRelative(reinterpret_cast<void*>(menuOpenOffset), &currentMenuOpenPercent, sizeof(float))) {
 		currentMenuOpenPercent = 0.f; // fall back to not open
 	}
 
@@ -128,6 +133,9 @@ void InputWatchdog::updateInteractionState() {
 		case InteractionState::Solving:
 			interactionStateString << "SOLVING" << std::endl;
 			break;
+		case InteractionState::Cutscene:
+			interactionStateString << "CUTSCENE" << std::endl;
+			break;
 		case InteractionState::Menu:
 			interactionStateString << "MENU" << std::endl;
 			break;
@@ -140,16 +148,47 @@ void InputWatchdog::updateInteractionState() {
 #endif
 }
 
-void InputWatchdog::findGlobalOffsets() {
-	// The interact mode is within the GLOBALS struct and has a fixed offset within all recent builds. Note that this offset
-	//   is different than in the PDB build.
-	interactModeOffset = Memory::GLOBALS + 0x524;
+void InputWatchdog::findInteractModeOffset() {
+	// get_cursor_delta_from_mouse_or_gamepad() has a reliable signature to scan for:
+	uint64_t cursorDeltaOffset = memory->executeSigScan({
+		0xF3, 0x0F, 0x59, 0xD7,		// MULSS XMM2,XMM7
+		0xF3, 0x0F, 0x59, 0xCF,		// MULSS XMM1,XMM7
+		0xF3, 0x0F, 0x59, 0xD0,		// MULSS XMM2,XMM0
+		0xF3, 0x0F, 0x59, 0xC8,		// MULSS XMM1,XMM0
+	});
 
+	if (cursorDeltaOffset == UINT64_MAX) {
+		interactModeOffset = 0;
+		return;
+	}
+
+	// This set of instructions is executed immediately after the call to retrieve the pointer to globals.interact_mode, so we just need to read four bytes prior
+	interactModeOffset = 0;
+	if (memory->ReadRelative(reinterpret_cast<void*>(cursorDeltaOffset - 0x4), &interactModeOffset, 0x4)) {
+		// Since menu_open_t is a global, any access to it uses an address that's relative to the instruction doing the access, which is conveniently our search offset.
+		interactModeOffset += cursorDeltaOffset;
+	}
+	else {
+		interactModeOffset = 0;
+	}
+
+	std::wostringstream hmmm;
+	hmmm << "offset: " << std::hex << interactModeOffset << std::endl;
+	hmmm << "        " << std::hex << (interactModeOffset - Memory::GLOBALS) << std::endl;
+	OutputDebugStringW(hmmm.str().c_str());
+}
+
+void InputWatchdog::findMenuOpenOffset() {
 	// In order to find menu_open_t, we need to find a usage of it. draw_floating_symbols has a unique entry point:
 	uint64_t floatingSymbolOffset = memory->executeSigScan({
 		0x48, 0x63, 0xC3,			// MOVSXD RAX,EBX
-		0x48, 0x6B, 0xC8, 0x7C}		// IMUL RCX,RAX,0x7C
-	);
+		0x48, 0x6B, 0xC8, 0x7C		// IMUL RCX,RAX,0x7C
+	});
+
+	if (floatingSymbolOffset == UINT64_MAX) {
+		menuOpenOffset = 0;
+		return;
+	}
 
 	// Skip ahead to the actual read:
 	//  0x48, 0x03, 0x0D			// |
