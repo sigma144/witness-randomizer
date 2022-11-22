@@ -4,12 +4,18 @@
 
 #include "Memory.h"
 #include "Memoryapi.h"
+#include "Utilities.h"
+
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <iostream>
 
 #undef PROCESSENTRY32
 #undef Process32Next
+
+#define SIGSCAN_STRIDE   0x100000 // 100 KiB. Note that larger reads are not significantly slower than small reads, but have an increased chance of failing, since ReadProcessMemory fails if ANY of the memory is inaccessible.
+#define SIGSCAN_PADDING  0x000800 // The additional amount to scan in order to ensure that a useful amount of data is returned if the found signature is at the end of the buffer.
+#define PROGRAM_SIZE    0x5000000 // 5 MiB. (The application itself is only 4.7 MiB large.)
 
 Memory::Memory(const std::string& processName) {
 	std::string process32 = "witness_d3d11.exe";
@@ -62,59 +68,19 @@ Memory::~Memory() {
 	CloseHandle(_handle);
 }
 
+
+
 // Copied from Witness Trainer https://github.com/jbzdarkid/witness-trainer/blob/master/Source/Memory.cpp#L218
-int find(const std::vector<byte> &data, const std::vector<byte> &search) {
-	const byte* dataBegin = &data[0];
-	const byte* searchBegin = &search[0];
-	size_t maxI = data.size() - search.size();
-	size_t maxJ = search.size();
-
-	for (int i=0; i<maxI; i++) {
-		bool match = true;
-		for (size_t j=0; j<maxJ; j++) {
-			if (*(dataBegin + i + j) == *(searchBegin + j)) {
-				continue;
-			}
-			match = false;
-			break;
-		}
-		if (match) return i;
-	}
-	return -1;
-}
-
-std::vector<int> findAll(const std::vector<byte>& sourceData, const std::vector<byte>& searchSequence) {
-	std::vector<int> foundIndices;
-	for (int sourceIndex = 0; sourceIndex < sourceData.size() - searchSequence.size(); sourceIndex++) {
-		bool foundMatch = true;
-
-		for (int comparisonIndex = 0; comparisonIndex < searchSequence.size(); comparisonIndex++) {
-			if (sourceData[sourceIndex + comparisonIndex] != searchSequence[comparisonIndex])
-			{
-				foundMatch = false;
-				break;
-			}
-		}
-
-		if (foundMatch) {
-			foundIndices.push_back(sourceIndex);
-		}
-	}
-
-	return foundIndices;
-}
-
 int Memory::findGlobals() {
 	const std::vector<byte> scanBytes = {0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10};
-	#define BUFFER_SIZE 0x100000 // 100 KB
 	std::vector<byte> buff;
-	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
+	buff.resize(SIGSCAN_STRIDE + 0x100); // padding in case the sigscan is past the end of the buffer
 
-	for (uintptr_t i = 0; i < 0x500000; i += BUFFER_SIZE) {
+	for (uintptr_t i = 0; i < PROGRAM_SIZE; i += SIGSCAN_STRIDE) {
 		SIZE_T numBytesWritten;
 		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
 		buff.resize(numBytesWritten);
-		int index = find(buff, scanBytes);
+		int index = Utilities::findSequence(buff, scanBytes);
 		if (index == -1) continue;
 
 		index = index + 0x14; // This scan targets a line slightly before the key instruction
@@ -124,6 +90,30 @@ int Memory::findGlobals() {
 	}
 
 	return Memory::GLOBALS;
+}
+
+void Memory::findGamelibRenderer()
+{
+	// Find the pointer to gamelib_renderer. A reliable access point to this is in Overlay::begin().
+	const std::vector<byte> gamelibSearchBytes = {
+		0x45, 0x33, 0xC9,
+		0x89, 0x41, 0x40,
+		0x48, 0x8B, 0x0D  // <- MOV RCX, qword ptr [next 4 bytes]
+	};
+
+	uint64_t pointerLocation = executeSigScan(gamelibSearchBytes) + gamelibSearchBytes.size();
+
+	// Read the literal value passed to the MOV operation.
+	if (!ReadRelative(reinterpret_cast<void*>(pointerLocation), &GAMELIB_RENDERER, sizeof(uint64_t))) {
+		throw "Unable to dereference gamelib_render.";
+		GAMELIB_RENDERER = 0;
+		return;
+	}
+	
+	// Since referencing global values is a relative operation, our final address is equal to the offset passed to the MOV operation, plus the address
+	//   of the instruction immediately after the call. Note that since pointerLocation is an offset relative to the program's base address, this final
+	//   value is itself relative to the base address.
+	GAMELIB_RENDERER += pointerLocation + 0x4;
 }
 
 void Memory::findPlayerPosition() {
@@ -313,7 +303,7 @@ void Memory::findImportantFunctionAddresses(){
 	});
 
 	//display subtitles2
-	executeSigScan({ 0xF3, 0x0F, 0x10, 0x8C, 0x24, 0xE0, 0x00, 0x00, 0x00, 0x8B, 0xCE, 0x4C, 0x8B, 0xC0, 0x48, 0x89, 0xBC }, [this](__int64 offset, int index, const std::vector<byte>& data) { 
+	executeSigScan({ 0xF3, 0x0F, 0x10, 0x8C, 0x24, 0xE0, 0x00, 0x00, 0x00, 0x8B, 0xCE, 0x4C, 0x8B, 0xC0, 0x48, 0x89, 0xBC }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->displaySubtitlesFunction2 = _baseAddress + offset + index;
 		
 		return true;
@@ -398,7 +388,7 @@ void Memory::findImportantFunctionAddresses(){
 		ReadProcessMemory(_handle, reinterpret_cast<void*>(functionAddress), &functionBody[0], functionSize, &numBytesWritten);
 
 		// Find all three instances of 1.0f. (0x3f800000)
-		std::vector<int> foundIndices = findAll(functionBody, { 0x00, 0x00, 0x80, 0x3f });
+		std::vector<int> foundIndices = Utilities::findAllSequences(functionBody, { 0x00, 0x00, 0x80, 0x3f });
 		if (foundIndices.size() != 3) {
 			return false;
 		}
@@ -438,7 +428,7 @@ void Memory::findImportantFunctionAddresses(){
 					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 
 
-					Write(addressPointer, &urelativeBoatSpeed4Address, sizeof(urelativeBoatSpeed4Address)); // Write the new relative address into the "movss xmm0 [address]" statement.
+					WriteAbsolute(addressPointer, &urelativeBoatSpeed4Address, sizeof(urelativeBoatSpeed4Address)); // Write the new relative address into the "movss xmm0 [address]" statement.
 
 					return true;
 				}, boatSpeed4Address); // Start this Sigscan for a new constant at the location of the original constant to find one "nearby"
@@ -462,7 +452,7 @@ void Memory::findImportantFunctionAddresses(){
 					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 
 
-					Write(addressPointer, &urelativeBoatSpeed3Address, sizeof(urelativeBoatSpeed3Address));
+					WriteAbsolute(addressPointer, &urelativeBoatSpeed3Address, sizeof(urelativeBoatSpeed3Address));
 
 					return true;
 					}, boatSpeed3Address);
@@ -486,7 +476,7 @@ void Memory::findImportantFunctionAddresses(){
 					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 
 
-					Write(addressPointer, &urelativeBoatSpeed2Address, sizeof(urelativeBoatSpeed2Address));
+					WriteAbsolute(addressPointer, &urelativeBoatSpeed2Address, sizeof(urelativeBoatSpeed2Address));
 
 					return true;
 					}, boatSpeed2Address);
@@ -510,7 +500,7 @@ void Memory::findImportantFunctionAddresses(){
 					LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 
 
-					Write(addressPointer, &urelativeBoatSpeed1Address, sizeof(urelativeBoatSpeed1Address));
+					WriteAbsolute(addressPointer, &urelativeBoatSpeed1Address, sizeof(urelativeBoatSpeed1Address));
 
 					return true;
 					}, boatSpeed1Address);
@@ -600,24 +590,44 @@ __int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>
 	return offset + index + bytesToEOL + *(int*)&data[index];
 }
 
-#define BUFFER_SIZE 0x10000
-void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc, uintptr_t startAddress) {
-	std::vector<byte> buff;
-	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
+uint64_t Memory::executeSigScan(const std::vector<byte>& signatureBytes, const SigScanDelegate& scanFunc, uint64_t startAddress) {
+	std::vector<byte> scanBuffer;
+	scanBuffer.resize(SIGSCAN_STRIDE + SIGSCAN_PADDING); // padding in case the sigscan is past the end of the buffer
 
-	for (uintptr_t i = startAddress; i < startAddress + 0x200000000; i += BUFFER_SIZE) {
-		SIZE_T numBytesWritten;
-		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(i), &buff[0], buff.size(), &numBytesWritten)) continue;
-		buff.resize(numBytesWritten);
-		int index = find(buff, scanBytes);
-		if (index == -1) continue;
-		scanFunc(i - startAddress, index, buff); // We're expecting i to be relative to the base address here.
-		return;
+	SIZE_T numBytesWritten;
+	for (uint64_t scanAddress = 0; scanAddress < PROGRAM_SIZE; scanAddress += SIGSCAN_STRIDE) {
+		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(scanAddress + startAddress), &scanBuffer[0], scanBuffer.size(), &numBytesWritten)) continue;
+
+		// Search for our target signature, testing our scan function against every match until we find a match or reach the end of our stride.
+		int searchLength = std::min(numBytesWritten, SIGSCAN_STRIDE + signatureBytes.size());
+		for (int matchIndex = 0; matchIndex < searchLength;) {
+			// Find the next instance of the signature.
+			matchIndex = Utilities::findSequence(scanBuffer, signatureBytes, matchIndex, searchLength);
+
+			if (matchIndex == -1) {
+				// We didn't find the signature in the remainder of this scan. Move to the next segment.
+				break;
+			}
+			// Test the scan function for a match. Note that the function is expecting an address relative to the starting address.
+			else if (scanFunc(scanAddress, matchIndex, scanBuffer)) {
+				return scanAddress + matchIndex;
+			}
+		}
 	}
+
+	return UINT64_MAX;
 }
 
-void Memory::executeSigScan(const std::vector<byte>& scanBytes, const ScanFunc2& scanFunc) {
-	executeSigScan(scanBytes, scanFunc, _baseAddress);
+uint64_t Memory::executeSigScan(const std::vector<byte>& signatureBytes, const SigScanDelegate& scanFunc) {
+	return executeSigScan(signatureBytes, scanFunc, _baseAddress);
+}
+
+uint64_t Memory::executeSigScan(const std::vector<byte>& signatureBytes, uint64_t startAddress) {
+	return executeSigScan(signatureBytes, [](uint64_t offset, int index, const std::vector<byte>& data) { return true; }, startAddress);
+}
+
+uint64_t Memory::executeSigScan(const std::vector<byte>& signatureBytes) {
+	return executeSigScan(signatureBytes, [](uint64_t offset, int index, const std::vector<byte>& data) { return true; });
 }
 
 void Memory::ThrowError(std::string message) {
@@ -679,7 +689,7 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 		if (search == std::end(_computedAddresses)) {
 			// If the address is not yet computed, then compute it.
 			uintptr_t computedAddress = 0;
-			if (!Read(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {
+			if (!ReadAbsolute(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {
 				ThrowError(offsets, false);
 			}
 			_computedAddresses[cumulativeAddress] = computedAddress;
@@ -783,7 +793,7 @@ void Memory::DisplayHudMessage(std::string message, std::array<float, 3> rgbColo
 		LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 		__int32 addressOf6 = relativeAddressOf6;
 
-		Write(addressPointer, &addressOf6, sizeof(addressOf6));
+		WriteAbsolute(addressPointer, &addressOf6, sizeof(addressOf6));
 	}
 
 	strcpy_s(buffer, message.c_str());
@@ -1004,10 +1014,13 @@ void Memory::RemoveMesh(int id) {
 	__int64 buffer[1];
 	buffer[0] = 0;
 
-	__int64 collisionMesh = Write(reinterpret_cast<LPVOID>(meshPointer + 0x98), buffer, sizeof(buffer)); //Collision Mesh
+	__int64 collisionMesh = WriteAbsolute(reinterpret_cast<LPVOID>(meshPointer + 0x98), buffer, sizeof(buffer)); //Collision Mesh
 }
 
+std::recursive_mutex Memory::mtx = std::recursive_mutex();
+
 int Memory::GLOBALS = 0;
+int Memory::GAMELIB_RENDERER = 0;
 int Memory::RUNSPEED = 0;
 int Memory::CAMERAPOSITION = 0;
 int Memory::ACCELERATION = 0;

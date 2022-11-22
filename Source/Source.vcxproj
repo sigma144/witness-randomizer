@@ -183,6 +183,7 @@
     <ClInclude Include="Converty.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Generate.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
     <ClInclude Include="Panel.h" />
@@ -194,6 +195,7 @@
     <ClInclude Include="Randomizer.h" />
     <ClInclude Include="Special.h" />
     <ClInclude Include="StringSplitter.h" />
+    <ClInclude Include="Utilities.h" />
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +203,7 @@
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\Client\wswrap\src\wswrap.cpp" />
     <ClCompile Include="Generate.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
     <ClCompile Include="Panel.cpp" />

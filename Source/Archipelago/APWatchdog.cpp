@@ -748,9 +748,9 @@ void APWatchdog::RefreshDoorCollisions() {
 		return;
 	}
 
-	std::wstringstream s;
-	s << playerPosition[0] << ", " << playerPosition[1] << ", " << playerPosition[2] << "\n";
-	OutputDebugStringW(s.str().c_str());
+	//std::wstringstream s;
+	//s << playerPosition[0] << ", " << playerPosition[1] << ", " << playerPosition[2] << "\n";
+	//OutputDebugStringW(s.str().c_str());
 
 	for(auto const& p : collisionsToRefresh){
 		auto collisionToUpdate = p.first;
@@ -807,7 +807,7 @@ void APWatchdog::RefreshDoorCollisions() {
 		}
 	}
 
-	OutputDebugStringW(L"-----\n");
+	//OutputDebugStringW(L"-----\n");
 
 	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }
