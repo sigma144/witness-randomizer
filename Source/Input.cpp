@@ -171,11 +171,6 @@ void InputWatchdog::findInteractModeOffset() {
 	else {
 		interactModeOffset = 0;
 	}
-
-	std::wostringstream hmmm;
-	hmmm << "offset: " << std::hex << interactModeOffset << std::endl;
-	hmmm << "        " << std::hex << (interactModeOffset - Memory::GLOBALS) << std::endl;
-	OutputDebugStringW(hmmm.str().c_str());
 }
 
 void InputWatchdog::findMenuOpenOffset() {
