@@ -104,7 +104,7 @@ void Memory::findGamelibRenderer()
 	uint64_t pointerLocation = executeSigScan(gamelibSearchBytes) + gamelibSearchBytes.size();
 
 	// Read the literal value passed to the MOV operation.
-	if (!ReadRelative(reinterpret_cast<void*>(pointerLocation), &GAMELIB_RENDERER, sizeof(uint64_t))) {
+	if (!ReadRelative(reinterpret_cast<void*>(pointerLocation), &GAMELIB_RENDERER, sizeof(int))) {
 		throw "Unable to dereference gamelib_render.";
 		GAMELIB_RENDERER = 0;
 		return;
