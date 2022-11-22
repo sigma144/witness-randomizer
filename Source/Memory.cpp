@@ -527,7 +527,7 @@ void Memory::findImportantFunctionAddresses(){
 	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		byte newByte = 0xEB;
 
-		Write(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
+		WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
 
 		return true;
 	});
