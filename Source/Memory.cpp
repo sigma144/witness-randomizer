@@ -533,6 +533,25 @@ void Memory::findImportantFunctionAddresses(){
 
 		return true;
 	});
+
+	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		byte newByte = 0xEB;
+
+		Write(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
+
+		return true;
+	});
+
+	executeSigScan({ 0x48, 0x8B, 0x51, 0x18, 0x2B, 0x42, 0x08, 0x78, 0x37 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index--) {
+			if (data[index] == 0x40 && data[index + 1] == 0x53 && data[index + 2] == 0x48) { // need to find function start (backwards)
+				this->completeEPFunction = _baseAddress + offset + index;
+				break;
+			}
+		}
+
+		return true;
+	});
 }
 
 void Memory::findMovementSpeed() {
@@ -1020,6 +1039,7 @@ uint64_t Memory::subtitlesHashTable = 0;
 uint64_t Memory::_recordPlayerUpdate = 0;
 uint64_t Memory::_getSoundFunction = 0;
 uint64_t Memory::_bytesLengthChallenge = 0;
+uint64_t Memory::completeEPFunction = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

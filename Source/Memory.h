@@ -158,6 +158,10 @@ public:
 		CallVoidFunction(id, activateLaserFunction);
 	}
 
+	void SolveEP(int id) {
+		CallVoidFunction(id, completeEPFunction);
+	}
+
 	void SetInfiniteChallenge(bool enable);
 
 	void RemoveMesh(int id);
@@ -198,6 +202,7 @@ public:
 	static uint64_t _recordPlayerUpdate;
 	static uint64_t _getSoundFunction;
 	static uint64_t _bytesLengthChallenge;
+	static uint64_t completeEPFunction;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;

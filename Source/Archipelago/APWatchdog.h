@@ -27,7 +27,7 @@ struct AudioLogMessage {
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, std::map<int, std::set<int>> o, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -37,6 +37,7 @@ public:
 		panelLocker = p;
 		audioLogMessages = a;
 		state = s;
+		obeliskHexToEPHexes = o;
 	}
 
 	int skippedPuzzles = 0;
@@ -64,6 +65,8 @@ public:
 
 	void DoubleDoorTargetHack(int id);
 
+	void SetItemReward(const int& id, const APClient::NetworkItem& item);
+
 	void queueMessage(std::string text) {
 		HudMessage message;
 		message.text = text;
@@ -79,6 +82,8 @@ public:
 
 		outstandingMessages.push(message);
 	}
+
+	bool CheckPanelHasBeenSolved(int panelId);
 
 	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
 
@@ -147,6 +152,7 @@ private:
 	int currentAudioLog = -1;
 
 	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
+	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);

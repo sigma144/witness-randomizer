@@ -231,27 +231,6 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id) {
 	}
 }
 
-void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item) {
-	Color backgroundColor;
-	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
-		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
-	else if (item.flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
-		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
-	else if (item.flags & APClient::ItemFlags::FLAG_TRAP)
-		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
-	else
-		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
-
-	if (id == 0x28998 || id == 0x28A69 || id == 0x17CAA || id == 0x00037 || id == 0x09FF8 || id == 0x09DAF || id == 0x0A01F || id == 0x17E67) {
-		_memory->WritePanelData<Color>(id, SUCCESS_COLOR_A, { backgroundColor });
-	}
-	else
-	{ 
-		_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
-	}
-	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-}
-
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 	puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);

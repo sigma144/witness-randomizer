@@ -1,2 +1,2 @@
 colorblind:false
-collect:false
+collect:true
