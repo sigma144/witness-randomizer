@@ -160,6 +160,13 @@ enum class InputButton : int {
 	CONTROLLER_TRIGGER_RIGHT	= 0x13c,
 };
 
+enum InteractionState {
+	Walking,	// Free look.
+	Focusing,	// Cursor shown, but no puzzle selected
+	Solving,	// Actively solving a puzzle
+	Menu		// A menu is shown and blocking game input
+};
+
 
 // A manager class for reading input values from game memory and processing them into useful data.
 class InputWatchdog : public Watchdog {
@@ -176,6 +183,9 @@ public:
 	// Returns the state (pressed/released) for the given key.
 	bool getButtonState(InputButton key) const;
 
+	// Returns the player's current interaction mode.
+	InteractionState getInteractionState() const;
+
 private:
 
 	InputWatchdog();
@@ -185,9 +195,21 @@ private:
 	// The raw state data retrieved from game memory. Updated once per tick.
 	int32_t currentKeyState[INPUT_KEYSTATE_SIZE];
 
-	// Finds the address of the keyboard state in game memory.
-	uint64_t findKeyStateAddress();
+	void updateKeyState();
+
+	// The raw interact mode integer retrieved from game memory. Updated once per tick.
+	int32_t currentInteractMode;
+
+	// A value between 0 and 1 representing how faded in the pause menu is, with 1 being fully active.
+	float currentMenuOpenPercent;
+
+	void updateInteractionState();
 
 	std::shared_ptr<class Memory> memory;
+
+	void findGlobalOffsets();
+
+	uint64_t interactModeOffset;
+	uint64_t menuOpenOffset;
 
 };
