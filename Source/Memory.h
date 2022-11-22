@@ -193,6 +193,8 @@ public:
 	static uint64_t displaySubtitlesFunction;
 	static uint64_t displaySubtitlesFunction2;
 	static uint64_t displaySubtitlesFunction3;
+	static uint64_t subtitlesOnOrOff;
+	static uint64_t subtitlesHashTable;
 	static uint64_t _recordPlayerUpdate;
 	static uint64_t _getSoundFunction;
 	static uint64_t _bytesLengthChallenge;
