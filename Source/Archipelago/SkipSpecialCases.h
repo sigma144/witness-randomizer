@@ -82,7 +82,7 @@ inline const std::set<int> skip_completelyExclude = {
 	0x03629, 0x03505, // Tutorial Gate Close
 	0x09F98, // Town Laser Redirect
 	0x0A079, // Bunker Elevator
-	0x00609, 0x181F5, 0x17E2B, 0x18488, // Swamp Bridge Controls
+	0x00609, 0x17E2B, 0x18488, // Swamp Bridge Controls
 	0x17C04, 0x17E07, // Swamp Maze Controls
 	0x037FF, // Treehouse Bridge to Keep
 	0x09F7F, // Mountaintop Box Open
@@ -113,4 +113,7 @@ inline const std::set<int> skip_specialCase = {
 	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD,
 
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle
+
+	0x181F5, // Swamp Rotating Bridge
+	0x334D8, // Town RGB Control
 };

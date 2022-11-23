@@ -27,7 +27,7 @@ struct AudioLogMessage {
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, std::map<int, std::set<int>> o, bool ep, bool hard, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -37,6 +37,19 @@ public:
 		panelLocker = p;
 		audioLogMessages = a;
 		state = s;
+		EPShuffle = ep;
+		obeliskHexToEPHexes = o;
+		Hard = hard;
+
+		panelsThatHaveToBeSkippedForEPPurposes = {
+			0x09E86, 0x09ED8, // light controllers 2 3
+			0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
+		};
+
+		if (hard) {
+			panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
+			panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
+		}
 	}
 
 	int skippedPuzzles = 0;
@@ -64,6 +77,8 @@ public:
 
 	void DoubleDoorTargetHack(int id);
 
+	void SetItemReward(const int& id, const APClient::NetworkItem& item);
+
 	void queueMessage(std::string text) {
 		HudMessage message;
 		message.text = text;
@@ -79,6 +94,8 @@ public:
 
 		outstandingMessages.push(message);
 	}
+
+	bool CheckPanelHasBeenSolved(int panelId);
 
 	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
 
@@ -97,6 +114,9 @@ private:
 	bool isCompleted = false;
 
 	int halfSecondCounter = 0;
+
+	bool EPShuffle = false;
+	bool Hard = false;
 
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
@@ -124,6 +144,8 @@ private:
 
 	float speedTime = 0.0f;
 
+	void CheckEPSkips();
+
 	void DisplayMessage();
 
 	void DisableCollisions();
@@ -147,12 +169,17 @@ private:
 	int currentAudioLog = -1;
 
 	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
+	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
 	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5);
 	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2, -96.3, 5.8, 172.3, -101.1, 11.5);
 	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9, 5, -148, -154.8, 9);
+	CollisionCube quarryLaserPanel = CollisionCube(-59, 90, 17, -67, 100, 21);
+	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6, -185, 37, 17);
+
+	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 

@@ -1,4 +1,5 @@
 #include "APRandomizer.h"
+#include "APGameData.h"
 
 bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
@@ -123,7 +124,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
-		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : true;
+		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
+		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
 
 		if (!UnlockSymbols) {
 			state.unlockedArrows = true;
@@ -162,6 +164,21 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			panelIdToLocationId.insert({ panelId, locationId });
 			panelIdToLocationIdReverse.insert({ locationId, panelId });
+		}
+
+		if (slotData.contains("obelisk_side_id_to_EPs")) {
+			for (auto& [key, val] : slotData["obelisk_side_id_to_EPs"].items()) {
+				int sideId = std::stoul(key, nullptr, 10);
+				std::set<int> v = val;
+
+				obeliskSideIDsToEPHexes.insert({ sideId, v });
+			}
+		}
+
+		if (slotData.contains("precompleted_puzzles")) {
+			for (int key : slotData["precompleted_puzzles"]) {
+				precompletedLocations.insert(key);
+			}
 		}
 
 		if (slotData.contains("item_id_to_door_hexes")) {
@@ -276,12 +293,15 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		else {
 			int location = item.location;
 
-			if (panelIdToLocationIdReverse.count(location) && !_memory->ReadPanelData<int>(panelIdToLocationIdReverse[location], SOLVED)) {
+			bool panelSolved = false;
+			int panelId = panelIdToLocationIdReverse[location];
+
+			if (panelIdToLocationIdReverse.count(location) && async->CheckPanelHasBeenSolved(panelId)) {
 				async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorForItem(item));
 			}
 			else
 			{
-				panelLocker->SetItemReward(findResult->first, item);
+				async->SetItemReward(findResult->first, item);
 				if(!receiving) async->queueMessage("Sent " + itemName + " to " + player + ".", getColorForItem(item));
 			}
 		}
@@ -358,6 +378,12 @@ std::string APRandomizer::buildUri(std::string& server)
 }
 
 void APRandomizer::PostGeneration(HWND loadingHandle) {
+	for (int eID : precompletedLocations) {
+		if (allEPs.count(eID)) {
+			_memory->SolveEP(eID);
+		}
+	}
+
 	// Bunker door colors
 
 	int num_dec = _memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
@@ -426,7 +452,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, Hard, &state);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -434,7 +460,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, Hard, &state);
 	SeverDoors();
 
 	//Mess with Town targets
