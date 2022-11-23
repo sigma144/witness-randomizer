@@ -127,6 +127,15 @@ void APWatchdog::CheckSolvedPanels() {
 					anyNew = true;
 
 					it2 = EPSet.erase(it2);
+
+					APClient::DataStorageOperation operation;
+					operation.operation = "replace";
+					operation.value = true;
+
+					std::list<APClient::DataStorageOperation> operations;
+					operations.push_back(operation);
+
+					ap->Set("EP_" + std::to_string(*it2), NULL, false, operations);
 				}
 				else
 				{
@@ -861,6 +870,15 @@ void APWatchdog::AudioLogPlaying() {
 					std::vector<std::string> message = audioLogMessages[id].first;
 
 					audioLogMessageBuffer[100] = { message[0], message[1], message[2], 12.0f, true};
+
+					APClient::DataStorageOperation operation;
+					operation.operation = "replace";
+					operation.value = true;
+
+					std::list<APClient::DataStorageOperation> operations;
+					operations.push_back(operation);
+
+					ap->Set("AL_" + std::to_string(id), NULL, false, operations);
 				}
 				else if (audioLogMessageBuffer.count(100)) {
 					audioLogMessageBuffer.erase(100);
