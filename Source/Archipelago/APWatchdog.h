@@ -123,6 +123,8 @@ private:
 	bool EPShuffle = false;
 	bool Hard = false;
 
+	bool FirstEverLocationCheckDone = false;
+
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
 

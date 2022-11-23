@@ -138,7 +138,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 			if (EPSet.empty())
 			{
-				queueMessage(ap->get_location_name(locationId) + " Completed!");
+				if(FirstEverLocationCheckDone) queueMessage(ap->get_location_name(locationId) + " Completed!");
 
 				solvedLocations.push_back(locationId);
 
@@ -150,7 +150,7 @@ void APWatchdog::CheckSolvedPanels() {
 					int total = obeliskHexToAmountOfEPs[panelId];
 					int done = total - EPSet.size();
 
-					queueMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+					if (FirstEverLocationCheckDone) queueMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
 				}
 				it++;
 			}
@@ -233,6 +233,8 @@ void APWatchdog::CheckSolvedPanels() {
 
 	if (!solvedLocations.empty())
 		ap->LocationChecks(solvedLocations);
+
+	FirstEverLocationCheckDone = true;
 }
 
 void APWatchdog::MarkLocationChecked(int locationId, bool collect)
