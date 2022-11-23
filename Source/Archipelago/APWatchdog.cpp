@@ -117,14 +117,41 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 
 		if (obeliskHexToEPHexes.count(panelId)) {
-			if (false) //TODO: Check EP solved
+			std::set<int> EPSet = obeliskHexToEPHexes[panelId];
+
+			bool anyNew = false;
+
+			for (auto it2 = EPSet.begin(); it2 != EPSet.end();) {
+				if (ReadPanelData<int>(*it2, EP_SOLVED)) //TODO: Check EP solved
+				{
+					anyNew = true;
+
+					it2 = EPSet.erase(it2);
+				}
+				else
+				{
+					it2++;
+				}
+			}
+
+			obeliskHexToEPHexes[panelId] = EPSet;
+
+			if (EPSet.empty())
 			{
+				queueMessage(ap->get_location_name(locationId) + " Completed!");
+
 				solvedLocations.push_back(locationId);
 
 				it = panelIdToLocationId.erase(it);
 			}
 			else
 			{
+				if (anyNew) {
+					int total = obeliskHexToAmountOfEPs[panelId];
+					int done = total - EPSet.size();
+
+					queueMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+				}
 				it++;
 			}
 			continue;

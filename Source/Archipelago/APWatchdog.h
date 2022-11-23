@@ -39,6 +39,11 @@ public:
 		state = s;
 		EPShuffle = ep;
 		obeliskHexToEPHexes = o;
+
+		for (auto [key, value] : obeliskHexToEPHexes) {
+			obeliskHexToAmountOfEPs[key] = value.size();
+		}
+
 		Hard = hard;
 
 		panelsThatHaveToBeSkippedForEPPurposes = {
@@ -170,6 +175,7 @@ private:
 
 	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
+	std::map<int, int> obeliskHexToAmountOfEPs = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
