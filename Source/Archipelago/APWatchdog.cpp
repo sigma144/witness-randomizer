@@ -17,6 +17,8 @@ void APWatchdog::action() {
 		halfSecondCounter = 4;
 	}
 
+	QueueItemMessages();
+
 	CheckSolvedPanels();
 	CheckEPSkips();
 
@@ -1103,4 +1105,72 @@ void APWatchdog::CheckEPSkips() {
 		Special::SkipPanel(panel, "Skipped", false);
 		WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Cost == 0
 	}
+}
+
+void APWatchdog::QueueItemMessages() {
+	if (newItemsJustIn) {
+		newItemsJustIn = false;
+		return;
+	}
+
+	processingItemMessages = true;
+
+	std::map<std::string, int> itemCounts;
+	std::map<std::string, std::array<float, 3>> itemColors;
+	std::vector<std::string> receivedItems;
+
+	std::vector<std::pair<const APClient::NetworkItem&, int>> requeue;
+
+	while (!queuedItems.empty()) {
+		auto itemPair = queuedItems.front();
+		queuedItems.pop();
+
+		const APClient::NetworkItem& item = itemPair.first;
+		int realitem = itemPair.second;
+
+		if (ap->get_item_name(realitem) == "Unknown" || ap->get_item_name(item.item) == "Unknown") {
+			requeue.push_back(itemPair);
+			continue;
+		}
+
+		std::string name = ap->get_item_name(item.item);
+
+		if (realitem != item.item) {
+			name += " (" + ap->get_item_name(realitem) + ")";
+		}
+
+		// Track the quantity of this item received in this batch.
+		if (itemCounts.find(name) == itemCounts.end()) {
+			itemCounts[name] = 1;
+			receivedItems.emplace_back(name);
+		}
+		else {
+			itemCounts[name]++;
+		}
+
+		// Assign a color to the item.
+		itemColors[name] = getColorForItem(item);
+	}
+
+	for (std::pair<const APClient::NetworkItem&, int> itemPair : requeue) {
+		queuedItems.push(itemPair);
+	}
+
+	for (std::string name : receivedItems) {
+		// If we received more than one of an item in this batch, add the quantity to the output string.
+		std::string count = "";
+		if (itemCounts[name] > 1) {
+			count = " (x" + std::to_string(itemCounts[name]) + ")";
+		}
+
+		queueMessage("Received " + name + count + ".", itemColors[name]);
+	}
+
+	processingItemMessages = false;
+}
+
+void APWatchdog::QueueReceivedItem(const APClient::NetworkItem& item, int realitem) {
+	newItemsJustIn = true;
+
+	queuedItems.push({ item, realitem });
 }

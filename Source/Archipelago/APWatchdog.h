@@ -110,6 +110,12 @@ public:
 		if (enable) queueMessage("Challenge Timer disabled.");
 		if (!enable) queueMessage("Challenge Timer reenabled.");
 	}
+
+	bool processingItemMessages = false;
+	bool newItemsJustIn = false;
+
+	void QueueReceivedItem(const APClient::NetworkItem& item, int realitem);
+
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;
@@ -155,6 +161,8 @@ private:
 
 	void DisplayMessage();
 
+	void QueueItemMessages();
+
 	void DisableCollisions();
 
 	void AudioLogPlaying();
@@ -190,6 +198,8 @@ private:
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
+
+	std::queue<std::pair<const APClient::NetworkItem&, int>> queuedItems;
 
 
 	int CheckIfCanSkipPuzzle();
