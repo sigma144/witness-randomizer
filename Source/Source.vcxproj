@@ -181,8 +181,10 @@
     <ClInclude Include="Archipelago\Client\json\include\nlohmann\json.hpp" />
     <ClInclude Include="Archipelago\SkipSpecialCases.h" />
     <ClInclude Include="Converty.h" />
+    <ClInclude Include="DataTypes.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Generate.h" />
+    <ClInclude Include="HUDManager.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
@@ -203,6 +205,7 @@
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\Client\wswrap\src\wswrap.cpp" />
     <ClCompile Include="Generate.cpp" />
+    <ClCompile Include="HUDManager.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />

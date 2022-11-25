@@ -56,7 +56,7 @@ class APRandomizer {
 		std::map<int, std::set<int>> itemIdToDoorSet;
 		std::set<int> doorsActuallyInTheItemPool;
 		std::map<int, std::vector<int>> progressiveItems;
-		std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages;
+		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
 		std::map<int, int> panelIdToLocationIdReverse;
 
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;

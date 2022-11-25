@@ -3,6 +3,8 @@
 #include <map>
 #include <vector>
 
+#include "../DataTypes.h"
+
 #define TARGET 0x2B4
 
 #define PANEL 0
@@ -829,7 +831,7 @@ private:
 	float z2;
 };
 
-static std::array<float, 3> getColorForItem(const APClient::NetworkItem& item)
+static RgbColor getColorForItem(const APClient::NetworkItem& item)
 {
 	// Pick the appropriate color for this item based on its progression flags. Colors are loosely based on AP codes but somewhat
 	//   paler to match the Witness aesthetic. See https://github.com/ArchipelagoMW/Archipelago/blob/main/NetUtils.py for details.
