@@ -17,6 +17,8 @@ void APWatchdog::action() {
 		halfSecondCounter = 4;
 	}
 
+	QueueItemMessages();
+
 	CheckSolvedPanels();
 	CheckEPSkips();
 
@@ -117,14 +119,50 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 
 		if (obeliskHexToEPHexes.count(panelId)) {
-			if (false) //TODO: Check EP solved
+			std::set<int> EPSet = obeliskHexToEPHexes[panelId];
+
+			bool anyNew = false;
+
+			for (auto it2 = EPSet.begin(); it2 != EPSet.end();) {
+				if (ReadPanelData<int>(*it2, EP_SOLVED)) //TODO: Check EP solved
+				{
+					anyNew = true;
+
+					it2 = EPSet.erase(it2);
+
+					APClient::DataStorageOperation operation;
+					operation.operation = "replace";
+					operation.value = true;
+
+					std::list<APClient::DataStorageOperation> operations;
+					operations.push_back(operation);
+
+					ap->Set("EP_" + std::to_string(*it2), NULL, false, operations);
+				}
+				else
+				{
+					it2++;
+				}
+			}
+
+			obeliskHexToEPHexes[panelId] = EPSet;
+
+			if (EPSet.empty())
 			{
+				if(FirstEverLocationCheckDone) queueMessage(ap->get_location_name(locationId) + " Completed!");
+
 				solvedLocations.push_back(locationId);
 
 				it = panelIdToLocationId.erase(it);
 			}
 			else
 			{
+				if (anyNew) {
+					int total = obeliskHexToAmountOfEPs[panelId];
+					int done = total - EPSet.size();
+
+					if (FirstEverLocationCheckDone) queueMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+				}
 				it++;
 			}
 			continue;
@@ -206,6 +244,8 @@ void APWatchdog::CheckSolvedPanels() {
 
 	if (!solvedLocations.empty())
 		ap->LocationChecks(solvedLocations);
+
+	FirstEverLocationCheckDone = true;
 }
 
 void APWatchdog::MarkLocationChecked(int locationId, bool collect)
@@ -832,6 +872,15 @@ void APWatchdog::AudioLogPlaying() {
 					std::vector<std::string> message = audioLogMessages[id].first;
 
 					audioLogMessageBuffer[100] = { message[0], message[1], message[2], 12.0f, true};
+
+					APClient::DataStorageOperation operation;
+					operation.operation = "replace";
+					operation.value = true;
+
+					std::list<APClient::DataStorageOperation> operations;
+					operations.push_back(operation);
+
+					ap->Set("AL_" + std::to_string(id), NULL, false, operations);
 				}
 				else if (audioLogMessageBuffer.count(100)) {
 					audioLogMessageBuffer.erase(100);
@@ -1056,4 +1105,72 @@ void APWatchdog::CheckEPSkips() {
 		Special::SkipPanel(panel, "Skipped", false);
 		WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Cost == 0
 	}
+}
+
+void APWatchdog::QueueItemMessages() {
+	if (newItemsJustIn) {
+		newItemsJustIn = false;
+		return;
+	}
+
+	processingItemMessages = true;
+
+	std::map<std::string, int> itemCounts;
+	std::map<std::string, std::array<float, 3>> itemColors;
+	std::vector<std::string> receivedItems;
+
+	std::vector<std::pair<const APClient::NetworkItem&, int>> requeue;
+
+	while (!queuedItems.empty()) {
+		auto itemPair = queuedItems.front();
+		queuedItems.pop();
+
+		const APClient::NetworkItem& item = itemPair.first;
+		int realitem = itemPair.second;
+
+		if (ap->get_item_name(realitem) == "Unknown" || ap->get_item_name(item.item) == "Unknown") {
+			requeue.push_back(itemPair);
+			continue;
+		}
+
+		std::string name = ap->get_item_name(item.item);
+
+		if (realitem != item.item) {
+			name += " (" + ap->get_item_name(realitem) + ")";
+		}
+
+		// Track the quantity of this item received in this batch.
+		if (itemCounts.find(name) == itemCounts.end()) {
+			itemCounts[name] = 1;
+			receivedItems.emplace_back(name);
+		}
+		else {
+			itemCounts[name]++;
+		}
+
+		// Assign a color to the item.
+		itemColors[name] = getColorForItem(item);
+	}
+
+	for (std::pair<const APClient::NetworkItem&, int> itemPair : requeue) {
+		queuedItems.push(itemPair);
+	}
+
+	for (std::string name : receivedItems) {
+		// If we received more than one of an item in this batch, add the quantity to the output string.
+		std::string count = "";
+		if (itemCounts[name] > 1) {
+			count = " (x" + std::to_string(itemCounts[name]) + ")";
+		}
+
+		queueMessage("Received " + name + count + ".", itemColors[name]);
+	}
+
+	processingItemMessages = false;
+}
+
+void APWatchdog::QueueReceivedItem(const APClient::NetworkItem& item, int realitem) {
+	newItemsJustIn = true;
+
+	queuedItems.push({ item, realitem });
 }
