@@ -3,7 +3,8 @@
 #include "Utilities.h"
 
 
-#define PRINT_INPUT_DEBUG 1
+#define PRINT_INPUT_DEBUG 0
+#define KEY_TAP_DURATION 0.4f
 
 InputWatchdog* InputWatchdog::_singleton = nullptr;
 
@@ -53,6 +54,12 @@ InteractionState InputWatchdog::getInteractionState() const {
 	}
 }
 
+std::vector<InputButton> InputWatchdog::consumeTapEvents() {
+	std::vector<InputButton> output = pendingTapEvents;
+	pendingTapEvents.clear();
+	return output;
+}
+
 void InputWatchdog::updateKeyState() {
 	// First, find the address of the key state in memory.
 	const std::vector<int> offsets = {
@@ -81,14 +88,47 @@ void InputWatchdog::updateKeyState() {
 
 #if PRINT_INPUT_DEBUG
 	std::vector<int> changedKeys;
+#endif
+
 	for (int keyIndex = 1; keyIndex < INPUT_KEYSTATE_SIZE; keyIndex++) {
-		// Only report values changed to/from zero. The input code sets a value of 3 for the first frame a button is pressed and 5 for
-		//   the frame it is released, so reporting the value every time it changes adds unnecessary noise.
-		if (newKeyState[keyIndex] != currentKeyState[keyIndex] && (newKeyState[keyIndex] == 0 || currentKeyState[keyIndex] == 0)) {
+		// Test for key changes. Note that we only report values changing to/from zero: the input code sets a value of 3 for the first frame a button is
+		//   pressed and 5 for the frame it is released, so if we report an event every time the value changes we'll be adding unnecessary noise.
+		//   Additionally, we don't want to explicitly react to 3s and 5s here because we're polling asynchronously, and we may miss the frame that those
+		//   values are set.
+		bool wasPressed = currentKeyState[keyIndex] != 0;
+		bool isPressed = newKeyState[keyIndex] != 0;
+		if (!wasPressed && isPressed) {
+			// The key was pressed since our last poll. Record when it was pressed.
+			pressTimes[static_cast<InputButton>(keyIndex)] = std::chrono::system_clock::now();
+		}
+		else if (wasPressed && !isPressed) {
+			// The key was released since our last poll. Check to see if the press and release are close enough together to count as a tap, and if so,
+			//   record it.
+			auto result = pressTimes.find(static_cast<InputButton>(keyIndex));
+			if (result != pressTimes.end()) {
+				std::chrono::duration<float> holdDuration = std::chrono::system_clock::now() - result->second;
+				if ((float)holdDuration.count() <= KEY_TAP_DURATION) {
+					pendingTapEvents.push_back(static_cast<InputButton>(keyIndex));
+
+#if PRINT_INPUT_DEBUG
+					std::wostringstream tapKeyString;
+					tapKeyString << "TAPPED: 0x" << std::hex << keyIndex << std::endl;
+					OutputDebugStringW(tapKeyString.str().c_str());			
+#endif
+				}
+
+				pressTimes.erase(result);
+			}
+		}
+
+#if PRINT_INPUT_DEBUG
+		if (wasPressed != isPressed) {
 			changedKeys.push_back(keyIndex);
 		}
+#endif
 	}
 
+#if PRINT_INPUT_DEBUG
 	if (changedKeys.size() > 0) {
 		std::wostringstream activeKeyString;
 		activeKeyString << "HELD KEYS:";

@@ -40,16 +40,16 @@ enum class InputButton : int {
 	KEY_Z				= 0x7a,
 	
 	// Numerals (not numpad)
-	KEY_0				= 0x48,
-	KEY_1				= 0x49,
-	KEY_2				= 0x4A,
-	KEY_3				= 0x4B,
-	KEY_4				= 0x4C,
-	KEY_5				= 0x4D,
-	KEY_6				= 0x4E,
-	KEY_7				= 0x4F,
-	KEY_8				= 0x50,
-	KEY_9				= 0x51,
+	KEY_0				= 0x30,
+	KEY_1				= 0x31,
+	KEY_2				= 0x32,
+	KEY_3				= 0x33,
+	KEY_4				= 0x34,
+	KEY_5				= 0x35,
+	KEY_6				= 0x36,
+	KEY_7				= 0x37,
+	KEY_8				= 0x38,
+	KEY_9				= 0x39,
 
 	// Function keys
 	KEY_F1				= 0x112,
@@ -187,6 +187,9 @@ public:
 	// Returns the player's current interaction mode.
 	InteractionState getInteractionState() const;
 
+	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
+	std::vector<InputButton> consumeTapEvents();
+
 private:
 
 	InputWatchdog();
@@ -213,5 +216,8 @@ private:
 
 	uint64_t interactModeOffset;
 	uint64_t menuOpenOffset;
+
+	std::map<InputButton, std::chrono::system_clock::time_point> pressTimes;
+	std::vector<InputButton> pendingTapEvents;
 
 };

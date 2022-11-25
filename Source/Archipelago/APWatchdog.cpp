@@ -1,12 +1,21 @@
 #include "APWatchdog.h"
-#include "..\Quaternion.h"
-#include <thread>
+
+#include "../Input.h"
 #include "../Panels.h"
+#include "../Quaternion.h"
 #include "SkipSpecialCases.h"
+
+#include <thread>
+
+
+#define CHEAT_KEYS_ENABLED 0
+
 
 void APWatchdog::action() {
 	HandleMovementSpeed();
 	DisplayAudioLogMessage();
+
+	HandleKeyTaps();
 
 	if (halfSecondCounter > 0) {
 		halfSecondCounter -= 1;
@@ -319,7 +328,7 @@ void APWatchdog::ResetPowerSurge() {
 }
 
 int APWatchdog::CheckIfCanSkipPuzzle() {
-	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(availablePuzzleSkips - skippedPuzzles)).c_str());
+	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(foundPuzzleSkips - skippedPuzzles)).c_str());
 
 
 
@@ -381,7 +390,7 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 
 	// Cost Evaluated
 
-	if (availablePuzzleSkips - cost < skippedPuzzles) {
+	if (foundPuzzleSkips - cost < skippedPuzzles) {
 		EnableWindow(skipButton, false);
 		return -1;
 	}
@@ -474,7 +483,7 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 }
 
 void APWatchdog::AddPuzzleSkip() {
-	availablePuzzleSkips++;
+	foundPuzzleSkips++;
 }
 
 void APWatchdog::UnlockDoor(int id) {
@@ -680,6 +689,25 @@ void APWatchdog::DoubleDoorTargetHack(int id) {
 
 		_memory->WritePanelData<int>(0x2FD5F, CABLE_TARGET_1, { 0 });
 		return;
+	}
+}
+
+void APWatchdog::HandleKeyTaps() {
+	std::vector<InputButton> tapEvents = InputWatchdog::get()->consumeTapEvents();
+	for (const InputButton& tappedButton : tapEvents) {
+		switch (tappedButton) {
+#if CHEAT_KEYS_ENABLED
+		case InputButton::KEY_MINUS:
+			ApplyTemporarySlow();
+			break;
+		case InputButton::KEY_EQUALS:
+			ApplyTemporarySpeedBoost();
+			break;
+		case InputButton::KEY_0:
+			AddPuzzleSkip();
+			break;
+#endif
+		};
 	}
 }
 

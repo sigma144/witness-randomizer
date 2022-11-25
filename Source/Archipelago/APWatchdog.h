@@ -40,7 +40,7 @@ public:
 	}
 
 	int skippedPuzzles = 0;
-	int availablePuzzleSkips = 0;
+	int foundPuzzleSkips = 0;
 
 	HWND skipButton;
 	HWND availableSkips;
@@ -123,6 +123,8 @@ private:
 	int storageCheckCounter = 6;
 
 	float speedTime = 0.0f;
+
+	void HandleKeyTaps();
 
 	void DisplayMessage();
 
