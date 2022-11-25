@@ -104,7 +104,7 @@ void Memory::findGamelibRenderer()
 	uint64_t pointerLocation = executeSigScan(gamelibSearchBytes) + gamelibSearchBytes.size();
 
 	// Read the literal value passed to the MOV operation.
-	if (!ReadRelative(reinterpret_cast<void*>(pointerLocation), &GAMELIB_RENDERER, sizeof(uint64_t))) {
+	if (!ReadRelative(reinterpret_cast<void*>(pointerLocation), &GAMELIB_RENDERER, sizeof(int))) {
 		throw "Unable to dereference gamelib_render.";
 		GAMELIB_RENDERER = 0;
 		return;
@@ -270,6 +270,34 @@ void Memory::findImportantFunctionAddresses(){
 	//display subtitles
 	executeSigScan({ 0x48, 0x89, 0xB4, 0x24, 0xC8, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x4B, 0x08, 0x4C, 0x8D, 0x84, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->displaySubtitlesFunction = _baseAddress + offset + index - 9;
+
+		for (; index < data.size(); index--) { // find rax statement at start of function (Subtitles setting)
+			if (data[index] == 0x48 && data[index + 1] == 0x8B && data[index+2] == 0x05) { 
+				u_int64 raxstatement = _baseAddress + offset + index + 3;
+				
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(raxstatement), buff, sizeof(buff), NULL);
+
+				this->subtitlesOnOrOff = raxstatement + buff[0] + 4;
+				
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) { // find rax statement at start of function (Subtitles setting)
+			if (data[index] == 0x48 && data[index + 1] == 0x8B && data[index + 2] == 0x1D) {
+				u_int64 rbxstatement = _baseAddress + offset + index + 3;
+
+				int buff[1];
+
+				ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(rbxstatement), buff, sizeof(buff), NULL);
+
+				this->subtitlesHashTable = rbxstatement + buff[0] + 4;
+
+				break;
+			}
+		}
 
 		return true;
 	});
@@ -492,6 +520,25 @@ void Memory::findImportantFunctionAddresses(){
 		LPVOID addressPointer = reinterpret_cast<LPVOID>(comissStatement);
 
 		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+
+		return true;
+	});
+
+	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		byte newByte = 0xEB;
+
+		WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
+
+		return true;
+	});
+
+	executeSigScan({ 0x48, 0x8B, 0x51, 0x18, 0x2B, 0x42, 0x08, 0x78, 0x37 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index--) {
+			if (data[index] == 0x40 && data[index + 1] == 0x53 && data[index + 2] == 0x48) { // need to find function start (backwards)
+				this->completeEPFunction = _baseAddress + offset + index;
+				break;
+			}
+		}
 
 		return true;
 	});
@@ -802,7 +849,7 @@ void Memory::DisplaySubtitles(std::string line1, std::string line2, std::string 
 	char buffer[1024];
 
 	if (!_subtitlesStuff) {
-		__int64 addressOfSettings = this->ReadData<__int64>({ 0x62D4E0 }, 1)[0];
+		__int64 addressOfSettings = this->ReadData<__int64>({ (int) (this->subtitlesOnOrOff - _baseAddress)}, 1)[0];
 		__int32 oneBuff[1];
 		oneBuff[0] = 1;
 
@@ -851,11 +898,11 @@ void Memory::DisplaySubtitles(std::string line1, std::string line2, std::string 
 
 		WriteProcessMemory(_handle, addressPointer2, asmBuff2, sizeof(asmBuff2) - 1, NULL);
 
-		while (this->ReadData<__int64>({ 0x62d4e8 }, 1)[0] == 0) { // 0 means subtitles aren't loaded yet
+		while (this->ReadData<__int64>({ (int) (this->subtitlesHashTable - _baseAddress) }, 1)[0] == 0) { // 0 means subtitles aren't loaded yet
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
-		__int64 addressOfSectionHashtable = this->ReadData<__int64>({ 0x62d4e8 }, 1)[0];
+		__int64 addressOfSectionHashtable = this->ReadData<__int64>({ (int)(this->subtitlesHashTable - _baseAddress) }, 1)[0];
 		__int64 hashtablePlus8 = addressOfSectionHashtable + 8;
 		__int64 nameOfClip = reinterpret_cast<__int64>(_subtitlesStuff);
 		__int64 returnAddress = nameOfClip + 0x18;
@@ -1000,9 +1047,12 @@ uint64_t Memory::relativeBoatSpeed1Address = 0;
 uint64_t Memory::displaySubtitlesFunction = 0;
 uint64_t Memory::displaySubtitlesFunction2 = 0;
 uint64_t Memory::displaySubtitlesFunction3 = 0;
+uint64_t Memory::subtitlesOnOrOff = 0;
+uint64_t Memory::subtitlesHashTable = 0;
 uint64_t Memory::_recordPlayerUpdate = 0;
 uint64_t Memory::_getSoundFunction = 0;
 uint64_t Memory::_bytesLengthChallenge = 0;
+uint64_t Memory::completeEPFunction = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

@@ -27,6 +27,7 @@ void APWatchdog::action() {
 	}
 
 	CheckSolvedPanels();
+	CheckEPSkips();
 
 	HandlePowerSurge();
 	CheckIfCanSkipPuzzle();
@@ -109,6 +110,34 @@ void APWatchdog::CheckSolvedPanels() {
 	{
 		int panelId = it->first;
 		int locationId = it->second;
+
+		if (allEPs.count(panelId)) {
+			if (ReadPanelData<int>(panelId, EP_SOLVED)) //TODO: Check EP solved
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
+
+		if (obeliskHexToEPHexes.count(panelId)) {
+			if (false) //TODO: Check EP solved
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
 
 		if (panelId == 0x09FD2) {
 			int cableId = 0x09FCD;
@@ -194,6 +223,8 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 	while (it != panelIdToLocationId.end())
 	{
 		if (it->second == locationId) {
+			if (!actuallyEveryPanel.count(it->first)) return;
+
 			if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
 				if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
 					std::vector<int> bridgePanels;
@@ -333,6 +364,11 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 
 
 	int id = GetActivePanel();
+
+	if ((id == 0x181F5 || id == 0x334D8) && !Hard) { // Swamp Rotating Bridge and Town RGB Control should only be skippable in expert
+		EnableWindow(skipButton, false);
+		return -1;
+	}
 
 	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), id) == actuallyEveryPanel.end()) {
 		EnableWindow(skipButton, false);
@@ -936,5 +972,116 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
 		audioLogMessageBuffer[50] = { "", "Panels in the Bunker need", "Black/White Squares, Colored Squares.", 0.8f, false };
+	}
+
+	if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
+		if(Hard) audioLogMessageBuffer[50] = { "", "Needs Eraser, Triangles,", "Stars, Stars + Same Colored Symbol.", 0.8f, false };
+		else audioLogMessageBuffer[50] = { "", "Needs Shapers and Eraser.", "", 0.8f, false };
+	}
+
+	if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
+		if(Hard) audioLogMessageBuffer[50] = { "", "Needs Symmetry and Triangles.", "", 0.8f, false};
+		else audioLogMessageBuffer[50] = { "", "Needs Symmetry and Dots.", "", 0.8f, false};
+	}
+
+	if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
+		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
+			audioLogMessageBuffer[50] = { "", "Left Panel needs Stars and Shapers.", "Right Panel needs Dots and Colored Squares.", 0.8f, false };
+		}
+		else
+		{
+			audioLogMessageBuffer[50] = { "", "", "Left Panel needs Stars and Shapers.", 0.8f, false };
+		}
+	}
+	else if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
+		audioLogMessageBuffer[50] = { "", "", "Right Panel needs Dots and Colored Squares.", 0.8f, false };
+	}
+}
+
+bool APWatchdog::CheckPanelHasBeenSolved(int panelId) {
+	return panelIdToLocationId.count(panelId);
+}
+
+void APWatchdog::SetItemReward(const int& id, const APClient::NetworkItem& item) {
+	if (!actuallyEveryPanel.count(id)) return;
+
+	Color backgroundColor;
+	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
+		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
+	else if (item.flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
+		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
+	else if (item.flags & APClient::ItemFlags::FLAG_TRAP)
+		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
+	else
+		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
+
+	if (id == 0x28998 || id == 0x28A69 || id == 0x17CAA || id == 0x00037 || id == 0x09FF8 || id == 0x09DAF || id == 0x0A01F || id == 0x17E67) {
+		WritePanelData<Color>(id, SUCCESS_COLOR_A, { backgroundColor });
+	}
+	else
+	{
+		WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
+	}
+	WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
+void APWatchdog::CheckEPSkips() {
+	if (!EPShuffle) return;
+
+	std::set<int> panelsToSkip = {};
+	std::set<int> panelsToRemoveSilently = {};
+
+	for (int panel : panelsThatHaveToBeSkippedForEPPurposes) {
+		__int32 skipped = ReadPanelData<__int32>(panel, VIDEO_STATUS_COLOR);
+
+		if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED) {
+			panelsToRemoveSilently.insert(panel);
+			continue;
+		}
+
+		if (panel == 0x09E86 || panel == 0x09ED8) {
+			// TODO: This needs to check the exit is solved.
+			if (ReadPanelData<int>(0x09E86, FLASH_MODE) == 1 && ReadPanelData<int>(0x09ED8, FLASH_MODE) == 1) { 
+				int num_front_traced_edges = ReadPanelData<int>(0x09ED8, TRACED_EDGES);
+				std::vector<int> front_traced_edges = ReadArray<int>(0x09ED8, TRACED_EDGE_DATA, num_front_traced_edges * 23);
+
+				if(num_front_traced_edges >= 0 && front_traced_edges[num_front_traced_edges*13 - 13] == 0x1B && front_traced_edges[num_front_traced_edges * 13 - 12] == 0x27){
+					panelsToSkip.insert(panel); 
+					continue;
+				}
+				
+				int num_back_traced_edges = ReadPanelData<int>(0x09E86, TRACED_EDGES);
+				std::vector<int> back_traced_edges = ReadArray<int>(0x09E86, TRACED_EDGE_DATA, num_back_traced_edges * 13);
+
+				if (num_back_traced_edges >= 0 && back_traced_edges[num_back_traced_edges * 13 - 13] == 0x1B && back_traced_edges[num_back_traced_edges * 13 - 12] == 0x27) {
+					panelsToSkip.insert(panel);
+					continue;
+				}
+			}
+		}
+
+		if (panel == 0x033EA || panel == 0x01BE9 || panel == 0x01CD3 || panel == 0x01D3F || panel == 0x181F5) {
+			if (ReadPanelData<int>(panel, SOLVED)) {
+				panelsToSkip.insert(panel);
+				continue;
+			}
+		}
+
+		if (panel == 0x334D8) { // Town RGB Control
+			if (ReadPanelData<int>(0x334D8, SOLVED) && ReadPanelData<int>(0x03C0C, SOLVED) && ReadPanelData<int>(0x03C08, SOLVED)) {
+				panelsToSkip.insert(panel);
+				continue;
+			}
+		}
+	}
+
+	for (int panel : panelsToRemoveSilently) {
+		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
+	}
+
+	for (int panel : panelsToSkip) {
+		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
+		Special::SkipPanel(panel, "Skipped", false);
+		WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Cost == 0
 	}
 }

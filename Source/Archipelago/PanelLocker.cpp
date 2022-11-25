@@ -143,6 +143,43 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		if (!isLocked)
 			lockedPuzzles.insert({ id, puzzle });
 
+		if (id == 0x03612 || id == 0x1C349) { // Quarry Laser Panel & Symmetry Island Upper
+			int num_dec = _memory->ReadPanelData<int>(id, NUM_DOTS);
+			std::vector<int> dec = _memory->ReadArray<int>(id, DOT_FLAGS, num_dec);
+
+			for (int i = 0; i < num_dec; i++) {
+				if (dec[i] == 0x600002) dec[i] = 0;
+			}
+
+			_memory->WriteArray(id, DOT_FLAGS, dec);
+			_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+			return;
+		}
+
+		if (id == 0x01983) {
+			if (_memory->ReadPanelData<float>(0x0C179, 0xE0) < 0.0001f) return;
+
+			while (_memory->ReadPanelData<int>(0x0C179, 0x1e4)) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			}
+
+			_memory->WritePanelData<float>(0x0C179, 0xE0, { 0.000001f });
+			_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
+			return;
+		}
+
+		if (id == 0x01987) {
+			if (_memory->ReadPanelData<float>(0x0C19D, 0xE0) < 0.0001f) return;
+
+			while (_memory->ReadPanelData<int>(0x0C19D, 0x1e4)) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			}
+
+			_memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.000001f });
+			_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
+			return;
+		}
+
 		const int width = 4;
 		const int height = 2;
 
@@ -231,29 +268,26 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id) {
 	}
 }
 
-void PanelLocker::SetItemReward(const int& id, const APClient::NetworkItem& item) {
-	Color backgroundColor;
-	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
-		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
-	else if (item.flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
-		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
-	else if (item.flags & APClient::ItemFlags::FLAG_TRAP)
-		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
-	else
-		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
-
-	if (id == 0x28998 || id == 0x28A69 || id == 0x17CAA || id == 0x00037 || id == 0x09FF8 || id == 0x09DAF || id == 0x0A01F || id == 0x17E67) {
-		_memory->WritePanelData<Color>(id, SUCCESS_COLOR_A, { backgroundColor });
-	}
-	else
-	{ 
-		_memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
-	}
-	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-}
-
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
-	puzzle->Restore(_memory);
+	if (puzzle->id == 0x01983) {
+		while (_memory->ReadPanelData<int>(0x0C179, 0x1d4)) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
+		_memory->WritePanelData<float>(0x0C179, 0xE0, { 0.2300000042f });
+		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
+	}
+
+	else if (puzzle->id == 0x01987) {
+		while (_memory->ReadPanelData<int>(0x0C19D, 0x1d4)) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
+		_memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.2300000042f });
+		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
+	}
+
+	else puzzle->Restore(_memory);
 	lockedPuzzles.erase(puzzle->id);
 	//delete puzzle;
 }

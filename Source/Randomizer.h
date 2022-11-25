@@ -84,7 +84,8 @@ private:
 #define OUTER_BACKGROUND_MODE 0x214 
 #define TRACED_EDGES 0x228 
 #define TRACED_EDGE_DATA 0x230 
-#define AUDIO_PREFIX 0x270 
+#define AUDIO_PREFIX 0x270
+#define FLASH_MODE 0x280
 #define SOLVED 0x298
 #define POWER 0x2A0 
 #define TARGET 0x2B4 

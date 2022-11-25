@@ -26,6 +26,7 @@ class APRandomizer {
 		bool UnlockSymbols = false;
 		bool EarlyUTM = false;
 		bool DisableNonRandomizedPuzzles = false;
+		bool EPShuffle = false;
 		int MountainLasers = 7;
 		int ChallengeLasers = 11;
 
@@ -57,6 +58,10 @@ class APRandomizer {
 		std::map<int, std::vector<int>> progressiveItems;
 		std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages;
 		std::map<int, int> panelIdToLocationIdReverse;
+
+		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
+		std::set<int> precompletedLocations;
+
 		std::shared_ptr<Memory> _memory;
 
 		APClient* ap;
