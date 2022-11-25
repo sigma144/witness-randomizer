@@ -39,6 +39,11 @@ public:
 		state = s;
 		EPShuffle = ep;
 		obeliskHexToEPHexes = o;
+
+		for (auto [key, value] : obeliskHexToEPHexes) {
+			obeliskHexToAmountOfEPs[key] = value.size();
+		}
+
 		Hard = hard;
 
 		panelsThatHaveToBeSkippedForEPPurposes = {
@@ -105,6 +110,12 @@ public:
 		if (enable) queueMessage("Challenge Timer disabled.");
 		if (!enable) queueMessage("Challenge Timer reenabled.");
 	}
+
+	bool processingItemMessages = false;
+	bool newItemsJustIn = false;
+
+	void QueueReceivedItem(const APClient::NetworkItem& item, int realitem);
+
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;
@@ -117,6 +128,8 @@ private:
 
 	bool EPShuffle = false;
 	bool Hard = false;
+
+	bool FirstEverLocationCheckDone = false;
 
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
@@ -150,6 +163,8 @@ private:
 
 	void DisplayMessage();
 
+	void QueueItemMessages();
+
 	void DisableCollisions();
 
 	void AudioLogPlaying();
@@ -172,6 +187,7 @@ private:
 
 	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
+	std::map<int, int> obeliskHexToAmountOfEPs = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
@@ -184,6 +200,8 @@ private:
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
+
+	std::queue<std::pair<const APClient::NetworkItem&, int>> queuedItems;
 
 
 	int CheckIfCanSkipPuzzle();
