@@ -209,8 +209,6 @@ private:
 
 	void updateInteractionState();
 
-	std::shared_ptr<class Memory> memory;
-
 	void findInteractModeOffset();
 	void findMenuOpenOffset();
 
