@@ -8,7 +8,7 @@
 #include <thread>
 
 
-#define CHEAT_KEYS_ENABLED 1
+#define CHEAT_KEYS_ENABLED 0
 
 
 void APWatchdog::action() {
