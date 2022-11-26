@@ -13,7 +13,7 @@ class Memory;
 class HudManager {
 public:
 
-	HudManager(const std::shared_ptr<Memory>& memory) : memory(memory) {}
+	HudManager(const std::shared_ptr<Memory>& memory);
 	
 	void update(float deltaSeconds);
 
@@ -35,6 +35,17 @@ public:
 	// Show an input action hint to the player, such as "Hold [TAB]: Skip Puzzle".
 	void setActionHint(std::string text);
 	void clearActionHint() { setActionHint(std::string()); };
+
+	enum SubtitleSize {
+		Large,
+		Medium,
+		Small
+	};
+
+	// Sets the default size of the subtitle. NOTE: When subtitles are drawn, the game will attempt to pick progressively smaller
+	//   fonts until it finds one where the entire subtitle line can fit on screen horizontally. As such, if we set a large font
+	//   here, then pass a long string, the game may not use the large font for that message.
+	void setSubtitleSize(SubtitleSize size);
 
 private:
 
@@ -62,6 +73,11 @@ private:
 	std::string actionHint;
 	std::string statusMessage;
 	bool subtitlesDirty = false;
+
+	void findSetSubtitleOffsets();
+
+	uint64_t setSubtitleOffset;
+	uint32_t largeSubtitlePointerOffset;
 
 	std::shared_ptr<Memory> memory;
 

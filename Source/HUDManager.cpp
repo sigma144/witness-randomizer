@@ -3,6 +3,11 @@
 #include "Memory.h"
 
 
+HudManager::HudManager(const std::shared_ptr<Memory>& memory) : memory(memory) {
+	findSetSubtitleOffsets();
+	setSubtitleSize(SubtitleSize::Small);
+}
+
 void HudManager::update(float deltaSeconds) {
 	updateBannerMessages(deltaSeconds);
 	updateSubtitleMessages(deltaSeconds);
@@ -41,6 +46,27 @@ void HudManager::setActionHint(std::string text) {
 		actionHint = text;
 		subtitlesDirty = true;
 	}
+}
+
+void HudManager::setSubtitleSize(SubtitleSize size) {
+	if (setSubtitleOffset == 0 || largeSubtitlePointerOffset == 0) {
+		return;
+	}
+
+	uint32_t sizeOffset;
+	switch (size) {
+	case SubtitleSize::Large:
+		sizeOffset = 0;
+		break;
+	case SubtitleSize::Medium:
+		sizeOffset = 0x08;
+		break;
+	case SubtitleSize::Small:
+		sizeOffset = 0x10;
+	}
+
+	uint32_t fontPointerOffset = largeSubtitlePointerOffset + sizeOffset;
+	memory->WriteRelative(reinterpret_cast<void*>(setSubtitleOffset), &fontPointerOffset, 0x4);
 }
 
 void HudManager::updateBannerMessages(float deltaSeconds) {
@@ -136,4 +162,40 @@ std::vector<std::string> HudManager::splitByNewline(std::string input) {
 	}
 
 	return splitLines;
+}
+
+void HudManager::findSetSubtitleOffsets() {
+	// Find hud_draw_subtitles. We can do so by looking for where it loads its color information from constants, which seems to be
+	//   a unique set of instructions:
+	uint64_t drawSubtitleOffset = memory->executeSigScan({
+		0x0F, 0x57, 0xFF,		// XORPS XMM7, XMM7
+		0x0F, 0x28, 0xD7,
+		0x0F, 0x28, 0xCF
+	});
+
+	if (drawSubtitleOffset == UINT64_MAX) {
+		setSubtitleOffset = 0;
+		largeSubtitlePointerOffset = 0;
+		return;
+	}
+
+	// Next, find the address of the call that sets the subtitle size. Skip ahead:
+	//  0x0F, 0x11, 0x44, 0x24, 0x40
+	//  0x0F, 0x28, 0xC7
+	//  0xE8, 0x60, 0xF8, 0x0F, 0x00	// CALL argb_color (makes black)
+	//  0x48, 0x8D, 0x4C, 0x24, 0x40
+	//  0x44, 0x8B, 0xE0
+	//  0xE8, 0xF3, 0xF7, 0x0F, 0x00	// CALL argb_color (makes white)
+	//  0x4C, 0x8B, 0x3D				// |
+	//  ____, ____, ____, ____			// MOV R15, qword ptr [globals.subtitles_font]
+	setSubtitleOffset = drawSubtitleOffset + 0x9 + 0x1D;
+
+	// Finally, get the offset that is ordinarily used by this MOV operation, which corresponds to globals.subtitles_font. (We don't
+	//   want to dereference this here, only get the address of the pointer itself, because we'll be changing which font we're
+	//   pointing to rather than modifying the font itself.
+	largeSubtitlePointerOffset = 0;
+	if (!memory->ReadRelative(reinterpret_cast<void*>(setSubtitleOffset), &largeSubtitlePointerOffset, 0x4)) {
+		setSubtitleOffset = 0;
+		largeSubtitlePointerOffset = 0;
+	}
 }
