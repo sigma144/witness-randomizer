@@ -1,5 +1,7 @@
 #include "APRandomizer.h"
 #include "APGameData.h"
+#include "../Panels.h"
+#include "PanelRestore.h"
 
 bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
@@ -376,6 +378,10 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 
 	async->SkipPreviouslySkippedPuzzles();
 
+	for (int panel : desertPanels) {
+		_memory->UpdatePanelJunctions(panel);
+	}
+
 	if (FinalPanel == 0x09F7F) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
 	}
@@ -417,6 +423,8 @@ void APRandomizer::Init() {
 	for (int panel : AllPuzzles) {
 		_memory->InitPanel(panel);
 	}
+
+	PanelRestore::RestoreOriginalPanelData(_memory);
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {

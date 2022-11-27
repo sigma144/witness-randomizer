@@ -234,6 +234,12 @@ void Memory::SetInfiniteChallenge(bool enable) {
 }
 
 void Memory::findImportantFunctionAddresses(){
+	executeSigScan({ 0x48, 0x89, 0x6C, 0x24, 0x18, 0x57, 0x8B, 0x81 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->updateJunctionsFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
 	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x49, 0x8B, 0xF8, 0x48, 0x8B, 0xF2, 0x48, 0x8B, 0xD9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->_getSoundFunction = _baseAddress + offset + index;
 
@@ -1053,6 +1059,7 @@ uint64_t Memory::_recordPlayerUpdate = 0;
 uint64_t Memory::_getSoundFunction = 0;
 uint64_t Memory::_bytesLengthChallenge = 0;
 uint64_t Memory::completeEPFunction = 0;
+uint64_t Memory::updateJunctionsFunction = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

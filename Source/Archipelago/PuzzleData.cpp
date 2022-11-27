@@ -21,6 +21,11 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	int numberColoredRegions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
 	colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions * 4);
 
+	outer_background_mode = _memory->ReadPanelData<int>(id, OUTER_BACKGROUND_MODE);
+	outer_background_color = _memory->ReadPanelData<float>(id, OUTER_BACKGROUND, 4);
+	background_region_color = _memory->ReadPanelData<float>(id, BACKGROUND_REGION_COLOR, 4);
+	path_color = _memory->ReadPanelData<float>(id, PATH_COLOR, 4);
+
 
 	if (id == 0x01983) {
 		hasTetris = true;
@@ -164,5 +169,9 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
 	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size() / 4) });
 	_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions, true);
+	_memory->WritePanelData<float>(id, OUTER_BACKGROUND, outer_background_color);
+	_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { outer_background_mode });
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, background_region_color);
+	_memory->WritePanelData<float>(id, PATH_COLOR, path_color);
 }

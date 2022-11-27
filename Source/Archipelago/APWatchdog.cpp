@@ -128,8 +128,6 @@ void APWatchdog::CheckSolvedPanels() {
 				{
 					anyNew = true;
 
-					it2 = EPSet.erase(it2);
-
 					APClient::DataStorageOperation operation;
 					operation.operation = "replace";
 					operation.value = true;
@@ -138,6 +136,8 @@ void APWatchdog::CheckSolvedPanels() {
 					operations.push_back(operation);
 
 					ap->Set("EP_" + std::to_string(*it2), NULL, false, operations);
+
+					it2 = EPSet.erase(it2);
 				}
 				else
 				{

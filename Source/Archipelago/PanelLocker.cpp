@@ -143,19 +143,6 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		if (!isLocked)
 			lockedPuzzles.insert({ id, puzzle });
 
-		if (id == 0x03612 || id == 0x1C349) { // Quarry Laser Panel & Symmetry Island Upper
-			int num_dec = _memory->ReadPanelData<int>(id, NUM_DOTS);
-			std::vector<int> dec = _memory->ReadArray<int>(id, DOT_FLAGS, num_dec);
-
-			for (int i = 0; i < num_dec; i++) {
-				if (dec[i] == 0x600002) dec[i] = 0;
-			}
-
-			_memory->WriteArray(id, DOT_FLAGS, dec);
-			_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-			return;
-		}
-
 		if (id == 0x01983) {
 			if (_memory->ReadPanelData<float>(0x0C179, 0xE0) < 0.0001f) return;
 
@@ -246,6 +233,10 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
 		_memory->WriteArray<int>(id, COLORED_REGIONS, polygons, true);
+		_memory->WritePanelData<float>(id, PATH_COLOR, { 0.75f, 0.75f, 0.75f, 1.0f });
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.5f, 0.0f, 0.0f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.5f, 0.0f, 0.0f, 1.0f });
+		_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
 	else if (isLocked) {
@@ -287,7 +278,10 @@ void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
 	}
 
-	else puzzle->Restore(_memory);
+	else {
+		puzzle->Restore(_memory);
+		_memory->UpdatePanelJunctions(puzzle->id);
+	}
 	lockedPuzzles.erase(puzzle->id);
 	//delete puzzle;
 }
@@ -392,59 +386,187 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	std::vector<int> gridDecorations(8, 0);
 	std::vector<int> gridDecorationsFlags(8, 0);
 
-	int column = 4;
-	int secondRowOffset = -column;
+	int i = 0;
+	int position = 0;
 
-	if (puzzle->hasStones && !state.unlockedStones && puzzle->hasColoredStones && !state.unlockedColoredStones) {
-		gridDecorations[column] = Decoration::Stone | Decoration::Color::Black;
-		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Blue;
-		column++;
+	if (puzzle->hasStones && !state.unlockedStones) {
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);;
+		gridDecorations[position] = Decoration::Stone | Decoration::Color::White;
+		i++; // 1
 	}
-	else if (puzzle->hasColoredStones && !state.unlockedColoredStones) {
-		gridDecorations[column] = Decoration::Stone | Decoration::Color::Orange;
-		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Blue;
-		column++;
+
+	if (puzzle->hasColoredStones && !state.unlockedColoredStones) {
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Stone | Decoration::Color::Orange;
+		i++; // 2
 	}
-	else if (puzzle->hasStones && !state.unlockedStones) {
-		gridDecorations[column] = Decoration::Stone | Decoration::Color::Black;
-		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::White;
-		column++;
+
+	if (puzzle->hasStars && !state.unlockedStars) {
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Star | Decoration::Color::Green;
+
+		i++; // 3
 	}
 
 	if (puzzle->hasStarsWithOtherSymbol && !state.unlockedStarsWithOtherSimbol) {
-		gridDecorations[column] = Decoration::Star | Decoration::Color::Green;
-		gridDecorations[column + secondRowOffset] = Decoration::Stone | Decoration::Color::Green;
-		column++;
-	}
-	else if (puzzle->hasStars && !state.unlockedStars) {
-		gridDecorations[column] = Decoration::Star | Decoration::Color::Magenta;
-		column++;
-	}
+		int intersectionOffset = intersectionFlags.size();
 
-	const int defaultLShape = 0x00170000;
-	if ((puzzle->hasTetris && !state.unlockedTetris)
-		|| (puzzle->hasTetrisRotated && !state.unlockedTetrisRotated)
-		|| (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative))
-	{
-		if (puzzle->hasTetrisRotated && !state.unlockedTetrisRotated)
-			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape | Decoration::Can_Rotate;
-		else if (puzzle->hasTetris && !state.unlockedTetris)
-			gridDecorations[column] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		int intersectionIndex = position;
 
-		if (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative)
-			gridDecorations[column + secondRowOffset] = Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative;
+		gridDecorations[position] = Decoration::Star | Decoration::Color::Green;
 
-		column++;
+		if (position > 3) intersectionIndex++;
+
+		float x = intersections[intersectionIndex * 2];
+		float y = intersections[intersectionIndex * 2 + 1];
+
+		float factor = 1.0f;
+		if (vertical) {
+			factor = 0.75f;
+		}
+
+		std::vector<float> plusIntersections = {
+			x + 0.135f * factor, y + 0.15f * factor, x + 0.165f * factor, y + 0.15f * factor,
+			x + 0.15f * factor, y + 0.135f * factor, x + 0.15f * factor, y + 0.165f * factor,
+		};
+
+		std::vector<int> plusIntersectionFlags = {
+			0, 0, 0, 0,
+		};
+		std::vector<int> plusConnectionsA = {
+			intersectionOffset + 0,
+			intersectionOffset + 2,
+		};
+		std::vector<int> plusConnectionsB = {
+			intersectionOffset + 1,
+			intersectionOffset + 3,
+		};
+
+		intersections.insert(intersections.end(), plusIntersections.begin(), plusIntersections.end());
+		intersectionFlags.insert(intersectionFlags.end(), plusIntersectionFlags.begin(), plusIntersectionFlags.end());
+		connectionsA.insert(connectionsA.end(), plusConnectionsA.begin(), plusConnectionsA.end());
+		connectionsB.insert(connectionsB.end(), plusConnectionsB.begin(), plusConnectionsB.end());
+
+		i++; // 4
 	}
 
 	if (puzzle->hasErasers && !state.unlockedErasers) {
-		gridDecorations[column] = Decoration::Eraser;
-		column++;
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Eraser;
+		i++; // 5
 	}
 
 	if (puzzle->hasTriangles && !state.unlockedTriangles) {
-		gridDecorations[column] = Decoration::Triangle2 | Decoration::Yellow;
-		column++;
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Triangle2 | Decoration::Yellow;
+		i++; // 6
+	}
+
+	const int defaultLShape = 0x00170000;
+
+	if (puzzle->hasTetris && !state.unlockedTetris) {
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape;
+		i++; // 7
+	}
+
+	if (puzzle->hasTetrisRotated && !state.unlockedTetrisRotated){
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Poly | Decoration::Color::Yellow | defaultLShape | Decoration::Can_Rotate;
+		i++; // 8 - Careful from here on!
+	}
+
+	if (puzzle->hasTetrisNegative && !state.unlockedTetrisNegative && i != gridDecorations.size()) {
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		gridDecorations[position] = Decoration::Poly | Decoration::Color::Blue | defaultLShape | Decoration::Negative;
+		i++;
+	}
+
+	if (puzzle->hasSymmetry && !state.unlockedSymmetry && i != gridDecorations.size()) {
+		int intersectionOffset = intersectionFlags.size();
+
+		position = (1 - (i % 2)) * 4 + ((int)i / 2);
+		int intersectionIndex = position;
+		if (position > 3) intersectionIndex++;
+
+		float x = intersections[intersectionIndex * 2];
+		float y = intersections[intersectionIndex * 2 + 1];
+
+		float factor = 1.0f;
+		if (vertical) {
+			factor = 0.75f;
+		}
+
+		std::vector<float> symmetryIntersections = {
+			x + 0.05f * factor, y + 0.05f * factor, x + 0.08f * factor, y + 0.05f * factor, x + 0.12f * factor, y + 0.05f * factor, x + 0.15f * factor, y + 0.05f * factor, //bottom row
+			x + 0.05f * factor, y + 0.10f * factor, x + 0.08f * factor, y + 0.10f * factor, x + 0.12f * factor, y + 0.10f * factor, x + 0.15f * factor, y + 0.10f * factor, //middle row
+			x + 0.05f * factor, y + 0.15f * factor, x + 0.08f * factor, y + 0.15f * factor, x + 0.12f * factor, y + 0.15f * factor, x + 0.15f * factor, y + 0.15f * factor, //top row
+		};
+
+		std::vector<int> symmetryIntersectionFlags = {
+			0, 0, 0, 0, //bottom row
+			0, 0, 0, 0, //middle row
+			0, 0, 0, 0, //top row
+		};
+		std::vector<int> symmetryConnectionsA = {
+			intersectionOffset + 0, intersectionOffset + 2, //horizontal bottom row
+			intersectionOffset + 4, intersectionOffset + 6, //horizontal middle row
+			intersectionOffset + 8, intersectionOffset + 11,//horizontal top row
+			intersectionOffset + 4, // vertical left column
+			intersectionOffset + 1, // vertical 2 column
+			intersectionOffset + 2, // vertical 3 column
+			intersectionOffset + 7, // vertical right column
+		};
+		std::vector<int> symmetryConnectionsB = {
+			intersectionOffset + 1, intersectionOffset + 3, //horizontal bottom row
+			intersectionOffset + 5, intersectionOffset + 7, //horizontal middle row
+			intersectionOffset + 9, intersectionOffset + 10,//horizontal top row
+			intersectionOffset + 8, // vertical left column
+			intersectionOffset + 5, // vertical 2 column
+			intersectionOffset + 6, // vertical 3 column
+			intersectionOffset + 11,// vertical right column
+		};
+
+		intersections.insert(intersections.end(), symmetryIntersections.begin(), symmetryIntersections.end());
+		intersectionFlags.insert(intersectionFlags.end(), symmetryIntersectionFlags.begin(), symmetryIntersectionFlags.end());
+		connectionsA.insert(connectionsA.end(), symmetryConnectionsA.begin(), symmetryConnectionsA.end());
+		connectionsB.insert(connectionsB.end(), symmetryConnectionsB.begin(), symmetryConnectionsB.end());
+
+		i++;
+	}
+
+	if (puzzle->hasArrows && !state.unlockedArrows && i != gridDecorations.size()) {
+		int intersectionOffset = intersectionFlags.size();
+		
+		position = (1 - (i % 2)) * 4 + ((int) i / 2);
+
+		int intersectionIndex = (i < 4) ? 5 + i : i - 4;
+
+		float x = intersections[intersectionIndex * 2];
+		float y = intersections[intersectionIndex * 2 + 1];
+
+		std::vector<float> arrowIntersections = {
+			x + 0.05f, y + 0.1f, x + 0.15f, y + 0.1f,
+			x + 0.09f, y + 0.05f, x + 0.09f, y + 0.15f,
+		};
+		std::vector<int> arrowIntersectionFlags = { 0, 0, 0, 0 };
+		std::vector<int> arrowConnectionsA = {
+			intersectionOffset + 0,	intersectionOffset + 0,	intersectionOffset + 0,
+		};
+		std::vector<int> arrowConnectionsB = {
+			intersectionOffset + 1, intersectionOffset + 2, intersectionOffset + 3,
+		};
+
+		intersections.insert(intersections.end(), arrowIntersections.begin(), arrowIntersections.end());
+		intersectionFlags.insert(intersectionFlags.end(), arrowIntersectionFlags.begin(), arrowIntersectionFlags.end());
+		connectionsA.insert(connectionsA.end(), arrowConnectionsA.begin(), arrowConnectionsA.end());
+		connectionsB.insert(connectionsB.end(), arrowConnectionsB.begin(), arrowConnectionsB.end());
+
+		//TODO Fix meh
+		//Panel panel;
+		//panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
+		i++;
 	}
 
 	if (puzzle->hasColoredDots && !state.unlockedColoredDots) {
@@ -477,78 +599,6 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	}
 	else if (puzzle->hasDots && !state.unlockedDots) {
 		intersectionFlags[11] = IntersectionFlags::DOT;
-	}
-
-	if (puzzle->hasSymmetry && !state.unlockedSymmetry) {
-		float x = intersections[(column - 4) * 2];
-		int intersectionOffset = intersectionFlags.size();
-
-		float factor = 1.0f;
-		if (vertical) factor = 0.75f;
-
-		std::vector<float> symmetryIntersections = {
-			x + 0.05f * factor, 0.35f, x + 0.08f * factor, 0.35f, x + 0.12f * factor, 0.35f, x + 0.15f * factor, 0.35f, //bottom row
-			x + 0.05f * factor, 0.40f, x + 0.08f * factor, 0.40f, x + 0.12f * factor, 0.40f, x + 0.15f * factor, 0.40f, //middle row
-			x + 0.05f * factor, 0.45f, x + 0.08f * factor, 0.45f, x + 0.12f * factor, 0.45f, x + 0.15f * factor, 0.45f, //top row
-		};
-
-		std::vector<int> symmetryIntersectionFlags = {
-			0, 0, 0, 0, //bottom row
-			0, 0, 0, 0, //middle row
-			0, 0, 0, 0, //top row
-		};
-		std::vector<int> symmetryConnectionsA = {
-			intersectionOffset + 0, intersectionOffset + 2, //horizontal bottom row
-			intersectionOffset + 4, intersectionOffset + 6, //horizontal middle row
-			intersectionOffset + 8, intersectionOffset + 11,//horizontal top row
-			intersectionOffset + 4, // vertical left column
-			intersectionOffset + 1, // vertical 2 column
-			intersectionOffset + 2, // vertical 3 column
-			intersectionOffset + 7, // vertical right column
-		};
-		std::vector<int> symmetryConnectionsB = {
-			intersectionOffset + 1, intersectionOffset + 3, //horizontal bottom row
-			intersectionOffset + 5, intersectionOffset + 7, //horizontal middle row
-			intersectionOffset + 9, intersectionOffset + 10,//horizontal top row
-			intersectionOffset + 8, // vertical left column
-			intersectionOffset + 5, // vertical 2 column
-			intersectionOffset + 6, // vertical 3 column
-			intersectionOffset + 11,// vertical right column
-		};
-
-		intersections.insert(intersections.end(), symmetryIntersections.begin(), symmetryIntersections.end());
-		intersectionFlags.insert(intersectionFlags.end(), symmetryIntersectionFlags.begin(), symmetryIntersectionFlags.end());
-		connectionsA.insert(connectionsA.end(), symmetryConnectionsA.begin(), symmetryConnectionsA.end());
-		connectionsB.insert(connectionsB.end(), symmetryConnectionsB.begin(), symmetryConnectionsB.end());
-
-		column++;
-	}
-
-	if (puzzle->hasArrows && !state.unlockedArrows) {
-		float x = intersections[(column - 4) * 2];
-		int intersectionOffset = intersectionFlags.size();
-
-		std::vector<float> arrowIntersections = {
-			x + 0.05f, 0.40f, x + 0.15f, 0.40f,
-			x + 0.09f, 0.35f, x + 0.09f, 0.45f
-		};
-		std::vector<int> arrowIntersectionFlags = { 0, 0, 0, 0 };
-		std::vector<int> arrowConnectionsA = {
-			intersectionOffset + 0,	intersectionOffset + 0,	intersectionOffset + 0,
-		};
-		std::vector<int> arrowConnectionsB = {
-			intersectionOffset + 1, intersectionOffset + 2, intersectionOffset + 3,
-		};
-
-		intersections.insert(intersections.end(), arrowIntersections.begin(), arrowIntersections.end());
-		intersectionFlags.insert(intersectionFlags.end(), arrowIntersectionFlags.begin(), arrowIntersectionFlags.end());
-		connectionsA.insert(connectionsA.end(), arrowConnectionsA.begin(), arrowConnectionsA.end());
-		connectionsB.insert(connectionsB.end(), arrowConnectionsB.begin(), arrowConnectionsB.end());
-
-		//TODO Fix meh
-		//Panel panel;
-		//panel.render_arrow(column, 1, 2, 0, intersections, intersectionFlags, polygons);
-		column++;
 	}
 
 	decorations.insert(decorations.begin(), gridDecorations.begin(), gridDecorations.end());

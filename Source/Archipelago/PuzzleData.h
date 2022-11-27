@@ -43,5 +43,10 @@ struct PuzzleData
 		std::vector<int> decorations;
 		std::vector<int> decoration_flags;
 		std::vector<int> colored_regions;
+
+		std::vector<float> outer_background_color;
+		std::vector<float> path_color;
+		std::vector<float> background_region_color;
+		int outer_background_mode;
 };
 

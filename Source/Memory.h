@@ -164,6 +164,10 @@ public:
 		CallVoidFunction(id, initPanelFunction);
 	}
 
+	void UpdatePanelJunctions(int id) {
+		CallVoidFunction(id, updateJunctionsFunction);
+	}
+
 	void PowerNext(int source, int target);
 
 	void UpdateEntityPosition(int id) {
@@ -227,6 +231,7 @@ public:
 	static uint64_t _getSoundFunction;
 	static uint64_t _bytesLengthChallenge;
 	static uint64_t completeEPFunction;
+	static uint64_t updateJunctionsFunction;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
