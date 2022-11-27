@@ -169,6 +169,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 		const int width = 4;
 		const int height = 2;
+		int extraRows = 0;
 
 		float pattern_scale = 0.5f;
 
@@ -194,7 +195,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		else {
 			addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB, id == 0x0A332);
 
-			addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons, id == 0x0A332);
+			extraRows = addPuzzleSimbols(state, puzzle, intersections, intersectionFlags, connectionsA, connectionsB, decorations, decorationsFlags, polygons, id == 0x0A332);
 		
 			if (id == 0x0A332) {
 				int currentIntersections = intersections.size();
@@ -220,7 +221,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		}
 
 		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
-		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 });
+		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 + extraRows });
 		_memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale / puzzle->path_width_scale });
 		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
@@ -236,6 +237,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		_memory->WritePanelData<float>(id, PATH_COLOR, { 0.75f, 0.75f, 0.75f, 1.0f });
 		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.5f, 0.0f, 0.0f, 1.0f });
 		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.5f, 0.0f, 0.0f, 1.0f });
+		_memory->WritePanelData<__int64>(id, DECORATION_COLORS, { 0 });
 		_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
@@ -295,7 +297,6 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 		0.1f, 0.1f, 0.3f, 0.1f, 0.5f, 0.1f, 0.7f, 0.1f, 0.9f, 0.1f, //bottom row
 		0.1f, 0.3f, 0.3f, 0.3f, 0.5f, 0.3f, 0.7f, 0.3f, 0.9f, 0.3f, //middle row
 		0.1f, 0.5f, 0.3f, 0.5f, 0.5f, 0.5f, 0.7f, 0.5f, 0.9f, 0.5f,  //top row
-		-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
 	};
 
 	if (vertical) {
@@ -303,7 +304,6 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 			0.35f, 0.37f, 0.35f, 0.52f, 0.35f, 0.67f, 0.35f, 0.82f, 0.35f, 0.97f, //bottom row
 			0.495f, 0.37f, 0.495f, 0.52f, 0.495f, 0.67f, 0.495f, 0.82f, 0.495f, 0.97f, //middle row
 			0.64f, 0.37f, 0.64f, 0.52f, 0.64f, 0.67f, 0.64f, 0.82f, 0.64f, 0.97f,  //top row
-			-0.3f, -0.3f, 1.0f, 1.0f //start, exit needed to prevent crash on re-randomization
 		};
 	}
 
@@ -313,7 +313,6 @@ void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, st
 		0, 0, 0, 0, 0, //bottom row
 		0, 0, 0, 0, 0, //middle row
 		0, 0, 0, 0, 0, //top row
-		IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT //start, exit
 	};
 
 	//starts of a connection, the value refers to the position of an intersection point the intersections array
@@ -377,7 +376,7 @@ void PanelLocker::createText(int id, std::string text, std::vector<float>& inter
 		intersectionFlags.emplace_back(0);
 }
 
-void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
+int PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 	std::vector<int>& decorations, std::vector<int>& decorationsFlags, std::vector<int>& polygons, bool vertical) {
 
@@ -388,6 +387,8 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 
 	int i = 0;
 	int position = 0;
+
+	int extraRows = 0;
 
 	if (puzzle->hasStones && !state.unlockedStones) {
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);;
@@ -414,8 +415,6 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);
 		int intersectionIndex = position;
 
-		gridDecorations[position] = Decoration::Star | Decoration::Color::Green;
-
 		if (position > 3) intersectionIndex++;
 
 		float x = intersections[intersectionIndex * 2];
@@ -426,27 +425,38 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 			factor = 0.75f;
 		}
 
-		std::vector<float> plusIntersections = {
-			x + 0.135f * factor, y + 0.15f * factor, x + 0.165f * factor, y + 0.15f * factor,
-			x + 0.15f * factor, y + 0.135f * factor, x + 0.15f * factor, y + 0.165f * factor,
+		std::vector<float> newIntersections = {
+			x - 0.03f, y + 0.03f,	x + 0.17f, y + 0.03f,					0, 0, 0 ,0,	0, 0,
+			x - 0.03f, y + 0.23f,	x + 0.17f, y + 0.23f,					0, 0, 0 ,0,	0, 0,
+
+			x + 0.03f, y - 0.03f,	x + 0.23f, y - 0.03f,					0, 0, 0 ,0,	0, 0,
+			x + 0.03f, y + 0.17f,	x + 0.23f, y + 0.17f,					0, 0, 0 ,0,	0, 0,
 		};
 
-		std::vector<int> plusIntersectionFlags = {
-			0, 0, 0, 0,
-		};
-		std::vector<int> plusConnectionsA = {
-			intersectionOffset + 0,
-			intersectionOffset + 2,
-		};
-		std::vector<int> plusConnectionsB = {
-			intersectionOffset + 1,
-			intersectionOffset + 3,
+		std::vector<int> newIntersectionFlags = {
+			0x8, 0x8, 0x8, 0x8, 0x8,
+			0x8, 0x8, 0x8, 0x8, 0x8,
+			0x8, 0x8, 0x8, 0x8, 0x8,
+			0x8, 0x8, 0x8, 0x8, 0x8,
 		};
 
-		intersections.insert(intersections.end(), plusIntersections.begin(), plusIntersections.end());
-		intersectionFlags.insert(intersectionFlags.end(), plusIntersectionFlags.begin(), plusIntersectionFlags.end());
-		connectionsA.insert(connectionsA.end(), plusConnectionsA.begin(), plusConnectionsA.end());
-		connectionsB.insert(connectionsB.end(), plusConnectionsB.begin(), plusConnectionsB.end());
+		gridDecorations.emplace_back(0); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0);
+		gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);	gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);
+
+		gridDecorations.emplace_back(Decoration::Star | Decoration::Color::Green); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0);
+		gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);	gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);
+		
+		gridDecorations.emplace_back(0); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0);
+		gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);	gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);
+
+		gridDecorations.emplace_back(Decoration::Stone | Decoration::Color::Green); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0); gridDecorations.emplace_back(0);
+		gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);	gridDecorationsFlags.emplace_back(0); gridDecorationsFlags.emplace_back(0);
+
+
+		extraRows = 4;
+
+		intersections.insert(intersections.end(), newIntersections.begin(), newIntersections.end());
+		intersectionFlags.insert(intersectionFlags.end(), newIntersectionFlags.begin(), newIntersectionFlags.end());
 
 		i++; // 4
 	}
@@ -603,6 +613,8 @@ void PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 
 	decorations.insert(decorations.begin(), gridDecorations.begin(), gridDecorations.end());
 	decorationsFlags.insert(decorationsFlags.begin(), gridDecorationsFlags.begin(), gridDecorationsFlags.end());
+
+	return extraRows;
 }
 
 boolean PanelLocker::PuzzleIsLocked(int id) {

@@ -25,6 +25,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	outer_background_color = _memory->ReadPanelData<float>(id, OUTER_BACKGROUND, 4);
 	background_region_color = _memory->ReadPanelData<float>(id, BACKGROUND_REGION_COLOR, 4);
 	path_color = _memory->ReadPanelData<float>(id, PATH_COLOR, 4);
+	decorationsColorsPointer = _memory->ReadPanelData<__int64>(id, DECORATION_COLORS);
 
 
 	if (id == 0x01983) {
@@ -174,4 +175,5 @@ void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
 	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, background_region_color);
 	_memory->WritePanelData<float>(id, PATH_COLOR, path_color);
+	_memory->WritePanelData<__int64>(id, DECORATION_COLORS, { decorationsColorsPointer });
 }
