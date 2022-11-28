@@ -1,75 +1,54 @@
 #include "APWatchdog.h"
-#include "..\Quaternion.h"
-#include <thread>
+
+#include "../Input.h"
 #include "../Panels.h"
+#include "../Quaternion.h"
 #include "SkipSpecialCases.h"
 
+#include <thread>
+
+
+#define CHEAT_KEYS_ENABLED 0
+
+
 void APWatchdog::action() {
-	HandleMovementSpeed();
-	DisplayAudioLogMessage();
+	auto currentFrameTime = std::chrono::system_clock::now();
+	std::chrono::duration<float> frameDuration = currentFrameTime - lastFrameTime;
+	lastFrameTime = currentFrameTime;
 
-	if (halfSecondCounter > 0) {
-		halfSecondCounter -= 1;
-		return;
-	}
-	else
-	{
-		halfSecondCounter = 4;
-	}
+	HandleMovementSpeed(frameDuration.count());
 
-	QueueItemMessages();
+	HandleKeyTaps();
 
-	CheckSolvedPanels();
-	CheckEPSkips();
+	halfSecondCountdown -= frameDuration.count();
+	if (halfSecondCountdown <= 0) {
+		halfSecondCountdown += 0.5f;
 
-	HandlePowerSurge();
-	CheckIfCanSkipPuzzle();
-	DisplayMessage();
-	DisableCollisions();
-	RefreshDoorCollisions();
-	AudioLogPlaying();
+		QueueItemMessages();
 
-	if (storageCheckCounter <= 0) {
-		CheckLasers();
-		storageCheckCounter = 20;
-	}
-	else
-	{
-		storageCheckCounter--;
-	}
+		CheckSolvedPanels();
+		CheckEPSkips();
 
-	CheckImportantCollisionCubes();
-}
+		HandlePowerSurge();
+		CheckIfCanSkipPuzzle();
+		DisableCollisions();
+		RefreshDoorCollisions();
+		AudioLogPlaying();
 
-void APWatchdog::DisplayAudioLogMessage() {
-	bool displayingMessage = false;
-
-	auto it = audioLogMessageBuffer.begin();
-	while (it != audioLogMessageBuffer.end())
-	{
-		int priority = it->first;
-		AudioLogMessage* message = &it->second;
-
-
-
-		if (!displayingMessage || message->countWhileOutprioritized) message->time -= 0.1f;
-
-		if (message->time < 0) {
-			it = audioLogMessageBuffer.erase(it);
-			continue;
+		if (storageCheckCounter <= 0) {
+			CheckLasers();
+			storageCheckCounter = 20;
 		}
 		else
 		{
-			if (!displayingMessage) _memory->DisplaySubtitles(message->line1, message->line2, message->line3);
-			displayingMessage = true;
+			storageCheckCounter--;
 		}
 
-		++it;
+		CheckImportantCollisionCubes();
 	}
 
-	if (!displayingMessage) {
-		_memory->DisplaySubtitles("", "", "");
-	}
+	SetStatusMessages();
+	hudManager->update(frameDuration.count());
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -149,7 +128,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 			if (EPSet.empty())
 			{
-				if(FirstEverLocationCheckDone) queueMessage(ap->get_location_name(locationId) + " Completed!");
+				if(FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId) + " Completed!");
 
 				solvedLocations.push_back(locationId);
 
@@ -161,7 +140,7 @@ void APWatchdog::CheckSolvedPanels() {
 					int total = obeliskHexToAmountOfEPs[panelId];
 					int done = total - EPSet.size();
 
-					if (FirstEverLocationCheckDone) queueMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+					if (FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
 				}
 				it++;
 			}
@@ -305,43 +284,20 @@ void APWatchdog::ApplyTemporarySlow() {
 }
 
 
-void APWatchdog::HandleMovementSpeed() {
-	if (!hasEverModifiedSpeed) {
-		temporarySpeedModificationTime = std::chrono::system_clock::now();
-		hasEverModifiedSpeed = true;
-	}
+void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
+	if (speedTime != 0) {
+		// Move the speed time closer to zero.
+		speedTime = std::max(std::abs(speedTime) - deltaSeconds, 0.f) * (std::signbit(speedTime) ? -1 : 1);
 
-	auto rightnow = std::chrono::system_clock::now();
-
-	std::chrono::duration<float> elapsed_seconds = rightnow - temporarySpeedModificationTime;
-	float secondsInFloat = elapsed_seconds.count();
-
-	temporarySpeedModificationTime = rightnow;
-
-	if (speedTime == 0.0f) {
-		WriteMovementSpeed(baseSpeed);
-		audioLogMessageBuffer[100000] = { "", "", "", 0.8f, true };
-		return;
-	}
-
-	int speedTimeInt = (int) std::round((std::abs(speedTime) + 0.49f));
-
-	if (speedTime > 0.0f) {
-		audioLogMessageBuffer[100000] = { "", "", "Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.", 0.8f, true};
-
-		WriteMovementSpeed(2.0f * baseSpeed);
-		if (speedTime - secondsInFloat < 0.0f) speedTime = 0.0f;
-		else speedTime -= secondsInFloat;
-		return;
-	}
-	
-	if (speedTime < 0.0f) {
-		audioLogMessageBuffer[100000] = { "", "", "Slowness active for " + std::to_string(speedTimeInt) + " seconds.", 0.8f, true };
-
-		WriteMovementSpeed(0.6f * baseSpeed);
-		if (speedTime + secondsInFloat > 0.0f) speedTime = 0.0f;
-		else speedTime += secondsInFloat;
-		return;
+		if (speedTime > 0) {
+			WriteMovementSpeed(2.0f * baseSpeed);
+		}
+		else if (speedTime < 0) {
+			WriteMovementSpeed(0.6f * baseSpeed);
+		}
+		else {
+			WriteMovementSpeed(baseSpeed);
+		}
 	}
 }
 
@@ -390,8 +346,8 @@ void APWatchdog::ResetPowerSurge() {
 }
 
 int APWatchdog::CheckIfCanSkipPuzzle() {
-	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(availablePuzzleSkips - skippedPuzzles)).c_str());
-
+	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(foundPuzzleSkips - skippedPuzzles)).c_str());
+	puzzleSkipInfoMessage.clear();
 
 
 	int id = GetActivePanel();
@@ -418,7 +374,8 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 		}
 		else
 		{
-			audioLogMessageBuffer[49] = { "", "Skipping this panel costs", "1 Puzzle Skip per unopened latch.", 0.8f, true };
+			puzzleSkipInfoMessage = "Skipping this panel costs\n"
+									"1 Puzzle Skip per unopened latch.";
 		}
 
 		if (!ReadPanelData<int>(0x288E9, DOOR_OPEN) && !ReadPanelData<int>(0x28AD4, DOOR_OPEN)) {
@@ -433,7 +390,7 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 		}
 		else
 		{
-			audioLogMessageBuffer[49] = { "", "Skipping this panel costs", "2 Puzzle Skips.", 0.8f, true };
+			puzzleSkipInfoMessage = "Skipping this panel costs 2 Puzzle Skips.";
 		}
 
 		cost = 2;
@@ -444,8 +401,13 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 			__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
 			if (skipped < PUZZLE_SKIPPED || skipped > PUZZLE_SKIPPED_MAX) {
-				if(!metaPuzzleMessageHasBeenDisplayed) audioLogMessageBuffer[49] = { "", "Skipping this panel requires", "Skipping all the small puzzles.", 8.0f, true };
-				metaPuzzleMessageHasBeenDisplayed = true;
+				//
+				//  TODO (blastron, 11/24/22): The concept of only showing a puzzle skip message once isn't really supported in the new paradigm. Update this.
+				// 
+				//if(!metaPuzzleMessageHasBeenDisplayed) audioLogMessageBuffer[49] = { "", "Skipping this panel requires", "Skipping all the small puzzles.", 8.0f, true };
+				//metaPuzzleMessageHasBeenDisplayed = true;
+				//
+				
 				EnableWindow(skipButton, false);
 				return -1;
 				break;
@@ -457,7 +419,7 @@ int APWatchdog::CheckIfCanSkipPuzzle() {
 
 	// Cost Evaluated
 
-	if (availablePuzzleSkips - cost < skippedPuzzles) {
+	if (foundPuzzleSkips - cost < skippedPuzzles) {
 		EnableWindow(skipButton, false);
 		return -1;
 	}
@@ -550,7 +512,7 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 }
 
 void APWatchdog::AddPuzzleSkip() {
-	availablePuzzleSkips++;
+	foundPuzzleSkips++;
 }
 
 void APWatchdog::UnlockDoor(int id) {
@@ -759,19 +721,26 @@ void APWatchdog::DoubleDoorTargetHack(int id) {
 	}
 }
 
-void APWatchdog::DisplayMessage() {
-	if (messageCounter > 0) {
-		messageCounter--;
-		return;
+void APWatchdog::HandleKeyTaps() {
+	std::vector<InputButton> tapEvents = InputWatchdog::get()->consumeTapEvents();
+	for (const InputButton& tappedButton : tapEvents) {
+		switch (tappedButton) {
+#if CHEAT_KEYS_ENABLED
+		case InputButton::KEY_MINUS:
+			hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
+			ApplyTemporarySlow();
+			break;
+		case InputButton::KEY_EQUALS:
+			hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
+			ApplyTemporarySpeedBoost();
+			break;
+		case InputButton::KEY_0:
+			hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
+			AddPuzzleSkip();
+			break;
+#endif
+		};
 	}
-
-	if (outstandingMessages.empty()) return;
-
-	HudMessage message = outstandingMessages.front();
-	outstandingMessages.pop();
-	_memory->DisplayHudMessage(message.text, message.rgbColor);
-	
-	messageCounter = 8;
 }
 
 void APWatchdog::DisableCollisions() {
@@ -863,31 +832,26 @@ void APWatchdog::AudioLogPlaying() {
 	std::string line2 = "";
 	std::string line3 = "";
 
-	for (int id : audioLogs) {
-		if (ReadPanelData<int>(id, AUDIO_LOG_IS_PLAYING)) {
-			if (currentAudioLog != id) {
-				currentAudioLog = id;
+	for (int logId : audioLogs) {
+		bool logPlaying = ReadPanelData<int>(logId, AUDIO_LOG_IS_PLAYING) != 0;
+		if (logPlaying && logId != currentAudioLog) {
+			currentAudioLog = logId;
 
-				if (audioLogMessages.count(id)) {
-					std::vector<std::string> message = audioLogMessages[id].first;
+			std::string message = audioLogMessages[logId].first;
+			hudManager->showSubtitleMessage(message, 12.0f);
 
-					audioLogMessageBuffer[100] = { message[0], message[1], message[2], 12.0f, true};
+			APClient::DataStorageOperation operation;
+			operation.operation = "replace";
+			operation.value = true;
 
-					APClient::DataStorageOperation operation;
-					operation.operation = "replace";
-					operation.value = true;
+			std::list<APClient::DataStorageOperation> operations;
+			operations.push_back(operation);
 
-					std::list<APClient::DataStorageOperation> operations;
-					operations.push_back(operation);
-
-					ap->Set("AL_" + std::to_string(id), NULL, false, operations);
-				}
-				else if (audioLogMessageBuffer.count(100)) {
-					audioLogMessageBuffer.erase(100);
-				}
-			}
-
-			return;
+			ap->Set("AL_" + std::to_string(logId), NULL, false, operations);
+		}
+		else if (!logPlaying && logId == currentAudioLog) {
+			currentAudioLog = -1;
+			hudManager->clearSubtitleMessage();
 		}
 	}
 }
@@ -963,9 +927,16 @@ void APWatchdog::HandleLaserResponse(const std::map <std::string, nlohmann::json
 		{
 			if (laserNo == 0x012FB) _memory->OpenDoor(0x01317);
 			_memory->ActivateLaser(laserNo);
-			queueMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
+			hudManager->queueBannerMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
 		}
 	}
+}
+
+void APWatchdog::InfiniteChallenge(bool enable) {
+	_memory->SetInfiniteChallenge(enable);
+
+	if (enable) hudManager->queueBannerMessage("Challenge Timer disabled.");
+	if (!enable) hudManager->queueBannerMessage("Challenge Timer reenabled.");
 }
 
 void APWatchdog::CheckImportantCollisionCubes() {
@@ -980,42 +951,41 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	// bonsai panel dots requirement
 	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
-		audioLogMessageBuffer[50] = { "", "Needs Dots.", "", 0.8f, false };
+		hudManager->setWorldMessage("Needs Dots.");
 	}
-
-	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
-		audioLogMessageBuffer[50] = { "", "Stone Pillar needs Triangles.", "", 0.8f, false };
+	else if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
+		hudManager->setWorldMessage("Stone Pillar needs Triangles.");
 	}
-
-	if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
-		audioLogMessageBuffer[50] = { "", "Needs Dots, Black/White Squares.", "", 0.8f, false };
+	else if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
+		hudManager->setWorldMessage("Needs Dots, Black/White Squares.");
 	}
-
-	if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
-		audioLogMessageBuffer[50] = { "", "Panels in the Bunker need", "Black/White Squares, Colored Squares.", 0.8f, false };
+	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
+		hudManager->setWorldMessage("Bunker panels need B/W and Colored Squares.");
 	}
-
-	if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if(Hard) audioLogMessageBuffer[50] = { "", "Needs Eraser, Triangles,", "Stars, Stars + Same Colored Symbol.", 0.8f, false };
-		else audioLogMessageBuffer[50] = { "", "Needs Shapers and Eraser.", "", 0.8f, false };
+	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
+		if (Hard) hudManager->setWorldMessage("Needs Eraser, Triangles,\n"
+											  "Stars, Stars + Same Colored Symbol.");
+		else hudManager->setWorldMessage("Needs Shapers and Eraser.");
 	}
-
-	if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if(Hard) audioLogMessageBuffer[50] = { "", "Needs Symmetry and Triangles.", "", 0.8f, false};
-		else audioLogMessageBuffer[50] = { "", "Needs Symmetry and Dots.", "", 0.8f, false};
+	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
+		if (Hard) hudManager->setWorldMessage("Needs Symmetry and Triangles.");
+		else hudManager->setWorldMessage("Needs Symmetry and Dots.");
 	}
-
-	if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
+	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
 		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-			audioLogMessageBuffer[50] = { "", "Left Panel needs Stars and Shapers.", "Right Panel needs Dots and Colored Squares.", 0.8f, false };
+			hudManager->setWorldMessage("Left Panel needs Stars and Shapers.\n"
+										"Right Panel needs Dots and Colored Squares.");
 		}
 		else
 		{
-			audioLogMessageBuffer[50] = { "", "", "Left Panel needs Stars and Shapers.", 0.8f, false };
+			hudManager->setWorldMessage("Left Panel needs Stars and Shapers.");
 		}
 	}
 	else if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-		audioLogMessageBuffer[50] = { "", "", "Right Panel needs Dots and Colored Squares.", 0.8f, false };
+		hudManager->setWorldMessage("Right Panel needs Dots and Colored Squares.");
+	}
+	else {
+		hudManager->clearWorldMessage();
 	}
 }
 
@@ -1116,7 +1086,7 @@ void APWatchdog::QueueItemMessages() {
 	processingItemMessages = true;
 
 	std::map<std::string, int> itemCounts;
-	std::map<std::string, std::array<float, 3>> itemColors;
+	std::map<std::string, RgbColor> itemColors;
 	std::vector<std::string> receivedItems;
 
 	std::vector<std::pair<const APClient::NetworkItem&, int>> requeue;
@@ -1163,7 +1133,7 @@ void APWatchdog::QueueItemMessages() {
 			count = " (x" + std::to_string(itemCounts[name]) + ")";
 		}
 
-		queueMessage("Received " + name + count + ".", itemColors[name]);
+		hudManager->queueBannerMessage("Received " + name + count + ".", itemColors[name]);
 	}
 
 	processingItemMessages = false;
@@ -1173,4 +1143,27 @@ void APWatchdog::QueueReceivedItem(const APClient::NetworkItem& item, int realit
 	newItemsJustIn = true;
 
 	queuedItems.push({ item, realitem });
+}
+
+void APWatchdog::SetStatusMessages() {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState == InteractionState::Walking) {
+		int speedTimeInt = (int)std::ceil(std::abs(speedTime));
+
+		if (speedTime > 0) {
+			hudManager->setStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+		}
+		else if (speedTime < 0) {
+			hudManager->setStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+		}
+		else {
+			hudManager->clearStatusMessage();
+		}
+	}
+	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+		hudManager->setStatusMessage(puzzleSkipInfoMessage);
+	}
+	else {
+		hudManager->clearStatusMessage();
+	}
 }
