@@ -111,10 +111,27 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		//  - world messages		Quarry Laser requires Shapers and Erasers.
 		//  - status messages		Speed boost! 30 seconds remaining.
 		//  - action hints			[Hold TAB] Skip puzzle (have 2 skips).
+		// Additionally, we only want to show complete messages, so if any of these messages would not be fully representable in
+		//   the three available lines, don't show them.
 		std::vector<std::string> lines;
-		if (!worldMessage.empty()) lines.push_back(worldMessage);
-		if (!statusMessage.empty()) lines.push_back(statusMessage);
-		if (!actionHint.empty()) lines.push_back(actionHint);
+		if (!actionHint.empty()) {
+			std::vector<std::string> expandedHint = splitByNewline(actionHint);
+			lines.insert(lines.begin(), expandedHint.begin(), expandedHint.end());
+		}
+
+		if (!statusMessage.empty()) {
+			std::vector<std::string> expandedStatus = splitByNewline(statusMessage);
+			if (lines.size() + expandedStatus.size() <= 3) {
+				lines.insert(lines.begin(), expandedStatus.begin(), expandedStatus.end());
+			}
+		}
+
+		if (!worldMessage.empty()) {
+			std::vector<std::string> expandedWorld = splitByNewline(worldMessage);
+			if (lines.size() + expandedWorld.size() <= 3) {
+				lines.insert(lines.begin(), expandedWorld.begin(), expandedWorld.end());
+			}
+		}
 
 		writeSubtitle(lines);
 		subtitlesDirty = false;
