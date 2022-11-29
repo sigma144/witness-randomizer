@@ -16,7 +16,9 @@ void APWatchdog::action() {
 	std::chrono::duration<float> frameDuration = currentFrameTime - lastFrameTime;
 	lastFrameTime = currentFrameTime;
 
-	HandleMovementSpeed(frameDuration.count());
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+
+	if (interactionState == InteractionState::Walking) HandleMovementSpeed(frameDuration.count());
 
 	HandleKeyTaps();
 
@@ -276,11 +278,11 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 }
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
-	speedTime += 30.0f;
+	speedTime += 20.0f;
 }
 
 void APWatchdog::ApplyTemporarySlow() {
-	speedTime -= 30.0f;
+	speedTime -= 20.0f;
 }
 
 
