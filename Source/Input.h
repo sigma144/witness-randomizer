@@ -40,16 +40,16 @@ enum class InputButton : int {
 	KEY_Z				= 0x7a,
 	
 	// Numerals (not numpad)
-	KEY_0				= 0x48,
-	KEY_1				= 0x49,
-	KEY_2				= 0x4A,
-	KEY_3				= 0x4B,
-	KEY_4				= 0x4C,
-	KEY_5				= 0x4D,
-	KEY_6				= 0x4E,
-	KEY_7				= 0x4F,
-	KEY_8				= 0x50,
-	KEY_9				= 0x51,
+	KEY_0				= 0x30,
+	KEY_1				= 0x31,
+	KEY_2				= 0x32,
+	KEY_3				= 0x33,
+	KEY_4				= 0x34,
+	KEY_5				= 0x35,
+	KEY_6				= 0x36,
+	KEY_7				= 0x37,
+	KEY_8				= 0x38,
+	KEY_9				= 0x39,
 
 	// Function keys
 	KEY_F1				= 0x112,
@@ -160,6 +160,14 @@ enum class InputButton : int {
 	CONTROLLER_TRIGGER_RIGHT	= 0x13c,
 };
 
+enum InteractionState {
+	Walking,	// Free look.
+	Focusing,	// Cursor shown, but no puzzle selected
+	Solving,	// Actively solving a puzzle
+	Cutscene,	// In the ending cutscene
+	Menu		// A menu is shown and blocking game input
+};
+
 
 // A manager class for reading input values from game memory and processing them into useful data.
 class InputWatchdog : public Watchdog {
@@ -176,6 +184,12 @@ public:
 	// Returns the state (pressed/released) for the given key.
 	bool getButtonState(InputButton key) const;
 
+	// Returns the player's current interaction mode.
+	InteractionState getInteractionState() const;
+
+	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
+	std::vector<InputButton> consumeTapEvents();
+
 private:
 
 	InputWatchdog();
@@ -185,9 +199,23 @@ private:
 	// The raw state data retrieved from game memory. Updated once per tick.
 	int32_t currentKeyState[INPUT_KEYSTATE_SIZE];
 
-	// Finds the address of the keyboard state in game memory.
-	uint64_t findKeyStateAddress();
+	void updateKeyState();
 
-	std::shared_ptr<class Memory> memory;
+	// The raw interact mode integer retrieved from game memory. Updated once per tick.
+	int32_t currentInteractMode;
+
+	// A value between 0 and 1 representing how faded in the pause menu is, with 1 being fully active.
+	float currentMenuOpenPercent;
+
+	void updateInteractionState();
+
+	void findInteractModeOffset();
+	void findMenuOpenOffset();
+
+	uint64_t interactModeOffset;
+	uint64_t menuOpenOffset;
+
+	std::map<InputButton, std::chrono::system_clock::time_point> pressTimes;
+	std::vector<InputButton> pendingTapEvents;
 
 };

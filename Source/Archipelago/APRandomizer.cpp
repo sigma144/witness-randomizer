@@ -1,3 +1,4 @@
+#include "../HUDManager.h"
 #include "APRandomizer.h"
 #include "APGameData.h"
 #include "../Panels.h"
@@ -177,11 +178,15 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		if (slotData.contains("log_ids_to_hints")) {
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
-				std::vector<std::string> message;
+				std::string message;
 				int64_t location_id_in_this_world = -1;
 				for (int i = 0; i < val.size(); i++) {
 					if (i < 3) {
-						message.push_back(val[i]);
+						std::string line = val[i];
+						if (!line.empty()) {
+							message.append(line);
+							message.append("\n");
+						}
 					}
 					else {
 						location_id_in_this_world = val[i];
@@ -258,7 +263,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		}
 
 		if (hint) {
-			async->queueMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
+			async->getHudManager()->queueBannerMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
 		}
 		else {
 			int location = item.location;
@@ -267,12 +272,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			int panelId = panelIdToLocationIdReverse[location];
 
 			if (panelIdToLocationIdReverse.count(location) && async->CheckPanelHasBeenSolved(panelId)) {
-				async->queueMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorForItem(item));
+				async->getHudManager()->queueBannerMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorForItem(item));
 			}
 			else
 			{
 				async->SetItemReward(findResult->first, item);
-				if(!receiving) async->queueMessage("Sent " + itemName + " to " + player + ".", getColorForItem(item));
+				if(!receiving) async->getHudManager()->queueBannerMessage("Sent " + itemName + " to " + player + ".", getColorForItem(item));
 			}
 		}
 	});

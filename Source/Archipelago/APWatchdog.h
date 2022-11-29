@@ -1,33 +1,21 @@
 #pragma once
 
-#include <map>
-#include <chrono>
-#include "..\Watchdog.h"
-#include "..\Generate.h"
-#include "..\DateTime.h"
-#include "nlohmann\json.hpp"
+#include "../DateTime.h"
+#include "../Generate.h"
+#include "../HUDManager.h"
+#include "../Watchdog.h"
 #include "APGameData.h"
 #include "APState.h"
 #include "PanelLocker.h"
+#include "nlohmann\json.hpp"
 
-struct HudMessage {
-	std::string text;
-	std::array<float, 3> rgbColor;
-};
+#include <chrono>
+#include <map>
 
-struct AudioLogMessage {
-	std::string line1;
-	std::string line2;
-	std::string line3;
-	
-	float time;
-
-	bool countWhileOutprioritized;
-};
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::vector<std::string>, int64_t>> a, std::map<int, std::set<int>> o, bool ep, bool hard, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, bool hard, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -41,7 +29,7 @@ public:
 		obeliskHexToEPHexes = o;
 
 		for (auto [key, value] : obeliskHexToEPHexes) {
-			obeliskHexToAmountOfEPs[key] = value.size();
+			obeliskHexToAmountOfEPs[key] = (int)value.size();
 		}
 
 		Hard = hard;
@@ -55,10 +43,13 @@ public:
 			panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
 			panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
 		}
+
+		lastFrameTime = std::chrono::system_clock::now();
+		hudManager = std::make_shared<HudManager>(_memory);
 	}
 
 	int skippedPuzzles = 0;
-	int availablePuzzleSkips = 0;
+	int foundPuzzleSkips = 0;
 
 	HWND skipButton;
 	HWND availableSkips;
@@ -84,37 +75,18 @@ public:
 
 	void SetItemReward(const int& id, const APClient::NetworkItem& item);
 
-	void queueMessage(std::string text) {
-		HudMessage message;
-		message.text = text;
-		message.rgbColor = { 1.0f, 1.0f, 1.0f };
-
-		outstandingMessages.push(message);
-	}
-
-	void queueMessage(std::string text, std::array<float, 3> rgbColor) {
-		HudMessage message;
-		message.text = text;
-		message.rgbColor = rgbColor;
-
-		outstandingMessages.push(message);
-	}
-
 	bool CheckPanelHasBeenSolved(int panelId);
 
 	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
 
-	void InfiniteChallenge(bool enable) {
-		_memory->SetInfiniteChallenge(enable);
-
-		if (enable) queueMessage("Challenge Timer disabled.");
-		if (!enable) queueMessage("Challenge Timer reenabled.");
-	}
+	void InfiniteChallenge(bool enable);
 
 	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
 	void QueueReceivedItem(const APClient::NetworkItem& item, int realitem);
+
+	HudManager* getHudManager() const { return hudManager.get(); }
 
 private:
 	APClient* ap;
@@ -124,7 +96,12 @@ private:
 	int finalPanel;
 	bool isCompleted = false;
 
+	std::chrono::system_clock::time_point lastFrameTime;
+	float halfSecondCountdown = 0.f;
+
 	int halfSecondCounter = 0;
+
+	std::shared_ptr<HudManager> hudManager;
 
 	bool EPShuffle = false;
 	bool Hard = false;
@@ -134,16 +111,7 @@ private:
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
 
-	float baseSpeed = 2.0f;
-	float currentSpeed = 2.0f;
-	bool hasTemporarySpeedModdification = false;
-	std::chrono::system_clock::time_point temporarySpeedModificationTime;
-	bool hasEverModifiedSpeed = false;
-
-	std::queue<HudMessage> outstandingMessages;
-	int messageCounter = 0;
-
-	std::map<int, AudioLogMessage> audioLogMessageBuffer;
+	const float baseSpeed = 2.0f;
 
 	bool laserRequirementMet = false;
 
@@ -157,49 +125,52 @@ private:
 
 	float speedTime = 0.0f;
 
+	void HandleKeyTaps();
+	
 	void CheckEPSkips();
-
-	void DisplayMessage();
 
 	void QueueItemMessages();
 
 	void DisableCollisions();
 
 	void AudioLogPlaying();
-	void DisplayAudioLogMessage();
 
 	void RefreshDoorCollisions();
 
 	void CheckSolvedPanels();
-	void HandleMovementSpeed();
+	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
 
 	void CheckLasers();
 
 	void CheckImportantCollisionCubes();
 
+	void SetStatusMessages();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 
 	int currentAudioLog = -1;
 
-	std::map<int, std::pair<std::vector<std::string>, int64_t>> audioLogMessages = {};
+	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
-	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5);
-	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2, -96.3, 5.8, 172.3, -101.1, 11.5);
-	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9, 5, -148, -154.8, 9);
+	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5f);
+	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
+	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
 	CollisionCube quarryLaserPanel = CollisionCube(-59, 90, 17, -67, 100, 21);
-	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6, -185, 37, 17);
+	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6f, -185, 37, 17);
 
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 
 	std::queue<std::pair<const APClient::NetworkItem&, int>> queuedItems;
+
+	std::string puzzleSkipInfoMessage;
 
 
 	int CheckIfCanSkipPuzzle();
