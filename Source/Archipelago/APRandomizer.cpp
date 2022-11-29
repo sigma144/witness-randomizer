@@ -443,7 +443,6 @@ void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 	Special::copyTarget(0x03C08, 0x28A0D); Special::copyTarget(0x28A0D, 0x28998);
 	
 	Special::setTargetAndDeactivate(0x03C0C, 0x03C08);
-	Special::setPower(0x28A69, false);
 
 	if (doorsActuallyInTheItemPool.count(0x28A0D)) {
 		Special::setPower(0x28A0D, false);

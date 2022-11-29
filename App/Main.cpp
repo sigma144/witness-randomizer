@@ -340,8 +340,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			apRandomizer->Init();
 
-			//if (hard) randomizer->GenerateHard(hwndLoadingText);
-			//else randomizer->GenerateNormal(hwndLoadingText);
+			if (hard) randomizer->GenerateHard(hwndLoadingText);
+			else randomizer->GenerateNormal(hwndLoadingText);
 			SetWindowText(hwndRandomize, L"Randomized!");
 
 			EnableWindow(hwndChallenge, true);
