@@ -54,7 +54,8 @@ private:
 
 	void writeSubtitle(std::vector<std::string> lines);
 
-	static std::vector<std::string> splitByNewline(std::string input);
+	// Splits the given string into individual lines, first by chopping it by newlines, and second by wrapping any long strings.
+	static std::vector<std::string> separateLines(std::string input);
 
 	struct BannerMessage {
 		BannerMessage(std::string text, RgbColor color, float duration) : text(text), color(color), duration(duration) {}
