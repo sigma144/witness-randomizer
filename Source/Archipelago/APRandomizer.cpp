@@ -186,7 +186,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 						std::string line = val[i];
 						if (!line.empty()) {
 							message.append(line);
-							message.append("\n");
+							message.append(" ");
 						}
 					}
 					else {

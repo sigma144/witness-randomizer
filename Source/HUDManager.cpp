@@ -3,6 +3,8 @@
 #include "Memory.h"
 
 
+#define SUBTITLE_MAX_LINE_LENGTH 70
+
 HudManager::HudManager(const std::shared_ptr<Memory>& memory) : memory(memory) {
 	findSetSubtitleOffsets();
 	setSubtitleSize(SubtitleSize::Small);
@@ -115,19 +117,19 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		//   the three available lines, don't show them.
 		std::vector<std::string> lines;
 		if (!actionHint.empty()) {
-			std::vector<std::string> expandedHint = splitByNewline(actionHint);
+			std::vector<std::string> expandedHint = separateLines(actionHint);
 			lines.insert(lines.begin(), expandedHint.begin(), expandedHint.end());
 		}
 
 		if (!statusMessage.empty()) {
-			std::vector<std::string> expandedStatus = splitByNewline(statusMessage);
+			std::vector<std::string> expandedStatus = separateLines(statusMessage);
 			if (lines.size() + expandedStatus.size() <= 3) {
 				lines.insert(lines.begin(), expandedStatus.begin(), expandedStatus.end());
 			}
 		}
 
 		if (!worldMessage.empty()) {
-			std::vector<std::string> expandedWorld = splitByNewline(worldMessage);
+			std::vector<std::string> expandedWorld = separateLines(worldMessage);
 			if (lines.size() + expandedWorld.size() <= 3) {
 				lines.insert(lines.begin(), expandedWorld.begin(), expandedWorld.end());
 			}
@@ -143,14 +145,14 @@ void HudManager::writeSubtitle(std::vector<std::string> lines) {
 	//   line by newline characters and append those to the list.
 	std::vector<std::string> expandedLines;
 	for (const std::string& line : lines) {
-		std::vector<std::string> splitLines = splitByNewline(line);
+		std::vector<std::string> splitLines = separateLines(line);
 		expandedLines.insert(expandedLines.end(), splitLines.begin(), splitLines.end());
 	}
 
 	// Since we want to keep this text as low on the screen as possible, we need to write our text using the lowest possible rows.
 	//   In order to do this, we can compute an offset into the list of lines based on its size such that the last line in the
 	//   list corresponds to the last line in the subtitle.
-	int lineOffset = 3 - expandedLines.size(); // NOTE: If the message is longer than 3 lines, only the last 3 will be displayed.
+	int lineOffset = std::max(3 - (int)expandedLines.size(), 0); // NOTE: This will only display the first three lines.
 
 	memory->DisplaySubtitles(
 		0 - lineOffset >= 0 ? expandedLines[0 - lineOffset] : "",
@@ -159,9 +161,9 @@ void HudManager::writeSubtitle(std::vector<std::string> lines) {
 	);
 }
 
-std::vector<std::string> HudManager::splitByNewline(std::string input) {
+std::vector<std::string> HudManager::separateLines(std::string input) {
+	// First, split the string into lines based on newlines.
 	std::vector<std::string> splitLines;
-
 	std::string::size_type searchIndex = 0, previousIndex = 0;
 	while (true) {
 		searchIndex = input.find('\n', previousIndex);
@@ -178,7 +180,37 @@ std::vector<std::string> HudManager::splitByNewline(std::string input) {
 		splitLines.push_back(input.substr(previousIndex));
 	}
 
-	return splitLines;
+	// Next, check every line for length and, if they are exceedingly long, split them into wrapped strings by length.
+	std::vector<std::string> wrappedLines;
+	for (const std::string& line : splitLines) {
+		if (line.length() > SUBTITLE_MAX_LINE_LENGTH) {
+			// The line is longer than our max width and needs to be wrapped.
+			std::string choppedLine = line;
+			while (choppedLine.length() > SUBTITLE_MAX_LINE_LENGTH) {
+				// Find the closest space character to the end of the line.
+				searchIndex = choppedLine.rfind(' ', SUBTITLE_MAX_LINE_LENGTH);
+				if (searchIndex != std::string::npos) {
+					// We found a space. Separate the string at that character and keep working.
+					wrappedLines.push_back(choppedLine.substr(0, searchIndex));
+					choppedLine = choppedLine.substr(searchIndex + 1);
+				}
+				else {
+					// There was no space in the previous line. Simply split the string mid-word.
+					wrappedLines.push_back(choppedLine.substr(0, SUBTITLE_MAX_LINE_LENGTH));
+					choppedLine = choppedLine.substr(SUBTITLE_MAX_LINE_LENGTH);
+				}
+			}
+
+			// Add the remainder of the string to the output.
+			wrappedLines.push_back(choppedLine);
+		}
+		else {
+			// The line is shorter than our max width and can be added to the output directly.
+			wrappedLines.push_back(line);
+		}
+	}
+
+	return wrappedLines;
 }
 
 void HudManager::findSetSubtitleOffsets() {
