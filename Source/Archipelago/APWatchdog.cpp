@@ -850,6 +850,12 @@ void APWatchdog::AudioLogPlaying() {
 			operations.push_back(operation);
 
 			ap->Set("AL_" + std::to_string(logId), NULL, false, operations);
+
+			int locationId = audioLogMessages[logId].second;
+
+			if (locationId != -1) {
+				ap->LocationScouts({ locationId });
+			}
 		}
 		else if (!logPlaying && logId == currentAudioLog) {
 			currentAudioLog = -1;
@@ -1091,23 +1097,19 @@ void APWatchdog::QueueItemMessages() {
 	std::map<std::string, RgbColor> itemColors;
 	std::vector<std::string> receivedItems;
 
-	std::vector<std::pair<const APClient::NetworkItem&, int>> requeue;
+	for (auto it = queuedItems.begin(); it != queuedItems.end();) {
+		__int64 item = it->at(0);
+		__int64 flags = it->at(1);
+		__int64 realitem = it->at(2);
 
-	while (!queuedItems.empty()) {
-		auto itemPair = queuedItems.front();
-		queuedItems.pop();
-
-		const APClient::NetworkItem& item = itemPair.first;
-		int realitem = itemPair.second;
-
-		if (ap->get_item_name(realitem) == "Unknown" || ap->get_item_name(item.item) == "Unknown") {
-			requeue.push_back(itemPair);
+		if (ap->get_item_name(realitem) == "Unknown" || ap->get_item_name(item) == "Unknown") {
+			it++;
 			continue;
 		}
 
-		std::string name = ap->get_item_name(item.item);
+		std::string name = ap->get_item_name(item);
 
-		if (realitem != item.item) {
+		if (realitem != item && realitem > 0) {
 			name += " (" + ap->get_item_name(realitem) + ")";
 		}
 
@@ -1121,11 +1123,9 @@ void APWatchdog::QueueItemMessages() {
 		}
 
 		// Assign a color to the item.
-		itemColors[name] = getColorForItem(item);
-	}
+		itemColors[name] = getColorByItemFlag(flags);
 
-	for (std::pair<const APClient::NetworkItem&, int> itemPair : requeue) {
-		queuedItems.push(itemPair);
+		it = queuedItems.erase(it);
 	}
 
 	for (std::string name : receivedItems) {
@@ -1141,10 +1141,10 @@ void APWatchdog::QueueItemMessages() {
 	processingItemMessages = false;
 }
 
-void APWatchdog::QueueReceivedItem(const APClient::NetworkItem& item, int realitem) {
+void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
 	newItemsJustIn = true;
 
-	queuedItems.push({ item, realitem });
+	queuedItems.push_back(item);
 }
 
 void APWatchdog::SetStatusMessages() {

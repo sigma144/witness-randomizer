@@ -39,6 +39,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		
 		for (const auto& item : items) {
 			int realitem = item.item;
+			int advancement = item.flags;
 
 			if (progressiveItems.count(realitem)) {
 				if (progressiveItems[realitem].size() == 0) {
@@ -82,7 +83,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
-			async->QueueReceivedItem(item, realitem);
+			async->QueueReceivedItem({ item.item, advancement, realitem });
 		}
 	});
 

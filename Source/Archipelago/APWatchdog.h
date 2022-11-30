@@ -84,7 +84,7 @@ public:
 	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
-	void QueueReceivedItem(const APClient::NetworkItem& item, int realitem);
+	void QueueReceivedItem(std::vector<__int64> item);
 
 	HudManager* getHudManager() const { return hudManager.get(); }
 
@@ -168,7 +168,7 @@ private:
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 
-	std::queue<std::pair<const APClient::NetworkItem&, int>> queuedItems;
+	std::vector<std::vector<__int64>> queuedItems;
 
 	std::string puzzleSkipInfoMessage;
 
