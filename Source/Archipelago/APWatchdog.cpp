@@ -39,6 +39,7 @@ void APWatchdog::action() {
 
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
+			CheckEPs();
 			storageCheckCounter = 20;
 		}
 		else
@@ -116,7 +117,7 @@ void APWatchdog::CheckSolvedPanels() {
 					std::list<APClient::DataStorageOperation> operations;
 					operations.push_back(operation);
 
-					ap->Set("EP_" + std::to_string(*it2), NULL, false, operations);
+					ap->Set("WitnessEP" + std::to_string(ap->get_player_number()) + "-" + std::to_string(*it2), NULL, false, operations);
 
 					it2 = EPSet.erase(it2);
 				}
@@ -235,38 +236,47 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 	while (it != panelIdToLocationId.end())
 	{
 		if (it->second == locationId) {
-			if (!actuallyEveryPanel.count(it->first)) return;
+			if (actuallyEveryPanel.count(it->first)) {
+				if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
+					if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
+						std::vector<int> bridgePanels;
+						if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
+						else if (it->first == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
+						else if (it->first == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
+						else if (it->first == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
+						else if (it->first == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
+						else if (it->first == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
+						else if (it->first == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
+						else if (it->first == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
+						else if (it->first == 0x034E3) bridgePanels = { 0x034E4 };
 
-			if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
-				if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
-					std::vector<int> bridgePanels;
-					if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
-					else if (it->first == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
-					else if (it->first == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
-					else if (it->first == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
-					else if (it->first == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
-					else if (it->first == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
-					else if (it->first == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
-					else if (it->first == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
-					else if (it->first == 0x034E3) bridgePanels = { 0x034E4 };
+						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
+						Special::SkipPanel(it->first, "Collected", false);
+						WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED });
 
-					if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-					Special::SkipPanel(it->first, "Collected", false);
-					WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); 
+						for (int panel : bridgePanels) {
+							if (ReadPanelData<int>(panel, SOLVED)) continue;
 
-					for (int panel : bridgePanels) {
-						if (ReadPanelData<int>(panel, SOLVED)) continue;
-						
-						if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
-						Special::SkipPanel(panel, "Collected", false);
-						WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
+							if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
+							Special::SkipPanel(panel, "Collected", false);
+							WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
+						}
+					}
+					else {
+						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
+						Special::SkipPanel(it->first, "Collected", false);
+						if (it->first != 0x01983 && it->first != 0x01983) WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
+						WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
 					}
 				}
-				else{
-					if(panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-					Special::SkipPanel(it->first, "Collected", false);
-					if(it->first != 0x01983 && it->first != 0x01983) WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
-					WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+			}
+
+			else if (allEPs.count(it->first) && collect) {
+				int eID = it->first;
+
+				_memory->SolveEP(eID);
+				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+					_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
 				}
 			}
 
@@ -840,6 +850,7 @@ void APWatchdog::AudioLogPlaying() {
 			currentAudioLog = logId;
 
 			std::string message = audioLogMessages[logId].first;
+			hudManager->clearSubtitleMessage();
 			hudManager->showSubtitleMessage(message, 12.0f);
 
 			APClient::DataStorageOperation operation;
@@ -849,7 +860,9 @@ void APWatchdog::AudioLogPlaying() {
 			std::list<APClient::DataStorageOperation> operations;
 			operations.push_back(operation);
 
-			ap->Set("AL_" + std::to_string(logId), NULL, false, operations);
+			int pNO = ap->get_player_number();
+
+			ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, operations);
 
 			int locationId = audioLogMessages[logId].second;
 
@@ -859,17 +872,108 @@ void APWatchdog::AudioLogPlaying() {
 		}
 		else if (!logPlaying && logId == currentAudioLog) {
 			currentAudioLog = -1;
-			hudManager->clearSubtitleMessage();
+		}
+	}
+}
+
+void APWatchdog::CheckEPs() {
+	if (EPIDsToEPs.empty()) {
+		int pNO = ap->get_player_number();
+
+		for (int ep : allEPs) {
+			std::string epID = "WitnessEP" + std::to_string(pNO) + "-" + std::to_string(ep);
+
+			EPIDsToEPs[epID] = ep;
+			EPStates[ep] = false;
+			EPIDs.push_back(epID);
+
+			APClient::DataStorageOperation operation;
+			operation.operation = "default";
+			operation.value = false;
+
+			std::list<APClient::DataStorageOperation> operations;
+
+			operations.push_back(operation);
+
+
+			nlohmann::json a;
+
+			ap->Set(epID, a, false, operations);
+
+			EPIDs.push_back(epID);
+		}
+
+		ap->SetNotify(EPIDs);
+		ap->Get(EPIDs);
+	}
+
+	for (auto [epID, ep] : EPIDsToEPs) {
+		if (ReadPanelData<int>(ep, EP_SOLVED)) {
+			if (!EPStates[ep]) {
+				EPStates[ep] = true;
+
+				APClient::DataStorageOperation operation;
+				operation.operation = "replace";
+				operation.value = true;
+
+				std::list<APClient::DataStorageOperation> operations;
+				operations.push_back(operation);
+
+				ap->Set(epID, NULL, false, operations);
+			}
 		}
 	}
 }
 
 void APWatchdog::CheckLasers() {
+	if (laserIDsToLasers.empty()) {
+		int pNO = ap->get_player_number();
+
+		for (int laser : allLasers) {
+			std::string laserID = "WitnessLaser" + std::to_string(pNO) + "-" + std::to_string(laser);
+
+			laserIDsToLasers[laserID] = laser;
+			laserStates[laser] = false;
+			laserIDs.push_back(laserID);
+
+			APClient::DataStorageOperation operation;
+			operation.operation = "default";
+			operation.value = false;
+
+			std::list<APClient::DataStorageOperation> operations;
+
+			operations.push_back(operation);
+
+
+			nlohmann::json a;
+
+			ap->Set(laserID, a, false, operations);
+
+			laserIDs.push_back(laserID);
+		}
+
+		ap->SetNotify(laserIDs);
+		ap->Get(laserIDs);
+	}
+
 	int laserCount = 0;
 	
-	for (int laser : allLasers) {
+	for (auto [laserID, laser] : laserIDsToLasers) {
 		if (ReadPanelData<int>(laser, LASER_TARGET)) {
 			laserCount += 1;
+
+			if (!laserStates[laser]) {
+				laserStates[laser] = true;
+
+				APClient::DataStorageOperation operation;
+				operation.operation = "replace";
+				operation.value = true;
+
+				std::list<APClient::DataStorageOperation> operations;
+				operations.push_back(operation);
+
+				ap->Set(laserID, NULL, false, operations);
+			}
 		}
 	}
 
@@ -882,61 +986,41 @@ void APWatchdog::CheckLasers() {
 			laserRequirementMet = true;
 		}
 	}
-
-	if (laserIDsToLasers.empty()) {
-		int pNO = ap->get_player_number();
-
-		for (int laser : allLasers) {
-			std::string laserID = std::to_string(pNO) + "-" + std::to_string(laser);
-
-			laserIDsToLasers[laserID] = laser;
-			laserIDs.push_back(laserID);
-
-			APClient::DataStorageOperation operation;
-			operation.operation = "default";
-			operation.value = false;
-
-			std::list<APClient::DataStorageOperation> operations;
-
-			operations.push_back(operation);
-
-			nlohmann::json a;
-		
-			ap->Set(laserID, a, false, operations);
-		}
-	}
-
-	auto laserStates = ap->Get(laserIDs);
 }
 
-void APWatchdog::HandleLaserResponse(const std::map <std::string, nlohmann::json> response, bool collect) {
-	for (auto& [key, value] : response) {
-		int playerNo = std::stoi(key.substr(0, key.find("-")));
-		int laserNo = std::stoi(key.substr(key.find("-") + 1, key.length()));
+void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, bool collect) {
+	int laserNo = laserIDsToLasers[laserID];
 
-		bool laserActiveAccordingToDataPackage = value == true;
+	bool laserActiveAccordingToDataPackage = value == true;
 
-		bool laserActiveInGame = ReadPanelData<int>(laserNo, LASER_TARGET) != 0;
+	bool laserActiveInGame = ReadPanelData<int>(laserNo, LASER_TARGET) != 0;
 
-		if (laserActiveInGame == laserActiveAccordingToDataPackage) continue;
+	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
 
-		if (laserActiveInGame) {
-			APClient::DataStorageOperation operation;
-			operation.operation = "replace";
-			operation.value = true;
+	if(!laserActiveInGame)
+	{
+		if (laserNo == 0x012FB) _memory->OpenDoor(0x01317);
+		_memory->ActivateLaser(laserNo);
+		hudManager->queueBannerMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
+	}
+}
 
-			std::list<APClient::DataStorageOperation> operations;
-			operations.push_back(operation);
+void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool collect) {
+	int epNo = EPIDsToEPs[epID];
 
-			ap->Set(key, NULL, false, operations);
+	bool epActiveAccordingToDataPackage = value == true;
+
+	bool epActiveInGame = ReadPanelData<int>(epNo, EP_SOLVED) != 0;
+
+	if (epActiveInGame == epActiveAccordingToDataPackage) return;
+
+	if (!epActiveInGame)
+	{
+		_memory->SolveEP(epNo);
+		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo)) {
+			_memory->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
-
-		else if(collect)
-		{
-			if (laserNo == 0x012FB) _memory->OpenDoor(0x01317);
-			_memory->ActivateLaser(laserNo);
-			hudManager->queueBannerMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
-		}
+		hudManager->queueBannerMessage("EP Activated Remotely (Coop)"); //TODO: Names
 	}
 }
 
@@ -1039,7 +1123,6 @@ void APWatchdog::CheckEPSkips() {
 		}
 
 		if (panel == 0x09E86 || panel == 0x09ED8) {
-			// TODO: This needs to check the exit is solved.
 			if (ReadPanelData<int>(0x09E86, FLASH_MODE) == 1 && ReadPanelData<int>(0x09ED8, FLASH_MODE) == 1) { 
 				int num_front_traced_edges = ReadPanelData<int>(0x09ED8, TRACED_EDGES);
 				std::vector<int> front_traced_edges = ReadArray<int>(0x09ED8, TRACED_EDGE_DATA, num_front_traced_edges * 23);
@@ -1079,6 +1162,7 @@ void APWatchdog::CheckEPSkips() {
 	}
 
 	for (int panel : panelsToSkip) {
+		panelLocker->PermanentlyUnlockPuzzle(panel);
 		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
 		Special::SkipPanel(panel, "Skipped", false);
 		WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Cost == 0

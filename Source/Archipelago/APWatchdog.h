@@ -77,7 +77,8 @@ public:
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
-	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
+	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool collect);
+	void HandleEPResponse(std::string epID, nlohmann::json value, bool collect);
 
 	void InfiniteChallenge(bool enable);
 
@@ -142,6 +143,7 @@ private:
 	void HandlePowerSurge();
 
 	void CheckLasers();
+	void CheckEPs();
 
 	void CheckImportantCollisionCubes();
 
@@ -149,6 +151,11 @@ private:
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
+	std::map<int, bool> laserStates;
+
+	std::map<std::string, int> EPIDsToEPs;
+	std::list<std::string> EPIDs;
+	std::map<int, bool> EPStates;
 
 	int currentAudioLog = -1;
 

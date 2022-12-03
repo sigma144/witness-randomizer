@@ -234,6 +234,67 @@ void Memory::SetInfiniteChallenge(bool enable) {
 }
 
 void Memory::findImportantFunctionAddresses(){
+	executeSigScan ({0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x20, 0x48, 0x89, 0x48, 0x08, 0x55, 0x56, 0x57, 0x41, 0x54}, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x78 && data[index - 1] == 0x10 && data[index] == 0xE8) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
+				uint64_t pointerLocation = _baseAddress + offset + index + 1;
+
+				int function;
+
+				ReadAbsolute(reinterpret_cast<void*>(pointerLocation), &function, sizeof(int));
+
+				removeFromPatternMapFunction = pointerLocation + function + 4;
+				
+				// stop game from trying to delete previous pattern map
+
+				uint64_t testInstruction = pointerLocation + 0x10;
+
+				LPVOID testInstructionPointer = reinterpret_cast<LPVOID>(testInstruction);
+
+				char buf[] = "\x90\x90\x90\x75"; //Change to nop nop nop jne instead of test je. Will never be equal due to the preceding code, so will always jump.
+				//This will cause memory leaks because the object is now not deleted. But that's preferrable to the game crashing.
+				//The memory leaks are about on the order of 0.1kB per "Resolving an already solved EP", an action the player shouldn't do too often.
+
+				WriteAbsolute(testInstructionPointer, buf, sizeof(buf) -1); // Write the new relative address into the "movss xmm0 [address]" statement.
+
+
+				break;
+			}
+		}
+
+		index++;
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x4B && data[index - 1] == 0x30 && data[index] == 0xE8) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
+				uint64_t pointerLocation = _baseAddress + offset + index + 1;
+
+				int function;
+
+				ReadAbsolute(reinterpret_cast<void*>(pointerLocation), &function, sizeof(int));
+
+				addToPatternMapFunction = pointerLocation + function + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index--) {
+			if (data[index] == 0x48 && data[index + 1] == 0x8D && data[index + 2] == 0x0D) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
+				uint64_t pointerLocation = _baseAddress + offset + index + 3;
+
+				int function;
+
+				ReadAbsolute(reinterpret_cast<void*>(pointerLocation), &function, sizeof(int));
+
+				patternMap = pointerLocation + function + 4;
+
+				break;
+			}
+		}
+
+		return true;
+	});
+
 	executeSigScan({ 0x48, 0x89, 0x6C, 0x24, 0x18, 0x57, 0x8B, 0x81 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->updateJunctionsFunction = _baseAddress + offset + index;
 
@@ -1023,6 +1084,139 @@ void Memory::RemoveMesh(int id) {
 	__int64 collisionMesh = WriteAbsolute(reinterpret_cast<LPVOID>(meshPointer + 0x98), buffer, sizeof(buffer)); //Collision Mesh
 }
 
+void Memory::MakeEPGlow(std::string name, std::vector<byte> patternPointBytes) {
+	char buffer[2048];
+
+	memset(buffer, 0, sizeof(buffer));
+
+	for (int i = 0; i < name.size(); i++) {
+		buffer[0x200 + i] = name[i];
+	}
+
+	auto alloc = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+	u_int64 allocStart = reinterpret_cast<u_int64>(alloc);
+	u_int64 patternSolvedPart = allocStart + 0x100;
+	u_int64 namePointer = allocStart + 0x200;
+	u_int64 patternPointStart = allocStart + 0x300;
+
+	for (int i = 0; i < patternPointBytes.size(); i++) {
+		buffer[0x300 + i] = patternPointBytes[i];
+	}
+
+	byte elements = patternPointBytes.size() / 4;
+
+	buffer[0x100] = elements;
+
+	buffer[0x104] = elements;
+
+	buffer[0x108] = (patternPointStart) & 0xff;
+	buffer[0x109] = (patternPointStart >> 8) & 0xff;
+	buffer[0x10A] = (patternPointStart >> 16) & 0xff;
+	buffer[0x10B] = (patternPointStart >> 24) & 0xff;
+	buffer[0x10C] = (patternPointStart >> 32) & 0xff;
+	buffer[0x10D] = (patternPointStart >> 40) & 0xff;
+	buffer[0x10E] = (patternPointStart >> 48) & 0xff;
+	buffer[0x10F] = (patternPointStart >> 56) & 0xff;
+
+	WriteProcessMemory(_handle, alloc, buffer, sizeof(buffer), NULL);
+
+	/*unsigned char removeBuff[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	removeBuff[2] = removeFromPatternMapFunction & 0xff;
+	removeBuff[3] = (removeFromPatternMapFunction >> 8) & 0xff;
+	removeBuff[4] = (removeFromPatternMapFunction >> 16) & 0xff;
+	removeBuff[5] = (removeFromPatternMapFunction >> 24) & 0xff;
+	removeBuff[6] = (removeFromPatternMapFunction >> 32) & 0xff;
+	removeBuff[7] = (removeFromPatternMapFunction >> 40) & 0xff;
+	removeBuff[8] = (removeFromPatternMapFunction >> 48) & 0xff;
+	removeBuff[9] = (removeFromPatternMapFunction >> 56) & 0xff;
+	removeBuff[12] = patternMap & 0xff;
+	removeBuff[13] = (patternMap >> 8) & 0xff;
+	removeBuff[14] = (patternMap >> 16) & 0xff;
+	removeBuff[15] = (patternMap >> 24) & 0xff;
+	removeBuff[16] = (patternMap >> 32) & 0xff;
+	removeBuff[17] = (patternMap >> 40) & 0xff;
+	removeBuff[18] = (patternMap >> 48) & 0xff;
+	removeBuff[19] = (patternMap >> 56) & 0xff;
+	removeBuff[22] = namePointer & 0xff;
+	removeBuff[23] = (namePointer >> 8) & 0xff;
+	removeBuff[24] = (namePointer >> 16) & 0xff;
+	removeBuff[25] = (namePointer >> 24) & 0xff;
+	removeBuff[26] = (namePointer >> 32) & 0xff;
+	removeBuff[27] = (namePointer >> 40) & 0xff;
+	removeBuff[28] = (namePointer >> 48) & 0xff;
+	removeBuff[29] = (namePointer >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(removeBuff);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, removeBuff, allocation_size, NULL);
+	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);*/
+
+
+
+	unsigned char addBuff[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx [address]
+		"\x49\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov r8 [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	addBuff[2] = addToPatternMapFunction & 0xff;
+	addBuff[3] = (addToPatternMapFunction >> 8) & 0xff;
+	addBuff[4] = (addToPatternMapFunction >> 16) & 0xff;
+	addBuff[5] = (addToPatternMapFunction >> 24) & 0xff;
+	addBuff[6] = (addToPatternMapFunction >> 32) & 0xff;
+	addBuff[7] = (addToPatternMapFunction >> 40) & 0xff;
+	addBuff[8] = (addToPatternMapFunction >> 48) & 0xff;
+	addBuff[9] = (addToPatternMapFunction >> 56) & 0xff;
+	addBuff[12] = patternMap & 0xff;
+	addBuff[13] = (patternMap >> 8) & 0xff;
+	addBuff[14] = (patternMap >> 16) & 0xff;
+	addBuff[15] = (patternMap >> 24) & 0xff;
+	addBuff[16] = (patternMap >> 32) & 0xff;
+	addBuff[17] = (patternMap >> 40) & 0xff;
+	addBuff[18] = (patternMap >> 48) & 0xff;
+	addBuff[19] = (patternMap >> 56) & 0xff;
+	addBuff[22] = namePointer & 0xff;
+	addBuff[23] = (namePointer >> 8) & 0xff;
+	addBuff[24] = (namePointer >> 16) & 0xff;
+	addBuff[25] = (namePointer >> 24) & 0xff;
+	addBuff[26] = (namePointer >> 32) & 0xff;
+	addBuff[27] = (namePointer >> 40) & 0xff;
+	addBuff[28] = (namePointer >> 48) & 0xff;
+	addBuff[29] = (namePointer >> 56) & 0xff;
+	addBuff[32] = patternSolvedPart & 0xff;
+	addBuff[33] = (patternSolvedPart >> 8) & 0xff;
+	addBuff[34] = (patternSolvedPart >> 16) & 0xff;
+	addBuff[35] = (patternSolvedPart >> 24) & 0xff;
+	addBuff[36] = (patternSolvedPart >> 32) & 0xff;
+	addBuff[37] = (patternSolvedPart >> 40) & 0xff;
+	addBuff[38] = (patternSolvedPart >> 48) & 0xff;
+	addBuff[39] = (patternSolvedPart >> 56) & 0xff;
+
+	SIZE_T allocation_size2 = sizeof(addBuff);
+
+	auto allocation_start2 = VirtualAllocEx(_handle, NULL, allocation_size2, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start2, addBuff, allocation_size2, NULL);
+	auto thread2 = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start2, NULL, 0, 0);
+
+	WaitForSingleObject(thread2, INFINITE);
+}
+
 std::recursive_mutex Memory::mtx = std::recursive_mutex();
 
 int Memory::GLOBALS = 0;
@@ -1060,6 +1254,9 @@ uint64_t Memory::_getSoundFunction = 0;
 uint64_t Memory::_bytesLengthChallenge = 0;
 uint64_t Memory::completeEPFunction = 0;
 uint64_t Memory::updateJunctionsFunction = 0;
+uint64_t Memory::addToPatternMapFunction = 0;
+uint64_t Memory::removeFromPatternMapFunction = 0;
+uint64_t Memory::patternMap = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

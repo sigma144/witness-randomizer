@@ -222,7 +222,17 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	});
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
-		async->HandleLaserResponse(response, Collect);
+		for (auto [key, value] : response) {
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, Collect);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, Collect);
+		}
+	});
+
+	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
+		if (value != original_value) {
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, Collect);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, Collect);
+		}
 	});
 
 	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
@@ -357,7 +367,23 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	for (int eID : precompletedLocations) {
 		if (allEPs.count(eID)) {
 			_memory->SolveEP(eID);
+			if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+				_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+			}
 		}
+	}
+
+	// EP-related slowing down of certain bridges etc.
+
+	if (EPShuffle) {
+		_memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.02f }); // Swamp Rotating Bridge, 2x (Instead of 4x)
+		
+		_memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x (Instead of 2x)
+		_memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
 	}
 
 	// Bunker door colors

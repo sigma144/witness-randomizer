@@ -235,10 +235,12 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
 		_memory->WriteArray<int>(id, COLORED_REGIONS, polygons, true);
 		_memory->WritePanelData<float>(id, PATH_COLOR, { 0.75f, 0.75f, 0.75f, 1.0f });
-		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.5f, 0.0f, 0.0f, 1.0f });
-		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.5f, 0.0f, 0.0f, 1.0f });
 		_memory->WritePanelData<__int64>(id, DECORATION_COLORS, { 0 });
-		_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+		if (id != 0x28998) {
+			_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.5f, 0.0f, 0.0f, 1.0f });
+			_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.5f, 0.0f, 0.0f, 1.0f });
+			_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 }); //Tinted glass door needs to stay transparent
+		}
 		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
 	else if (isLocked) {

@@ -182,6 +182,8 @@ public:
 		CallVoidFunction(id, completeEPFunction);
 	}
 
+	void MakeEPGlow(std::string name, std::vector<byte> patternPointBytes);
+
 	void SetInfiniteChallenge(bool enable);
 
 	void RemoveMesh(int id);
@@ -232,6 +234,9 @@ public:
 	static uint64_t _bytesLengthChallenge;
 	static uint64_t completeEPFunction;
 	static uint64_t updateJunctionsFunction;
+	static uint64_t addToPatternMapFunction;
+	static uint64_t removeFromPatternMapFunction;
+	static uint64_t patternMap;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
