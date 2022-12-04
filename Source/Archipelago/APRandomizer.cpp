@@ -266,15 +266,22 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		std::string locationName = ap->get_location_name(item.location);
 
 		bool hint = false;
+		bool found = false;
 
 		for (auto textNode : msg) {
 			if (textNode.text.find("[Hint]") != std::string::npos) {
 				hint = true;
 			}
+			if (textNode.text.find("(found)") != std::string::npos) {
+				found = true;
+			}
 		}
 
 		if (hint) {
-			async->getHudManager()->queueBannerMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
+			std::string isFor = "";
+			if (!receiving) isFor = " for " + player;
+
+			if(!found) async->getHudManager()->queueBannerMessage("Hint: " + itemName + isFor + " is on " + locationName + ".");
 		}
 		else {
 			int location = item.location;
