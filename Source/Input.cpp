@@ -52,6 +52,18 @@ InteractionState InputWatchdog::getInteractionState() const {
 	}
 }
 
+bool InputWatchdog::consumeInteractionStateChange()
+{
+	InteractionState currentInteractionState = getInteractionState();
+	if (currentInteractionState != previousInteractionState) {
+		previousInteractionState == currentInteractionState;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 std::vector<InputButton> InputWatchdog::consumeTapEvents() {
 	std::vector<InputButton> output = pendingTapEvents;
 	pendingTapEvents.clear();

@@ -187,6 +187,9 @@ public:
 	// Returns the player's current interaction mode.
 	InteractionState getInteractionState() const;
 
+	// Returns whether or not the interaction state has changed since the last time this function was called.
+	bool consumeInteractionStateChange();
+
 	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
 	std::vector<InputButton> consumeTapEvents();
 
@@ -203,6 +206,9 @@ private:
 
 	// The raw interact mode integer retrieved from game memory. Updated once per tick.
 	int32_t currentInteractMode;
+
+	// The interact mode that was set at the last time consumeInteractionStateChange() was called.
+	InteractionState previousInteractionState = InteractionState::Walking;
 
 	// A value between 0 and 1 representing how faded in the pause menu is, with 1 being fully active.
 	float currentMenuOpenPercent;
