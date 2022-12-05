@@ -32,16 +32,6 @@ public:
 			obeliskHexToAmountOfEPs[key] = (int)value.size();
 		}
 
-		for (auto [id, message] : audioLogMessages) {
-			if (ReadPanelData<int>(id, AUDIO_LOG_LILYPAD_SIZE) != 5) continue;
-			
-			int locationId = message.second;
-
-			if (locationId != -1) {
-				seenAudioMessages.insert(locationId);
-			}
-		}
-
 		Hard = hard;
 
 		panelsThatHaveToBeSkippedForEPPurposes = {

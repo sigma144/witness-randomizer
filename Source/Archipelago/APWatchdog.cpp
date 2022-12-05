@@ -921,8 +921,6 @@ void APWatchdog::AudioLogPlaying() {
 		if (logPlaying && logId != currentAudioLog) {
 			currentAudioLog = logId;
 
-			WritePanelData<int>(logId, AUDIO_LOG_LILYPAD_SIZE, { 5 }); // Seemingly unused but still persistent value. We could just use "played" but what if someone plays an audio log while not connected?
-
 			std::string message = audioLogMessages[logId].first;
 			hudManager->clearSubtitleMessage();
 			hudManager->showSubtitleMessage(message, 12.0f);
@@ -941,7 +939,7 @@ void APWatchdog::AudioLogPlaying() {
 			int locationId = audioLogMessages[logId].second;
 
 			if (locationId != -1 && !seenAudioMessages.count(locationId)) {
-				ap->LocationScouts({ locationId }, 1);
+				ap->LocationScouts({ locationId }, 2);
 				seenAudioMessages.insert(locationId);
 			}
 		}
