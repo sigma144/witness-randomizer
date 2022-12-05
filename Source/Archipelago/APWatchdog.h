@@ -32,6 +32,16 @@ public:
 			obeliskHexToAmountOfEPs[key] = (int)value.size();
 		}
 
+		for (auto [id, message] : audioLogMessages) {
+			if (ReadPanelData<int>(id, AUDIO_LOG_LILYPAD_SIZE) != 5) continue;
+			
+			int locationId = message.second;
+
+			if (locationId != -1) {
+				seenAudioMessages.insert(locationId);
+			}
+		}
+
 		Hard = hard;
 
 		panelsThatHaveToBeSkippedForEPPurposes = {
@@ -77,16 +87,19 @@ public:
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
-	void HandleLaserResponse(const std::map<std::string, nlohmann::json> response, bool collect);
+	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool collect);
+	void HandleEPResponse(std::string epID, nlohmann::json value, bool collect);
 
 	void InfiniteChallenge(bool enable);
 
 	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
-	void QueueReceivedItem(const APClient::NetworkItem& item, int realitem);
+	void QueueReceivedItem(std::vector<__int64> item);
 
 	HudManager* getHudManager() const { return hudManager.get(); }
+
+	std::set<int> seenAudioMessages;
 
 private:
 	APClient* ap;
@@ -142,6 +155,7 @@ private:
 	void HandlePowerSurge();
 
 	void CheckLasers();
+	void CheckEPs();
 
 	void CheckImportantCollisionCubes();
 
@@ -149,6 +163,11 @@ private:
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
+	std::map<int, bool> laserStates;
+
+	std::map<std::string, int> EPIDsToEPs;
+	std::list<std::string> EPIDs;
+	std::map<int, bool> EPStates;
 
 	int currentAudioLog = -1;
 
@@ -168,7 +187,7 @@ private:
 
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 
-	std::queue<std::pair<const APClient::NetworkItem&, int>> queuedItems;
+	std::vector<std::vector<__int64>> queuedItems;
 
 	std::string puzzleSkipInfoMessage;
 

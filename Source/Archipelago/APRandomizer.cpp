@@ -39,6 +39,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		
 		for (const auto& item : items) {
 			int realitem = item.item;
+			int advancement = item.flags;
 
 			if (progressiveItems.count(realitem)) {
 				if (progressiveItems[realitem].size() == 0) {
@@ -82,7 +83,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
-			async->QueueReceivedItem(item, realitem);
+			async->QueueReceivedItem({ item.item, advancement, realitem });
 		}
 	});
 
@@ -221,14 +222,26 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	});
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
-		async->HandleLaserResponse(response, Collect);
+		for (auto [key, value] : response) {
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, Collect);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, Collect);
+		}
 	});
 
-	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
-		if (!receivingPlayer || !networkItem || networkItem->player != ap->get_player_number())
+	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
+		if (value != original_value) {
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, Collect);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, Collect);
+		}
+	});
+
+	ap->set_print_json_handler([&](const APClient::PrintJSONArgs jsonArgs) {
+		if (!jsonArgs.receiving || !jsonArgs.item || jsonArgs.item->player != ap->get_player_number())
 			return;
 
-		const APClient::NetworkItem item = *networkItem;
+		const APClient::NetworkItem item = *jsonArgs.item;
+		const int receiver = *jsonArgs.receiving;
+		const auto msg = jsonArgs.data;
 
 		while (!randomizationFinished) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -239,8 +252,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			counter--;
 		}
-
-		const int receiver = *receivingPlayer;
 
 		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {
 			return pair.second == item.location;
@@ -254,16 +265,16 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		std::string itemName = ap->get_item_name(item.item);
 		std::string locationName = ap->get_location_name(item.location);
 
-		bool hint = false;
-
-		for (auto textNode : msg) {
-			if (textNode.text.find("[Hint]") != std::string::npos) {
-				hint = true;
-			}
-		}
+		bool hint = jsonArgs.type == "Hint";
+		bool found = (jsonArgs.found) ? *jsonArgs.found : false;
 
 		if (hint) {
-			async->getHudManager()->queueBannerMessage("Hint: " + itemName + " for " + player + " is on " + locationName + ".");
+			if (async->seenAudioMessages.count(item.location)) return;
+
+			std::string isFor = "";
+			if (!receiving) isFor = " for " + player;
+
+			if(!found) async->getHudManager()->queueBannerMessage("Hint: " + itemName + isFor + " is on " + locationName + ".");
 		}
 		else {
 			int location = item.location;
@@ -356,7 +367,23 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	for (int eID : precompletedLocations) {
 		if (allEPs.count(eID)) {
 			_memory->SolveEP(eID);
+			if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+				_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+			}
 		}
+	}
+
+	// EP-related slowing down of certain bridges etc.
+
+	if (EPShuffle) {
+		_memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.02f }); // Swamp Rotating Bridge, 2x (Instead of 4x)
+		
+		_memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x (Instead of 2x)
+		_memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		_memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
 	}
 
 	// Bunker door colors
@@ -448,7 +475,6 @@ void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 	Special::copyTarget(0x03C08, 0x28A0D); Special::copyTarget(0x28A0D, 0x28998);
 	
 	Special::setTargetAndDeactivate(0x03C0C, 0x03C08);
-	Special::setPower(0x28A69, false);
 
 	if (doorsActuallyInTheItemPool.count(0x28A0D)) {
 		Special::setPower(0x28A0D, false);

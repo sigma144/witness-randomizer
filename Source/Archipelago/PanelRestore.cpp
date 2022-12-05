@@ -18,4 +18,6 @@ void PanelRestore::RestoreOriginalPanelData(std::shared_ptr<Memory> memory) {
 	for (auto& [key, value] : originalBackgroundRegionColors) {
 		memory->WritePanelData<float>(key, BACKGROUND_REGION_COLOR, value);
 	}
+
+	return;
 }

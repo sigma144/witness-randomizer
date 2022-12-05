@@ -18,7 +18,7 @@ public:
 	void update(float deltaSeconds);
 
 	// Queue a message to be shown at the top of the screen, such as "Received Shapers".
-	void queueBannerMessage(std::string text, RgbColor color = RgbColor(), float duration = 8.f);
+	void queueBannerMessage(std::string text, RgbColor color = RgbColor(), float duration = 5.f);
 
 	// Show a specific message using the subtitle display, overriding any other messages.
 	void showSubtitleMessage(std::string text, float duration);
