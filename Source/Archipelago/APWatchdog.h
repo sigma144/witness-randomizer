@@ -58,7 +58,7 @@ public:
 		hudManager = std::make_shared<HudManager>(_memory);
 	}
 
-	int skippedPuzzles = 0;
+	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
 
 	HWND skipButton;
@@ -139,6 +139,8 @@ private:
 	float speedTime = 0.0f;
 
 	void HandleKeyTaps();
+
+	void HandleInteractionState();
 	
 	void CheckEPSkips();
 
@@ -153,6 +155,24 @@ private:
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
+
+	// Updates puzzle skip logic.
+	void UpdatePuzzleSkip(float deltaSeconds);
+
+	// Whether or not the player can use a puzzle skip. Checks if the player has a
+	//   puzzle selected, if they can afford the cost, etc.
+	bool CanUsePuzzleSkip() const;
+
+	// Whether or not the puzzle is in a skippable state (unlocked, not skipped, etc.),
+	//   NOT whether or not the player can skip the puzzle.
+	bool PuzzleIsSkippable(int puzzleId) const;
+
+	// Computes the cost to skip the puzzle. If the cost is unusual, will set
+	//   specialMessage to indicate the reason why.
+	int CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessage) const;
+
+	// Returns the number of skips currently available to the player.
+	int GetAvailablePuzzleSkips() const;
 
 	void CheckLasers();
 	void CheckEPs();
@@ -170,6 +190,14 @@ private:
 	std::map<int, bool> EPStates;
 
 	int currentAudioLog = -1;
+
+	int activePanelId = -1;
+	std::string puzzleSkipInfoMessage;
+	float skipButtonHeldTime = 0.f; // Tracks how long the skip button has been held.
+
+	// The cost to skip the currently-selected puzzle. -1 if the puzzle cannot be
+	//   skipped for whatever reason.
+	int puzzleSkipCost = -1;
 
 	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
@@ -189,10 +217,6 @@ private:
 
 	std::vector<std::vector<__int64>> queuedItems;
 
-	std::string puzzleSkipInfoMessage;
-
-
-	int CheckIfCanSkipPuzzle();
 
 	int GetActivePanel() {
 		try {
@@ -200,6 +224,7 @@ private:
 		}
 		catch (std::exception& e) {
 			OutputDebugStringW(L"Couldn't get active panel");
+			return -1;
 		}
 	}
 
