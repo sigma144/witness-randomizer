@@ -18,7 +18,7 @@ public:
 	float sleepTime;
 	bool terminate;
 protected:
-	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
+	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size) const {
 		try{
 			return _memory->ReadPanelData<T>(panel, offset, size);
 		}
@@ -26,7 +26,7 @@ protected:
 			OutputDebugStringW(L"Watchdog Read Problem");
 		}
 	}
-	template <class T> T ReadPanelData(int panel, int offset) {
+	template <class T> T ReadPanelData(int panel, int offset) const {
 		try {
 			return _memory->ReadPanelData<T>(panel, offset);
 		}
@@ -34,10 +34,10 @@ protected:
 			OutputDebugStringW(L"Watchdog Read Problem");
 		}
 	}
-	template <class T> T ReadPanelDataIntentionallyUnsafe(int panel, int offset) {
+	template <class T> T ReadPanelDataIntentionallyUnsafe(int panel, int offset) const {
 		return _memory->ReadPanelData<T>(panel, offset);
 	}
-	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) {
+	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) const {
 		try {
 			return _memory->ReadArray<T>(panel, offset, size);
 		}
@@ -45,7 +45,7 @@ protected:
 			OutputDebugStringW(L"Watchdog Read Array Problem");
 		}
 	}
-	template <class T> void WritePanelData(int panel, int offset, const std::vector<T>& data) {
+	template <class T> void WritePanelData(int panel, int offset, const std::vector<T>& data) const {
 		try {
 			return _memory->WritePanelData<T>(panel, offset, data);
 		}
@@ -53,7 +53,7 @@ protected:
 			OutputDebugStringW(L"Watchdog Write Problem");
 		}
 	}
-	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data) {
+	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data) const {
 		try {
 			return _memory->WriteArray<T>(panel, offset, data, false);
 		}
@@ -61,7 +61,7 @@ protected:
 			OutputDebugStringW(L"Watchdog Write Problem");
 		}
 	}
-	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
+	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) const {
 		try {
 			return _memory->WriteArray<T>(panel, offset, data, force);
 		}
