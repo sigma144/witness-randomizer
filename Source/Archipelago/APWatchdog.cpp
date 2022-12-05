@@ -9,6 +9,7 @@
 
 
 #define CHEAT_KEYS_ENABLED 0
+#define SKIP_HOLD_DURATION 1.f
 
 
 void APWatchdog::action() {
@@ -16,11 +17,14 @@ void APWatchdog::action() {
 	std::chrono::duration<float> frameDuration = currentFrameTime - lastFrameTime;
 	lastFrameTime = currentFrameTime;
 
+	HandleInteractionState();
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-
 	if (interactionState == InteractionState::Walking) HandleMovementSpeed(frameDuration.count());
-
+	
 	HandleKeyTaps();
+
+	UpdatePuzzleSkip(frameDuration.count());
+
 
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
@@ -32,7 +36,6 @@ void APWatchdog::action() {
 		CheckEPSkips();
 
 		HandlePowerSurge();
-		CheckIfCanSkipPuzzle();
 		DisableCollisions();
 		RefreshDoorCollisions();
 		AudioLogPlaying();
@@ -52,6 +55,22 @@ void APWatchdog::action() {
 
 	SetStatusMessages();
 	hudManager->update(frameDuration.count());
+}
+
+void APWatchdog::HandleInteractionState() {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	bool stateChanged = InputWatchdog::get()->consumeInteractionStateChange();
+
+	if (interactionState == InteractionState::Solving) {
+		if (stateChanged) {
+			// The player has started solving a puzzle. Update our active panel ID to match.
+			activePanelId = GetActivePanel();
+		}
+	}
+	else if (interactionState != InteractionState::Focusing) {
+		// We're not in a puzzle-solving state. Clear the active panel, if any.
+		activePanelId = -1;
+	}
 }
 
 void APWatchdog::CheckSolvedPanels() {
@@ -357,156 +376,203 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-int APWatchdog::CheckIfCanSkipPuzzle() {
-	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(foundPuzzleSkips - skippedPuzzles)).c_str());
-	puzzleSkipInfoMessage.clear();
+void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
+		// If we're tracking a panel for the purpose of puzzle skips, update our internal logic.
+		if (activePanelId != -1) {
+			// Check to see if the puzzle is in a skippable state.
+			if (PuzzleIsSkippable(activePanelId)) {
+				// The puzzle is still skippable. Update the panel's cost in case something has changed, like a latch
+				//   being opened remotely.
+				puzzleSkipCost = CalculatePuzzleSkipCost(activePanelId, puzzleSkipInfoMessage);
 
-
-	int id = GetActivePanel();
-
-	if ((id == 0x181F5 || id == 0x334D8) && !Hard) { // Swamp Rotating Bridge and Town RGB Control should only be skippable in expert
-		EnableWindow(skipButton, false);
-		return -1;
-	}
-
-	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), id) == actuallyEveryPanel.end()) {
-		EnableWindow(skipButton, false);
-		return -1;
-	}
-
-	// Evaluate Cost
-
-	int cost = 1;
-
-
-	if (id == 0x03612) {
-		if (ReadPanelData<int>(0x288E9, DOOR_OPEN) && ReadPanelData<int>(0x28AD4, DOOR_OPEN)) {
-			EnableWindow(skipButton, false);
-			return -1;
-		}
-		else
-		{
-			puzzleSkipInfoMessage = "Skipping this panel costs\n"
-									"1 Puzzle Skip per unopened latch.";
-		}
-
-		if (!ReadPanelData<int>(0x288E9, DOOR_OPEN) && !ReadPanelData<int>(0x28AD4, DOOR_OPEN)) {
-			cost = 2;
+				// Update skip button logic.
+				bool skipButtonHeld = InputWatchdog::get()->getButtonState(InputButton::KEY_T);
+				if (skipButtonHeld) {
+					skipButtonHeldTime += deltaSeconds;
+					if (skipButtonHeldTime > SKIP_HOLD_DURATION) {
+						SkipPuzzle();
+					}
+				}
+				else {
+					skipButtonHeldTime = 0.f;
+				}
+			}
+			else {
+				// The puzzle is not in a skippable state.
+				puzzleSkipInfoMessage = "";
+				puzzleSkipCost = -1;
+			}
 		}
 	}
 
-	if (id == 0x1C349) {
-		if (ReadPanelData<int>(0x28AE8, DOOR_OPEN)) {
-			EnableWindow(skipButton, false);
-			return -1;
-		}
-		else
-		{
-			puzzleSkipInfoMessage = "Skipping this panel costs 2 Puzzle Skips.";
-		}
+	// Update the client.
+	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(GetAvailablePuzzleSkips())).c_str());
+	EnableWindow(skipButton, CanUsePuzzleSkip());
+}
 
-		cost = 2;
+bool APWatchdog::CanUsePuzzleSkip() const {
+	return activePanelId != -1 && puzzleSkipCost != -1 && GetAvailablePuzzleSkips() >= puzzleSkipCost;
+}
+
+bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
+	if (puzzleId == -1) {
+		return false;
 	}
 
-	if (id == 0x09FDA) { // Metapuzzle
-		for (int id : {0x09FC1, 0x09F8E, 0x09F01, 0x09EFF}) {
-			__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+	// Special case: For pressure plate puzzles, the player can't actually select the puzzle directly, so we instead
+	//   detect when they've selected the reset line and then switch to the actual panel they want to interact with.
+	if (puzzleId == 0x0A3A8) {
+		puzzleId = 0x033EA;
+	}
+	else if (puzzleId == 0x0A3B9) {
+		puzzleId = 0x01BE9;
+	}
+	else if (puzzleId == 0x0A3BB) {
+		puzzleId = 0x01CD3;
+	}
+	else if (puzzleId == 0x0A3AD) {
+		puzzleId = 0x01D3F;
+	}
 
-			if (skipped < PUZZLE_SKIPPED || skipped > PUZZLE_SKIPPED_MAX) {
-				//
-				//  TODO (blastron, 11/24/22): The concept of only showing a puzzle skip message once isn't really supported in the new paradigm. Update this.
-				// 
-				//if(!metaPuzzleMessageHasBeenDisplayed) audioLogMessageBuffer[49] = { "", "Skipping this panel requires", "Skipping all the small puzzles.", 8.0f, true };
-				//metaPuzzleMessageHasBeenDisplayed = true;
-				//
-				
-				EnableWindow(skipButton, false);
+	// Verify that this is, indeed, a panel.
+	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), puzzleId) == actuallyEveryPanel.end()) {
+		return false;
+	}
+
+	// Check for hardcoded exclusions.
+	if (skip_completelyExclude.count(puzzleId) != 0) {
+		// Puzzle is always excluded.
+		return false;
+	}
+	else if (Hard && skip_excludeOnHard.count(puzzleId) != 0) {
+		// Puzzle is excluded on Hard.
+		return false;
+	}
+	else if (!Hard && skip_excludeOnNormal.count(puzzleId) != 0) {
+		// Puzzle is excluded on Normal.
+		return false;
+	}
+
+	// Locked puzzles are unskippable.
+	if (panelLocker->PuzzleIsLocked(puzzleId)) {
+		return false;
+	}
+
+	// Check skippability based on panel state.
+	uint32_t statusColor = ReadPanelData<uint32_t>(puzzleId, VIDEO_STATUS_COLOR);
+	if (statusColor >= PUZZLE_SKIPPED && statusColor <= PUZZLE_SKIPPED_MAX) {
+		// Puzzle has already been skipped.
+		return false;
+	}
+	else if (statusColor == COLLECTED) {
+		// Puzzle has been collected and is not worth skipping.
+		return false;
+	}
+	else if (ReadPanelData<int>(puzzleId, SOLVED) != 0 && skip_multisolvePuzzles.count(puzzleId) == 0) {
+		// Puzzle has already been solved and thus cannot be skipped.
+		return false;
+	}
+
+	return true;
+}
+
+int APWatchdog::CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessage) const {
+	// Check for special cases.
+	if (puzzleId == 0x03612) {
+		// Quarry laser panel. Check for latches.
+		bool leftLatchOpen = ReadPanelData<int>(0x288E9, DOOR_OPEN) != 0;
+		bool rightLatchOpen = ReadPanelData<int>(0x28AD4, DOOR_OPEN) != 0;
+		if (!leftLatchOpen && !rightLatchOpen) {
+			specialMessage = "Skipping this panel costs 1 Puzzle Skip per unopened latch.";
+			return 2;
+		}
+		else if (!leftLatchOpen || !rightLatchOpen) {
+			specialMessage = "Skipping this panel costs 1 Puzzle Skip per unopened latch.";
+			return 1;
+		}
+		else {
+			specialMessage = "";
+			return 1;
+		}
+	}
+	else if (puzzleId == 0x1C349) {
+		// Symmetry island upper panel. Check for latch.
+		bool latchOpen = ReadPanelData<int>(0x28AE8, DOOR_OPEN) != 0;
+		if (!latchOpen) {
+			specialMessage = "Skipping this panel costs 2 Puzzle Skips while latched.";
+			return 2;
+		}
+		else {
+			specialMessage = "";
+			return 1;
+		}
+	}
+	else if (puzzleId == 0x09FDA) {
+		// Metapuzzle. This can only be skipped if all child puzzles are skipped too.
+		//   TODO: This flow here is a little confusing to read, because PuzzleIsSkippable returns true, but the cost
+		//   returned here indicates that it isn't.
+		for (int smallPuzzleId : {0x09FC1, 0x09F8E, 0x09F01, 0x09EFF}) {
+			uint32_t statusColor = ReadPanelData<uint32_t>(smallPuzzleId, VIDEO_STATUS_COLOR);
+			if (statusColor < PUZZLE_SKIPPED || statusColor > PUZZLE_SKIPPED_MAX) {
+				specialMessage = "Skipping this panel requires skipping all the small puzzles.";
 				return -1;
-				break;
 			}
 		}
 
-		cost = 1;
+		return 1;
 	}
 
-	// Cost Evaluated
-
-	if (foundPuzzleSkips - cost < skippedPuzzles) {
-		EnableWindow(skipButton, false);
-		return -1;
-	}
-
-	if (id == 0x0A3A8) {
-		id = 0x033EA;
-	}
-	if (id == 0x0A3B9) {
-		id = 0x01BE9;
-	}
-	if (id == 0x0A3BB) {
-		id = 0x01CD3;
-	}
-	if (id == 0x0A3AD) {
-		id = 0x01D3F;
-	}
-
-	if (id == -1 || skip_completelyExclude.count(id) || panelLocker->PuzzleIsLocked(id)) {
-		EnableWindow(skipButton, false);
-		return -1;
-	}
-
-	__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
-
-	if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED) {
-		EnableWindow(skipButton, false);
-		return -1;
-	}
-
-	// Puzzle can be skipped from here on out, calculate cost
-
-	EnableWindow(skipButton, true);
-	return cost;
+	specialMessage = "";
+	return 1;
 }
 
-void APWatchdog::SkipPuzzle()
-{
-	int id = GetActivePanel();
+int APWatchdog::GetAvailablePuzzleSkips() const {
+	return std::max(0, foundPuzzleSkips - spentPuzzleSkips);
+}
 
-	int cost = CheckIfCanSkipPuzzle();
+void APWatchdog::SkipPuzzle() {
+	if (!CanUsePuzzleSkip()) {
+		return;
+	}
 
-	if (cost == -1) return;
-
-	skippedPuzzles+= cost;
+	spentPuzzleSkips += puzzleSkipCost;
+	skipButtonHeldTime = 0.f;
 
 	// Special Skipping Animations
 
-	if (id == 0x03612) {
+	if (activePanelId == 0x03612) { // Quarry laser panels
 		if (!ReadPanelData<int>(0x288E9, DOOR_OPEN))
 		{
 			_memory->OpenDoor(0x288E9);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
+
 		if (!ReadPanelData<int>(0x28AD4, DOOR_OPEN))
 		{
 			_memory->OpenDoor(0x28AD4);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 	}
+	else if (activePanelId == 0x1C349) { // Symmetry island upper latches
+		if (!ReadPanelData<int>(0x28AE8, DOOR_OPEN))
+		{
+			_memory->OpenDoor(0x28AE8);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
 
-	if (id == 0x1C349) {
-		_memory->OpenDoor(0x28AE8);
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-		_memory->OpenDoor(0x28AED);
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		if (!ReadPanelData<int>(0x28AED, DOOR_OPEN))
+		{
+			_memory->OpenDoor(0x28AED);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
 	}
 
 	// Special Skipping Animations Done
 
-	Special::SkipPanel(id, true);
-
-	WritePanelData<__int32>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + cost }); // Videos can't be skipped, so this should be safe.
-
-	CheckIfCanSkipPuzzle();
+	Special::SkipPanel(activePanelId, true);
+	WritePanelData<__int32>(activePanelId, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + puzzleSkipCost }); // Videos can't be skipped, so this should be safe.
 }
 
 void APWatchdog::SkipPreviouslySkippedPuzzles() {
@@ -515,7 +581,7 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 
 		if (skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
 			Special::SkipPanel(id);
-			skippedPuzzles += skipped - PUZZLE_SKIPPED;
+			spentPuzzleSkips += skipped - PUZZLE_SKIPPED;
 		}
 		else if (skipped == COLLECTED) {
 			Special::SkipPanel(id, "Collected", false);
@@ -748,6 +814,12 @@ void APWatchdog::HandleKeyTaps() {
 			break;
 		case InputButton::KEY_0:
 			hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
+			if (spentPuzzleSkips > foundPuzzleSkips) {
+				// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
+				//   previous app launch. Reset to zero before adding a new one.
+				foundPuzzleSkips = spentPuzzleSkips;
+			}
+
 			AddPuzzleSkip();
 			break;
 #endif
@@ -1248,11 +1320,44 @@ void APWatchdog::SetStatusMessages() {
 		else {
 			hudManager->clearStatusMessage();
 		}
+
+		hudManager->clearActionHint();
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
-		hudManager->setStatusMessage(puzzleSkipInfoMessage);
+		if (activePanelId != -1) {
+			hudManager->setStatusMessage(puzzleSkipInfoMessage);
+
+			if (CanUsePuzzleSkip()) {
+				if (puzzleSkipCost == 0) {
+					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Free!)");
+				}
+				else if (puzzleSkipCost == 1) {
+					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
+				}
+				else {
+					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
+				}
+			}
+			else if (GetAvailablePuzzleSkips() > 0 && puzzleSkipCost > GetAvailablePuzzleSkips()) {
+				// The player has some puzzle skips available, but not enough to solve the selected puzzle.
+				hudManager->setActionHint("Insufficient Puzzle Skips. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
+			}
+			else if (GetAvailablePuzzleSkips() == 0 && puzzleSkipCost != -1) {
+				// The player has no puzzle skips available, but the puzzle is skippable.
+				hudManager->setActionHint("No Puzzle Skips available.");
+			}
+			else {
+				// We can't use the puzzle skip for a different reason.
+				hudManager->clearActionHint();
+			}
+		}
+		else {
+			hudManager->clearStatusMessage();
+			hudManager->clearActionHint();
+		}
 	}
 	else {
 		hudManager->clearStatusMessage();
+		hudManager->clearActionHint();
 	}
 }

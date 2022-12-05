@@ -105,12 +105,67 @@ inline const std::set<int> skip_completelyExclude = {
 
 };
 
+// Puzzles that don't make sense to skip on Normal but are useful to skip on Hard.
+inline const std::set<int> skip_excludeOnNormal = {
+	0x181F5, // Swamp Rotating Bridge
+	0x334D8, // Town RGB Control
+};
+
+// Puzzles that don't make sense to skip on Hard but are useful to skip on Normal.
+inline const std::set<int> skip_excludeOnHard = {
+};
+
+// Non-trivial puzzles that have multiple gameplay-relevant solutions and should continue to be skippable even after the puzzle has been solved.
+//   Note that there are puzzles in here that are currently excluded or special-cased in some manner; they're here for completeness's sake so
+//   that if we ever decide to un-exclude them we'll already have them represented here and (hopefully) not run into any issues there.
+inline const std::set<int> skip_multisolvePuzzles = {
+	// Bunker
+	0x0A079, // Bunker Elevator
+
+	// Caves
+	0x17FA2, // Entry "discard" triangle puzzle
+	0x335AB, 0x335AC, 0x3369D, // Elevators
+
+	// Keep
+	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate resets (needed for EPs)
+
+	// Mountain
+	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle small panels <-- TODO: These are fully "solved" once the big puzzle has been solved.
+	0x09E39, 0x09E86, 0x09ED8, // Light Bridge Controls
+	0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Same solution set
+
+	// Quarry
+	0x03678, 0x03675, 0x03679, 0x03676, // Mill ramp/lift controls
+	0x03852, 0x03858, // Boathouse ramp controls
+	0x275FA, // Hook
+
+	// Swamp
+	0x00609, 0x17E2B, 0x18488, // Swamp Bridge Controls
+	0x17C04, 0x17E07, // Swamp Maze Controls
+	0x181F5, // Swamp Rotating Bridge
+
+	// Theater
+	0x00815, // Video input
+
+	// Town
+	0x334D8, // RGB Control
+	0x079DF, // Shadow/Perspective/Reflection Triple Solve <-- TODO: This is fully solved once all three of its solutions have been entered.
+	0x2896A, // Rooftop bridge
+
+	// Treehouse
+	0x17E52, 0x17DD1, 0x17CE3, 0x17DB7, // Treehouse Directional Bridge Panels
+
+	// Tutorial
+	0x0A3B5, // Tutorial back left
+	0x03629, // Tutorial gate
+};
+
 inline const std::set<int> skip_specialCase = {
 	0x09E86, 0x09ED8,
 
 	0x00A52, 0x00A57, 0x00A5B, 0x00A61, 0x00A64, 0x00A68, //Symmetry Laser Panels
 
-	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD,
+	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate reset lines
 
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle
 
