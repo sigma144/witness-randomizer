@@ -37,6 +37,7 @@
 #define ENTITY_NAME 0x58
 
 #define AUDIO_LOG_IS_PLAYING 0xE4
+#define AUDIO_LOG_LILYPAD_SIZE 0x128
 
 struct Connection
 {

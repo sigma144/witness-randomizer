@@ -138,8 +138,17 @@ public:
         std::string type;
         std::string color;
         std::string text;
-        bool found = false;
+        int player = 0;
         unsigned flags = FLAG_NONE;
+    };
+
+    struct PrintJSONArgs {
+        std::list<TextNode> data;
+        std::string type;
+        int* receiving = nullptr;
+        NetworkItem* item = nullptr;
+        bool* found = nullptr;
+        int* countdown = nullptr;
     };
 
     struct Version {
@@ -241,14 +250,83 @@ public:
         _hOnPrint = f;
     }
 
-    void set_print_json_handler(std::function<void(const std::list<TextNode>&, const NetworkItem*, const int*)> f)
+    void set_print_json_handler(std::function<void(const json& command)> f)
     {
         _hOnPrintJson = f;
     }
 
+    void set_print_json_handler(std::function<void(const PrintJSONArgs&)> f)
+    {
+        set_print_json_handler([f](const json& command) {
+            if (!f) return;
+
+            PrintJSONArgs args;
+
+            int receiving;
+            NetworkItem item;
+            bool found;
+            int countdown;
+
+            for (const auto& part: command["data"]) {
+                args.data.push_back({
+                    part.value("type", ""),
+                    part.value("color", ""),
+                    part.value("text", ""),
+                    part.value("player", 0),
+                    part.value("flags", 0U),
+                });
+            }
+
+            args.type = command.value("type", "");
+
+            auto it = command.find("item");
+            if (it != command.end()) {
+                item = {
+                   it->value("item", (int64_t) 0),
+                   it->value("location", (int64_t) 0),
+                   it->value("player", 0),
+                   it->value("flags", 0U),
+                   -1
+                };
+                args.item = &item;
+            }
+
+            it = command.find("receiving");
+            if (it != command.end()) {
+               receiving = *it;
+               args.receiving = &receiving;
+            }
+
+            it = command.find("found");
+            if (it != command.end()) {
+                found = *it;
+                args.found = &found;
+            }
+
+            it = command.find("countdown");
+            if (it != command.end()) {
+                countdown = *it;
+                args.countdown = &countdown;
+            }
+
+            f(args);
+        });
+    }
+
+    void set_print_json_handler(std::function<void(const std::list<TextNode>&, const NetworkItem*, const int*)> f)
+    {
+        set_print_json_handler([f](const PrintJSONArgs& args) {
+            if (!f) return;
+            f(args.data, args.item, args.receiving);
+        });
+    }
+
     void set_print_json_handler(std::function<void(const std::list<TextNode>&)> f)
     {
-        _hOnPrintJson = std::bind(f, std::placeholders::_1);
+        set_print_json_handler([f](const PrintJSONArgs& args) {
+            if (!f) return;
+            f(args.data);
+        });
     }
 
     void set_bounced_handler(std::function<void(const json&)> f)
@@ -407,8 +485,7 @@ public:
             } else if (node.type == "item_id") {
                 int64_t id = stoi64(node.text);
                 if (color.empty()) {
-                    if (node.found) color = "green";
-                    else if (node.flags & ItemFlags::FLAG_ADVANCEMENT) color = "plum";
+                    if (node.flags & ItemFlags::FLAG_ADVANCEMENT) color = "plum";
                     else if (node.flags & ItemFlags::FLAG_NEVER_EXCLUDE) color = "slateblue";
                     else if (node.flags & ItemFlags::FLAG_TRAP) color = "salmon";
                     else color = "cyan";
@@ -455,18 +532,19 @@ public:
         return true;
     }
 
-    bool LocationScouts(std::list<int64_t> locations)
+    bool LocationScouts(std::list<int64_t> locations, int create_as_hint = 0)
     {
         // returns true if scouts were sent or queued
         if (_state == State::SLOT_CONNECTED) {
             auto packet = json{{
                 {"cmd", "LocationScouts"},
                 {"locations", locations},
+                {"create_as_hint", create_as_hint},
             }};
             debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
             _ws->send(packet.dump());
         } else {
-            _scoutQueue.insert(locations.begin(), locations.end());
+            _scoutQueues[create_as_hint].insert(locations.begin(), locations.end());
         }
         return true;
     }
@@ -657,6 +735,11 @@ public:
         return _slotnr;
     }
 
+    int get_team_number() const
+    {
+        return _team;
+    }
+
     bool is_data_package_valid() const
     {
         // returns true if cached texts are valid
@@ -693,7 +776,7 @@ public:
     void reset()
     {
         _checkQueue.clear();
-        _scoutQueue.clear();
+        _scoutQueues.clear();
         _clientStatus = ClientStatus::UNKNOWN;
         _seed.clear();
         _slot.clear();
@@ -865,13 +948,17 @@ private:
                         _checkQueue.clear();
                         LocationChecks(queuedChecks);
                     }
-                    if (!_scoutQueue.empty()) {
-                        std::list<int64_t> queuedScouts;
-                        for (int64_t location : _scoutQueue) {
-                            queuedScouts.push_back(location);
+                    if (!_scoutQueues.empty()) {
+                        for (const auto& pair: _scoutQueues) {
+                            if (!pair.second.empty()) {
+                                std::list<int64_t> queuedScouts;
+                                for (int64_t location : pair.second) {
+                                    queuedScouts.push_back(location);
+                                }
+                                LocationScouts(queuedScouts, pair.first);
+                            }
                         }
-                        _scoutQueue.clear();
-                        LocationScouts(queuedScouts);
+                        _scoutQueues.clear();
                     }
         
                 }
@@ -929,37 +1016,7 @@ private:
                     if (_hOnPrint) _hOnPrint(command["text"].get<std::string>());
                 }
                 else if (cmd == "PrintJSON") {
-                    NetworkItem* pItem = nullptr;
-                    NetworkItem item;
-                    if (command.contains("item")) {
-                        item = {
-                           command["item"]["item"].get<int64_t>(),
-                           command["item"]["location"].get<int64_t>(),
-                           command["item"]["player"].get<int>(),
-                           command["item"].value("flags", 0U),
-                           -1
-                        };
-                        pItem = &item;
-                    }
-
-                    int* pReciever = nullptr;
-                    int reciever;
-                    if (command.contains("receiving")) {
-                       reciever = command["receiving"];
-                       pReciever = &reciever;
-                    }
-
-                    std::list<TextNode> msg;
-                    for (const auto& part: command["data"]) {
-                        msg.push_back({
-                            part.value("type", ""),
-                            part.value("color", ""),
-                            part.value("text", ""),
-                            part.value<bool>("found", false),
-                            part.value("flags", 0U),
-                        });
-                    }
-                    if (_hOnPrintJson) _hOnPrintJson(msg, pItem, pReciever);
+                    if (_hOnPrintJson) _hOnPrintJson(command);
                 }
                 else if (cmd == "Bounced") {
                     if (_hOnBounced) _hOnBounced(command);
@@ -1065,7 +1122,7 @@ private:
     std::function<void(const std::list<NetworkItem>&)> _hOnLocationInfo = nullptr;
     std::function<void(const json&)> _hOnDataPackageChanged = nullptr;
     std::function<void(const std::string&)> _hOnPrint = nullptr;
-    std::function<void(const std::list<TextNode>&, const NetworkItem*, const int*)> _hOnPrintJson = nullptr;
+    std::function<void(const json&)> _hOnPrintJson = nullptr;
     std::function<void(const json&)> _hOnBounced = nullptr;
     std::function<void(const std::list<int64_t>&)> _hOnLocationChecked = nullptr;
     std::function<void(const std::map<std::string, json>&)> _hOnRetrieved = nullptr;
@@ -1074,7 +1131,7 @@ private:
     unsigned long _lastSocketConnect;
     unsigned long _socketReconnectInterval = 1500;
     std::set<int64_t> _checkQueue;
-    std::set<int64_t> _scoutQueue;
+    std::map<int, std::set<int64_t>> _scoutQueues;
     ClientStatus _clientStatus = ClientStatus::UNKNOWN;
     std::string _seed;
     std::string _slot; // currently connected slot, if any
@@ -1113,7 +1170,7 @@ private:
         "properties": {
             "key": { "type": "string" }
         },
-        "required": [ "key", "value", "original_value" ]
+        "required": [ "key", "value" ]
     })"_json;
     std::map<std::string, valijson::Schema> _commandSchemas;
 };

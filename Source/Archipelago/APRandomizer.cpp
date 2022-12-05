@@ -235,11 +235,13 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		}
 	});
 
-	ap->set_print_json_handler([&](const std::list<APClient::TextNode>& msg, const APClient::NetworkItem* networkItem, const int* receivingPlayer) {
-		if (!receivingPlayer || !networkItem || networkItem->player != ap->get_player_number())
+	ap->set_print_json_handler([&](const APClient::PrintJSONArgs jsonArgs) {
+		if (!jsonArgs.receiving || !jsonArgs.item || jsonArgs.item->player != ap->get_player_number())
 			return;
 
-		const APClient::NetworkItem item = *networkItem;
+		const APClient::NetworkItem item = *jsonArgs.item;
+		const int receiver = *jsonArgs.receiving;
+		const auto msg = jsonArgs.data;
 
 		while (!randomizationFinished) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -250,8 +252,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			counter--;
 		}
-
-		const int receiver = *receivingPlayer;
 
 		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {
 			return pair.second == item.location;
@@ -265,19 +265,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 		std::string itemName = ap->get_item_name(item.item);
 		std::string locationName = ap->get_location_name(item.location);
 
-		bool hint = false;
-		bool found = false;
-
-		for (auto textNode : msg) {
-			if (textNode.text.find("[Hint]") != std::string::npos) {
-				hint = true;
-			}
-			if (textNode.text.find("(found)") != std::string::npos) {
-				found = true;
-			}
-		}
+		bool hint = jsonArgs.type == "Hint";
+		bool found = (jsonArgs.found) ? *jsonArgs.found : false;
 
 		if (hint) {
+			if (async->seenAudioMessages.count(item.location)) return;
+
 			std::string isFor = "";
 			if (!receiving) isFor = " for " + player;
 
