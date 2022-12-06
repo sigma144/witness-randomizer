@@ -33,7 +33,8 @@ void APWatchdog::action() {
 		QueueItemMessages();
 
 		CheckSolvedPanels();
-		CheckEPSkips();
+
+		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
 		HandlePowerSurge();
 		DisableCollisions();
