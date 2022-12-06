@@ -15,7 +15,7 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, bool hard, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -32,14 +32,14 @@ public:
 			obeliskHexToAmountOfEPs[key] = (int)value.size();
 		}
 
-		Hard = hard;
+		PuzzleRandomization = puzzle_rando;
 
 		panelsThatHaveToBeSkippedForEPPurposes = {
 			0x09E86, 0x09ED8, // light controllers 2 3
 			0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
 		};
 
-		if (hard) {
+		if (puzzle_rando == SIGMA_EXPERT) {
 			panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
 			panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
 		}
@@ -107,7 +107,7 @@ private:
 	std::shared_ptr<HudManager> hudManager;
 
 	bool EPShuffle = false;
-	bool Hard = false;
+	int PuzzleRandomization = 0;
 
 	bool FirstEverLocationCheckDone = false;
 

@@ -5,6 +5,10 @@
 
 #include "../DataTypes.h"
 
+#define SIGMA_NORMAL 0
+#define SIGMA_EXPERT 1
+#define NO_PUZZLE_RANDO 2
+
 #define TARGET 0x2B4
 
 #define PANEL 0

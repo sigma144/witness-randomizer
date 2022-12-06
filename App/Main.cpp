@@ -105,7 +105,7 @@ Decoration::Color color;
 int currentShape;
 int currentDir;
 int lastSeed;
-bool lastHard;
+int lastPuzzleRandomisation;
 bool colorblind;
 bool collect;
 bool challenge;
@@ -216,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			int seed = apRandomizer->Seed;
-			bool hard = apRandomizer->Hard;
+			int puzzleRando = apRandomizer->PuzzleRandomization;
 
 			randomizer->ClearOffsets();
 			
@@ -233,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+				lastPuzzleRandomisation = Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12);
 			}
 
 			//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
@@ -340,19 +340,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			apRandomizer->Init();
 
-			if (hard) randomizer->GenerateHard(hwndLoadingText);
-			else randomizer->GenerateNormal(hwndLoadingText);
+			if (puzzleRando == SIGMA_EXPERT) randomizer->GenerateHard(hwndLoadingText);
+			else if (puzzleRando == SIGMA_NORMAL) randomizer->GenerateNormal(hwndLoadingText);
+
 			SetWindowText(hwndRandomize, L"Randomized!");
 
 			EnableWindow(hwndChallenge, true);
 
-			if (hard)
+			if (puzzleRando == SIGMA_EXPERT)
 				apRandomizer->GenerateHard(hwndSkip, hwndAvailableSkips);
-			else
+			else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
 				apRandomizer->GenerateNormal(hwndSkip, hwndAvailableSkips);
 
 			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
+			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
 
 			apRandomizer->PostGeneration(hwndLoadingText);
 

@@ -22,7 +22,7 @@ class APRandomizer {
 		int FinalPanel = 0;
 		bool Collect = false;
 
-		bool Hard = false;
+		int PuzzleRandomization = 2;
 		bool UnlockSymbols = false;
 		bool EarlyUTM = false;
 		bool DisableNonRandomizedPuzzles = false;
