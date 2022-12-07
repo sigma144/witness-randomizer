@@ -16,6 +16,8 @@ void PanelRestore::RestoreOriginalPanelData(std::shared_ptr<Memory> memory) {
 	}
 
 	for (auto& [key, value] : originalBackgroundRegionColors) {
+		if (key == 0x64 || key == 0x182) continue; //important info is stored on these
+
 		memory->WritePanelData<float>(key, BACKGROUND_REGION_COLOR, value);
 	}
 

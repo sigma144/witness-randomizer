@@ -244,6 +244,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				else break;
 			}
 
+			if (lastSeed == 0) {
+				Special::WritePanelData(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
+			}
+
 
 
 			std::vector<char> addressArray;

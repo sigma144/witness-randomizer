@@ -30,12 +30,26 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			async->MarkLocationChecked(locationId, this->Collect);
 	});
 
+	ap->set_slot_disconnected_handler([&]() {
+		async->getHudManager()->queueBannerMessage("Randomiser has been disconnected.");
+		std::string message = "The randomizer seems to have unexpectedly disconnected. Please reload both the game and the randomizer.";
+
+		MessageBoxA(GetActiveWindow(), message.c_str(), NULL, MB_OK);
+	});
+
+	ap->set_socket_disconnected_handler([&]() {
+		async->getHudManager()->queueBannerMessage("Randomiser has been disconnected.");
+		std::string message = "The randomizer seems to have unexpectedly disconnected. Please reload both the game and the randomizer.";
+
+		MessageBoxA(GetActiveWindow(), message.c_str(), NULL, MB_OK);
+	});
+
 	ap->set_items_received_handler([&](const std::list<APClient::NetworkItem>& items) {
 		while (!randomizationFinished) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
-		_memory->WritePanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12, { mostRecentItemId });
+		_memory->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
 		
 		for (const auto& item : items) {
 			int realitem = item.item;
@@ -77,7 +91,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			mostRecentItemId = item.index + 1;
 
-			_memory->WritePanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12, { mostRecentItemId });
+			_memory->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
 
 			while (async->processingItemMessages) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -198,7 +212,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
-		mostRecentItemId = _memory->ReadPanelData<int>(0x00293, BACKGROUND_REGION_COLOR + 12);
+		mostRecentItemId = _memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
 
 		connected = true;
 		hasConnectionResult = true;

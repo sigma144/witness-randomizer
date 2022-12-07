@@ -286,7 +286,7 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
 						Special::SkipPanel(it->first, "Collected", false);
 						if (it->first != 0x01983 && it->first != 0x01983) WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
-						WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+						if(!skip_completelyExclude.count(it->first)) WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
 						WritePanelData<__int32>(it->first, NEEDS_REDRAW, { 1 });
 					}
 				}
