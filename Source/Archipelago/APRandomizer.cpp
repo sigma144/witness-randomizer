@@ -212,8 +212,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
-		mostRecentItemId = _memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
-
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -468,6 +466,8 @@ void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
 }
 
 void APRandomizer::Init() {
+	mostRecentItemId = _memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
+
 	for (int panel : AllPuzzles) {
 		_memory->InitPanel(panel);
 	}

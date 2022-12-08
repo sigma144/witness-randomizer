@@ -232,6 +232,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if (MessageBox(hwnd, L"This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?", NULL, MB_YESNO) == IDNO) {
 						break;
 					}
+
+					Special::WritePanelData(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
 				}
 				lastPuzzleRandomisation = Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12);
 			}
