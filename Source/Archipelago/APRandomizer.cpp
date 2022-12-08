@@ -450,6 +450,8 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	randomizationFinished = true;
 	_memory->showMsg = false;
 
+	async->getHudManager()->queueBannerMessage("Randomized!");
+
 	async->start();
 }
 
