@@ -193,6 +193,8 @@ public:
 	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
 	std::vector<InputButton> consumeTapEvents();
 
+	std::pair<std::vector<float>, std::vector<float>> getMouseRay();
+
 private:
 
 	InputWatchdog();
@@ -217,10 +219,15 @@ private:
 
 	void findInteractModeOffset();
 	void findMenuOpenOffset();
+	void findCursorRelatedOffsets();
 
 	uint64_t interactModeOffset;
 	uint64_t menuOpenOffset;
 
+	uint64_t cursorToDirectionFunction;
+
+	LPVOID cursorResultsAllocation;
+	
 	std::map<InputButton, std::chrono::system_clock::time_point> pressTimes;
 	std::vector<InputButton> pendingTapEvents;
 

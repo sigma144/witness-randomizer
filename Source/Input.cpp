@@ -22,6 +22,7 @@ InputWatchdog* InputWatchdog::get() {
 InputWatchdog::InputWatchdog() : Watchdog(0.01f) {
 	findInteractModeOffset();
 	findMenuOpenOffset();
+	findCursorRelatedOffsets();
 }
 
 void InputWatchdog::action() {
@@ -68,6 +69,68 @@ std::vector<InputButton> InputWatchdog::consumeTapEvents() {
 	std::vector<InputButton> output = pendingTapEvents;
 	pendingTapEvents.clear();
 	return output;
+}
+
+std::pair<std::vector<float>, std::vector<float>> InputWatchdog::getMouseRay()
+{
+	uint64_t mouseFloats = 0;
+
+	_memory->ReadAbsolute(reinterpret_cast<LPVOID>(_memory->GESTURE_MANAGER), &mouseFloats, 0x8);
+
+	mouseFloats += 0x18;
+
+	uint64_t results = reinterpret_cast<uint64_t>(cursorResultsAllocation);
+
+
+	unsigned char buffer2[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer2[2] = cursorToDirectionFunction & 0xff;
+	buffer2[3] = (cursorToDirectionFunction >> 8) & 0xff;
+	buffer2[4] = (cursorToDirectionFunction >> 16) & 0xff;
+	buffer2[5] = (cursorToDirectionFunction >> 24) & 0xff;
+	buffer2[6] = (cursorToDirectionFunction >> 32) & 0xff;
+	buffer2[7] = (cursorToDirectionFunction >> 40) & 0xff;
+	buffer2[8] = (cursorToDirectionFunction >> 48) & 0xff;
+	buffer2[9] = (cursorToDirectionFunction >> 56) & 0xff;
+	buffer2[12] = mouseFloats & 0xff;
+	buffer2[13] = (mouseFloats >> 8) & 0xff;
+	buffer2[14] = (mouseFloats >> 16) & 0xff;
+	buffer2[15] = (mouseFloats >> 24) & 0xff;
+	buffer2[16] = (mouseFloats >> 32) & 0xff;
+	buffer2[17] = (mouseFloats >> 40) & 0xff;
+	buffer2[18] = (mouseFloats >> 48) & 0xff;
+	buffer2[19] = (mouseFloats >> 56) & 0xff;
+	buffer2[22] = results & 0xff;
+	buffer2[23] = (results >> 8) & 0xff;
+	buffer2[24] = (results >> 16) & 0xff;
+	buffer2[25] = (results >> 24) & 0xff;
+	buffer2[26] = (results >> 32) & 0xff;
+	buffer2[27] = (results >> 40) & 0xff;
+	buffer2[28] = (results >> 48) & 0xff;
+	buffer2[29] = (results >> 56) & 0xff;
+
+	SIZE_T allocation_size2 = sizeof(buffer2);
+
+	LPVOID allocation_start2 = VirtualAllocEx(_memory->getHandle(), NULL, allocation_size2, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_memory->getHandle(), allocation_start2, buffer2, allocation_size2, NULL);
+	HANDLE thread2 = CreateRemoteThread(_memory->getHandle(), NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start2, NULL, 0, 0);
+	WaitForSingleObject(thread2, INFINITE);
+
+	float resultDirection[3];
+	_memory->ReadAbsolute(reinterpret_cast<LPVOID>(results), resultDirection, 0xC);
+
+	std::vector<float> direction(resultDirection, resultDirection + 3);
+
+	std::vector<float> playerPosition = _memory->ReadPlayerPosition(); // Player position and "cursor origin" appear to be the same thing.
+
+	return { playerPosition, direction };
 }
 
 void InputWatchdog::updateKeyState() {
@@ -252,4 +315,19 @@ void InputWatchdog::findMenuOpenOffset() {
 	else {
 		menuOpenOffset = 0;
 	}
+}
+
+void InputWatchdog::findCursorRelatedOffsets() {
+	// cursor_to_direction
+	uint64_t offset = _memory->executeSigScan({
+		0x40, 0x53,
+		0x48, 0x83, 0xEC, 0x60,
+		0x48, 0x8B, 0x05,
+	});
+
+	cursorToDirectionFunction = _memory->getBaseAddress() + offset;
+
+	cursorResultsAllocation = VirtualAllocEx(_memory->getHandle(), NULL, sizeof(0x20), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+	return;
 }

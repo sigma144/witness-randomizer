@@ -609,6 +609,21 @@ void Memory::findImportantFunctionAddresses(){
 
 		return true;
 	});
+
+	executeSigScan({ 0x66, 0x0F, 0x6E, 0xD9, 0x0F, 0x5B, 0xDB }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x48 && data[index - 5] == 0xE8 && data[index - 10] == 0xE8 && data[index + 7] == 0xE8 && (data[index + 12] == 0x39 || data[index + 12] == 0x83)) {
+				this->GESTURE_MANAGER = _baseAddress + offset + index + 3;
+				
+				int addOffset = 0;
+				ReadAbsolute(reinterpret_cast<LPVOID>(this->GESTURE_MANAGER), &addOffset, 0x4);
+
+				this->GESTURE_MANAGER += addOffset + 0x4;
+			}
+		}
+
+		return true;
+	});
 }
 
 void Memory::findMovementSpeed() {
@@ -1221,6 +1236,7 @@ std::recursive_mutex Memory::mtx = std::recursive_mutex();
 
 int Memory::GLOBALS = 0;
 int Memory::GAMELIB_RENDERER = 0;
+uint64_t Memory::GESTURE_MANAGER = 0;
 int Memory::RUNSPEED = 0;
 int Memory::CAMERAPOSITION = 0;
 int Memory::ACCELERATION = 0;

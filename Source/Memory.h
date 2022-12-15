@@ -46,6 +46,14 @@ public:
 		return AllocArray<T>(id, static_cast<int>(numItems));
 	}
 
+	LPVOID getHandle() {
+		return _handle;
+	}
+
+	uint64_t getBaseAddress() {
+		return _baseAddress;
+	}
+
 	// Reads data from program memory relative to the base address of the program.
 	bool ReadRelative(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
 		lpBaseAddress = reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(lpBaseAddress) + _baseAddress);
@@ -237,6 +245,7 @@ public:
 	static uint64_t addToPatternMapFunction;
 	static uint64_t removeFromPatternMapFunction;
 	static uint64_t patternMap;
+	static uint64_t GESTURE_MANAGER;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
@@ -288,10 +297,11 @@ private:
 
 	std::map<uintptr_t, uintptr_t> _computedAddresses;
 	std::map<std::pair<int, int>, int> _arraySizes;
-	uintptr_t _baseAddress = 0;
 	LPVOID _messageAddress = 0;
 	LPVOID _subtitlesStuff = 0;
 	HANDLE _handle = nullptr;
+
+	uintptr_t _baseAddress = 0;
 
 	friend class Randomizer;
 	friend class Special;
