@@ -59,6 +59,7 @@ private:
 #define POSITION 0x24
 #define SCALE 0x30
 #define ORIENTATION 0x34
+#define BOUNDING_RADIUS 0x44
 #define MESH 0x60
 #define PATH_COLOR 0xC0 
 #define REFLECTION_PATH_COLOR 0xD0 

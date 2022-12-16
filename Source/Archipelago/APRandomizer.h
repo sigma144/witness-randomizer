@@ -61,6 +61,7 @@ class APRandomizer {
 
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
 		std::set<int> precompletedLocations;
+		std::map<int, std::string> epToName;
 
 		std::shared_ptr<Memory> _memory;
 

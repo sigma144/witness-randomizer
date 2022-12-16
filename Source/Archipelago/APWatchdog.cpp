@@ -25,6 +25,7 @@ void APWatchdog::action() {
 
 	UpdatePuzzleSkip(frameDuration.count());
 
+	hudManager->clearWorldMessage();
 
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
@@ -53,6 +54,8 @@ void APWatchdog::action() {
 
 		CheckImportantCollisionCubes();
 	}
+
+	LookingAtObelisk();
 
 	SetStatusMessages();
 	hudManager->update(frameDuration.count());
@@ -1360,4 +1363,68 @@ void APWatchdog::SetStatusMessages() {
 		hudManager->clearStatusMessage();
 		hudManager->clearActionHint();
 	}
+}
+
+void APWatchdog::LookingAtObelisk() {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) return;
+
+	std::set<int> candidates;
+
+	auto ray = InputWatchdog::get()->getMouseRay();
+
+	std::vector<float> headPosition = ray.first;
+	std::vector<float> cursorDirection = ray.second;
+
+	for (int epID : allEPs) {
+		std::vector<float> obeliskPosition = _memory->ReadPanelData<float>(epID, POSITION, 3);
+
+		if (pow(headPosition[0] - obeliskPosition[0], 2) + pow(headPosition[1] - obeliskPosition[1], 2) + pow(headPosition[2] - obeliskPosition[2], 2) > 49) {
+			continue;
+		}
+
+		std::vector<float> qData = ReadPanelData<float>(epID, ORIENTATION, 4);
+
+		Quaternion q;
+		q.x = qData[0];
+		q.y = qData[1];
+		q.z = qData[2];
+		q.w = qData[3];
+
+		std::vector<float> facing = { 1, 0, 0 };
+
+		q.RotateVector(facing);
+
+		float dotProduct = cursorDirection[0] * facing[0] + cursorDirection[1] * facing[1] + cursorDirection[2] * facing[2];
+
+		if (dotProduct < 0) candidates.insert(epID);
+
+		continue;
+	}
+
+	int lookingAtEP = -1;
+	float distanceToCenter = 10000000.0f;
+
+	for (int epID : candidates) {
+		std::vector<float> epPosition = _memory->ReadPanelData<float>(epID, POSITION, 3);
+
+		std::vector<float> v = { epPosition[0] - headPosition[0], epPosition[1] - headPosition[1], epPosition[2] - headPosition[2] };
+		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
+		std::vector<float> p = { headPosition[0] + t * cursorDirection[0], headPosition[1] + t * cursorDirection[1], headPosition[2] + t * cursorDirection[2] };
+		
+		float distance = sqrt(pow(p[0] - epPosition[0], 2) + pow(p[1] - epPosition[1], 2) + pow(p[2] - epPosition[2], 2));
+
+		float boundingRadius = _memory->ReadPanelData<float>(epID, BOUNDING_RADIUS);
+
+		if (distance < boundingRadius && distance < distanceToCenter) {
+			distanceToCenter = distance;
+			lookingAtEP = epID;
+		}
+	}
+
+	if (epToName.count(lookingAtEP)) {
+		hudManager->setWorldMessage(epToName[lookingAtEP]);
+	}
+
+	return;
 }

@@ -161,6 +161,14 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
+		if (slotData.contains("ep_to_name")) {
+			for (auto& [key, val] : slotData["ep_to_name"].items()) {
+				int sideId = std::stoul(key, nullptr, 16);
+
+				epToName.insert({ sideId, val });
+			}
+		}
+
 		if (slotData.contains("precompleted_puzzles")) {
 			for (int key : slotData["precompleted_puzzles"]) {
 				precompletedLocations.insert(key);
@@ -476,7 +484,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -484,7 +492,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
 	SeverDoors();
 
 	//Mess with Town targets

@@ -15,7 +15,7 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -27,6 +27,7 @@ public:
 		state = s;
 		EPShuffle = ep;
 		obeliskHexToEPHexes = o;
+		epToName = epn;
 
 		for (auto [key, value] : obeliskHexToEPHexes) {
 			obeliskHexToAmountOfEPs[key] = (int)value.size();
@@ -146,6 +147,8 @@ private:
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
 
+	void LookingAtObelisk();
+
 	// Updates puzzle skip logic.
 	void UpdatePuzzleSkip(float deltaSeconds);
 
@@ -192,6 +195,7 @@ private:
 	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
+	std::map<int, std::string> epToName = {};
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
