@@ -25,8 +25,6 @@ void APWatchdog::action() {
 
 	UpdatePuzzleSkip(frameDuration.count());
 
-	hudManager->clearWorldMessage();
-
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -51,10 +49,11 @@ void APWatchdog::action() {
 		{
 			storageCheckCounter--;
 		}
-
-		CheckImportantCollisionCubes();
 	}
 
+	hudManager->clearWorldMessage();
+
+	CheckImportantCollisionCubes();
 	LookingAtObelisk();
 
 	SetStatusMessages();
