@@ -76,6 +76,7 @@ private:
 	bool subtitlesDirty = false;
 
 	void findSetSubtitleOffsets();
+	void overwriteSubtitleFunction();
 
 	uint64_t setSubtitleOffset;
 	uint32_t largeSubtitlePointerOffset;

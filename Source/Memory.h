@@ -305,4 +305,5 @@ private:
 
 	friend class Randomizer;
 	friend class Special;
+	friend class HudManager;
 };

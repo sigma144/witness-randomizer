@@ -928,165 +928,165 @@ void Memory::DisplayHudMessage(std::string message, std::array<float, 3> rgbColo
 }
 
 void Memory::DisplaySubtitles(std::string line1, std::string line2, std::string line3) {
-	char buffer[1024];
+	//char buffer[1024];
 
-	if (!_subtitlesStuff) {
-		__int64 addressOfSettings = this->ReadData<__int64>({ (int) (this->subtitlesOnOrOff - _baseAddress)}, 1)[0];
-		__int32 oneBuff[1];
-		oneBuff[0] = 1;
+	//if (!_subtitlesStuff) {
+	//	__int64 addressOfSettings = this->ReadData<__int64>({ (int) (this->subtitlesOnOrOff - _baseAddress)}, 1)[0];
+	//	__int32 oneBuff[1];
+	//	oneBuff[0] = 1;
 
-		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(addressOfSettings + 0xC), oneBuff, 4, NULL);
+	//	WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(addressOfSettings + 0xC), oneBuff, 4, NULL);
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000)); //Let the game load subtitles, if they are not loaded first the game crashes.
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(1000)); //Let the game load subtitles, if they are not loaded first the game crashes.
 
-		_subtitlesStuff = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	//	_subtitlesStuff = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-		std::string sectionName = "mitchell_ttc_11";
+	//	std::string sectionName = "mitchell_ttc_11";
 
-		memset(buffer, 0, sizeof(buffer));
+	//	memset(buffer, 0, sizeof(buffer));
 
-		strcpy_s(buffer, sectionName.c_str());
+	//	strcpy_s(buffer, sectionName.c_str());
 
-		WriteProcessMemory(_handle, _subtitlesStuff, buffer, sizeof(buffer), NULL);
-
-
-		char asmBuff1[] = // Make the game always play mitchell_ttc_11. This also skips the check whether an audio log is actually playing.
-			"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax, address
-			"\x89\xB4\x24\xC8\x00\x00\x00"; //mov [rsp+000000C8],esi
-
-		__int64 subtitleName = reinterpret_cast<__int64>(_subtitlesStuff);
-
-		asmBuff1[2] = subtitleName & 0xff;
-		asmBuff1[3] = (subtitleName >> 8) & 0xff;
-		asmBuff1[4] = (subtitleName >> 16) & 0xff;
-		asmBuff1[5] = (subtitleName >> 24) & 0xff;
-		asmBuff1[6] = (subtitleName >> 32) & 0xff;
-		asmBuff1[7] = (subtitleName >> 40) & 0xff;
-		asmBuff1[8] = (subtitleName >> 48) & 0xff;
-		asmBuff1[9] = (subtitleName >> 56) & 0xff;
-
-		__int64 address = displaySubtitlesFunction;
-		LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
-
-		WriteProcessMemory(_handle, addressPointer, asmBuff1, sizeof(asmBuff1) - 1, NULL);
+	//	WriteProcessMemory(_handle, _subtitlesStuff, buffer, sizeof(buffer), NULL);
 
 
-		__int64 address2 = displaySubtitlesFunction2;
-		LPVOID addressPointer2 = reinterpret_cast<LPVOID>(address2);
+	//	char asmBuff1[] = // Make the game always play mitchell_ttc_11. This also skips the check whether an audio log is actually playing.
+	//		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax, address
+	//		"\x89\xB4\x24\xC8\x00\x00\x00"; //mov [rsp+000000C8],esi
 
-		char asmBuff2[] = // Make the time within the audio log always 1, so the first section always plays.
-			"\xF3\x0F\x10\x0D\x92\x9A\x32\x00" // movss xmm1,dword ptr[1405134D0] (Which is 1.0f constant)
-			"\x90"; // nop
+	//	__int64 subtitleName = reinterpret_cast<__int64>(_subtitlesStuff);
 
-		WriteProcessMemory(_handle, addressPointer2, asmBuff2, sizeof(asmBuff2) - 1, NULL);
+	//	asmBuff1[2] = subtitleName & 0xff;
+	//	asmBuff1[3] = (subtitleName >> 8) & 0xff;
+	//	asmBuff1[4] = (subtitleName >> 16) & 0xff;
+	//	asmBuff1[5] = (subtitleName >> 24) & 0xff;
+	//	asmBuff1[6] = (subtitleName >> 32) & 0xff;
+	//	asmBuff1[7] = (subtitleName >> 40) & 0xff;
+	//	asmBuff1[8] = (subtitleName >> 48) & 0xff;
+	//	asmBuff1[9] = (subtitleName >> 56) & 0xff;
 
-		while (this->ReadData<__int64>({ (int) (this->subtitlesHashTable - _baseAddress) }, 1)[0] == 0) { // 0 means subtitles aren't loaded yet
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		}
+	//	__int64 address = displaySubtitlesFunction;
+	//	LPVOID addressPointer = reinterpret_cast<LPVOID>(address);
 
-		__int64 addressOfSectionHashtable = this->ReadData<__int64>({ (int)(this->subtitlesHashTable - _baseAddress) }, 1)[0];
-		__int64 hashtablePlus8 = addressOfSectionHashtable + 8;
-		__int64 nameOfClip = reinterpret_cast<__int64>(_subtitlesStuff);
-		__int64 returnAddress = nameOfClip + 0x18;
-		__int64 functionAddress = displaySubtitlesFunction3;
-
-		char asmBuff3[] =
-			"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax, function address
-			"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx, string name of subtitle section
-			"\x48\xBB\x00\x00\x00\x00\x00\x00\x00\x00" //mov rbx, hash table
-			"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx, hash table plus 8 (idk it's necessary)
-			"\x49\xB8\x18\x00\x7C\x00\x00\x00\x00\x00" //mov r8, return value pointer (allocated memory)
-			"\x48\x83\xEC\x48" // sub rsp, 48
-			"\xFF\xD0" // call rax
-			"\x48\x83\xC4\x48" // add rsp, 48
-			"\xC3"; // ret
-
-		asmBuff3[2] = functionAddress & 0xff;
-		asmBuff3[3] = (functionAddress >> 8) & 0xff;
-		asmBuff3[4] = (functionAddress >> 16) & 0xff;
-		asmBuff3[5] = (functionAddress >> 24) & 0xff;
-		asmBuff3[6] = (functionAddress >> 32) & 0xff;
-		asmBuff3[7] = (functionAddress >> 40) & 0xff;
-		asmBuff3[8] = (functionAddress >> 48) & 0xff;
-		asmBuff3[9] = (functionAddress >> 56) & 0xff;
-		asmBuff3[12] = nameOfClip & 0xff;
-		asmBuff3[13] = (nameOfClip >> 8) & 0xff;
-		asmBuff3[14] = (nameOfClip >> 16) & 0xff;
-		asmBuff3[15] = (nameOfClip >> 24) & 0xff;
-		asmBuff3[16] = (nameOfClip >> 32) & 0xff;
-		asmBuff3[17] = (nameOfClip >> 40) & 0xff;
-		asmBuff3[18] = (nameOfClip >> 48) & 0xff;
-		asmBuff3[19] = (nameOfClip >> 56) & 0xff;
-		asmBuff3[22] = addressOfSectionHashtable & 0xff;
-		asmBuff3[23] = (addressOfSectionHashtable >> 8) & 0xff;
-		asmBuff3[24] = (addressOfSectionHashtable >> 16) & 0xff;
-		asmBuff3[25] = (addressOfSectionHashtable >> 24) & 0xff;
-		asmBuff3[26] = (addressOfSectionHashtable >> 32) & 0xff;
-		asmBuff3[27] = (addressOfSectionHashtable >> 40) & 0xff;
-		asmBuff3[28] = (addressOfSectionHashtable >> 48) & 0xff;
-		asmBuff3[29] = (addressOfSectionHashtable >> 56) & 0xff;
-		asmBuff3[32] = hashtablePlus8 & 0xff;
-		asmBuff3[33] = (hashtablePlus8 >> 8) & 0xff;
-		asmBuff3[34] = (hashtablePlus8 >> 16) & 0xff;
-		asmBuff3[35] = (hashtablePlus8 >> 24) & 0xff;
-		asmBuff3[36] = (hashtablePlus8 >> 32) & 0xff;
-		asmBuff3[37] = (hashtablePlus8 >> 40) & 0xff;
-		asmBuff3[38] = (hashtablePlus8 >> 48) & 0xff;
-		asmBuff3[39] = (hashtablePlus8 >> 56) & 0xff;
-		asmBuff3[42] = returnAddress & 0xff;
-		asmBuff3[43] = (returnAddress >> 8) & 0xff;
-		asmBuff3[44] = (returnAddress >> 16) & 0xff;
-		asmBuff3[45] = (returnAddress >> 24) & 0xff;
-		asmBuff3[46] = (returnAddress >> 32) & 0xff;
-		asmBuff3[47] = (returnAddress >> 40) & 0xff;
-		asmBuff3[48] = (returnAddress >> 48) & 0xff;
-		asmBuff3[49] = (returnAddress >> 56) & 0xff;
-
-		SIZE_T allocation_size = sizeof(asmBuff3);
-
-		LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		WriteProcessMemory(_handle, allocation_start, asmBuff3, allocation_size, NULL);
-		HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
-
-		WaitForSingleObject(thread, INFINITE);
-
-		__int64 subtitleObjectPointer[1];
-		SIZE_T numBytesWritten;
-		ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(returnAddress), subtitleObjectPointer, 8, &numBytesWritten);
-
-		__int64 instantsPointer[1];
-		ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(subtitleObjectPointer[0] + 0x10), instantsPointer, 8, &numBytesWritten);
-
-		__int64 instantsDataPointer[1];
-		ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(instantsPointer[0]), instantsDataPointer, 8, &numBytesWritten);
-
-		__int64 linesPointer[1];
-		ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(instantsDataPointer[0] + 0x8), linesPointer, 8, &numBytesWritten);
-
-		for (int i = 0; i < 3; i++) {
-			__int64 stringAddressBuffer[1];
-			stringAddressBuffer[0] = reinterpret_cast<__int64>(_subtitlesStuff) + (i + 1) * 0x100;
+	//	WriteProcessMemory(_handle, addressPointer, asmBuff1, sizeof(asmBuff1) - 1, NULL);
 
 
-			WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(linesPointer[0] + i * 0x8), stringAddressBuffer, 8, &numBytesWritten);
-		}
-	}
+	//	__int64 address2 = displaySubtitlesFunction2;
+	//	LPVOID addressPointer2 = reinterpret_cast<LPVOID>(address2);
 
-	char line1buff[254];
-	char line2buff[254];
-	char line3buff[254];
+	//	char asmBuff2[] = // Make the time within the audio log always 1, so the first section always plays.
+	//		"\xF3\x0F\x10\x0D\x92\x9A\x32\x00" // movss xmm1,dword ptr[1405134D0] (Which is 1.0f constant)
+	//		"\x90"; // nop
 
-	strcpy_s(line1buff, line1.c_str());
-	strcpy_s(line2buff, line2.c_str());
-	strcpy_s(line3buff, line3.c_str());
+	//	WriteProcessMemory(_handle, addressPointer2, asmBuff2, sizeof(asmBuff2) - 1, NULL);
 
-	__int64 string1Address = reinterpret_cast<__int64>(_subtitlesStuff) + 0x100;
-	__int64 string2Address = reinterpret_cast<__int64>(_subtitlesStuff) + 0x200;
-	__int64 string3Address = reinterpret_cast<__int64>(_subtitlesStuff) + 0x300;
+	//	while (this->ReadData<__int64>({ (int) (this->subtitlesHashTable - _baseAddress) }, 1)[0] == 0) { // 0 means subtitles aren't loaded yet
+	//		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	//	}
 
-	WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(string1Address), line1buff, sizeof(line1buff), NULL);
-	WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(string2Address), line2buff, sizeof(line2buff), NULL);
-	WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(string3Address), line3buff, sizeof(line3buff), NULL);
+	//	__int64 addressOfSectionHashtable = this->ReadData<__int64>({ (int)(this->subtitlesHashTable - _baseAddress) }, 1)[0];
+	//	__int64 hashtablePlus8 = addressOfSectionHashtable + 8;
+	//	__int64 nameOfClip = reinterpret_cast<__int64>(_subtitlesStuff);
+	//	__int64 returnAddress = nameOfClip + 0x18;
+	//	__int64 functionAddress = displaySubtitlesFunction3;
+
+	//	char asmBuff3[] =
+	//		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax, function address
+	//		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx, string name of subtitle section
+	//		"\x48\xBB\x00\x00\x00\x00\x00\x00\x00\x00" //mov rbx, hash table
+	//		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx, hash table plus 8 (idk it's necessary)
+	//		"\x49\xB8\x18\x00\x7C\x00\x00\x00\x00\x00" //mov r8, return value pointer (allocated memory)
+	//		"\x48\x83\xEC\x48" // sub rsp, 48
+	//		"\xFF\xD0" // call rax
+	//		"\x48\x83\xC4\x48" // add rsp, 48
+	//		"\xC3"; // ret
+
+	//	asmBuff3[2] = functionAddress & 0xff;
+	//	asmBuff3[3] = (functionAddress >> 8) & 0xff;
+	//	asmBuff3[4] = (functionAddress >> 16) & 0xff;
+	//	asmBuff3[5] = (functionAddress >> 24) & 0xff;
+	//	asmBuff3[6] = (functionAddress >> 32) & 0xff;
+	//	asmBuff3[7] = (functionAddress >> 40) & 0xff;
+	//	asmBuff3[8] = (functionAddress >> 48) & 0xff;
+	//	asmBuff3[9] = (functionAddress >> 56) & 0xff;
+	//	asmBuff3[12] = nameOfClip & 0xff;
+	//	asmBuff3[13] = (nameOfClip >> 8) & 0xff;
+	//	asmBuff3[14] = (nameOfClip >> 16) & 0xff;
+	//	asmBuff3[15] = (nameOfClip >> 24) & 0xff;
+	//	asmBuff3[16] = (nameOfClip >> 32) & 0xff;
+	//	asmBuff3[17] = (nameOfClip >> 40) & 0xff;
+	//	asmBuff3[18] = (nameOfClip >> 48) & 0xff;
+	//	asmBuff3[19] = (nameOfClip >> 56) & 0xff;
+	//	asmBuff3[22] = addressOfSectionHashtable & 0xff;
+	//	asmBuff3[23] = (addressOfSectionHashtable >> 8) & 0xff;
+	//	asmBuff3[24] = (addressOfSectionHashtable >> 16) & 0xff;
+	//	asmBuff3[25] = (addressOfSectionHashtable >> 24) & 0xff;
+	//	asmBuff3[26] = (addressOfSectionHashtable >> 32) & 0xff;
+	//	asmBuff3[27] = (addressOfSectionHashtable >> 40) & 0xff;
+	//	asmBuff3[28] = (addressOfSectionHashtable >> 48) & 0xff;
+	//	asmBuff3[29] = (addressOfSectionHashtable >> 56) & 0xff;
+	//	asmBuff3[32] = hashtablePlus8 & 0xff;
+	//	asmBuff3[33] = (hashtablePlus8 >> 8) & 0xff;
+	//	asmBuff3[34] = (hashtablePlus8 >> 16) & 0xff;
+	//	asmBuff3[35] = (hashtablePlus8 >> 24) & 0xff;
+	//	asmBuff3[36] = (hashtablePlus8 >> 32) & 0xff;
+	//	asmBuff3[37] = (hashtablePlus8 >> 40) & 0xff;
+	//	asmBuff3[38] = (hashtablePlus8 >> 48) & 0xff;
+	//	asmBuff3[39] = (hashtablePlus8 >> 56) & 0xff;
+	//	asmBuff3[42] = returnAddress & 0xff;
+	//	asmBuff3[43] = (returnAddress >> 8) & 0xff;
+	//	asmBuff3[44] = (returnAddress >> 16) & 0xff;
+	//	asmBuff3[45] = (returnAddress >> 24) & 0xff;
+	//	asmBuff3[46] = (returnAddress >> 32) & 0xff;
+	//	asmBuff3[47] = (returnAddress >> 40) & 0xff;
+	//	asmBuff3[48] = (returnAddress >> 48) & 0xff;
+	//	asmBuff3[49] = (returnAddress >> 56) & 0xff;
+
+	//	SIZE_T allocation_size = sizeof(asmBuff3);
+
+	//	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	//	WriteProcessMemory(_handle, allocation_start, asmBuff3, allocation_size, NULL);
+	//	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	//	WaitForSingleObject(thread, INFINITE);
+
+	//	__int64 subtitleObjectPointer[1];
+	//	SIZE_T numBytesWritten;
+	//	ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(returnAddress), subtitleObjectPointer, 8, &numBytesWritten);
+
+	//	__int64 instantsPointer[1];
+	//	ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(subtitleObjectPointer[0] + 0x10), instantsPointer, 8, &numBytesWritten);
+
+	//	__int64 instantsDataPointer[1];
+	//	ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(instantsPointer[0]), instantsDataPointer, 8, &numBytesWritten);
+
+	//	__int64 linesPointer[1];
+	//	ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(instantsDataPointer[0] + 0x8), linesPointer, 8, &numBytesWritten);
+
+	//	for (int i = 0; i < 3; i++) {
+	//		__int64 stringAddressBuffer[1];
+	//		stringAddressBuffer[0] = reinterpret_cast<__int64>(_subtitlesStuff) + (i + 1) * 0x100;
+
+
+	//		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(linesPointer[0] + i * 0x8), stringAddressBuffer, 8, &numBytesWritten);
+	//	}
+	//}
+
+	//char line1buff[254];
+	//char line2buff[254];
+	//char line3buff[254];
+
+	//strcpy_s(line1buff, line1.c_str());
+	//strcpy_s(line2buff, line2.c_str());
+	//strcpy_s(line3buff, line3.c_str());
+
+	//__int64 string1Address = reinterpret_cast<__int64>(_subtitlesStuff) + 0x100;
+	//__int64 string2Address = reinterpret_cast<__int64>(_subtitlesStuff) + 0x200;
+	//__int64 string3Address = reinterpret_cast<__int64>(_subtitlesStuff) + 0x300;
+
+	//WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(string1Address), line1buff, sizeof(line1buff), NULL);
+	//WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(string2Address), line2buff, sizeof(line2buff), NULL);
+	//WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(string3Address), line3buff, sizeof(line3buff), NULL);
 }
 
 void Memory::RemoveMesh(int id) {

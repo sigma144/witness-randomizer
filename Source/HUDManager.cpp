@@ -1,5 +1,6 @@
 #include "HUDManager.h"
 
+#include "ASMBuilder.h"
 #include "Memory.h"
 
 
@@ -7,7 +8,8 @@
 
 HudManager::HudManager(const std::shared_ptr<Memory>& memory) : memory(memory) {
 	findSetSubtitleOffsets();
-	setSubtitleSize(SubtitleSize::Small);
+	//setSubtitleSize(SubtitleSize::Small);
+	overwriteSubtitleFunction();
 }
 
 void HudManager::update(float deltaSeconds) {
@@ -247,4 +249,95 @@ void HudManager::findSetSubtitleOffsets() {
 		setSubtitleOffset = 0;
 		largeSubtitlePointerOffset = 0;
 	}
+}
+void HudManager::overwriteSubtitleFunction() {
+	// Offsets of key functions. TODO: Determine these through sigscans.
+	uint32_t func_hud_draw_subtitles = 0x1E99A0;
+	uint32_t func_rendering_2D_right_handed = 0x25a330;
+	uint32_t func_apply_2D_shader = 0x2581C0;
+	uint32_t func_im_begin = 0x33f5b0;
+	uint32_t func_im_flush = 0x33f5e0;
+	uint32_t func_draw_text = 0x259380;
+
+	// Offsets of key globals
+	uint32_t globals_shader_text = 0x62D400;
+	uint32_t global_subtitle_font = 0x62d458;
+
+	char tempString[] = "i have no idea what i am doing";
+	LPVOID tempStringAddress = VirtualAllocEx(memory->_handle, NULL, 0x100, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	WriteProcessMemory(memory->_handle, tempStringAddress, tempString, sizeof(tempString), NULL);
+
+////// BEGIN REPLACEMENT FUNCTION
+
+	AsmBuilder func(func_hud_draw_subtitles);
+
+	// Save off registers to the stack.
+	func.add({ 0x48,0x81,0xEC })			// SUB RSP, 0xD8	<- it's what the main function does and i don't want to mess with it
+		.add({ 0xD8,0x00,0x00,0x00 })
+		.add({ 0x48,0x89,0x9C,0x24 })		// MOV qword ptr [RSP + 0xF0], RBX
+		.add({ 0xF0,0x00,0x00,0x00 });
+
+	// Set rendering mode to right-handed 2D.
+	//     ECX				renderingSpace (0 is indexed on pixels, 1 is unit UV)
+	func.add({ 0x33, 0xC9 })				// XOR ECX, ECX
+		.add({ 0xE8 }).rel(func_rendering_2D_right_handed);	// CALL <rendering_2D_right_handed>
+
+	// Set the current 2D shader to shader_text.
+	//     ECX				Shader* shader
+	func.add({ 0x48,0x8B,0x0D })			// MOV RCX, qword ptr [<shader>]
+		.rel(globals_shader_text)
+		.add({ 0xE8 }).rel(func_apply_2D_shader);	// CALL <apply_2D_shader>
+
+	// Set parameters and call im_begin(3).
+	//     ECX				vertsPerPrimitive
+	func.add({ 0xB9,0x03,0x00,0x00,0x00 })	// MOV ECX, 0x3
+		.add({ 0xE8 }).rel(func_im_begin);	// CALL <im_begin>
+
+	//
+	// Write temporary string to screen at 0,0.
+	//
+
+	// Set parameters and call draw_text.
+	//     RCX:8			Dynamic_Font* font
+	//     XMM1_Da:4		float xPos
+	//     XMM2_Da:4		float yPos
+	//     R9D:4			ulong color (packed via argb_color())
+	//     Stack[0x28]		char* strings
+	//     Stack[0x30]		int zOrder
+	// - Set font
+	func.add({ 0x48, 0x8B, 0x0D })			// MOV RCX, qword ptr [RIP + <font>]
+		.rel(global_subtitle_font);
+	// - Set xPos and yPos
+	func.add({ 0x0F, 0x57, 0xC9 })			// XORPS XMM1, XMM1
+		.add({ 0x0F, 0x57, 0xD2 });			// XORPS XMM2, XMM2
+	// - Set color
+	func.add({ 0x41, 0xB9 })				// MOV R9D, 0xFFFFFFFF
+		.add({ 0xFF, 0xFF, 0xFF, 0xFF });
+	// - Set string pointer
+	func.add({ 0x49, 0xBA })				// MOV R10, <string address>
+		.abs((uint64_t)tempStringAddress)
+		.add({ 0x4C, 0x89, 0x54, 0x24, 0x20 });	// MOV qword ptr [RSP + 0x20], R10
+	// - Set zOrder
+	func.add({ 0xC7, 0x44, 0x24, 0x28 })	// MOV dword ptr [RSP + 0x28], 0x20
+		.add({ 0x20, 0x00, 0x00, 0x00 });
+	// - Call draw_text
+	func.add({ 0xE8 }).rel(func_draw_text);	// CALL <draw_text>
+
+	// Call im_flush().
+	func.add({ 0xE8 }).rel(func_im_flush);
+
+	// Restore registers from the stack.
+	func.add({ 0x48,0x8B,0x9C,0x24 })		// MOV RBX, qword ptr [RSP + 0xF0]
+		.add({ 0xF0,0x00,0x00,0x00 })
+		.add({ 0x48,0x81,0xC4 })			// ADD RSP,0xD8
+		.add({ 0xD8,0x00,0x00,0x00 });
+		
+	// Return.
+	func.add({ 0xC3 });						// RET
+
+////// END REPLACEMENT FUNCTION
+
+	// Write function to memory.
+	func.printBytes();
+	bool bSuccess = WriteProcessMemory(memory->_handle, reinterpret_cast<const LPVOID>(func_hud_draw_subtitles + memory->_baseAddress), func.get(), func.size(), NULL);
 }
