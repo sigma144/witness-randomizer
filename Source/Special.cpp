@@ -1678,6 +1678,39 @@ void Special::SetRequiredLasers(int mountain, int challenge) {
 }
 
 void Special::SkipPanel(int id, std::string text, bool kickOut) {
+	Panel panel;
+
+	// Special Skipping Animations
+
+	if (id == 0x03612) { // Quarry laser panels
+		if (!ReadPanelData<int>(0x288E9, 0x1E4))
+		{
+			panel._memory->OpenDoor(0x288E9);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+
+		if (!ReadPanelData<int>(0x28AD4, 0x1E4))
+		{
+			panel._memory->OpenDoor(0x28AD4);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+	}
+	else if (id == 0x1C349) { // Symmetry island upper latches
+		if (!ReadPanelData<int>(0x28AE8, 0x1E4))
+		{
+			panel._memory->OpenDoor(0x28AE8);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+
+		if (!ReadPanelData<int>(0x28AED, 0x1E4))
+		{
+			panel._memory->OpenDoor(0x28AED);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+	}
+
+	// Special Skipping Animations Done
+
 	if (skip_specialCase.count(id) == 0) {
 		DrawSimplePanel(id, text, kickOut);
 		return;

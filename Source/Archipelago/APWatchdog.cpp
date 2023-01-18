@@ -544,37 +544,6 @@ void APWatchdog::SkipPuzzle() {
 	spentPuzzleSkips += puzzleSkipCost;
 	skipButtonHeldTime = 0.f;
 
-	// Special Skipping Animations
-
-	if (activePanelId == 0x03612) { // Quarry laser panels
-		if (!ReadPanelData<int>(0x288E9, DOOR_OPEN))
-		{
-			_memory->OpenDoor(0x288E9);
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		}
-
-		if (!ReadPanelData<int>(0x28AD4, DOOR_OPEN))
-		{
-			_memory->OpenDoor(0x28AD4);
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		}
-	}
-	else if (activePanelId == 0x1C349) { // Symmetry island upper latches
-		if (!ReadPanelData<int>(0x28AE8, DOOR_OPEN))
-		{
-			_memory->OpenDoor(0x28AE8);
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		}
-
-		if (!ReadPanelData<int>(0x28AED, DOOR_OPEN))
-		{
-			_memory->OpenDoor(0x28AED);
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		}
-	}
-
-	// Special Skipping Animations Done
-
 	Special::SkipPanel(activePanelId, true);
 	WritePanelData<__int32>(activePanelId, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + puzzleSkipCost }); // Videos can't be skipped, so this should be safe.
 }
