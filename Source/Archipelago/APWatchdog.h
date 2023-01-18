@@ -8,6 +8,7 @@
 #include "APState.h"
 #include "PanelLocker.h"
 #include "nlohmann\json.hpp"
+#include "PanelRestore.h"
 
 #include <chrono>
 #include <map>
@@ -124,6 +125,7 @@ private:
 	std::set<int> severedDoorsList;
 	std::map<int,int> collisionsToRefresh;
 	std::map<int, std::vector<float>> collisionPositions;
+	std::set<int> alreadyTriedUpdatingNormally;
 
 	int storageCheckCounter = 6;
 

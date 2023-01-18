@@ -2,7 +2,6 @@
 #include "APRandomizer.h"
 #include "APGameData.h"
 #include "../Panels.h"
-#include "PanelRestore.h"
 
 bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);

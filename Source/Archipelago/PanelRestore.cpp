@@ -23,3 +23,11 @@ void PanelRestore::RestoreOriginalPanelData(std::shared_ptr<Memory> memory) {
 
 	return;
 }
+
+std::vector<float> PanelRestore::GetPositions(int id) {
+	return correctPosition[id];
+}
+
+bool PanelRestore::HasPositions(int id) {
+	return correctPosition.count(id);
+}

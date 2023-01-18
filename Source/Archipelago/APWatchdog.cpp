@@ -881,15 +881,34 @@ void APWatchdog::RefreshDoorCollisions() {
 		std::vector<float> newPositions = ReadPanelData<float>(collisionToUpdate, POSITION, 8);
 
 		if (originalPosition != newPositions) {
+			OutputDebugStringW(L"All good.\n");
+			continue;
+		}
+		if (PanelRestore::HasPositions(collisionToUpdate) && newPositions == PanelRestore::GetPositions(collisionToUpdate)) {
+			OutputDebugStringW(L"All good.\n");
 			continue;
 		}
 
 		std::wstringstream s;
-		s << std::hex << collisionToUpdate << " didn't move!!! Updating manually...\n";
+		s << std::hex << collisionToUpdate << " didn't move!!! ";
 		OutputDebugStringW(s.str().c_str());
 
+		if (alreadyTriedUpdatingNormally.count(collisionToUpdate)) {
+			OutputDebugStringW(L"Force-Updating...\n");
+
+			if (PanelRestore::HasPositions(collisionToUpdate)) {
+				WritePanelData<int>(collisionToUpdate, MOUNT_PARENT_ID, { 0 });
+				WritePanelData<float>(collisionToUpdate, POSITION, PanelRestore::GetPositions(collisionToUpdate));
+				_memory->UpdateEntityPosition(collisionToUpdate);
+			}
+
+			return;
+		}
+
 		try {  
+			OutputDebugStringW(L"Updating using ingame function...\n");
 			_memory->UpdateEntityPosition(collisionToUpdate);
+			alreadyTriedUpdatingNormally.insert(collisionToUpdate);
 		}
 		catch (const std::exception& e) { 
 			collisionsToRefresh[collisionToUpdate] = 2;
