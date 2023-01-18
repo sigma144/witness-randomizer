@@ -1728,7 +1728,7 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
-	if (id == 0x09FC1 || id == 0x09F8E || id == 0x09F01 || id == 0x09EFF) { //make this only the big puzzle?
+	if (id == 0x09FC1 || id == 0x09F8E || id == 0x09F01 || id == 0x09EFF) { 
 		SkipMetapuzzle(id, text, kickOut);
 		return;
 	}
@@ -1737,6 +1737,8 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
 	std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
+
+	if (!correctShapesById.count(id)) return;
 
 	int correctShape = correctShapesById[id];
 
