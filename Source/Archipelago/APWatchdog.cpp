@@ -1151,12 +1151,12 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		hudManager->setWorldMessage("Bunker panels need B/W and Colored Squares.");
 	}
 	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if (PuzzleRandomization = SIGMA_EXPERT) hudManager->setWorldMessage("Needs Eraser, Triangles,\n"
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Eraser, Triangles,\n"
 											  "Stars, Stars + Same Colored Symbol.");
 		else hudManager->setWorldMessage("Needs Shapers and Eraser.");
 	}
 	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if (PuzzleRandomization = SIGMA_EXPERT) hudManager->setWorldMessage("Needs Symmetry and Triangles.");
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Symmetry and Triangles.");
 		else hudManager->setWorldMessage("Needs Symmetry and Dots.");
 	}
 	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
