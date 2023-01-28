@@ -55,6 +55,7 @@ void APWatchdog::action() {
 
 	CheckImportantCollisionCubes();
 	LookingAtObelisk();
+	LookingAtTheDog(frameDuration.count());
 
 	SetStatusMessages();
 	hudManager->update(frameDuration.count());
@@ -1414,4 +1415,85 @@ void APWatchdog::LookingAtObelisk() {
 	}
 
 	return;
+}
+
+void APWatchdog::LookingAtTheDog(float frameLength) {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) {
+		letGoSinceInteractModeOpen = false;
+		dogFrames = 0;
+		_memory->writeCursorSize(1.0f);
+		_memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+		return;
+	}
+
+	auto ray = InputWatchdog::get()->getMouseRay();
+
+	std::vector<float> headPosition = ray.first;
+	std::vector<float> cursorDirection = ray.second;
+
+	std::vector<std::vector<float>> dogPositions = { {-107.954, -101.36, 4.078}, {-107.9, -101.312, 4.1},{-107.866, -101.232, 4.16},{ -107.871, -101.150, 4.22 }, { -107.86, -101.06, 4.3 }, { -107.88, -100.967, 4.397 } };
+
+	float distanceToDog = pow(headPosition[0] - dogPositions[1][0], 2) + pow(headPosition[1] - dogPositions[1][1], 2) + pow(headPosition[2] - dogPositions[1][2], 2);
+
+	if (distanceToDog > 49) {
+		return;
+	}
+
+	float smallestDistance = 10000000.0f;
+	float boundingRadius = 0.105f;
+
+	for (auto dogPosition : dogPositions) {
+		std::vector<float> v = { dogPosition[0] - headPosition[0], dogPosition[1] - headPosition[1], dogPosition[2] - headPosition[2] };
+		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
+		std::vector<float> p = { headPosition[0] + t * cursorDirection[0], headPosition[1] + t * cursorDirection[1], headPosition[2] + t * cursorDirection[2] };
+
+		float distance = sqrt(pow(p[0] - dogPosition[0], 2) + pow(p[1] - dogPosition[1], 2) + pow(p[2] - dogPosition[2], 2));
+
+		if (distance < smallestDistance) {
+			smallestDistance = distance;
+		}
+	}
+
+	if (smallestDistance > boundingRadius) {
+		_memory->writeCursorSize(1.0f);
+		_memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+		return;
+	}
+
+	_memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
+
+	if (dogFrames >= 4.0f) {
+		hudManager->setWorldMessage("Woof Woof!");
+
+		if (!sentDog) {
+			hudManager->queueBannerMessage("Sent Hookshot to Violet.", { 0.686f, 0.6f, 0.937f });
+			sentDog = true;
+		}
+	}
+	else
+	{
+		hudManager->setWorldMessage("Petting progress: " + std::to_string((int)(dogFrames * 100 / 4.0f)) + "%");
+	}
+
+	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
+		letGoSinceInteractModeOpen = true;
+
+		_memory->writeCursorSize(2.0f);
+		return;
+	}
+
+	if (!letGoSinceInteractModeOpen) {
+		_memory->writeCursorSize(2.0f);
+		return;
+	}
+
+	_memory->writeCursorSize(1.0f);
+
+	if (lastMousePosition != cursorDirection)
+	{
+		dogFrames += frameLength;
+	}
+
+	lastMousePosition = cursorDirection;
 }

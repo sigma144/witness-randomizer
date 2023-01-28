@@ -151,6 +151,8 @@ private:
 
 	void LookingAtObelisk();
 
+	void LookingAtTheDog(float frameLength);
+
 	// Updates puzzle skip logic.
 	void UpdatePuzzleSkip(float deltaSeconds);
 
@@ -198,6 +200,11 @@ private:
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> epToName = {};
+
+	std::vector<float> lastMousePosition = { 0,0,0 };
+	float dogFrames = 0.0f;
+	bool sentDog = false;
+	bool letGoSinceInteractModeOpen = false;
 
 	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);

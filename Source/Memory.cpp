@@ -234,6 +234,47 @@ void Memory::SetInfiniteChallenge(bool enable) {
 }
 
 void Memory::findImportantFunctionAddresses(){
+	executeSigScan({ 0x45, 0x0F, 0x28, 0xC8, 0xF3, 0x44 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		cursorSize = _baseAddress + offset + index;
+
+		char asmBuff[] = "\xBB\x00\x00\x80\x3F\x66\x44\x0F\x6E\xCB\x90\x90\x90";
+
+		/*mov ebx, 3F800000
+		movd xmm9, ebx
+		nop
+		nop
+		nop*/
+
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
+
+		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+
+		cursorSize++;
+
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+				cursorR = _baseAddress + offset + index;
+				break;
+			}
+		}
+		index++;
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+				cursorG = _baseAddress + offset + index;
+				break;
+			}
+		}
+		index++;
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+				cursorB = _baseAddress + offset + index;
+				break;
+			}
+		}
+
+		return true;
+	});
+
 	executeSigScan ({0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x20, 0x48, 0x89, 0x48, 0x08, 0x55, 0x56, 0x57, 0x41, 0x54}, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0x78 && data[index - 1] == 0x10 && data[index] == 0xE8) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
@@ -1273,6 +1314,10 @@ uint64_t Memory::updateJunctionsFunction = 0;
 uint64_t Memory::addToPatternMapFunction = 0;
 uint64_t Memory::removeFromPatternMapFunction = 0;
 uint64_t Memory::patternMap = 0;
+uint64_t Memory::cursorSize = 0;
+uint64_t Memory::cursorR = 0;
+uint64_t Memory::cursorG = 0;
+uint64_t Memory::cursorB = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;

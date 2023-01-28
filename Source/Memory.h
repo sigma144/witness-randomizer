@@ -190,6 +190,30 @@ public:
 		CallVoidFunction(id, completeEPFunction);
 	}
 
+	void writeCursorSize(float size) {
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
+
+		WriteAbsolute(addressPointer, &size, sizeof(size));
+	}
+
+	void writeCursorColor(std::vector<float> color) {
+		float r = color[0];
+		float g = color[1];
+		float b = color[2];
+
+		LPVOID addressPointer1 = reinterpret_cast<LPVOID>(cursorR);
+
+		WriteAbsolute(addressPointer1, &r, sizeof(r));
+
+		LPVOID addressPointer2 = reinterpret_cast<LPVOID>(cursorG);
+
+		WriteAbsolute(addressPointer2, &g, sizeof(g));
+
+		LPVOID addressPointer3 = reinterpret_cast<LPVOID>(cursorB);
+
+		WriteAbsolute(addressPointer3, &b, sizeof(b));
+	}
+
 	void MakeEPGlow(std::string name, std::vector<byte> patternPointBytes);
 
 	void SetInfiniteChallenge(bool enable);
@@ -246,6 +270,10 @@ public:
 	static uint64_t removeFromPatternMapFunction;
 	static uint64_t patternMap;
 	static uint64_t GESTURE_MANAGER;
+	static uint64_t cursorSize;
+	static uint64_t cursorR;
+	static uint64_t cursorG;
+	static uint64_t cursorB;
 
 	static std::vector<int> ACTIVEPANELOFFSETS;
 	static int ACCELERATION;
