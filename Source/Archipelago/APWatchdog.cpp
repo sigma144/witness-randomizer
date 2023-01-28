@@ -109,6 +109,20 @@ void APWatchdog::CheckSolvedPanels() {
 		int panelId = it->first;
 		int locationId = it->second;
 
+		if (panelId == 0xFFF80) {
+			if(sentDog)
+			{
+				solvedLocations.push_back(locationId);
+
+				it = panelIdToLocationId.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+			continue;
+		}
+
 		if (allEPs.count(panelId)) {
 			if (ReadPanelData<int>(panelId, EP_SOLVED)) //TODO: Check EP solved
 			{
@@ -1466,10 +1480,7 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	if (dogFrames >= 4.0f) {
 		hudManager->setWorldMessage("Woof Woof!");
 
-		if (!sentDog) {
-			hudManager->queueBannerMessage("Sent Hookshot to Violet.", { 0.686f, 0.6f, 0.937f });
-			sentDog = true;
-		}
+		sentDog = true;
 	}
 	else
 	{
