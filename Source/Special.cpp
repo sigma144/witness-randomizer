@@ -1901,7 +1901,12 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	Panel panel;
 
 	int style = panel._style = panel._memory->ReadPanelData<int>(id, STYLE_FLAGS);
-	style &= ~Panel::Style::SYMMETRICAL;
+
+	if (id != 0x01D3F) {
+		style &= ~Panel::Style::SYMMETRICAL;
+		panel._memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
+	}
+
 	style &= ~Panel::Style::HAS_TRIANGLES;
 	style &= ~Panel::Style::HAS_DOTS;
 	style &= ~Panel::Style::HAS_SHAPERS;
@@ -1912,8 +1917,6 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	}
 
 	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
-
-	panel._memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
 
 	float width = 1.0f;
 
