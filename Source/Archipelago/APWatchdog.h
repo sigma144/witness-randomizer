@@ -16,13 +16,11 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
 		finalPanel = lastPanel;
-		skipButton = skipButton1;
-		availableSkips = availableSkips1;
 		panelLocker = p;
 		audioLogMessages = a;
 		state = s;
@@ -52,9 +50,6 @@ public:
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
-
-	HWND skipButton;
-	HWND availableSkips;
 
 	APState* state;
 

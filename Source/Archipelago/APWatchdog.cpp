@@ -425,10 +425,6 @@ void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
 			}
 		}
 	}
-
-	// Update the client.
-	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(GetAvailablePuzzleSkips())).c_str());
-	EnableWindow(skipButton, CanUsePuzzleSkip());
 }
 
 bool APWatchdog::CanUsePuzzleSkip() const {

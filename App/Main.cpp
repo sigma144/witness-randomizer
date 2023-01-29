@@ -84,7 +84,11 @@
 //Panel to edit
 int panel = 0x09E69;
 
-HWND hwndAddress, hwndUser, hwndPassword, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndColorblind, hwndRestore, hwndSkip, hwndAvailableSkips, hwndRecentError, hwndLoadCredentials, hwndCollect, hwndChallenge;
+HWND hwndRandomize, hwndLoadingText, hwndRecentError;			// General UI
+HWND hwndColorblind, hwndCollect, hwndChallenge;				// Options
+HWND hwndAddress, hwndUser, hwndPassword, hwndLoadCredentials;	// AP credentials
+HWND hwndCol, hwndRow, hwndElem, hwndColor;						// Debug UI
+
 std::shared_ptr<Panel> _panel;
 std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
 std::shared_ptr<APRandomizer> apRandomizer = std::make_shared<APRandomizer>();
@@ -354,9 +358,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			EnableWindow(hwndChallenge, true);
 
 			if (puzzleRando == SIGMA_EXPERT)
-				apRandomizer->GenerateHard(hwndSkip, hwndAvailableSkips);
+				apRandomizer->GenerateHard();
 			else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
-				apRandomizer->GenerateNormal(hwndSkip, hwndAvailableSkips);
+				apRandomizer->GenerateNormal();
 
 			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
@@ -605,14 +609,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		hInstance,
 		NULL,
 		LoadCursor(nullptr, IDC_ARROW),
-		(HBRUSH)(COLOR_WINDOW+1),
+		(HBRUSH)(COLOR_WINDOW),
 		WINDOW_CLASS,
 		WINDOW_CLASS,
 	};
 	RegisterClassW(&wndClass);
 
-	HWND hwnd = CreateWindowEx(WS_EX_CONTROLPARENT, WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 385, nullptr, nullptr, hInstance, nullptr);
+	const int windowWidth = 560;
+	int windowHeight = 100;
+
+	HWND hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+      650, 200, windowWidth, windowHeight, nullptr, nullptr, hInstance, nullptr);
+
+	// HACK: Due to things like menu bar thickness, the root window won't actually be the requested size. Grab the actual size here for later comparison.
+	RECT actualRootWindowSize = { 0,0,0,0 };
+	GetClientRect(hwndRootWindow, &actualRootWindowSize);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -667,24 +678,44 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	//-------------------------Basic window controls---------------------------
 
-	CreateWindow(L"STATIC", L"Version: " VERSION_STR,
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		490, 15, 90, 16, hwnd, NULL, hInstance, NULL);
+	const int minX = 10, maxX = windowWidth - 10;
 
-	CreateWindow(L"STATIC", L"Options:",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 10, 120, 16, hwnd, NULL, hInstance, NULL);
-	hwndColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
-		10, 35, 570, 50, hwnd, (HMENU)IDC_COLORBLIND, hInstance, NULL);
+	const int staticTextHeight = 16;			// The height of a single line of text.
+	const int controlHeight = 26;				// The height of a text entry box or button.
+	const int controlLabelYOffset =				// Vertical offset for static text in line with a control.
+		(controlHeight - staticTextHeight) / 2;
+	const int lineSpacing = 5;					// Spacing between lines.
 
-	hwndCollect = CreateWindow(L"BUTTON", L"\"!collect\" Support: Puzzles that are locations will be \"skipped\" if those locations are collected / co-oped.",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
-		10, 90, 570, 35, hwnd, (HMENU)IDC_COLLECT, hInstance, NULL);
+	int currentY = 10;
 
-	hwndChallenge = CreateWindow(L"BUTTON", L"Disable Challenge Timer",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
-		10, 262, 185, 17, hwnd, (HMENU)IDC_CHALLENGE, hInstance, NULL);
+	// AP version display.
+	CreateWindow(L"STATIC", L"Archipelago Version: " AP_VERSION_STR,
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		minX, currentY, maxX - minX - 160, staticTextHeight, hwndRootWindow, NULL, hInstance, NULL);
+
+	// Client version display. Right-justified.
+	CreateWindow(L"STATIC", L"Client Version: " VERSION_STR,
+		WS_VISIBLE | WS_CHILD | SS_RIGHT,
+		maxX - 150, currentY, 150, staticTextHeight, hwndRootWindow, NULL, hInstance, NULL);
+
+	currentY += staticTextHeight + lineSpacing;
+
+	////////
+	// Horizontal rule.
+	CreateWindow(L"STATIC", L"",
+		WS_VISIBLE | WS_CHILD | SS_ETCHEDHORZ,
+		minX - 2, currentY + 4, maxX - minX + 4, 2, hwndRootWindow, 0, hInstance, NULL);
+	currentY += 10 + lineSpacing;
+
+	////////
+	// Archipelago credentials
+	////////
+
+	const int apLabelWidth = 160;
+	const int apLabelPadding = 10;
+
+	const int apTextBoxStart = minX + apLabelWidth + apLabelPadding;
+	const int apTextBoxWidth = maxX - apTextBoxStart;
 
 #if _DEBUG
 	auto defaultAddress = L"localhost";
@@ -694,101 +725,127 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	auto defaultUser = L"";
 #endif
 
+	// Server address.
 	CreateWindow(L"STATIC", L"Enter an AP address:",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 135, 160, 16, hwnd, NULL, hInstance, NULL);
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		minX + 2, currentY + controlLabelYOffset, apLabelWidth - 2, staticTextHeight, hwndRootWindow, NULL, hInstance, NULL);
 	hwndAddress = CreateWindow(MSFTEDIT_CLASS, defaultAddress,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		180, 130, 400, 26, hwnd, NULL, hInstance, NULL);
+		apTextBoxStart, currentY, apTextBoxWidth, controlHeight, hwndRootWindow, NULL, hInstance, NULL);
 	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 	SendMessage(hwndAddress, EM_SETEVENTMASK, NULL, KEY_EVENT); // Notify on text change
 
+	currentY += controlHeight + lineSpacing;
+
+	// Slot name.
 	CreateWindow(L"STATIC", L"Enter slot name:",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 165, 160, 16, hwnd, NULL, hInstance, NULL);
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		minX + 2, currentY + controlLabelYOffset, apLabelWidth - 2, staticTextHeight, hwndRootWindow, NULL, hInstance, NULL);
 	hwndUser = CreateWindow(MSFTEDIT_CLASS, defaultUser,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		180, 160, 400, 26, hwnd, NULL, hInstance, NULL);
+		apTextBoxStart, currentY, apTextBoxWidth, controlHeight, hwndRootWindow, NULL, hInstance, NULL);
 	SendMessage(hwndUser, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
+	currentY += controlHeight + lineSpacing;
+
+	// Password.
 	CreateWindow(L"STATIC", L"Enter password:",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 195, 160, 16, hwnd, NULL, hInstance, NULL);
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		minX + 2, currentY + controlLabelYOffset, apLabelWidth - 2, staticTextHeight, hwndRootWindow, NULL, hInstance, NULL);
 	hwndPassword = CreateWindow(MSFTEDIT_CLASS, L"",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		180, 190, 400, 26, hwnd, NULL, hInstance, NULL);
+		apTextBoxStart, currentY, apTextBoxWidth, controlHeight, hwndRootWindow, NULL, hInstance, NULL);
 	SendMessage(hwndPassword, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
+	currentY += controlHeight + lineSpacing;
+
+	// Load credentials button.
+	const int apCredentialsButtonWidth = 150;
+	hwndLoadCredentials = CreateWindow(L"BUTTON", L"Restore Credentials",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		minX, currentY, apLabelWidth, controlHeight, hwndRootWindow, (HMENU)IDC_LOADCREDENTIALS, hInstance, NULL);
+
+	// Connect button. In line with the load credentials button.
 	hwndRandomize = CreateWindow(L"BUTTON", L"Connect",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 220, 130, 26, hwnd, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
+		apTextBoxStart, currentY, apTextBoxWidth, controlHeight, hwndRootWindow, (HMENU)IDC_RANDOMIZE, hInstance, NULL);
 
-	hwndSkip = CreateWindow(L"BUTTON", L"Skip Puzzle",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		450, 250, 130, 26, hwnd, (HMENU)IDC_SKIPPUZZLE, hInstance, NULL);
+	currentY += controlHeight + lineSpacing;
 
-	hwndLoadCredentials = CreateWindow(L"BUTTON", L"Load Credentials",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		10, 220, 130, 26, hwnd, (HMENU)IDC_LOADCREDENTIALS, hInstance, NULL);
+	// Current randomization status.
+	hwndLoadingText = CreateWindow(L"STATIC", L"Not connected.",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		apTextBoxStart + 2, currentY + 2, apTextBoxWidth - 2, staticTextHeight, hwndRootWindow, NULL, hInstance, NULL);
 
-	EnableWindow(hwndSkip, false);
-	EnableWindow(hwndChallenge, false);
+	currentY += staticTextHeight + lineSpacing + 2;
 
-	hwndLoadingText = CreateWindow(L"STATIC", L"",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		250, 225, 160, 16, hwnd, NULL, hInstance, NULL);
+	////////
+	// Horizontal rule.
+	CreateWindow(L"STATIC", L"",
+		WS_VISIBLE | WS_CHILD | SS_ETCHEDHORZ,
+		minX - 2, currentY + 4, maxX - minX + 4, 2, hwndRootWindow, 0, hInstance, NULL);
+	currentY += 10 + lineSpacing;
 
-	hwndAvailableSkips = CreateWindow(L"STATIC", L"",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		250, 255, 160, 16, hwnd, NULL, hInstance, NULL);
+	////////
+	// Game options
+	////////
 
-	hwndRecentError = CreateWindow(L"STATIC", L"Most Recent Error:",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-		10, 285, 573, 60, hwnd, NULL, hInstance, NULL);
+	//// Options label.
+	//CreateWindow(L"STATIC", L"Options:",
+	//	WS_VISIBLE | WS_CHILD | SS_LEFT,
+	//	minX, currentY, 120, 16, hwndRootWindow, NULL, hInstance, NULL);
 
-	std::ifstream configFile("WRPGconfig.txt");
-	if (configFile.is_open()) {
-		std::map<std::string, std::string> settings;
-		std::string setting, value;
-		while (!configFile.eof() && configFile.good()) {
-			std::getline(configFile, setting, ':');
-			std::getline(configFile, value);
-			settings[setting] = value;
-		}
-		if (settings.count("colorblind") && settings["colorblind"] == "true") {
-			colorblind = true;
-			CheckDlgButton(hwnd, IDC_COLORBLIND, true);
-		}
-		if (settings.count("collect") && settings["collect"] == "true") {
-			collect = true;
-			CheckDlgButton(hwnd, IDC_COLLECT, true);
-		}
-		configFile.close();
-	}
+	//currentY += staticTextHeight + lineSpacing;
 
-	focusEdit(hwndAddress);
+	// Colorblind option. This is 3 lines tall.
+	hwndColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		minX, currentY, maxX - minX, staticTextHeight * 3, hwndRootWindow, (HMENU)IDC_COLORBLIND, hInstance, NULL);
 
-	ShowWindow(hwndLoadingText, SW_HIDE);
+	currentY += staticTextHeight * 3 + lineSpacing;
+
+	// !collect option. This is 2 lines tall.
+	hwndCollect = CreateWindow(L"BUTTON", L"\"!collect\" Support - Puzzles that are locations will be \"skipped\" if those locations are collected / co-oped.",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		minX, currentY, maxX - minX, staticTextHeight * 2, hwndRootWindow, (HMENU)IDC_COLLECT, hInstance, NULL);
+
+	currentY += staticTextHeight * 2 + lineSpacing;
+
+	// Challenge timer option.
+	hwndChallenge = CreateWindow(L"BUTTON", L"Disable Challenge Timer - Disables the time limit on the Challenge.",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		minX, currentY, maxX - minX, staticTextHeight, hwndRootWindow, (HMENU)IDC_CHALLENGE, hInstance, NULL);
+	EnableWindow(hwndChallenge, false); // Disabled until randomization is complete.
+
+	currentY += staticTextHeight + lineSpacing;
 
 	//---------------------Debug/editing controls (debug mode only)---------------------
 
 	if (DEBUG) {
+
+		////////
+		// Horizontal rule.
+		CreateWindow(L"STATIC", L"",
+			WS_VISIBLE | WS_CHILD | SS_ETCHEDHORZ,
+			minX - 2, currentY + 4, maxX - minX + 4, 2, hwndRootWindow, 0, hInstance, NULL);
+		currentY += 10 + lineSpacing;
+
 		_panel = std::make_shared<Panel>();
 		CreateWindow(L"STATIC", L"Col/Row:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			160, 330, 100, 26, hwnd, NULL, hInstance, NULL);
+			160, currentY, 100, 26, hwndRootWindow, NULL, hInstance, NULL);
 		hwndCol = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-			220, 330, 50, 26, hwnd, NULL, hInstance, NULL);
+			220, currentY, 50, 26, hwndRootWindow, NULL, hInstance, NULL);
 		hwndRow = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-			270, 330, 50, 26, hwnd, NULL, hInstance, NULL);
+			270, currentY, 50, 26, hwndRootWindow, NULL, hInstance, NULL);
 		SetWindowText(hwndCol, L"0");
 		SetWindowText(hwndRow, L"0");
 
 		hwndElem = CreateWindow(L"COMBOBOX", L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWN | CBS_HASSTRINGS,
-			160, 360, 150, 300, hwnd, NULL, hInstance, NULL);
+			160, currentY + 30, 150, 300, hwndRootWindow, NULL, hInstance, NULL);
 
 		const int NUM_ELEMS = 17;
 		TCHAR elems[NUM_ELEMS][24] =
@@ -810,7 +867,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 		hwndColor = CreateWindow(L"COMBOBOX", L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWN | CBS_HASSTRINGS,
-			160, 390, 150, 300, hwnd, NULL, hInstance, NULL);
+			160, currentY + 60, 150, 300, hwndRootWindow, NULL, hInstance, NULL);
 
 		const int NUM_COLORS = 12;
 		TCHAR colors[NUM_COLORS][24] =
@@ -828,79 +885,128 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 		CreateWindow(L"BUTTON", L"Place Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 420, 150, 26, hwnd, (HMENU)IDC_ADD, hInstance, NULL);
+			160, currentY + 90, 150, 26, hwndRootWindow, (HMENU)IDC_ADD, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Remove Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 450, 150, 26, hwnd, (HMENU)IDC_REMOVE, hInstance, NULL);
+			160, currentY + 120, 150, 26, hwndRootWindow, (HMENU)IDC_REMOVE, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Test",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 530, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
+			160, currentY + 200, 150, 26, hwndRootWindow, (HMENU)IDC_TEST, hInstance, NULL);
 
 		CreateWindow(L"STATIC", L"Shape:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			50, 350, 50, 16, hwnd, NULL, hInstance, NULL);
+			50, currentY + 20, 50, 16, hwndRootWindow, NULL, hInstance, NULL);
 
 		for (int x = 0; x < 4; x++) {
 			for (int y = 0; y < 4; y++) {
 				CreateWindow(L"BUTTON", L"",
 					WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-					50 + x * 15, 380 + y * 15, 12, 12, hwnd, (HMENU)shapePos[x + y * 4], hInstance, NULL);
+					50 + x * 15, currentY + 50 + y * 15, 12, 12, hwndRootWindow, (HMENU)shapePos[x + y * 4], hInstance, NULL);
 			}
 		}
 		for (long long chk : defaultShape) {
-			CheckDlgButton(hwnd, static_cast<int>(chk), TRUE);
+			CheckDlgButton(hwndRootWindow, static_cast<int>(chk), TRUE);
 			currentShape |= chk;
 		}
 
 		CreateWindow(L"BUTTON", L"",
 			WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-			50, 460, 12, 12, hwnd, (HMENU)IDC_ROTATED, hInstance, NULL);
+			50, currentY + 130, 12, 12, hwndRootWindow, (HMENU)IDC_ROTATED, hInstance, NULL);
 		CreateWindow(L"STATIC", L"Rotated",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			65, 460, 80, 16, hwnd, NULL, hInstance, NULL);
+			65, currentY + 130, 80, 16, hwndRootWindow, NULL, hInstance, NULL);
 
 		CreateWindow(L"BUTTON", L"",
 			WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-			50, 480, 12, 12, hwnd, (HMENU)IDC_NEGATIVE, hInstance, NULL);
+			50, currentY + 150, 12, 12, hwndRootWindow, (HMENU)IDC_NEGATIVE, hInstance, NULL);
 		CreateWindow(L"STATIC", L"Negative",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			65, 480, 80, 16, hwnd, NULL, hInstance, NULL);
+			65, currentY + 150, 80, 16, hwndRootWindow, NULL, hInstance, NULL);
 
 		CreateWindow(L"BUTTON", L"",
 			WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-			50, 520, 12, 12, hwnd, (HMENU)IDC_SYMMETRYX, hInstance, NULL);
+			50, currentY + 190, 12, 12, hwndRootWindow, (HMENU)IDC_SYMMETRYX, hInstance, NULL);
 		CreateWindow(L"STATIC", L"H. Symmetry",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			65, 520, 90, 16, hwnd, NULL, hInstance, NULL);
+			65, currentY + 190, 90, 16, hwndRootWindow, NULL, hInstance, NULL);
 
 		CreateWindow(L"BUTTON", L"",
 			WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-			50, 540, 12, 12, hwnd, (HMENU)IDC_SYMMETRYY, hInstance, NULL);
+			50, currentY + 210, 12, 12, hwndRootWindow, (HMENU)IDC_SYMMETRYY, hInstance, NULL);
 		CreateWindow(L"STATIC", L"V. Symmetry",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			65, 540, 90, 16, hwnd, NULL, hInstance, NULL);
+			65, currentY + 210, 90, 16, hwndRootWindow, NULL, hInstance, NULL);
 
 		CreateWindow(L"STATIC", L"Direction:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			50, 560, 90, 16, hwnd, NULL, hInstance, NULL);
+			50, currentY + 230, 90, 16, hwndRootWindow, NULL, hInstance, NULL);
 
 		for (int x = 0; x < 3; x++) {
 			for (int y = 0; y < 3; y++) {
 				if (x == 1 && y == 1) continue;
 				CreateWindow(L"BUTTON", L"",
 					WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-					50 + x * 15, 580 + y * 15, 12, 12, hwnd, (HMENU)directions[x + y * 3], hInstance, NULL);
+					50 + x * 15, currentY + 250 + y * 15, 12, 12, hwndRootWindow, (HMENU)directions[x + y * 3], hInstance, NULL);
 			}
 		}
 
+		currentY += 317 + lineSpacing;
+
 		if (_panel->symmetry == Panel::Symmetry::Horizontal || _panel->symmetry == Panel::Symmetry::Rotational)
-			CheckDlgButton(hwnd, IDC_SYMMETRYX, TRUE);
+			CheckDlgButton(hwndRootWindow, IDC_SYMMETRYX, TRUE);
 		if (_panel->symmetry == Panel::Symmetry::Vertical || _panel->symmetry == Panel::Symmetry::Rotational)
-			CheckDlgButton(hwnd, IDC_SYMMETRYY, TRUE);
+			CheckDlgButton(hwndRootWindow, IDC_SYMMETRYY, TRUE);
 	}
 
-	ShowWindow(hwnd, nCmdShow);
-	UpdateWindow(hwnd);
+	////////
+	// Horizontal rule.
+	CreateWindow(L"STATIC", L"",
+		WS_VISIBLE | WS_CHILD | SS_ETCHEDHORZ,
+		minX - 2, currentY + 4, maxX - minX + 4, 2, hwndRootWindow, 0, hInstance, NULL);
+	currentY += 10 + lineSpacing;
+
+	// Most recent error.
+	hwndRecentError = CreateWindow(L"STATIC", L"Most Recent Error:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		minX, currentY, maxX - minX, staticTextHeight * 3, hwndRootWindow, NULL, hInstance, NULL);
+
+	currentY += staticTextHeight * 3 + lineSpacing;
+
+
+	// Set window height to match its contents. Note that we need to apply the hack mentioned above to account for external sizing factors.
+	MoveWindow(hwndRootWindow, 650, 200, windowWidth + (windowWidth - actualRootWindowSize.right), currentY + (windowHeight - actualRootWindowSize.bottom), true);
+
+	RECT windowSize = { 0,0,0,0 };
+	GetClientRect(hwndRootWindow, &windowSize);
+
+	RECT loadingTextSize = { 0,0,0,0 };
+	GetClientRect(hwndLoadingText, &loadingTextSize);
+
+	// Restore configuration data.
+	std::ifstream configFile("WRPGconfig.txt");
+	if (configFile.is_open()) {
+		std::map<std::string, std::string> settings;
+		std::string setting, value;
+		while (!configFile.eof() && configFile.good()) {
+			std::getline(configFile, setting, ':');
+			std::getline(configFile, value);
+			settings[setting] = value;
+		}
+		if (settings.count("colorblind") && settings["colorblind"] == "true") {
+			colorblind = true;
+			CheckDlgButton(hwndRootWindow, IDC_COLORBLIND, true);
+		}
+		if (settings.count("collect") && settings["collect"] == "true") {
+			collect = true;
+			CheckDlgButton(hwndRootWindow, IDC_COLLECT, true);
+		}
+		configFile.close();
+	}
+
+	focusEdit(hwndAddress);
+
+	ShowWindow(hwndRootWindow, nCmdShow);
+	UpdateWindow(hwndRootWindow);
 
 	ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}, { FVIRTKEY, VK_RETURN, IDC_RETURN} };
 	const HACCEL hAccel = CreateAcceleratorTable(Accel, sizeof(Accel) / sizeof(ACCEL));
@@ -908,7 +1014,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     MSG msg;
 	while (!GetMessage(&msg, nullptr, 0, 0) == 0)
 	{
-		if (!TranslateAccelerator(hwnd, hAccel, &msg)) {
+		if (!TranslateAccelerator(hwndRootWindow, hAccel, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}

@@ -38,8 +38,8 @@ class APRandomizer {
 		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
 		void PostGeneration(HWND loadingHandle);
 
-		void GenerateNormal(HWND skipButton, HWND availableSkips);
-		void GenerateHard(HWND skipButton, HWND availableSkips);
+		void GenerateNormal();
+		void GenerateHard();
 
 		void SkipPuzzle();
 
