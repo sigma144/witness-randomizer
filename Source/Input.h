@@ -8,6 +8,11 @@
 #define INPUT_KEYSTATE_SIZE 0x200
 #endif
 
+// Custom keys for randomizer-specific functionality.
+enum class CustomKey : int {
+	SKIP_PUZZLE,
+	MAX
+};
 
 // A mapping of human-readable button names onto the hex codes used by the game.
 enum class InputButton : int {
@@ -89,6 +94,8 @@ enum class InputButton : int {
 	KEY_ARROW_RIGHT		= 0x103,
 
 	// Control inputs
+	KEY_ESCAPE			= 0x1B,
+	KEY_SPACEBAR		= 0x20,
 	KEY_RETURN			= 0x0D, // also used on the numpad
 	KEY_BACKSPACE		= 0x08,
 	KEY_DELETE			= 0x7F,
@@ -148,16 +155,19 @@ enum class InputButton : int {
 	CONTROLLER_RSTICK_CLICK		= 0x14C,
 
 	// D-pad on the controller
-	CONTROLLER_DPAD_UP			= 0x140,
-	CONTROLLER_DPAD_DOWN		= 0x141,
-	CONTROLLER_DPAD_LEFT		= 0x142,
-	CONTROLLER_DPAD_RIGHT		= 0x143,
+	CONTROLLER_DPAD_UP			= 0x13F,
+	CONTROLLER_DPAD_DOWN		= 0x140,
+	CONTROLLER_DPAD_LEFT		= 0x141,
+	CONTROLLER_DPAD_RIGHT		= 0x142,
 
 	// Shoulder/trigger buttons on the controller. Trigger values are presented as binary on/off and do not report pressure values.
 	CONTROLLER_SHOULDER_LEFT	= 0x139,
 	CONTROLLER_SHOULDER_RIGHT	= 0x13a,
 	CONTROLLER_TRIGGER_LEFT		= 0x13b,
 	CONTROLLER_TRIGGER_RIGHT	= 0x13c,
+
+	// Miscellaneous
+	NONE						= 0x0
 };
 
 enum InteractionState {
@@ -165,7 +175,8 @@ enum InteractionState {
 	Focusing,	// Cursor shown, but no puzzle selected
 	Solving,	// Actively solving a puzzle
 	Cutscene,	// In the ending cutscene
-	Menu		// A menu is shown and blocking game input
+	Menu,		// A menu is shown and blocking game input
+	Keybinding	// The randomizer is intercepting input in order to register a keybind.
 };
 
 
@@ -184,6 +195,9 @@ public:
 	// Returns the state (pressed/released) for the given key.
 	bool getButtonState(InputButton key) const;
 
+	// Returns the button associated with the custom keybind.
+	InputButton getCustomKeybind(CustomKey key) const;
+
 	// Returns the player's current interaction mode.
 	InteractionState getInteractionState() const;
 
@@ -195,10 +209,21 @@ public:
 
 	std::pair<std::vector<float>, std::vector<float>> getMouseRay();
 
+	static std::string getNameForCustomKey(CustomKey key);
+	static std::string getNameForInputButton(InputButton button);
+
+	void beginCustomKeybind(CustomKey key);
+	bool trySetCustomKeybind(InputButton button);
+	void cancelCustomKeybind();
+
+	CustomKey getCurrentlyRebindingKey() const;
+
+	// Determines whether or not the given button is valid for use as a custom keybind.
+	bool isValidForCustomKeybind(InputButton button) const;
+
 private:
 
 	InputWatchdog();
-
 	static InputWatchdog* _singleton;
 
 	// The raw state data retrieved from game memory. Updated once per tick.
@@ -220,6 +245,9 @@ private:
 	void findInteractModeOffset();
 	void findMenuOpenOffset();
 	void findCursorRelatedOffsets();
+
+	std::optional<CustomKey> currentlyRebindingKey;
+	std::map<CustomKey, InputButton> customKeybinds;
 
 	uint64_t interactModeOffset;
 	uint64_t menuOpenOffset;

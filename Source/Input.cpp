@@ -23,6 +23,9 @@ InputWatchdog::InputWatchdog() : Watchdog(0.01f) {
 	findInteractModeOffset();
 	findMenuOpenOffset();
 	findCursorRelatedOffsets();
+
+	// TEMP: Set default keybinds.
+	customKeybinds[CustomKey::SKIP_PUZZLE] = InputButton::KEY_T;
 }
 
 void InputWatchdog::action() {
@@ -35,8 +38,16 @@ bool InputWatchdog::getButtonState(InputButton key) const {
 	return currentKeyState[static_cast<int>(key)] != 0;
 }
 
+InputButton InputWatchdog::getCustomKeybind(CustomKey key) const {
+	auto result = customKeybinds.find(key);
+	return result != customKeybinds.end() ? result->second : InputButton::NONE;
+}
+
 InteractionState InputWatchdog::getInteractionState() const {
-	if (currentMenuOpenPercent >= 1.f) {
+	if (currentlyRebindingKey.has_value()) {
+		return InteractionState::Keybinding;
+	}
+	else if (currentMenuOpenPercent >= 1.f) {
 		return InteractionState::Menu;
 	}
 	else {
@@ -131,6 +142,68 @@ std::pair<std::vector<float>, std::vector<float>> InputWatchdog::getMouseRay()
 	std::vector<float> playerPosition = _memory->ReadPlayerPosition(); // Player position and "cursor origin" appear to be the same thing.
 
 	return { playerPosition, direction };
+}
+
+void InputWatchdog::beginCustomKeybind(CustomKey key) {
+	currentlyRebindingKey = key;
+}
+
+bool InputWatchdog::trySetCustomKeybind(InputButton button) {
+	if (currentlyRebindingKey.has_value() && isValidForCustomKeybind(button)) {
+		customKeybinds[currentlyRebindingKey.value()] = button;
+		currentlyRebindingKey.reset();
+
+		return true;
+	}
+
+	return false;
+}
+
+void InputWatchdog::cancelCustomKeybind() {
+	currentlyRebindingKey.reset();
+}
+
+CustomKey InputWatchdog::getCurrentlyRebindingKey() const {
+	return currentlyRebindingKey.has_value() ? currentlyRebindingKey.value() : CustomKey::MAX;
+}
+
+bool InputWatchdog::isValidForCustomKeybind(InputButton button) const
+{
+	// Filter inputs that are either hard-coded by the game to map to particular actions or are impractical for keybinds.
+	switch (button) {
+	case InputButton::MOUSE_BUTTON_LEFT:
+	case InputButton::MOUSE_BUTTON_RIGHT:
+	case InputButton::KEY_SPACEBAR:
+	case InputButton::KEY_ESCAPE:
+		// These buttons are hard-coded into the game.
+		return false;
+	case InputButton::CONTROLLER_LSTICK_UP:
+	case InputButton::CONTROLLER_LSTICK_DOWN:
+	case InputButton::CONTROLLER_LSTICK_LEFT:
+	case InputButton::CONTROLLER_LSTICK_RIGHT:
+	case InputButton::CONTROLLER_RSTICK_UP:
+	case InputButton::CONTROLLER_RSTICK_DOWN:
+	case InputButton::CONTROLLER_RSTICK_LEFT:
+	case InputButton::CONTROLLER_RSTICK_RIGHT:
+		// Controller axes are not good for keybinds.
+		return false;
+	}
+
+	// TODO: Identify players' current in-game keybinds and reject those.
+
+	// Filter keys that are already bound to a different custom keybind.
+	for (const std::pair<CustomKey, InputButton>& keybind : customKeybinds) {
+		if (currentlyRebindingKey.has_value() && keybind.first == currentlyRebindingKey.value()) {
+			// If we're rebinding a key, that key's current button is valid.
+			continue;
+		}
+
+		if (keybind.second == button) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void InputWatchdog::updateKeyState() {

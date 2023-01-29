@@ -61,6 +61,8 @@ public:
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
 
+	void StartRebindingKey(enum class CustomKey key);
+
 	void AddPuzzleSkip();
 	void SkipPuzzle();
 	void SkipPreviouslySkippedPuzzles();

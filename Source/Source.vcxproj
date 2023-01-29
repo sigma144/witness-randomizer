@@ -210,6 +210,7 @@
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="HUDManager.cpp" />
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="InputStrings.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
     <ClCompile Include="Panel.cpp" />

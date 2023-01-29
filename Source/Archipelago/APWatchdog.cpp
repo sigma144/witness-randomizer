@@ -395,8 +395,17 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
+void APWatchdog::StartRebindingKey(CustomKey key)
+{
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState == InteractionState::Walking) {
+		InputWatchdog::get()->beginCustomKeybind(key);
+	}
+}
+
+void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
+	const InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
 		// If we're tracking a panel for the purpose of puzzle skips, update our internal logic.
 		if (activePanelId != -1) {
@@ -407,7 +416,8 @@ void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
 				puzzleSkipCost = CalculatePuzzleSkipCost(activePanelId, puzzleSkipInfoMessage);
 
 				// Update skip button logic.
-				bool skipButtonHeld = InputWatchdog::get()->getButtonState(InputButton::KEY_T);
+				InputButton skipButton = inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE);
+				bool skipButtonHeld = skipButton != InputButton::NONE && inputWatchdog->getButtonState(skipButton);
 				if (skipButtonHeld) {
 					skipButtonHeldTime += deltaSeconds;
 					if (skipButtonHeldTime > SKIP_HOLD_DURATION) {
@@ -784,30 +794,61 @@ void APWatchdog::DoubleDoorTargetHack(int id) {
 }
 
 void APWatchdog::HandleKeyTaps() {
-	std::vector<InputButton> tapEvents = InputWatchdog::get()->consumeTapEvents();
-	for (const InputButton& tappedButton : tapEvents) {
-		switch (tappedButton) {
-#if CHEAT_KEYS_ENABLED
-		case InputButton::KEY_MINUS:
-			hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
-			ApplyTemporarySlow();
-			break;
-		case InputButton::KEY_EQUALS:
-			hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
-			ApplyTemporarySpeedBoost();
-			break;
-		case InputButton::KEY_0:
-			hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
-			if (spentPuzzleSkips > foundPuzzleSkips) {
-				// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
-				//   previous app launch. Reset to zero before adding a new one.
-				foundPuzzleSkips = spentPuzzleSkips;
-			}
+	InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState interactionState = inputWatchdog->getInteractionState();
+	std::vector<InputButton> tapEvents = inputWatchdog->consumeTapEvents();
 
-			AddPuzzleSkip();
-			break;
+	for (const InputButton& tappedButton : tapEvents) {
+		if (interactionState == InteractionState::Keybinding) {
+			CustomKey bindingKey = inputWatchdog->getCurrentlyRebindingKey();
+			if (tappedButton == InputButton::KEY_ESCAPE) {
+				inputWatchdog->cancelCustomKeybind();
+			}
+			else if (!inputWatchdog->isValidForCustomKeybind(tappedButton)) {
+				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
+				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
+				hudManager->queueBannerMessage("Can't bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
+			}
+			else if (inputWatchdog->trySetCustomKeybind(tappedButton)) {
+
+				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
+				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
+				hudManager->queueBannerMessage("Bound [" + keyName + "] to " + bindName + ".", { 1.f, 1.f, 1.f }, 2.f);
+			}
+			else {
+				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
+				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
+				hudManager->queueBannerMessage("Failed to bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
+			}
+		}
+		else {
+			switch (tappedButton) {
+				// TEMP: keybind rebind
+			case InputButton::KEY_BACKSLASH:
+				StartRebindingKey(CustomKey::SKIP_PUZZLE);
+				break;
+#if CHEAT_KEYS_ENABLED
+			case InputButton::KEY_MINUS:
+				hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
+				ApplyTemporarySlow();
+				break;
+			case InputButton::KEY_EQUALS:
+				hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
+				ApplyTemporarySpeedBoost();
+				break;
+			case InputButton::KEY_0:
+				hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
+				if (spentPuzzleSkips > foundPuzzleSkips) {
+					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
+					//   previous app launch. Reset to zero before adding a new one.
+					foundPuzzleSkips = spentPuzzleSkips;
+				}
+
+				AddPuzzleSkip();
+				break;
 #endif
-		};
+			};
+		}
 	}
 }
 
@@ -1308,7 +1349,8 @@ void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
 }
 
 void APWatchdog::SetStatusMessages() {
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	const InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Walking) {
 		int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
@@ -1329,14 +1371,16 @@ void APWatchdog::SetStatusMessages() {
 			hudManager->setStatusMessage(puzzleSkipInfoMessage);
 
 			if (CanUsePuzzleSkip()) {
+				std::string skipInstruction = "Hold [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to use Puzzle Skip.";
+
 				if (puzzleSkipCost == 0) {
-					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Free!)");
+					hudManager->setActionHint(skipInstruction + " (Free!)");
 				}
 				else if (puzzleSkipCost == 1) {
-					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
+					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
 				}
 				else {
-					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
+					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
 				}
 			}
 			else if (GetAvailablePuzzleSkips() > 0 && puzzleSkipCost > GetAvailablePuzzleSkips()) {
@@ -1356,6 +1400,11 @@ void APWatchdog::SetStatusMessages() {
 			hudManager->clearStatusMessage();
 			hudManager->clearActionHint();
 		}
+	}
+	else if (interactionState == InteractionState::Keybinding) {
+		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
+		hudManager->setActionHint("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
+		hudManager->clearStatusMessage();
 	}
 	else {
 		hudManager->clearStatusMessage();
