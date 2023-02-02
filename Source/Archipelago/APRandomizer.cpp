@@ -17,7 +17,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 6});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 8});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -372,8 +372,6 @@ std::string APRandomizer::buildUri(std::string& server)
 {
 	std::string uri = server;
 
-	if (uri.rfind("ws://", 0) == std::string::npos)
-		uri = "ws://" + uri;
 	if (uri.find(":") == std::string::npos)
 		uri = uri + ":38281";
 	else if (uri.back() == ':')
@@ -451,6 +449,8 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	setPuzzleLocks(loadingHandle);
 
 	async->ResetPowerSurge();
+
+	_memory->applyDestructivePatches();
 
 	randomizationFinished = true;
 	_memory->showMsg = false;

@@ -191,10 +191,12 @@ public:
 	}
 
 	void writeCursorSize(float size) {
-		LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
+		LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize + 1);
 
 		WriteAbsolute(addressPointer, &size, sizeof(size));
 	}
+
+	void applyDestructivePatches();
 
 	void writeCursorColor(std::vector<float> color) {
 		float r = color[0];
