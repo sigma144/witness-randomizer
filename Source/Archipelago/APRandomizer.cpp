@@ -483,7 +483,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -491,7 +491,7 @@ void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
 }
 
 void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	//Mess with Town targets

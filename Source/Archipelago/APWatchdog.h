@@ -16,7 +16,7 @@
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s) : Watchdog(0.1f) {
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.1f) {
 		generator = std::make_shared<Generate>();
 		ap = client;
 		panelIdToLocationId = mapping;
@@ -29,6 +29,7 @@ public:
 		EPShuffle = ep;
 		obeliskHexToEPHexes = o;
 		epToName = epn;
+		solveModeSpeedFactor = smsf;
 
 		for (auto [key, value] : obeliskHexToEPHexes) {
 			obeliskHexToAmountOfEPs[key] = (int)value.size();
@@ -130,6 +131,7 @@ private:
 	int storageCheckCounter = 6;
 
 	float speedTime = 0.0f;
+	float solveModeSpeedFactor = 0.0f;
 
 	void HandleKeyTaps();
 

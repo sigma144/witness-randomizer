@@ -18,8 +18,7 @@ void APWatchdog::action() {
 	lastFrameTime = currentFrameTime;
 
 	HandleInteractionState();
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-	if (interactionState == InteractionState::Walking) HandleMovementSpeed(frameDuration.count());
+	HandleMovementSpeed(frameDuration.count());
 	
 	HandleKeyTaps();
 
@@ -337,7 +336,12 @@ void APWatchdog::ApplyTemporarySlow() {
 void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
 	if (speedTime != 0) {
 		// Move the speed time closer to zero.
-		speedTime = std::max(std::abs(speedTime) - deltaSeconds, 0.f) * (std::signbit(speedTime) ? -1 : 1);
+		float factor = 1;
+
+		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+		if (interactionState != InteractionState::Walking) factor = solveModeSpeedFactor;
+
+		speedTime = std::max(std::abs(speedTime) - deltaSeconds * factor, 0.f) * (std::signbit(speedTime) ? -1 : 1);
 
 		if (speedTime > 0) {
 			WriteMovementSpeed(2.0f * baseSpeed);
