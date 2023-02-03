@@ -31,6 +31,11 @@ public:
 		epToName = epn;
 		solveModeSpeedFactor = smsf;
 
+		speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
+		if (speedTime == 0.6999999881) { // original value
+			speedTime = 0;
+		}
+
 		for (auto [key, value] : obeliskHexToEPHexes) {
 			obeliskHexToAmountOfEPs[key] = (int)value.size();
 		}

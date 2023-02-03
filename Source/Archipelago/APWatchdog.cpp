@@ -353,6 +353,12 @@ void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
 			WriteMovementSpeed(baseSpeed);
 		}
 	}
+
+	if (speedTime == 0.6999999881) { // avoid original value
+		speedTime = 0.699;
+	}
+
+	WritePanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR, { speedTime });
 }
 
 void APWatchdog::TriggerPowerSurge() {
