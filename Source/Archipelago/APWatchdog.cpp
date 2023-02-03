@@ -1245,6 +1245,10 @@ void APWatchdog::CheckEPSkips() {
 		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
 	}
 
+	if (!panelsToSkip.empty()) {
+		hudManager->queueBannerMessage("Puzzle symbols removed to make Environmental Pattern solvable.");
+	}
+
 	for (int panel : panelsToSkip) {
 		panelLocker->PermanentlyUnlockPuzzle(panel);
 		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
