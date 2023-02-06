@@ -135,6 +135,17 @@ Hovering over the symbol of an EP on an Obelisk will display its location name.
 
 ### Goal support
 
+There are four possible goal settings for you to choose, completion of which will send the Victory flag to the Archipelago server.
+
+* Mountaintop Box Short - Solve the Mountaintop Box to the right, usually requiring 7 lasers.
+* Mountaintop Box Long - Solve the Mountaintop Box to the left, usually requiring 11 lasers.
+* Elevator - Solve the Elevator start panel at the bottom of the Mountain.
+* Challenge - Solve the Challenge Vault Box by doing the Challenge speedrun.
+
+Unlike in vanilla, where getting to the Elevator or Challenge before getting 7 or 11 lasers respectively is impossible without glitches, the Record Player and Elevator start panels are hard-locked by the respective amount of required lasers. Having the required amount of lasers activated will immediately unlock those panels without needing to solve the Mountaintop Box.
+
+In your Archipelago settings, it is also possible to change the amount of required lasers for Mountaintop Box and Elevator to any value from 1 to 7, and the amount of required lasers for Mountaintop Box Long and Challenge to any value from 1 to 11.
+
 ## Other Archipelago support
 
 ### Useful items, junk items, and traps
