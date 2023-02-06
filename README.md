@@ -192,7 +192,7 @@ As well as the Archipelago integration, the randomizer includes some quality-of-
 
 ### Boat speed
 
-The boat is faster in The Witness randomizer. For example selecting the 2nd speed notch on the boat speed control will make the boat as fast as the 3rd speed notch did in the base game. The top speed is <!-- TODO --> x times faster
+The boat is faster in The Witness randomizer. For example selecting the 2nd speed notch on the boat speed control will make the boat as fast as the 3rd speed notch did in the base game. The top speed is raised from 2.5 to 6.
 
 ### Audiolog hints
 
