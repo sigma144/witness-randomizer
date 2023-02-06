@@ -133,6 +133,8 @@ Settings of your Archipelago world also determine whether certain EPs are pre-co
 
 Hovering over the symbol of an EP on an Obelisk will display its location name.
 
+In Sigma Rando, some EPs are impossible to solve because of the random puzzle generation. This includes the Keep Pressure Plates puzzles, the Mountain Light Bridge puzzles, and some others. These puzzles will automatically have their puzzle symbols removed upon solving them for the first time (have a free "Puzzle Skip" applied to them, essentially) , giving you full control over the solution path and allowing you to solve their associated EPs.
+
 ### Goal support
 
 There are four possible goal settings for you to choose, completion of which will send the Victory flag to the Archipelago server.
@@ -189,6 +191,11 @@ Collect support can be turned on by a checkbox in the randomizer client.
 ## Quality of life updates
 
 As well as the Archipelago integration, the randomizer includes some quality-of-life improvements to make your Witness experience nicer.
+
+### Elevator/Bridge speed
+
+Some elevators and bridges are sped up.
+This includes all the ones from Sigma Rando, as well as a few additional ones like the Bunker Elevator, Caves Elevator and Monastery Shutters.
 
 ### Boat speed
 
