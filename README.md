@@ -9,6 +9,9 @@ This is a project that modifies 2016 puzzle game [The Witness](https://store.ste
 To play a randomizer version of The Witness with this project, you will need:
 
 1. **A compatible version of The Witness**
+   
+   Officially supported versions are: Steam, Epic Games, (Humble Store)
+   Supported Operating System: Windows, 64bit
 
 2. **An executable version of this randomizer**
 
