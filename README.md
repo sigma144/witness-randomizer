@@ -84,7 +84,7 @@ As other players unlock items in your world, the randomizer will display text on
 
 With symbol shuffle on, individual panels are unavailable to solve until the symbols they require have been awarded as Archipelago items
 
-If you don't yet have the symbols required to solve a panel, it will show a bright red background, the word "MISSING" and a graphic representation of the specific symbols that are missing. Additionally a subtitle will be displayed with the missing symbol names when you're near to the panel.
+If you don't yet have the symbols required to solve a panel, it will show a bright red background, the word "MISSING" and a graphic representation of the specific symbols that are missing. For some puzzles where a display would not be visible, a subtitle will be displayed with the missing symbol names when you're near to the panel instead.
 
 ### Door shuffle
 
