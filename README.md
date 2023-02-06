@@ -52,17 +52,6 @@ To play a randomizer version of The Witness with this project, you will need:
    * This will randomize your running version of the game and link its progress with the Archipelago servers
 6. Play!
 
-### Supported versions
-
-Because of differences between releases, and the amount of memory manipulation the randomizer performs, this project will not work with all versions of The Witness.
-
-Supported versions of the game are:
-
-* Steam release for Windows, vX.X
-* [...]
-
-Other/older versions may or may not work
-
 # Randomizer features
 
 This project makes a number of changes to The Witness. Most of these are configured as part of the Archipelago game setup process. See the [Witness game settings page](https://archipelago.gg/games/The%20Witness/player-settings) on the Archipelago website for info on how to specify these settings for your game.
