@@ -129,8 +129,9 @@ Instead, the normal effects of these panels are moved to other panels around the
 
 With EP shuffle on, competing the games environmental puzzles can send checks to Archipelago. Depending on the settings, this might be a check for every individual EP, or it might be a check for completing every EP on a single face of the black obelisks around the island.
 
+Settings of your Archipelago world also determine whether certain EPs are pre-completed. These will glow when hovering over their start point, unless they also don't do this in vanilla. The symbols on the respective Obelisk will also be lit up.
 
-[...detail the mechanics...]
+Hovering over the symbol of an EP on an Obelisk will display its location name.
 
 ### Goal support
 
