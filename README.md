@@ -123,7 +123,7 @@ These include puzzles in:
 
 If this setting is on, these panels will be completely disabled so that you never have to solve a puzzle that's unrandomized.
 
-Instead, the normal effects of these panels are moved to other panels around the world. You can find details of these changes in the [Sigma randomizer documentation].
+Instead, the normal effects of these panels are moved to other panels around the world. You can find details of these changes in the [Sigma randomizer documentation](https://github.com/sigma144/witness-randomizer/wiki/Activation-Triggers).
 
 ### EP shuffle
 
