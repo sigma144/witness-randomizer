@@ -94,7 +94,7 @@ With door shuffle on, doors will not open based on their original triggers. Inst
 
 Depending on the game settings, doors may be received from Archipelago individually ("Complex doors") or as a group of related doors ("Simple doors", for example all doors in the Desert temple at once)
 
-Additionally, with a "Panels" setting, the panels that activate doors are not enabled until a corresponding item is received.
+Additionally, with a "Panels" setting, the panels that activate doors, move bridges or trigger other effects such as changing water levels are not enabled until a corresponding item is received.
 
 ### Laser shuffle
 
