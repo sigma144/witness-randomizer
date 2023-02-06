@@ -144,7 +144,7 @@ As well as progression items like symbols, doors and lasers, Archipelago will al
 
 The randomizer will keep track of the number of "puzzle skip" items you have been awarded. You can spend a puzzle skip to replace any puzzle panel in the game with a trivially solvable version.
 
-When standing in front of the panel to skip, press and hold the `T` button for one second to spend the skip.
+When standing in front of the panel to skip: Click the starting circle to draw on the panel, then press and hold the `T` button for one second to spend the skip.
 
 Depending on the panel, this will either replace the panel with a "SKIPPED" display with a single line to solve, or may remove all symbols from the panel allowing you to draw any valid line.
 
