@@ -205,11 +205,11 @@ The boat is faster in The Witness randomizer. For example selecting the 2nd spee
 
 Archipelago has a built-in hint system that unlocks hints based on your progress. Additionally, activating audiolog recorders scattered around the island will display a subtitle that may give you information about one of the items or locations in your game.
 
-The number of useful hints available in your game is controller by your game settings. Not all hints will be useful.
+The number of useful hints available in your game is controlled by your game settings. Not all hints will be useful.
 
 There may be duplicates of each hint. This makes it easier for you to find all the available hints.
 
-Activating an audiolog will start playing the usual recording, as well as displaying the hint. You can click an audiolog a second time to stop the recording.
+Activating an audio log will start playing the usual recording, as well as displaying the hint. You can click an audiolog a second time to stop the recording. The hint will display for exactly 12 seconds no matter what, meaning the subtitles will continue to display even if you immediately turn off the audio log again. Conversely, they will stop playing after some time even if you leave the audio log on.
 
 ### Disable challenge timer
 
