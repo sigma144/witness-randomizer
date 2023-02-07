@@ -1142,7 +1142,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		hudManager->setWorldMessage("Needs Dots, Black/White Squares.");
 	}
 	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
-		hudManager->setWorldMessage("Bunker panels need B/W and Colored Squares.");
+		hudManager->setWorldMessage("Most Bunker panels need Black/White Squares and Colored Squares.");
 	}
 	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
 		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Eraser, Triangles,\n"
