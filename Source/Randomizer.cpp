@@ -12,6 +12,7 @@
 #include <numeric>
 #include "Random.h"
 #include "Quaternion.h"
+#include "ClientWindow.h"
 
 std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::vector<int>& toRemove) {
 	std::vector<int> result;
@@ -24,23 +25,22 @@ std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::v
 	return result;
 }
 
-void Randomizer::GenerateNormal(HWND loadingHandle) {
+void Randomizer::GenerateNormal() {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
-	puzzles->setLoadingHandle(loadingHandle);
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllN();
 	if (doubleMode) ShufflePanels(false);
 }
 
-void Randomizer::GenerateHard(HWND loadingHandle) {
+void Randomizer::GenerateHard() {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
-	puzzles->setLoadingHandle(loadingHandle);
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllH();
 	if (doubleMode) ShufflePanels(true);
-	SetWindowText(loadingHandle, L"Starting watchdogs...");
+
+	ClientWindow* clientWindow = ClientWindow::get();
+	clientWindow->setStatusMessage("Starting expert symbol watchdogs...");
 	Panel::StartArrowWatchdogs(_shuffleMapping);
-	SetWindowText(loadingHandle, L"Done!");
 }
 
 template <class T>

@@ -2078,4 +2078,59 @@ void Special::test() {
 
 }
 
+
+std::string Special::readStringFromPanels(std::vector<int> panelIDs) {
+	std::string output;
+	for (int panelIndex = 0; panelIndex < panelIDs.size(); panelIndex++) {
+		int panelID = panelIDs[panelIndex];
+
+		// First, check to see if this panel has been overridden at all.
+		if (Special::ReadPanelData<float>(panelID, VIDEO_STATUS_COLOR) == 1.0f) {
+			// This panel hasn't been overridden, which means there is no more string data to read.
+			break;
+		}
+
+		for (int propertyOffset = 0; propertyOffset < 16; propertyOffset += 4) {
+			// Retrieve the data and append it to the array.
+			const int intData = Special::ReadPanelData<int>(panelID, VIDEO_STATUS_COLOR + propertyOffset);
+			output.append(reinterpret_cast<const char*>(&intData), 4);
+
+			// Check to see if the string length matches what we would expect it to be if we had just written 4 bytes
+			//   to it. This will not be the case if the data we just read contains a null terminator.
+			int targetCharCount = panelIndex * 16 + propertyOffset + 4;
+			if (output.length() < targetCharCount) {
+				break;
+			}
+		}
+	}
+
+	return output;
+}
+
+void Special::writeStringToPanels(std::string string, std::vector<int> panelIDs) {
+	for (int panelIndex = 0; panelIndex < panelIDs.size(); panelIndex++) {
+		int panelID = panelIDs[panelIndex];
+
+		// When determining whether a panel has been overridden, we check VIDEO_STATUS_COLOR + 12 to see if it has its
+		//   default value of 1.0f. Clear this value so that we will always know that this panel has been overridden,
+		//   even if we don't actually write enough data to require overriding VIDEO_STATUS_COLOR + 12.
+		Special::WritePanelData(panelID, VIDEO_STATUS_COLOR + 12, 0);
+
+		// Iterate through the string, writing 4 characters at a time.
+		for (int propertyOffset = 0; propertyOffset < 16; propertyOffset += 4) {
+			int charIndex = propertyOffset + panelIndex * 16;
+			if (charIndex > string.length()) {
+				// We've run past the end of the string.
+				return;
+			}
+
+			// Cast four bytes of the array to an integer and write it to the panel. We don't actually care if we read
+			//   past the end of the character array here because we'll still be capturing the null terminator, which
+			//   is what actually matters for reading.
+			int intData = *reinterpret_cast<const int*>(string.c_str() + charIndex);
+			Special::WritePanelData(panelID, VIDEO_STATUS_COLOR + propertyOffset, intData);
+		}
+	}
+}
+
 std::map<int, int> Special::correctShapesById = {};

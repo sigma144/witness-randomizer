@@ -280,7 +280,6 @@ public:
 	static int DECELERATION;
 	static bool showMsg;
 	static int globalsTests[3];
-	static HWND errorWindow;
 	bool retryOnFail = true;
 
 	// Scan the process's memory for the given signature, returning the address of the first byte of the signature relative to startAddress if found,

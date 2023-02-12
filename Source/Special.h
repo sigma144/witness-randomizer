@@ -163,6 +163,9 @@ public:
 		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WriteArray<Color>(panel, offset, data, force);
 	}
 
+	static std::string readStringFromPanels(std::vector<int> panelIDs);
+	static void writeStringToPanels(std::string string, std::vector<int> panelIDs);
+
 	static void testSwap(int id1, int id2) {
 		std::shared_ptr<Panel> panel = std::make_shared<Panel>();
 		std::vector<byte> bytes1 = panel->_memory->ReadPanelData<byte>(id1, 0, 0x600);

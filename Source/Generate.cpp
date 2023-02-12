@@ -6,6 +6,7 @@
 #include "Randomizer.h"
 #include "MultiGenerate.h"
 #include "Special.h"
+#include "ClientWindow.h"
 
 void Generate::generate(int id, int symbol, int amount) {
 	PuzzleSymbols symbols({ std::make_pair(symbol, amount) });
@@ -308,11 +309,15 @@ void Generate::incrementProgress()
 {
 	_areaTotal++;
 	_genTotal++;
-	if (_handle) {
-		int total = (_totalPuzzles == 0 ? _areaPuzzles : _totalPuzzles);
-		if (total == 0) return;
-		std::wstring text = _areaName + L": " + std::to_wstring(_areaTotal) + L"/" + std::to_wstring(_areaPuzzles) + L" (" + std::to_wstring(_genTotal * 100 / total) + L"%)";
-		SetWindowText(_handle, text.c_str());
+
+	int total = (_totalPuzzles == 0 ? _areaPuzzles : _totalPuzzles);
+	if (total > 0) {
+		std::stringstream statusStream;
+		statusStream << "Randomizing " << _areaName << ": " << _areaTotal << "/" << _areaPuzzles << " (" << (_genTotal * 100 / total) << "%)";
+		ClientWindow::get()->setStatusMessage(statusStream.str());
+	}
+	else {
+		ClientWindow::get()->setStatusMessage("Randomizing " + _areaName);
 	}
 }
 

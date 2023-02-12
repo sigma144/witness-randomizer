@@ -35,8 +35,8 @@ class APRandomizer {
 		bool connected = false;
 		bool randomizationFinished = false;
 
-		bool Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password);
-		void PostGeneration(HWND loadingHandle);
+		bool Connect(std::string& server, std::string& user, std::string& password);
+		void PostGeneration();
 
 		void GenerateNormal();
 		void GenerateHard();
@@ -73,7 +73,7 @@ class APRandomizer {
 
 		void PreventSnipes();
 
-		void setPuzzleLocks(HWND loadingHandle);
+		void setPuzzleLocks();
 
 		std::string buildUri(std::string& server);
 };

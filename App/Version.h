@@ -13,4 +13,3 @@
 #define AP_VERSION_STR	"0.3.6"
 
 #define PRODUCT_NAME L"Witness Random Puzzle Generator for Archipelago.gg"
-#define WINDOW_CLASS L"WitnessRandomizer"

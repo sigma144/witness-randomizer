@@ -8,8 +8,8 @@ class Randomizer {
 public:
 	void RestoreLineWidths();
 
-	void GenerateNormal(HWND loadingHandle);
-	void GenerateHard(HWND loadingHandle);
+	void GenerateNormal();
+	void GenerateHard();
 
 	void AdjustSpeed();
 

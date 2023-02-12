@@ -9,6 +9,7 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <iostream>
+#include "ClientWindow.h"
 
 #undef PROCESSENTRY32
 #undef Process32Next
@@ -755,15 +756,9 @@ uint64_t Memory::executeSigScan(const std::vector<byte>& signatureBytes) {
 
 void Memory::ThrowError(std::string message) {
 	if (!showMsg) {
-		if(errorWindow != NULL){
-			time_t now = time(NULL);
-			//char *str = asctime(localtime(&now));
-			tm now_tm = {};
-			char str[26] = {};
-			localtime_s(&now_tm, &now);
-			asctime_s(str, 26, &now_tm);
-			std::string str_r(str);
-			SetWindowText(errorWindow, (L"Most recent error on " + std::wstring(str_r.begin(), str_r.end()) + L"\n" + std::wstring(message.begin(), message.end())).c_str());
+		ClientWindow* clientWindow = ClientWindow::get();
+		if (clientWindow != nullptr) {
+			clientWindow->setErrorMessage("Most recent error: " + message);
 		}
 		throw std::exception(message.c_str());
 	}
@@ -1321,7 +1316,6 @@ uint64_t Memory::cursorB = 0;
 
 std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
 bool Memory::showMsg = false;
-HWND Memory::errorWindow = NULL;
 int Memory::globalsTests[3] = {
 	0x62D0A0, //Steam and Epic Games
 	0x62B0A0, //Good Old Games

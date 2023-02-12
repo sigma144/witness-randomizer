@@ -19,7 +19,6 @@ public:
 		_width = _height = 0;
 		_areaTotal = _genTotal = _totalPuzzles = _areaPuzzles = _stoneTypes = 0;
 		_fullGaps = _bisect = _allowNonMatch = false;
-		_handle = NULL;
 		_panel = NULL;
 		_parity = -1;
 		colorblind = false;
@@ -62,9 +61,8 @@ public:
 	void setGridSize(int width, int height);
 	void setSymmetry(Panel::Symmetry symmetry);
 	void write(int id);
-	void setLoadingHandle(HWND handle) { _handle = handle; }
 	void setLoadingData(int totalPuzzles) { _totalPuzzles = totalPuzzles; _genTotal = 0; }
-	void setLoadingData(const std::wstring& areaName, int numPuzzles) { _areaName = areaName; _areaPuzzles = numPuzzles; _areaTotal = 0; }
+	void setLoadingData(const std::string& areaName, int numPuzzles) { _areaName = areaName; _areaPuzzles = numPuzzles; _areaTotal = 0; }
 	void setFlag(Config option) { _config |= option; };
 	void setFlagOnce(Config option) { _config |= option; _oneTimeAdd |= option; };
 	bool hasFlag(Config option) { return _config & option; };
@@ -157,9 +155,8 @@ private:
 	std::vector<std::vector<Point>> _obstructions;
 	bool colorblind;
 
-	HWND _handle;
 	int _areaTotal, _genTotal, _areaPuzzles, _totalPuzzles;
-	std::wstring _areaName;
+	std::string _areaName;
 
 	friend class PuzzleList;
 	friend class Special;

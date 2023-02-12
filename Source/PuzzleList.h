@@ -20,11 +20,6 @@ public:
 		this->specialCase = std::make_shared<Special>(generator);
 	}
 
-	void setLoadingHandle(HWND handle) {
-		_handle = handle;
-		generator->setLoadingHandle(handle);
-	}
-
 	void setSeed(int seed, bool isRNG, bool colorblind) {
 		this->seed = seed;
 		this->seedIsRNG = isRNG;
@@ -84,7 +79,6 @@ public:
 private:
 	std::shared_ptr<Generate> generator;
 	std::shared_ptr<Special> specialCase;
-	HWND _handle = nullptr;
 	int seed = 0;
 	bool seedIsRNG = false;
 	bool colorblind = false;

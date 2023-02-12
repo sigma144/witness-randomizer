@@ -2,8 +2,9 @@
 #include "APRandomizer.h"
 #include "APGameData.h"
 #include "../Panels.h"
+#include "../ClientWindow.h"
 
-bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
+bool APRandomizer::Connect(std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
 
 	ap = new APClient("uuid", "The Witness", uri);
@@ -229,15 +230,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				return a + (a.length() > 0 ? "," : "") + b;
 			});
 
-		std::wstring wError = std::wstring(errorString.begin(), errorString.end());
-
 		connected = false;
 		hasConnectionResult = true;
 
-		WCHAR errorMessage[200] = L"Connection Failed: ";
-		wcscat_s(errorMessage, 200, wError.data());
-
-		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
+		ClientWindow::get()->showMessageBox("Connection failed: " + errorString);
 	});
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
@@ -325,12 +321,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			connected = false;
 			hasConnectionResult = true;
 
-			std::wstring wideServer = Converty::Utf8ToWide(uri);
-
-			WCHAR errorMessage[200] = L"Timeout while connecting to server: ";
-			wcscat_s(errorMessage, 200, wideServer.data());
-
-			MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
+			std::string errorMessage = "Timeout while connecting to server: " + uri;
+			ClientWindow::get()->showMessageBox(errorMessage);
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -382,19 +374,25 @@ std::string APRandomizer::buildUri(std::string& server)
 	return uri;
 }
 
-void APRandomizer::PostGeneration(HWND loadingHandle) {
-	for (int eID : precompletedLocations) {
-		if (allEPs.count(eID)) {
-			_memory->SolveEP(eID);
-			if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
-				_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+void APRandomizer::PostGeneration() {
+	ClientWindow* clientWindow = ClientWindow::get();
+
+	if (precompletedLocations.size() > 0) {
+		clientWindow->setStatusMessage("Precompleting EPs...");
+		for (int eID : precompletedLocations) {
+			if (allEPs.count(eID)) {
+				_memory->SolveEP(eID);
+				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+					_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+				}
 			}
 		}
 	}
 
 	// EP-related slowing down of certain bridges etc.
-
 	if (EPShuffle) {
+		clientWindow->setStatusMessage("Adjusting EP element speeds...");
+
 		_memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.02f }); // Swamp Rotating Bridge, 2x (Instead of 4x)
 		
 		_memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x (Instead of 2x)
@@ -406,10 +404,9 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	}
 
 	// Bunker door colors
-
+	clientWindow->setStatusMessage("Setting additional colors...");
 	int num_dec = _memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
-
-	if(num_dec != 1){
+	if (num_dec != 1){
 		std::vector<int> decorations = _memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
 
 		decorations[3] = 264;
@@ -419,19 +416,13 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	}
 
 	// Challenge Timer Colors
-
 	_memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_A, { 0.0f, 1.0f, 1.0f, 1.0f });
 	_memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_B, { 1.0f, 1.0f, 0.0f, 1.0f });
 
+	clientWindow->setStatusMessage("Applying progression...");
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
-
-	async->SkipPreviouslySkippedPuzzles();
-
-	for (int panel : desertPanels) {
-		_memory->UpdatePanelJunctions(panel);
-	}
 
 	if (FinalPanel == 0x09F7F) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
@@ -446,9 +437,15 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", MountainLasers, ChallengeLasers);
 	}
 
+	async->SkipPreviouslySkippedPuzzles();
+
+	for (int panel : desertPanels) {
+		_memory->UpdatePanelJunctions(panel);
+	}
+
 	_memory->DisplaySubtitles("", "", "");
 	
-	setPuzzleLocks(loadingHandle);
+	setPuzzleLocks();
 
 	async->ResetPowerSurge();
 
@@ -460,16 +457,15 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 	async->start();
 }
 
-void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
-	for (int i = 0; i < sizeof(AllPuzzles) / sizeof(AllPuzzles[0]); i++)	{
-		std::wstring text = L"Locking puzzles: " + std::to_wstring(i) + L"/" + std::to_wstring(sizeof(AllPuzzles));
-		SetWindowText(loadingHandle, text.c_str());
+void APRandomizer::setPuzzleLocks() {
+	ClientWindow* clientWindow = ClientWindow::get();
 
+	const int puzzleCount = sizeof(AllPuzzles) / sizeof(AllPuzzles[0]);
+	for (int i = 0; i < puzzleCount; i++)	{
+		clientWindow->setStatusMessage("Locking puzzles: " + std::to_string(i) + "/" + std::to_string(puzzleCount));
 		if (!_memory->ReadPanelData<int>(AllPuzzles[i], SOLVED));
 			panelLocker->UpdatePuzzleLock(state, AllPuzzles[i]);
 	}
-
-	SetWindowText(loadingHandle, L"Done!");
 }
 
 void APRandomizer::Init() {
