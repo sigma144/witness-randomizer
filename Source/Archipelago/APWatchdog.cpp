@@ -353,6 +353,9 @@ void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
 			WriteMovementSpeed(baseSpeed);
 		}
 	}
+	else {
+		WriteMovementSpeed(baseSpeed);
+	}
 
 	if (speedTime == 0.6999999881) { // avoid original value
 		speedTime = 0.699;
