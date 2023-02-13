@@ -144,6 +144,8 @@ private:
 	
 	void CheckEPSkips();
 
+	void CheckDeathLink();
+
 	void QueueItemMessages();
 
 	void DisableCollisions();
@@ -197,6 +199,8 @@ private:
 
 	int activePanelId = -1;
 	int mostRecentActivePanelId = -1;
+	int mostRecentPanelState = -1;
+
 	std::string puzzleSkipInfoMessage;
 	float skipButtonHeldTime = 0.f; // Tracks how long the skip button has been held.
 

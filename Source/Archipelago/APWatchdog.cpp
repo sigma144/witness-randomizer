@@ -24,6 +24,8 @@ void APWatchdog::action() {
 
 	UpdatePuzzleSkip(frameDuration.count());
 
+	CheckDeathLink();
+
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -374,8 +376,8 @@ void APWatchdog::TriggerPowerSurge() {
 		powerSurgeStartTime = std::chrono::system_clock::now();
 
 		for (const auto& panelId : AllPuzzles) {
-			if (ReadPanelData<int>(panelId, SOLVED))
-				continue;
+			/*if (ReadPanelData<int>(panelId, SOLVED))
+				continue;*/
 
 			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
@@ -1525,4 +1527,19 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	}
 
 	lastMousePosition = cursorDirection;
+}
+
+void APWatchdog::CheckDeathLink() {
+	if (mostRecentActivePanelId == -1 || !actuallyEveryPanel.count(mostRecentActivePanelId)) return;
+
+	int newState = ReadPanelData<int>(mostRecentActivePanelId, FLASH_MODE);
+
+	if (mostRecentPanelState != newState) {
+		mostRecentPanelState = newState;
+
+		if (newState == 2) {
+			TriggerPowerSurge();
+			hudManager->queueBannerMessage("Death Sent.");
+		}
+	}
 }
