@@ -68,6 +68,7 @@ void APWatchdog::HandleInteractionState() {
 		if (stateChanged) {
 			// The player has started solving a puzzle. Update our active panel ID to match.
 			activePanelId = GetActivePanel();
+			mostRecentActivePanelId = activePanelId;
 		}
 	}
 	else if (interactionState != InteractionState::Focusing) {
