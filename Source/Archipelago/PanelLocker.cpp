@@ -1,6 +1,6 @@
 #include "PanelLocker.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels)
+void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels, std::set<int> exemptDoorPanels)
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -19,6 +19,12 @@ void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels)
 	Special::copyTarget(0x17F9B, 0x17CAB);
 	Special::copyTarget(0x17C42, 0x09DE0);
 	Special::copyTarget(0x00A5B, 0x17CA4);
+
+	for (int id : {0x17CA4, 0x17CAB, 0x28B39, 0x00C92, 0x0A8DC}) {
+		if (!exemptDoorPanels.count(id)) {
+			Special::setPower(id, true);
+		}
+	}
 
 	for (int id : disabledPanels) {
 		disablePuzzle(id);

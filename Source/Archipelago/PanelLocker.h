@@ -14,7 +14,7 @@ class PanelLocker {
 			_memory = memory;
 		};
 
-		void DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels);
+		void DisableNonRandomizedPuzzles(std::set<int> disabledPuzzles, std::set<int> exemptDoorPanels);
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		void SetItemReward(const int& id, const APClient::NetworkItem& item);
