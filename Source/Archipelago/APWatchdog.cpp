@@ -274,6 +274,13 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 		if (it->second == locationId) {
 			if (actuallyEveryPanel.count(it->first)) {
 				if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
+					__int32 skipped = ReadPanelData<__int32>(it->first, VIDEO_STATUS_COLOR);
+
+					if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
+						it = panelIdToLocationId.erase(it);
+						continue;
+					}
+
 					if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
 						std::vector<int> bridgePanels;
 						if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
@@ -498,7 +505,7 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 		// Puzzle has already been skipped.
 		return false;
 	}
-	else if (statusColor == COLLECTED) {
+	else if (statusColor == COLLECTED || statusColor == DISABLED) {
 		// Puzzle has been collected and is not worth skipping.
 		return false;
 	}
@@ -586,6 +593,9 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 		}
 		else if (skipped == COLLECTED) {
 			Special::SkipPanel(id, "Collected", false);
+		}
+		else if (skipped == DISABLED) {
+			//Panellocker will do it again anyway
 		}
 	}
 }
@@ -1210,7 +1220,7 @@ void APWatchdog::CheckEPSkips() {
 	for (int panel : panelsThatHaveToBeSkippedForEPPurposes) {
 		__int32 skipped = ReadPanelData<__int32>(panel, VIDEO_STATUS_COLOR);
 
-		if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED) {
+		if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED || skipped == DISABLED) {
 			panelsToRemoveSilently.insert(panel);
 			continue;
 		}

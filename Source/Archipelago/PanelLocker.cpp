@@ -1,6 +1,6 @@
 #include "PanelLocker.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
+void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels)
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -20,23 +20,9 @@ void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
 	Special::copyTarget(0x17C42, 0x09DE0);
 	Special::copyTarget(0x00A5B, 0x17CA4);
 
-	for (int id : {0x17CA4, 0x17CAB, 0x28B39, 0x00C92, 0x0A8DC}) {
-		if (!exemptDoorPanels.count(id)) {
-			Special::setPower(id, true);
-		}
+	for (int id : disabledPanels) {
+		disablePuzzle(id);
 	}
-
-	disablePuzzle(0x0A8DC); //Shadows
-	disablePuzzle(0x17C2E); //BNK3R door
-	disablePuzzle(0x00B10); //Monastary door left
-	disablePuzzle(0x00C92); //Monastary door right
-	disablePuzzle(0x002C4); //Waves one
-	disablePuzzle(0x18590); //Town transparent symmetry
-	disablePuzzle(0x00143); //Orchard Apple Tree 1
-	disablePuzzle(0x00139); //Keep Hedge Maze 1
-	disablePuzzle(0x0360E); //Keep Laser Hedges
-
-	disablePuzzle(0x009B8); //Symmetry Island Scenery Outlines 1
 }
 
 void PanelLocker::disablePuzzle(int id) {
@@ -44,30 +30,8 @@ void PanelLocker::disablePuzzle(int id) {
 		unlockPuzzle(lockedPuzzles[id]);
 
 	disabledPuzzles.emplace_back(id);
-	
-	std::vector<float> intersections = { -0.3f, -0.3f, 1.0f, 1.0f };
-	std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
-	std::vector<int> connectionsA;
-	std::vector<int> connectionsB;	
-	std::vector<int> decorations = { Decoration::Triangle }; //Invisable triangle to have a non empty decorations array
-	std::vector<int> decorationsFlags = { 0 };
 
-	createText(id, "disabled", intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
-
-	float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
-
-	_memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
-	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
-	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
-	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
-	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorationsFlags.size()) });
-	_memory->WriteArray<int>(id, DECORATIONS, decorations);
-	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-	_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
-	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	Special::SkipPanel(id, "Disabled", false);
 }
 
 void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) {

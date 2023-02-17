@@ -1894,8 +1894,64 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	//DrawSimplePanel(0x09FDA, text, kickOut);
 }
 
+void Special::ColorPanel(int id, std::string text) {
+	if (text != "Collected" && text != "Disabled" && skip_completelyExclude.count(id)) return;
+	
+	Panel panel;
+
+	if (text == "Collected" && id != 0x28998) {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+	}
+	else if (text == "Skipped" && id != 0x28998) {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+	}
+	else if (text == "Disabled" && id != 0x28998) {
+		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
+		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+	}
+
+	if (cutoutPanels.count(id)) {
+		if (text == "Collected") {
+			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+			panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			panel._memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Skipped") {
+			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+			panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			panel._memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Disabled") {
+			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+			panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+			panel._memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.2f, 0.2f, 1.0f });
+		}
+	}
+	else
+	{
+		if (text == "Collected") {
+			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Skipped") {
+			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Disabled") {
+			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+		}
+		panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
+	}
+	
+	if (id != 0x28998) panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+
+	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 {
+	ColorPanel(id, text);
+
 	if (skip_completelyExclude.count(id)) return;
 
 	Panel panel;
@@ -2005,33 +2061,6 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
-
-	if (text == "Collected" && id != 0x28998) {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
-	}
-	else if (text == "Skipped" && id != 0x28998) {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
-	}
-
-	if (id == 0x28a69 || id == 0x15ADD || id == 0x00290 || id == 0x00038 || id == 0x00037 || id == 0x17caa ||
-		id == 0x09F7D || id == 0x09FDC || id == 0x09FF7 || id == 0x09F82 || 
-		id == 0x09D9F || id == 0x09FF8 || id == 0x09DA1 || id == 0x09DA2 || id == 0x09DAF ||
-		id == 0x0A010 || id == 0x0A01B || id == 0x0A01F || id == 0x17E63 || id == 0x17E67) {
-		if (text == "Collected") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
-		}
-		else if (text == "Skipped") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
-		}
-	}
-	else
-	{
-		panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
-	}
-	panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
-	if(id != 0x28998) panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 
 	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 

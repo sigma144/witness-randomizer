@@ -60,6 +60,7 @@ class APRandomizer {
 		std::map<int, std::vector<int>> progressiveItems;
 		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
 		std::map<int, int> panelIdToLocationIdReverse;
+		std::set<int> disabledPanels;
 
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
 		std::set<int> precompletedLocations;
