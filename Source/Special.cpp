@@ -1550,15 +1550,14 @@ void Special::drawText(int id, std::vector<float>& intersections, std::vector<in
 		}
 	}
 
-	Panel panel;
-	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
+	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void Special::drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options)
@@ -1653,58 +1652,54 @@ void Special::SetRequiredLasers(int mountain, int challenge) {
 	int seqLen = 0;
 	std::vector<int> seq = { };
 
-	Panel panel;
-
 	std::vector<int> decorations = { Decoration::Triangle };
 	std::vector<int> decorationsFlags = { 0 };
 
-	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-	panel._memory->WriteArray<int>(id, DECORATIONS, decorations);
-	panel._memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	_memory->WriteArray<int>(id, DECORATIONS, decorations);
+	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 
-	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
-	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
+	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	_memory->WriteArray<int>(id, COLORED_REGIONS, { });
 
-	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
-	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
-	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
+	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	_memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+	_memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void Special::SkipPanel(int id, std::string text, bool kickOut) {
-	Panel panel;
-
 	// Special Skipping Animations
 
 	if (id == 0x03612) { // Quarry laser panels
 		if (!ReadPanelData<int>(0x288E9, 0x1E4))
 		{
-			panel._memory->OpenDoor(0x288E9);
+			_memory->OpenDoor(0x288E9);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 
 		if (!ReadPanelData<int>(0x28AD4, 0x1E4))
 		{
-			panel._memory->OpenDoor(0x28AD4);
+			_memory->OpenDoor(0x28AD4);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 	}
 	else if (id == 0x1C349) { // Symmetry island upper latches
 		if (!ReadPanelData<int>(0x28AE8, 0x1E4))
 		{
-			panel._memory->OpenDoor(0x28AE8);
+			_memory->OpenDoor(0x28AE8);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 
 		if (!ReadPanelData<int>(0x28AED, 0x1E4))
 		{
-			panel._memory->OpenDoor(0x28AED);
+			_memory->OpenDoor(0x28AED);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 	}
@@ -1862,30 +1857,28 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 
 	WriteArray(id, DECORATIONS, dec);
 
-	Panel panel;
-
-	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
-	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
+	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	_memory->WriteArray<int>(id, COLORED_REGIONS, { });
 
 
 	if (text == "Collected") {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
 	}
 	else if (text == "Skipped") {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
 	}
 
-	panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
-	panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
-	panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+	_memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+	_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
+	_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 
-	int style = panel._style = panel._memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	int style = _memory->ReadPanelData<int>(id, STYLE_FLAGS);
 	style &= ~Panel::Style::HAS_ERASERS;
-	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
+	_memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
 
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 
 
 	//Panel panel = Panel(0x09FDA);
@@ -1896,56 +1889,54 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 
 void Special::ColorPanel(int id, std::string text) {
 	if (text != "Collected" && text != "Disabled" && skip_completelyExclude.count(id)) return;
-	
-	Panel panel;
 
 	if (text == "Collected" && id != 0x28998) {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
 	}
 	else if (text == "Skipped" && id != 0x28998) {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
 	}
 	else if (text == "Disabled" && id != 0x28998) {
-		panel._memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
-		panel._memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
 	}
 
 	if (cutoutPanels.count(id)) {
 		if (text == "Collected") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
-			panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
-			panel._memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+			_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
 		}
 		else if (text == "Skipped") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
-			panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
-			panel._memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+			_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
 		}
 		else if (text == "Disabled") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
-			panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
-			panel._memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.2f, 0.2f, 1.0f });
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+			_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+			_memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.2f, 0.2f, 1.0f });
 		}
 	}
 	else
 	{
 		if (text == "Collected") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
 		}
 		else if (text == "Skipped") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
 		}
 		else if (text == "Disabled") {
-			panel._memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
 		}
-		panel._memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
+		_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
 	}
 	
-	if (id != 0x28998) panel._memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+	if (id != 0x28998) _memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
@@ -1954,13 +1945,11 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	if (skip_completelyExclude.count(id)) return;
 
-	Panel panel;
-
-	int style = panel._style = panel._memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	int style = _memory->ReadPanelData<int>(id, STYLE_FLAGS);
 
 	if (id != 0x01D3F) {
 		style &= ~Panel::Style::SYMMETRICAL;
-		panel._memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
+		_memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
 	}
 
 	style &= ~Panel::Style::HAS_TRIANGLES;
@@ -1969,10 +1958,10 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	if (id == 0x79df) {
 		style = 0;
-		panel._memory->WritePanelData<int>(id, TARGET, { 0x34F1 });
+		_memory->WritePanelData<int>(id, TARGET, { 0x34F1 });
 	}
 
-	panel._memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
+	_memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
 
 	float width = 1.0f;
 
@@ -2010,21 +1999,21 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 		int seqLen = 0;
 		std::vector<int> seq = { };
 
-		float path_width_scale = panel._memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+		float path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
 
-		panel._memory->WritePanelData<float>(id, PATTERN_SCALE, { width / path_width_scale });
-		panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-		panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-		panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-		panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-		panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-		panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
-		panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { 0 });
-		panel._memory->WritePanelData<INT64>(id, DOT_SEQUENCE_REFLECTION, { 0 });
-		panel._memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { 0 });
-		panel._memory->WritePanelData<INT64>(id, DOT_SEQUENCE, { 0 });
+		_memory->WritePanelData<float>(id, PATTERN_SCALE, { width / path_width_scale });
+		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+		_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+		_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+		_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+		_memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { 0 });
+		_memory->WritePanelData<INT64>(id, DOT_SEQUENCE_REFLECTION, { 0 });
+		_memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { 0 });
+		_memory->WritePanelData<INT64>(id, DOT_SEQUENCE, { 0 });
 
-		panel._memory->WritePanelData<int>(id, TRACED_EDGES, { 0 });
+		_memory->WritePanelData<int>(id, TRACED_EDGES, { 0 });
 	}
 
 	else
@@ -2032,8 +2021,8 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	{
 		//Get rid of Dots.
 
-		int num_dots = panel._memory->ReadPanelData<int>(id, NUM_DOTS);
-		std::vector<int> intersectionFlags = panel._memory->ReadArray<int>(id, DOT_FLAGS, num_dots);
+		int num_dots = _memory->ReadPanelData<int>(id, NUM_DOTS);
+		std::vector<int> intersectionFlags = _memory->ReadArray<int>(id, DOT_FLAGS, num_dots);
 		std::vector<int> newIntFlags = {};
 		for (int value : intersectionFlags) {
 			int noDotColor = value & 0xFFFF00FF;
@@ -2045,34 +2034,34 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 			else newIntFlags.emplace_back(value);
 		}
 
-		panel._memory->WriteArray<int>(id, DOT_FLAGS, newIntFlags);
+		_memory->WriteArray<int>(id, DOT_FLAGS, newIntFlags);
 	}
 
 	std::vector<int> decorations = { Decoration::Triangle };
 	std::vector<int> decorationsFlags = { 0 };
 
 
-	panel._memory->WritePanelData<int>(id, NUM_DECORATIONS, {static_cast<int>(decorations.size())});
-	panel._memory->WriteArray<int>(id, DECORATIONS, decorations);
-	panel._memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+	_memory->WritePanelData<int>(id, NUM_DECORATIONS, {static_cast<int>(decorations.size())});
+	_memory->WriteArray<int>(id, DECORATIONS, decorations);
+	_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 
-	panel._memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
-	panel._memory->WriteArray<int>(id, COLORED_REGIONS, { });
+	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	_memory->WriteArray<int>(id, COLORED_REGIONS, { });
 
-	panel._memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
-	panel._memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+	_memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+	_memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
 
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 
 	if (kickOut) {
-		float panelDistance = panel._memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
+		float panelDistance = _memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
 
-		panel._memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.0001f });
+		_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.0001f });
 
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		panel._memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { panelDistance });
-		panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+		_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { panelDistance });
+		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
 
 	//Figure out a way to have the randomizer not touch a skipped panel when rerandomizing?
