@@ -1711,6 +1711,8 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
+	ColorPanel(id, text);
+
 	//Symmetry Blue/Yellow panels before laser
 
 	if (id == 0x00A52 || id == 0x00A61) {
@@ -1758,6 +1760,37 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 
 	if (id == 0x09FC1 || id == 0x09F8E || id == 0x09F01 || id == 0x09EFF) { 
 		SkipMetapuzzle(id, text, kickOut);
+		return;
+	}
+
+	if (id == 0x181F5) {
+		int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
+		std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
+
+		for (int i = 0; i < dec.size(); i++) {
+			int decoration = dec[i];
+
+			if((decoration & 0x700) == Decoration::Shape::Triangle || (decoration & 0x700) == Decoration::Shape::Stone || (decoration & 0xF00) == Decoration::Shape::Star) dec[i] = 0;
+		}
+
+		WriteArray(id, DECORATIONS, dec);
+		WritePanelData(id, NEEDS_REDRAW, { 1 });
+
+		return;
+	}
+
+	if (id == 0x334D8) {
+		int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
+		std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
+
+		for (int i = 0; i < dec.size(); i++) {
+			int decoration = dec[i];
+
+			if ((decoration & 0x700) == Decoration::Shape::Triangle) dec[i] = 0;
+		}
+
+		WriteArray(id, DECORATIONS, dec);
+		WritePanelData(id, NEEDS_REDRAW, { 1 });
 		return;
 	}
 }
