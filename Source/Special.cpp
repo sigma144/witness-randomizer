@@ -1711,8 +1711,6 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
-	ColorPanel(id, text);
-
 	//Symmetry Blue/Yellow panels before laser
 
 	if (id == 0x00A52 || id == 0x00A61) {
@@ -1759,11 +1757,13 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 
 	if (id == 0x09FC1 || id == 0x09F8E || id == 0x09F01 || id == 0x09EFF) { 
+		ColorPanel(id, text);
 		SkipMetapuzzle(id, text, kickOut);
 		return;
 	}
 
 	if (id == 0x181F5) {
+		ColorPanel(id, text);
 		int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
 		std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
 
@@ -1795,6 +1795,13 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 }
 
+void Special::SetVanillaMetapuzzleShapes() {
+	correctShapesById[0x09f01] = 0x00310400;
+	correctShapesById[0x09f8E] = 0x02230400;
+	correctShapesById[0x09fc1] = 0x00330400;
+	correctShapesById[0x09EFF] = 0x00130400;
+}
+
 void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
 	std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
@@ -1806,7 +1813,7 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	int likelyShape = -1;
 	int definitelyShape = -1;
 
-	bool hardMode = ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0;
+	bool hardMode = ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) == 1;
 
 	for (int i = 0; i < dec.size(); i++) {
 		int decoration = dec[i];

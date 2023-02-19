@@ -488,6 +488,8 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
+	Special::SetVanillaMetapuzzleShapes();
+
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 

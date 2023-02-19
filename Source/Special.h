@@ -81,6 +81,8 @@ public:
 
 	static void SkipPanel(int id, std::string text, bool kickOut);
 
+	static void SetVanillaMetapuzzleShapes();
+
 	static void SkipMetapuzzle(int id, std::string text, bool kickOut);
 
 	static void ColorPanel(int id, std::string text);
