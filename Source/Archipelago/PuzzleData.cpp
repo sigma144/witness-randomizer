@@ -65,18 +65,15 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 				hasStarsWithOtherSymbol = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
-			if ((decorations[i] & 0x2000) == Decoration::Negative) {
-				hasTetrisNegative = true;
+			bool isRotated = (decorations[i] & 0x1000) == Decoration::Can_Rotate;
 
-				if ((decorations[i] & 0x1000) == Decoration::Can_Rotate)
-					hasTetrisRotated = true;
-			}
-			else {
-				if ((decorations[i] & 0x1000) == Decoration::Can_Rotate)
-					hasTetrisRotated = true;
-				else
-					hasTetris = true;
-			}
+			if ((decorations[i] & 0x2000) == Decoration::Negative)
+				hasTetrisNegative = true;
+			else if (!isRotated)
+				hasTetris = true;
+
+			if (isRotated)
+				hasTetrisRotated = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Eraser) {
 			hasErasers = true;
