@@ -4,6 +4,7 @@
 
 #include "PuzzleList.h"
 #include "Watchdog.h"
+#include "ClientWindow.h"
 
 void PuzzleList::GenerateAllN()
 {
@@ -24,20 +25,20 @@ void PuzzleList::GenerateAllN()
 	GenerateJungleN();
 	GenerateMountainN();
 	GenerateCavesN();
-	SetWindowText(_handle, L"Done!");
+	ClientWindow::get()->setStatusMessage("Generation complete!");
 	(new ArrowWatchdog(0x0056E))->start(); //Easy way to close the randomizer when the game is done
 	//GenerateShadowsN(); //Can't randomize
 	//GenerateMonasteryN(); //Can't randomize
 }
 
 void PuzzleList::GenerateShadowsN() {
-	generator->setLoadingData(L"Shadows", 13);
+	generator->setLoadingData("Shadows", 13);
 	generator->resetConfig();
 
-	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+	Memory* memory = Memory::get();
 
-	_memory->WritePanelData<int>(0x386FA, SEQUENCE_LEN , { 0 });
-	_memory->WritePanelData<int>(0x386FA, DOT_SEQUENCE_LEN, { 0 });
+	memory->WritePanelData<int>(0x386FA, SEQUENCE_LEN , { 0 });
+	memory->WritePanelData<int>(0x386FA, DOT_SEQUENCE_LEN, { 0 });
 	generator->generate(0x386FA, Decoration::Arrow1, 5);
 
 	generator->generate(0x1C33F, Decoration::Arrow2, 5);
@@ -74,7 +75,7 @@ void PuzzleList::GenerateAllH()
 	GenerateJungleH();
 	GenerateMountainH();
 	GenerateCavesH();
-	SetWindowText(_handle, L"Done!");
+	ClientWindow::get()->setStatusMessage("Generation complete!");
 	//GenerateShadowsH(); //Can't randomize
 	//GenerateMonasteryH(); //Can't randomize
 }
@@ -106,7 +107,7 @@ void PuzzleList::CopyTargets()
 
 void PuzzleList::GenerateTutorialN()
 {
-	generator->setLoadingData(L"Tutorial", 21);
+	generator->setLoadingData("Tutorial", 21);
 	generator->resetConfig();
 	Special::drawSeedAndDifficulty(0x00064, seed, false, !seedIsRNG, false);
 	Special::drawGoodLuckPanel(0x00182);
@@ -169,7 +170,7 @@ void PuzzleList::GenerateTutorialN()
 
 void PuzzleList::GenerateSymmetryN()
 {
-	generator->setLoadingData(L"Symmetry", 33);
+	generator->setLoadingData("Symmetry", 33);
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::StartEdgeOnly);
 	//Vertical Symmetry Mazes
@@ -245,7 +246,8 @@ void PuzzleList::GenerateSymmetryN()
 
 void PuzzleList::GenerateQuarryN()
 {
-	generator->setLoadingData(L"Quarry", 39);
+	Memory* memory = Memory::get();
+	generator->setLoadingData("Quarry", 39);
 	generator->resetConfig();
 	//Entry Gates
 	generator->setFlag(Generate::Config::EnableFlash);
@@ -301,14 +303,14 @@ void PuzzleList::GenerateQuarryN()
 	//Eraser + Shapes
 	generator->setFlag(Generate::Config::ResetColors);
 	generator->generate(0x021B3, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B4, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B0, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
 	generator->setFlagOnce(Generate::Config::SmallShapes);
 	generator->generate(0x021AF, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
 	generator->generate(0x021AE, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->removeFlag(Generate::Config::ResetColors);
@@ -349,7 +351,7 @@ void PuzzleList::GenerateBunkerN()
 
 void PuzzleList::GenerateSwampN()
 {
-	generator->setLoadingData(L"Swamp", 49);
+	generator->setLoadingData("Swamp", 49);
 	generator->resetConfig();
 	//First row
 	generator->setFlag(Generate::Config::SplitShapes);
@@ -477,7 +479,7 @@ void PuzzleList::GenerateSwampN()
 
 void PuzzleList::GenerateTreehouseN()
 {
-	generator->setLoadingData(L"Treehouse", 57);
+	generator->setLoadingData("Treehouse", 57);
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::WriteColors); //Have to do this to get a proper looking orange and green
 	generator->setGridSize(2, 2);
@@ -602,7 +604,7 @@ void PuzzleList::GenerateTreehouseN()
 
 void PuzzleList::GenerateTownN()
 {
-	generator->setLoadingData(L"Town", 20);
+	generator->setLoadingData("Town", 20);
 	generator->resetConfig();
 	//Full Dots + Shapes
 	generator->setFlag(Generate::Config::EnableFlash);
@@ -653,7 +655,7 @@ void PuzzleList::GenerateTownN()
 
 void PuzzleList::GenerateVaultsN()
 {
-	generator->setLoadingData(L"Vaults", 5);
+	generator->setLoadingData("Vaults", 5);
 	generator->resetConfig();
 	//Tutorial Vault
 	generator->generate(0x033D4, Decoration::Stone | Decoration::Color::White, 10, Decoration::Stone | Decoration::Color::Black, 10, Decoration::Dot, 10, Decoration::Start, 4);
@@ -674,7 +676,7 @@ void PuzzleList::GenerateVaultsN()
 
 void PuzzleList::GenerateTrianglePanelsN()
 {
-	generator->setLoadingData(L"Triangles", 12);
+	generator->setLoadingData("Triangles", 12);
 	generator->resetConfig();
 	generator->setGridSize(3, 3);
 	generator->setSymbol(Decoration::Start, 0, 0);
@@ -697,12 +699,11 @@ void PuzzleList::GenerateTrianglePanelsN()
 
 void PuzzleList::GenerateMountainN()
 {
-	std::wstring text = L"Mountain Perspective";
-	SetWindowText(_handle, text.c_str());
+	ClientWindow::get()->setStatusMessage("Randomizing Mountaintop Entrance");
 	specialCase->generateMountaintop(0x17C34, { { Decoration::Stone | Decoration::Color::Black, 2 },{ Decoration::Stone | Decoration::Color::White, 1, },
 		{ Decoration::Star | Decoration::Color::Black, 1, },{ Decoration::Star | Decoration::Color::White, 1 } });
 	
-	generator->setLoadingData(L"Mountain", 39);
+	generator->setLoadingData("Mountain", 39);
 	generator->resetConfig();
 	//Purple Bridge
 	generator->setFlagOnce(Generate::Config::PreserveStructure);
@@ -817,7 +818,7 @@ void PuzzleList::GenerateMountainN()
 
 void PuzzleList::GenerateCavesN()
 {
-	generator->setLoadingData(L"Caves", 51);
+	generator->setLoadingData("Caves", 51);
 	generator->resetConfig();
 	generator->generate(0x17FA2, Decoration::Triangle | Decoration::Color::Orange, 10);
 	generator->generate(0x00FF8, Decoration::Stone | Decoration::Color::Black, 4, Decoration::Stone | Decoration::Color::White, 3,
@@ -950,7 +951,7 @@ void PuzzleList::GenerateDesertN()
 
 void PuzzleList::GenerateKeepN()
 {
-	generator->setLoadingData(L"Keep", 5);
+	generator->setLoadingData("Keep", 5);
 	generator->resetConfig();
 
 	generator->setSymbol(Decoration::Gap_Column, 8, 3);
@@ -1017,7 +1018,7 @@ void PuzzleList::GenerateJungleN()
 	//specialCase->testFind({ 'b', 'i', 'r', 'd', '4' }); //0x52a2d8
 	//So the only thing that can be randomized currently, are the actual solutions.
 
-	generator->setLoadingData(L"Jungle", 4);
+	generator->setLoadingData("Jungle", 4);
 	generator->resetConfig();
 	specialCase->generateSoundDotPuzzle(0x0026D, { 2, 2 }, { DOT_SMALL, DOT_LARGE }, false);
 	specialCase->generateSoundDotPuzzle(0x0026E, { 2, 2 }, { DOT_SMALL, DOT_LARGE }, false);
@@ -1034,7 +1035,7 @@ void PuzzleList::GenerateJungleN()
 
 void PuzzleList::GenerateTutorialH()
 {
-	generator->setLoadingData(L"Tutorial", 21);
+	generator->setLoadingData("Tutorial", 21);
 	generator->resetConfig();
 	Special::drawSeedAndDifficulty(0x00064, seed, true, !seedIsRNG, false);
 	Special::drawGoodLuckPanel(0x00182);
@@ -1105,7 +1106,7 @@ void PuzzleList::GenerateTutorialH()
 
 void PuzzleList::GenerateSymmetryH()
 {
-	generator->setLoadingData(L"Symmetry", 34);
+	generator->setLoadingData("Symmetry", 34);
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::StartEdgeOnly);
 	//Symmetry Mazes
@@ -1236,7 +1237,8 @@ void PuzzleList::GenerateSymmetryH()
 
 void PuzzleList::GenerateQuarryH()
 {
-	generator->setLoadingData(L"Quarry", 40);
+	Memory* memory = Memory::get();
+	generator->setLoadingData("Quarry", 40);
 	generator->resetConfig();
 	//Entry Gates
 	generator->setGridSize(4, 4);
@@ -1313,15 +1315,15 @@ void PuzzleList::GenerateQuarryH()
 	//Eraser + Shapes
 	generator->setFlag(Generate::Config::ResetColors);
 	generator->generate(0x021B3, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B4, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B0, Decoration::Poly, 4, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
 	generator->setGridSize(4, 4);
 	generator->generate(0x021AF, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 2, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
-	specialCase->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021AE, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->resetConfig();
 	//Eraser + Stars
@@ -1394,7 +1396,7 @@ void PuzzleList::GenerateBunkerH()
 
 void PuzzleList::GenerateSwampH()
 {
-	generator->setLoadingData(L"Swamp", 55);
+	generator->setLoadingData("Swamp", 55);
 	generator->resetConfig();
 	generator->setGridSize(3, 3);
 	generator->setFlagOnce(Generate::Config::SplitShapes);
@@ -1562,7 +1564,7 @@ void PuzzleList::GenerateSwampH()
 
 void PuzzleList::GenerateTreehouseH()
 {
-	generator->setLoadingData(L"Treehouse", 58);
+	generator->setLoadingData("Treehouse", 58);
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::TreehouseColors);
 	generator->initPanel(0x0288C);
@@ -1749,7 +1751,7 @@ void PuzzleList::GenerateTreehouseH()
 
 void PuzzleList::GenerateTownH()
 {
-	generator->setLoadingData(L"Town", 21);
+	generator->setLoadingData("Town", 21);
 	generator->resetConfig();
 	//Full Dots + Triangles
 	generator->setFlag(Generate::Config::EnableFlash);
@@ -1830,7 +1832,7 @@ void PuzzleList::GenerateTownH()
 
 void PuzzleList::GenerateVaultsH()
 {
-	generator->setLoadingData(L"Vaults", 5);
+	generator->setLoadingData("Vaults", 5);
 	generator->resetConfig();
 	//Tutorial Vault
 	generator->setGridSize(8, 8);
@@ -1866,7 +1868,7 @@ void PuzzleList::GenerateVaultsH()
 
 void PuzzleList::GenerateTrianglePanelsH()
 {
-	generator->setLoadingData(L"Arrows", 14);
+	generator->setLoadingData("Arrows", 14);
 	generator->resetConfig();
 	generator->backgroundColor = { 0.5f, 0.5f, 0.5f, 1 };
 	generator->arrowColor = { 0.6f, 0, 1, 1 };
@@ -1894,14 +1896,13 @@ void PuzzleList::GenerateTrianglePanelsH()
 
 void PuzzleList::GenerateMountainH()
 {
-	std::wstring text = L"Mountain Perspective";
-	SetWindowText(_handle, text.c_str());
+	ClientWindow::get()->setStatusMessage("Mountain perspective");
 	specialCase->generateMountaintop(0x17C34, {
 		{ Decoration::Triangle | Decoration::Color::White, 2 },{ Decoration::Triangle | Decoration::Color::Black, 1 },
 		{ Decoration::Star | Decoration::Color::White, 1 },{ Decoration::Star | Decoration::Color::Black, 1 },
 		{ Decoration::Stone | Decoration::Color::White, 1 },{ Decoration::Stone | Decoration::Color::Black, 1 } });
 
-	generator->setLoadingData(L"Mountain", 39);
+	generator->setLoadingData("Mountain", 39);
 	generator->resetConfig();
 	//Purple Bridge
 	generator->setFlagOnce(Generate::Config::PreserveStructure);
@@ -2063,7 +2064,7 @@ void PuzzleList::GenerateMountainH()
 
 void PuzzleList::GenerateCavesH()
 {
-	generator->setLoadingData(L"Caves", 51);
+	generator->setLoadingData("Caves", 51);
 	generator->resetConfig();
 
 	specialCase->createArrowSecretDoor(0x17FA2);
@@ -2217,7 +2218,7 @@ void PuzzleList::GenerateCavesH()
 		Decoration::Eraser | Decoration::Color::Cyan, 1);
 	//Arrow Pillar
 	generator->resetConfig();
-	specialCase->WritePanelData(0x09DD5, PATH_COLOR, { 0.01f, 0, 0.02f, 1 });
+	Memory::get()->WritePanelData<float>(0x09DD5, PATH_COLOR, {0.01f, 0, 0.02f, 1});
 	generator->backgroundColor = { 0, 0, 0, 1 };
 	generator->arrowColor = { 0.6f, 0, 1, 1 };
 	generator->successColor = { 1, 1, 1, 1 };
@@ -2253,7 +2254,7 @@ void PuzzleList::GenerateDesertH()
 
 void PuzzleList::GenerateKeepH()
 {
-	generator->setLoadingData(L"Keep", 5);
+	generator->setLoadingData("Keep", 5);
 	generator->resetConfig();
 
 	generator->setObstructions({ { 8, 3 },{ 4, 5 },{ 3, 0 },{ 3, 2 },{ 5, 6 } });
@@ -2316,7 +2317,7 @@ void PuzzleList::GenerateKeepH()
 
 void PuzzleList::GenerateJungleH()
 {
-	generator->setLoadingData(L"Jungle", 6);
+	generator->setLoadingData("Jungle", 6);
 	generator->resetConfig();
 	specialCase->generateSoundDotPuzzle(0x0026D, { 3, 3 }, { DOT_SMALL, DOT_LARGE }, false);
 	specialCase->generateSoundDotReflectionPuzzle(0x0026E, { 5, 5 }, { DOT_SMALL, DOT_LARGE }, { DOT_SMALL, DOT_LARGE }, 0, true);

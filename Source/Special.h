@@ -1,9 +1,10 @@
 #pragma once
-#include "Generate.h"
-#include "Randomizer.h"
-#include "Watchdog.h"
+
 #include <algorithm>
-#include "Random.h"
+
+#include "Generate.h"
+#include "Memory.h"
+#include "Panel.h"
 
 typedef std::set<Point> Shape;
 
@@ -95,92 +96,62 @@ public:
 
 	static void setTarget(int puzzle, int target)
 	{
-		WritePanelData(puzzle, TARGET, target + 1);
+		Memory* memory = Memory::get();
+		memory->WritePanelData(puzzle, TARGET, target + 1);
 	}
 
 	static void clearTarget(int puzzle)
 	{
-		WritePanelData(puzzle, TARGET, 0);
+		Memory* memory = Memory::get();
+		memory->WritePanelData(puzzle, TARGET, 0);
 	}
 
 	static void copyTarget(int puzzle, int sourceTarget)
 	{
-		WritePanelData(puzzle, TARGET, ReadPanelData<int>(sourceTarget, TARGET));
+		Memory* memory = Memory::get();
+		memory->WritePanelData(puzzle, TARGET, memory->ReadPanelData<int>(sourceTarget, TARGET));
 	}
 	static bool hasBeenPlayed() {
-		return Special::ReadPanelData<float>(0x00295, POWER) > 0 || Special::ReadPanelData<int>(0x00064, TRACED_EDGES) > 0;
+		Memory* memory = Memory::get();
+		return memory->ReadPanelData<float>(0x00295, POWER) > 0 ||
+			memory->ReadPanelData<int>(0x00064, TRACED_EDGES) > 0;
 	}
 	static bool hasBeenRandomized() {
-		return Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12) > 0;
+		Memory* memory = Memory::get();
+		return memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12) > 0;
 	}
 	static void setTargetAndDeactivate(int puzzle, int target)
 	{
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+		Memory* memory = Memory::get();
 		if (!hasBeenRandomized()) //Only deactivate on a fresh save file (since power state is preserved)
-			_memory->WritePanelData<float>(target, POWER, { 0.0, 0.0 });
-		WritePanelData(puzzle, TARGET, target + 1);
+			memory->WritePanelData<float>(target, POWER, { 0.0, 0.0 });
+		memory->WritePanelData(puzzle, TARGET, target + 1);
 	}
-	static void setPower(int puzzle, bool power) {
 
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+	static void setPower(int puzzle, bool power) {
+		Memory* memory = Memory::get();
 		if (!power && hasBeenRandomized()) return; //Only deactivate on a fresh save file (since power state is preserved)
-		if (power) _memory->WritePanelData<float>(puzzle, POWER, { 1.0, 1.0 });
-		else _memory->WritePanelData<float>(puzzle, POWER, { 0.0, 0.0 });
+		if (power) memory->WritePanelData<float>(puzzle, POWER, { 1.0, 1.0 });
+		else memory->WritePanelData<float>(puzzle, POWER, { 0.0, 0.0 });
 	}
-	template <class T> static std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->ReadPanelData<T>(panel, offset, size);
-	}
-	template <class T> T static ReadPanelData(int panel, int offset) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->ReadPanelData<T>(panel, offset);
-	}
-	template <class T> static std::vector<T> ReadArray(int panel, int offset, int size) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->ReadArray<T>(panel, offset, size);
-	}
-	static void WritePanelData(int panel, int offset, char data) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WritePanelData<char>(panel, offset, { data });
-	}
-	static void WritePanelData(int panel, int offset, int data) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WritePanelData<int>(panel, offset, { data });
-	}
-	static void WritePanelData(int panel, int offset, float data) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WritePanelData<float>(panel, offset, { data });
-	}
-	static void WritePanelData(int panel, int offset, Color data) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WritePanelData<Color>(panel, offset, { data });
-	}
-	static void WriteArray(int panel, int offset, const std::vector<int>& data) {
-		return WriteArray(panel, offset, data, false);
-	}
-	static void WriteArray(int panel, int offset, const std::vector<int>& data, bool force) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WriteArray<int>(panel, offset, data, force);
-	}
-	static void WriteArray(int panel, int offset, const std::vector<float>& data) {
-		return WriteArray(panel, offset, data, false);
-	}
-	static void WriteArray(int panel, int offset, const std::vector<float>& data, bool force) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WriteArray<float>(panel, offset, data, force);
-	}
-	static void WriteArray(int panel, int offset, const std::vector<Color>& data) {
-		return WriteArray(panel, offset, data, false);
-	}
-	static void WriteArray(int panel, int offset, const std::vector<Color>& data, bool force) {
-		std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe"); return _memory->WriteArray<Color>(panel, offset, data, force);
-	}
+
+	static std::string readStringFromPanels(std::vector<int> panelIDs);
+	static void writeStringToPanels(std::string string, std::vector<int> panelIDs);
 
 	static void testSwap(int id1, int id2) {
-		std::shared_ptr<Panel> panel = std::make_shared<Panel>();
-		std::vector<byte> bytes1 = panel->_memory->ReadPanelData<byte>(id1, 0, 0x600);
-		std::vector<byte> bytes2 = panel->_memory->ReadPanelData<byte>(id2, 0, 0x600);
-		panel->_memory->WritePanelData<byte>(id1, TRACED_EDGES, bytes2);
-		panel->_memory->WritePanelData<byte>(id2, TRACED_EDGES, bytes1);
-		panel->_memory->WritePanelData<int>(id1, NEEDS_REDRAW, { 1 });
-		panel->_memory->WritePanelData<int>(id2, NEEDS_REDRAW, { 1 });
+		Memory* memory = Memory::get();
+		std::vector<byte> bytes1 = memory->ReadPanelData<byte>(id1, 0, 0x600);
+		std::vector<byte> bytes2 = memory->ReadPanelData<byte>(id2, 0, 0x600);
+		memory->WritePanelData<byte>(id1, TRACED_EDGES, bytes2);
+		memory->WritePanelData<byte>(id2, TRACED_EDGES, bytes1);
+		memory->WritePanelData<int>(id1, NEEDS_REDRAW, { 1 });
+		memory->WritePanelData<int>(id2, NEEDS_REDRAW, { 1 });
 	}
 
 	template <class T> static std::vector<T> testRead(int address, int numItems) {
-		Memory memory("witness64_d3d11.exe");
+		Memory* memory = Memory::get();
 		std::vector<int> offsets = { address };
-		return memory.ReadData<T>(offsets, numItems);
+		return memory->ReadData<T>(offsets, numItems);
 	}
 
 	static void testPanel(int id) {
@@ -189,7 +160,7 @@ public:
 	}
 
 	template <class T> static uintptr_t testFind(uintptr_t startAddress, int length, T item) {
-		Memory memory("witness64_d3d11.exe");
+		Memory* memory = Memory::get();
 		uintptr_t address;
 		std::vector<byte> bytes;
 		bytes.resize(1024, 0);
@@ -197,7 +168,7 @@ public:
 		itemb.resize(sizeof(T));
 		std::memcpy(&itemb[0], &item, sizeof(T));
 		for (address = startAddress; address < startAddress + length; address += 1024) {
-			if (!memory.ReadAbsolute(reinterpret_cast<LPCVOID>(address), &bytes[0], 1024))
+			if (!memory->ReadAbsolute(reinterpret_cast<LPCVOID>(address), &bytes[0], 1024))
 				continue;
 			for (int i = 0; i < bytes.size() - itemb.size(); i += sizeof(T)) {
 				if (std::equal(bytes.begin() + i, bytes.begin() + i + sizeof(T), itemb.begin()))
@@ -227,7 +198,6 @@ public:
 	}
 
 private:
-	inline static std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
 
 	std::shared_ptr<Generate> generator;
 

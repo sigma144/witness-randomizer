@@ -1,3 +1,5 @@
+#include <map>
+
 const std::map<int, std::vector<float>> originalPathColors = { {1,{0.2108, 0.2108, 0.2108, 1, }},
 {2,{0.2108, 0.2108, 0.2108, 1, }},
 {4,{0.2108, 0.2108, 0.2108, 1, }},

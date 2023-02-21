@@ -1,5 +1,12 @@
 #include "PanelLocker.h"
 
+#include "../Randomizer.h"
+#include "PuzzleData.h"
+#include "../Panel.h"
+#include "../Memory.h"
+#include "APState.h"
+#include "../Special.h"
+
 void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels, std::set<int> exemptDoorPanels)
 {
 	Special::copyTarget(0x00021, 0x19650);
@@ -77,6 +84,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	if (find(disabledPuzzles.begin(), disabledPuzzles.end(), id) != disabledPuzzles.end())
 		return;
 
+	Memory* memory = Memory::get();
+
 	bool isLocked;
 	PuzzleData* puzzle;
 
@@ -87,7 +96,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	else {
 		isLocked = false;
 		puzzle = new PuzzleData(id);
-		puzzle->Read(_memory);
+		puzzle->Read();
 	}
 
 	if ((puzzle->hasStones && !state.unlockedStones)
@@ -114,26 +123,26 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 			lockedPuzzles.insert({ id, puzzle });
 
 		if (id == 0x01983) {
-			if (_memory->ReadPanelData<float>(0x0C179, 0xE0) < 0.0001f) return;
+			if (memory->ReadPanelData<float>(0x0C179, 0xE0) < 0.0001f) return;
 
-			while (_memory->ReadPanelData<int>(0x0C179, 0x1e4)) {
+			while (memory->ReadPanelData<int>(0x0C179, 0x1e4)) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			}
 
-			_memory->WritePanelData<float>(0x0C179, 0xE0, { 0.000001f });
-			_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
+			memory->WritePanelData<float>(0x0C179, 0xE0, { 0.000001f });
+			memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
 			return;
 		}
 
 		if (id == 0x01987) {
-			if (_memory->ReadPanelData<float>(0x0C19D, 0xE0) < 0.0001f) return;
+			if (memory->ReadPanelData<float>(0x0C19D, 0xE0) < 0.0001f) return;
 
-			while (_memory->ReadPanelData<int>(0x0C19D, 0x1e4)) {
+			while (memory->ReadPanelData<int>(0x0C19D, 0x1e4)) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 			}
 
-			_memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.000001f });
-			_memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
+			memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.000001f });
+			memory->WritePanelData<float>(id, MAX_BROADCAST_DISTANCE, { 0.000001f });
 			return;
 		}
 
@@ -190,28 +199,28 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 			}
 		}
 
-		_memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
-		_memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 + extraRows });
-		_memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale / puzzle->path_width_scale });
-		_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
-		_memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
-		_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
-		_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
-		_memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
-		_memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
-		_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-		_memory->WriteArray<int>(id, DECORATIONS, decorations);
-		_memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
-		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
-		_memory->WriteArray<int>(id, COLORED_REGIONS, polygons, true);
-		_memory->WritePanelData<float>(id, PATH_COLOR, { 0.75f, 0.75f, 0.75f, 1.0f });
-		_memory->WritePanelData<__int64>(id, DECORATION_COLORS, { 0 });
+		memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
+		memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 + extraRows });
+		memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale / puzzle->path_width_scale });
+		memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+		memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+		memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+		memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+		memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+		memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+		memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+		memory->WriteArray<int>(id, DECORATIONS, decorations);
+		memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+		memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 }); //why devide by 4 tho?
+		memory->WriteArray<int>(id, COLORED_REGIONS, polygons, true);
+		memory->WritePanelData<float>(id, PATH_COLOR, { 0.75f, 0.75f, 0.75f, 1.0f });
+		memory->WritePanelData<__int64>(id, DECORATION_COLORS, { 0 });
 		if (id != 0x28998) {
-			_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.5f, 0.0f, 0.0f, 1.0f });
-			_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.5f, 0.0f, 0.0f, 1.0f });
-			_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 }); //Tinted glass door needs to stay transparent
+			memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.5f, 0.0f, 0.0f, 1.0f });
+			memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.5f, 0.0f, 0.0f, 1.0f });
+			memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 }); //Tinted glass door needs to stay transparent
 		}
-		_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+		memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	}
 	else if (isLocked) {
 		//puzzle is locked but should nolonger be locked
@@ -234,27 +243,29 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id) {
 }
 
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
+	Memory* memory = Memory::get();
+
 	if (puzzle->id == 0x01983) {
-		while (_memory->ReadPanelData<int>(0x0C179, 0x1d4)) {
+		while (memory->ReadPanelData<int>(0x0C179, 0x1d4)) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
-		_memory->WritePanelData<float>(0x0C179, 0xE0, { 0.2300000042f });
-		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
+		memory->WritePanelData<float>(0x0C179, 0xE0, { 0.2300000042f });
+		memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
 	}
 
 	else if (puzzle->id == 0x01987) {
-		while (_memory->ReadPanelData<int>(0x0C19D, 0x1d4)) {
+		while (memory->ReadPanelData<int>(0x0C19D, 0x1d4)) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
-		_memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.2300000042f });
-		_memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
+		memory->WritePanelData<float>(0x0C19D, 0xE0, { 0.2300000042f });
+		memory->WritePanelData<float>(puzzle->id, MAX_BROADCAST_DISTANCE, { -1.0f });
 	}
 
 	else {
-		puzzle->Restore(_memory);
-		_memory->UpdatePanelJunctions(puzzle->id);
+		puzzle->Restore();
+		memory->UpdatePanelJunctions(puzzle->id);
 	}
 	lockedPuzzles.erase(puzzle->id);
 	//delete puzzle;
@@ -589,6 +600,6 @@ int PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 	return extraRows;
 }
 
-boolean PanelLocker::PuzzleIsLocked(int id) {
+bool PanelLocker::PuzzleIsLocked(int id) {
 	return lockedPuzzles.count(id) != 0;
 }

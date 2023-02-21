@@ -1,32 +1,36 @@
 #include "PuzzleData.h"
+#include "../Memory.h"
+#include "../Panel.h"
+#include "../Randomizer.h"
 
-void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
-	grid_size_x = _memory->ReadPanelData<int>(id, GRID_SIZE_X);
-	grid_size_y = _memory->ReadPanelData<int>(id, GRID_SIZE_Y);
-	path_width_scale = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
-	pattern_scale = _memory->ReadPanelData<float>(id, PATTERN_SCALE);
+void PuzzleData::Read() {
+	Memory* memory = Memory::get();
+
+	grid_size_x = memory->ReadPanelData<int>(id, GRID_SIZE_X);
+	grid_size_y = memory->ReadPanelData<int>(id, GRID_SIZE_Y);
+	path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	pattern_scale = memory->ReadPanelData<float>(id, PATTERN_SCALE);
 	
-	int numberOfDots = _memory->ReadPanelData<int>(id, NUM_DOTS);
-	dot_positions = _memory->ReadArray<float>(id, DOT_POSITIONS, numberOfDots * 2);
-	dot_flags = _memory->ReadArray<int>(id, DOT_FLAGS, numberOfDots);
+	int numberOfDots = memory->ReadPanelData<int>(id, NUM_DOTS);
+	dot_positions = memory->ReadArray<float>(id, DOT_POSITIONS, numberOfDots * 2);
+	dot_flags = memory->ReadArray<int>(id, DOT_FLAGS, numberOfDots);
 
-	int numberOfConnections = _memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
-	dot_connections_a = _memory->ReadArray<int>(id, DOT_CONNECTION_A, numberOfConnections);
-	dot_connections_b = _memory->ReadArray<int>(id, DOT_CONNECTION_B, numberOfConnections);
+	int numberOfConnections = memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
+	dot_connections_a = memory->ReadArray<int>(id, DOT_CONNECTION_A, numberOfConnections);
+	dot_connections_b = memory->ReadArray<int>(id, DOT_CONNECTION_B, numberOfConnections);
 	
-	int numberOfDecorations = _memory->ReadPanelData<int>(id, NUM_DECORATIONS);
-	decorations = _memory->ReadArray<int>(id, DECORATIONS, numberOfDecorations);
-	decoration_flags = _memory->ReadArray<int>(id, DECORATION_FLAGS, numberOfDecorations);
+	int numberOfDecorations = memory->ReadPanelData<int>(id, NUM_DECORATIONS);
+	decorations = memory->ReadArray<int>(id, DECORATIONS, numberOfDecorations);
+	decoration_flags = memory->ReadArray<int>(id, DECORATION_FLAGS, numberOfDecorations);
 
-	int numberColoredRegions = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
-	colored_regions = _memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions * 4);
+	int numberColoredRegions = memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
+	colored_regions = memory->ReadArray<int>(id, COLORED_REGIONS, numberColoredRegions * 4);
 
-	outer_background_mode = _memory->ReadPanelData<int>(id, OUTER_BACKGROUND_MODE);
-	outer_background_color = _memory->ReadPanelData<float>(id, OUTER_BACKGROUND, 4);
-	background_region_color = _memory->ReadPanelData<float>(id, BACKGROUND_REGION_COLOR, 4);
-	path_color = _memory->ReadPanelData<float>(id, PATH_COLOR, 4);
-	decorationsColorsPointer = _memory->ReadPanelData<__int64>(id, DECORATION_COLORS);
-
+	outer_background_mode = memory->ReadPanelData<int>(id, OUTER_BACKGROUND_MODE);
+	outer_background_color = memory->ReadPanelData<float>(id, OUTER_BACKGROUND, 4);
+	background_region_color = memory->ReadPanelData<float>(id, BACKGROUND_REGION_COLOR, 4);
+	path_color = memory->ReadPanelData<float>(id, PATH_COLOR, 4);
+	decorationsColorsPointer = memory->ReadPanelData<__int64>(id, DECORATION_COLORS);
 
 	if (id == 0x01983) {
 		hasTetris = true;
@@ -86,7 +90,7 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 		}
 	}
 
-  	if (_memory->ReadPanelData<int>(id, REFLECTION_DATA))
+  	if (memory->ReadPanelData<int>(id, REFLECTION_DATA))
 		hasSymmetry = true;
 
 	int dotAmount = 0;
@@ -157,26 +161,28 @@ void PuzzleData::Read(std::shared_ptr<Memory> _memory) {
 	}
 }
 
-void PuzzleData::Restore(std::shared_ptr<Memory> _memory) {
-	_memory->WritePanelData<int>(id, GRID_SIZE_X, { grid_size_x });
-	_memory->WritePanelData<int>(id, GRID_SIZE_Y, { grid_size_y });
-	_memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { path_width_scale });
-	_memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale });
-	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(dot_flags.size()) }); //amount of intersections
-	_memory->WriteArray<float>(id, DOT_POSITIONS, dot_positions); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_FLAGS, dot_flags); //flags for each point such as entrance or exit
-	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(dot_connections_a.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
-	_memory->WriteArray<int>(id, DOT_CONNECTION_A, dot_connections_a); //start of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WriteArray<int>(id, DOT_CONNECTION_B, dot_connections_b); //end of a connection between points, contains position of point in sourceIntersectionFlags
-	_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-	_memory->WriteArray<int>(id, DECORATIONS, decorations);
-	_memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
-	_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size() / 4) });
-	_memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions, true);
-	_memory->WritePanelData<float>(id, OUTER_BACKGROUND, outer_background_color);
-	_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { outer_background_mode });
-	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, background_region_color);
-	_memory->WritePanelData<float>(id, PATH_COLOR, path_color);
-	_memory->WritePanelData<__int64>(id, DECORATION_COLORS, { decorationsColorsPointer });
+void PuzzleData::Restore() {
+	Memory* memory = Memory::get();
+
+	memory->WritePanelData<int>(id, GRID_SIZE_X, { grid_size_x });
+	memory->WritePanelData<int>(id, GRID_SIZE_Y, { grid_size_y });
+	memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { path_width_scale });
+	memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale });
+	memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(dot_flags.size()) }); //amount of intersections
+	memory->WriteArray<float>(id, DOT_POSITIONS, dot_positions); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+	memory->WriteArray<int>(id, DOT_FLAGS, dot_flags); //flags for each point such as entrance or exit
+	memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(dot_connections_a.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+	memory->WriteArray<int>(id, DOT_CONNECTION_A, dot_connections_a); //start of a connection between points, contains position of point in sourceIntersectionFlags
+	memory->WriteArray<int>(id, DOT_CONNECTION_B, dot_connections_b); //end of a connection between points, contains position of point in sourceIntersectionFlags
+	memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	memory->WriteArray<int>(id, DECORATIONS, decorations);
+	memory->WriteArray<int>(id, DECORATION_FLAGS, decoration_flags);
+	memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(colored_regions.size() / 4) });
+	memory->WriteArray<int>(id, COLORED_REGIONS, colored_regions, true);
+	memory->WritePanelData<float>(id, OUTER_BACKGROUND, outer_background_color);
+	memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { outer_background_mode });
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, background_region_color);
+	memory->WritePanelData<float>(id, PATH_COLOR, path_color);
+	memory->WritePanelData<__int64>(id, DECORATION_COLORS, { decorationsColorsPointer });
 }

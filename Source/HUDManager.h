@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <string>
 #include <queue>
 
@@ -13,7 +12,7 @@ class Memory;
 class HudManager {
 public:
 
-	HudManager(const std::shared_ptr<Memory>& memory);
+	HudManager();
 	
 	void update(float deltaSeconds);
 
@@ -79,7 +78,5 @@ private:
 
 	uint64_t setSubtitleOffset;
 	uint32_t largeSubtitlePointerOffset;
-
-	std::shared_ptr<Memory> memory;
 
 };

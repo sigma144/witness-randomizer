@@ -1,5 +1,6 @@
 #pragma once
-#include "..\Panel.h"
+
+#include <vector>
 
 struct PuzzleData
 {
@@ -8,8 +9,8 @@ struct PuzzleData
 			id = panelId;
 		};
 
-		void Read(std::shared_ptr<Memory> _memory);
-		void Restore(std::shared_ptr<Memory> _memory);
+		void Read();
+		void Restore();
 
 		int id;
 

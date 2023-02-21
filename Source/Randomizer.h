@@ -1,23 +1,17 @@
 #pragma once
-#include "Memory.h"
+
+#include <map>
 #include <memory>
 #include <set>
-#include <map>
+#include <vector>
 
 class Randomizer {
 public:
-	void RestoreLineWidths();
 
-	void GenerateNormal(HWND loadingHandle);
-	void GenerateHard(HWND loadingHandle);
+	void GenerateNormal();
+	void GenerateHard();
 
 	void AdjustSpeed();
-
-	void StartWatching();
-
-	void PreventSnipes();
-
-	void ClearOffsets() {_memory->ClearOffsets();}
 
 	enum SWAP {
 		NONE = 0,
@@ -44,7 +38,6 @@ private:
 	void ShuffleRange(std::vector<int>& order, size_t startIndex, size_t endIndex);
 	void ShufflePanels(bool hard);
 
-	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
 	std::set<int> _alreadySwapped;
 	std::map<int, int> _shuffleMapping;
 
