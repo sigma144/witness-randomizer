@@ -96,7 +96,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -137,7 +137,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -160,7 +160,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
