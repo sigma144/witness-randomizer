@@ -236,6 +236,9 @@ void Main::randomize() {
 	randomizer->colorblind = clientWindow->getSetting(ClientToggleSetting::ColorblindMode);
 	randomizer->doubleMode = false;
 
+	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
+	apRandomizer->Init();
+
 	clientWindow->setStatusMessage("Randomizing puzzles...");
 	if (puzzleRando == SIGMA_EXPERT)
 		randomizer->GenerateHard();
@@ -244,7 +247,6 @@ void Main::randomize() {
 
 	// Run the AP randomizer.
 	clientWindow->setStatusMessage("Setting up AP features...");
-	apRandomizer->Init();
 	if (puzzleRando == SIGMA_EXPERT)
 		apRandomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
