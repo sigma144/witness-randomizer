@@ -1,4 +1,5 @@
 #include "Input.h"
+
 #include "Memory.h"
 #include "Utilities.h"
 
@@ -60,6 +61,9 @@ InteractionState InputWatchdog::getInteractionState() const {
 			return InteractionState::Walking;
 		case 0x3:
 			return InteractionState::Cutscene;
+		default:
+			// Invalid. Return Walking.
+			return InteractionState::Walking;
 		}
 	}
 }
@@ -68,7 +72,7 @@ bool InputWatchdog::consumeInteractionStateChange()
 {
 	InteractionState currentInteractionState = getInteractionState();
 	if (currentInteractionState != previousInteractionState) {
-		previousInteractionState == currentInteractionState;
+		previousInteractionState = currentInteractionState;
 		return true;
 	}
 	else {
@@ -84,9 +88,10 @@ std::vector<InputButton> InputWatchdog::consumeTapEvents() {
 
 std::pair<std::vector<float>, std::vector<float>> InputWatchdog::getMouseRay()
 {
+	Memory* memory = Memory::get();
 	uint64_t mouseFloats = 0;
 
-	_memory->ReadAbsolute(reinterpret_cast<LPVOID>(_memory->GESTURE_MANAGER), &mouseFloats, 0x8);
+	memory->ReadAbsolute(reinterpret_cast<LPVOID>(memory->GESTURE_MANAGER), &mouseFloats, 0x8);
 
 	mouseFloats += 0x18;
 
@@ -129,17 +134,17 @@ std::pair<std::vector<float>, std::vector<float>> InputWatchdog::getMouseRay()
 
 	SIZE_T allocation_size2 = sizeof(buffer2);
 
-	LPVOID allocation_start2 = VirtualAllocEx(_memory->getHandle(), NULL, allocation_size2, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	WriteProcessMemory(_memory->getHandle(), allocation_start2, buffer2, allocation_size2, NULL);
-	HANDLE thread2 = CreateRemoteThread(_memory->getHandle(), NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start2, NULL, 0, 0);
+	LPVOID allocation_start2 = VirtualAllocEx(memory->getHandle(), NULL, allocation_size2, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(memory->getHandle(), allocation_start2, buffer2, allocation_size2, NULL);
+	HANDLE thread2 = CreateRemoteThread(memory->getHandle(), NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start2, NULL, 0, 0);
 	WaitForSingleObject(thread2, INFINITE);
 
 	float resultDirection[3];
-	_memory->ReadAbsolute(reinterpret_cast<LPVOID>(results), resultDirection, 0xC);
+	memory->ReadAbsolute(reinterpret_cast<LPVOID>(results), resultDirection, 0xC);
 
 	std::vector<float> direction(resultDirection, resultDirection + 3);
 
-	std::vector<float> playerPosition = _memory->ReadPlayerPosition(); // Player position and "cursor origin" appear to be the same thing.
+	std::vector<float> playerPosition = memory->ReadPlayerPosition(); // Player position and "cursor origin" appear to be the same thing.
 
 	return { playerPosition, direction };
 }
@@ -207,11 +212,13 @@ bool InputWatchdog::isValidForCustomKeybind(InputButton button) const
 }
 
 void InputWatchdog::updateKeyState() {
+	Memory* memory = Memory::get();
+
 	// First, find the address of the key state in memory.
 	const std::vector<int> offsets = {
 		// Input devices are contained within the Gamelib_Renderer struct. Conveniently enough, Gamelib_Renderer::input_devices is literally the first field
 		//   in the struct, so as soon as we dereference the pointer to the renderer we can immediately dereference the input device array.
-		Memory::GAMELIB_RENDERER,
+		memory->GAMELIB_RENDERER,
 		0x0,
 
 		// In the most recent build, the relevant Keyboard struct in input_devices is 0x90 bytes offset from the start of the input_devices array. Note that
@@ -224,11 +231,11 @@ void InputWatchdog::updateKeyState() {
 		0x8
 	};
 
-	uint64_t keyStateAddress = reinterpret_cast<uint64_t>(_memory->ComputeOffset(offsets));
+	uint64_t keyStateAddress = reinterpret_cast<uint64_t>(memory->ComputeOffset(offsets));
 
 	// Read the new state into memory.
 	int32_t newKeyState[INPUT_KEYSTATE_SIZE];
-	if (!_memory->ReadAbsolute(reinterpret_cast<void*>(keyStateAddress), &newKeyState, 0x200 * sizeof(int32_t))) {
+	if (!memory->ReadAbsolute(reinterpret_cast<void*>(keyStateAddress), &newKeyState, 0x200 * sizeof(int32_t))) {
 		return;
 	}
 
@@ -295,13 +302,15 @@ void InputWatchdog::updateKeyState() {
 }
 
 void InputWatchdog::updateInteractionState() {
+	Memory* memory = Memory::get();
+
 	InteractionState oldState = getInteractionState();
 
-	if (interactModeOffset == 0 || !_memory->ReadRelative(reinterpret_cast<void*>(interactModeOffset), &currentInteractMode, sizeof(int32_t))) {
+	if (interactModeOffset == 0 || !memory->ReadRelative(reinterpret_cast<void*>(interactModeOffset), &currentInteractMode, sizeof(int32_t))) {
 		currentInteractMode = 0x2; // fall back to not solving
 	}
 
-	if (menuOpenOffset == 0 || !_memory->ReadRelative(reinterpret_cast<void*>(menuOpenOffset), &currentMenuOpenPercent, sizeof(float))) {
+	if (menuOpenOffset == 0 || !memory->ReadRelative(reinterpret_cast<void*>(menuOpenOffset), &currentMenuOpenPercent, sizeof(float))) {
 		currentMenuOpenPercent = 0.f; // fall back to not open
 	}
 
@@ -335,8 +344,10 @@ void InputWatchdog::updateInteractionState() {
 }
 
 void InputWatchdog::findInteractModeOffset() {
+	Memory* memory = Memory::get();
+
 	// get_cursor_delta_from_mouse_or_gamepad() has a reliable signature to scan for:
-	uint64_t cursorDeltaOffset = _memory->executeSigScan({
+	uint64_t cursorDeltaOffset = memory->executeSigScan({
 		0xF3, 0x0F, 0x59, 0xD7,		// MULSS XMM2,XMM7
 		0xF3, 0x0F, 0x59, 0xCF,		// MULSS XMM1,XMM7
 		0xF3, 0x0F, 0x59, 0xD0,		// MULSS XMM2,XMM0
@@ -350,7 +361,7 @@ void InputWatchdog::findInteractModeOffset() {
 
 	// This set of instructions is executed immediately after the call to retrieve the pointer to globals.interact_mode, so we just need to read four bytes prior
 	interactModeOffset = 0;
-	if (_memory->ReadRelative(reinterpret_cast<void*>(cursorDeltaOffset - 0x4), &interactModeOffset, 0x4)) {
+	if (memory->ReadRelative(reinterpret_cast<void*>(cursorDeltaOffset - 0x4), &interactModeOffset, 0x4)) {
 		// Since menu_open_t is a global, any access to it uses an address that's relative to the instruction doing the access, which is conveniently our search offset.
 		interactModeOffset += cursorDeltaOffset;
 	}
@@ -360,8 +371,10 @@ void InputWatchdog::findInteractModeOffset() {
 }
 
 void InputWatchdog::findMenuOpenOffset() {
+	Memory* memory = Memory::get();
+
 	// In order to find menu_open_t, we need to find a usage of it. draw_floating_symbols has a unique entry point:
-	uint64_t floatingSymbolOffset = _memory->executeSigScan({
+	uint64_t floatingSymbolOffset = memory->executeSigScan({
 		0x48, 0x63, 0xC3,			// MOVSXD RAX,EBX
 		0x48, 0x6B, 0xC8, 0x7C		// IMUL RCX,RAX,0x7C
 	});
@@ -381,7 +394,7 @@ void InputWatchdog::findMenuOpenOffset() {
 	floatingSymbolOffset += 7 + 17;
 
 	menuOpenOffset = 0;
-	if (_memory->ReadRelative(reinterpret_cast<void*>(floatingSymbolOffset), &menuOpenOffset, 0x4)) {
+	if (memory->ReadRelative(reinterpret_cast<void*>(floatingSymbolOffset), &menuOpenOffset, 0x4)) {
 		// Since menu_open_t is a global, any access to it uses an address that's relative to the instruction doing the access.
 		menuOpenOffset += floatingSymbolOffset + 0x4;
 	}
@@ -391,16 +404,18 @@ void InputWatchdog::findMenuOpenOffset() {
 }
 
 void InputWatchdog::findCursorRelatedOffsets() {
+	Memory* memory = Memory::get();
+
 	// cursor_to_direction
-	uint64_t offset = _memory->executeSigScan({
+	uint64_t offset = memory->executeSigScan({
 		0x40, 0x53,
 		0x48, 0x83, 0xEC, 0x60,
 		0x48, 0x8B, 0x05,
 	});
 
-	cursorToDirectionFunction = _memory->getBaseAddress() + offset;
+	cursorToDirectionFunction = memory->getBaseAddress() + offset;
 
-	cursorResultsAllocation = VirtualAllocEx(_memory->getHandle(), NULL, sizeof(0x20), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	cursorResultsAllocation = VirtualAllocEx(memory->getHandle(), NULL, sizeof(0x20), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
 	return;
 }

@@ -30,7 +30,6 @@ public:
 	}
 
 	void CopyTargets();
-	void RestoreLineWidths();
 
 	//--------------------------Normal difficulty---------------------------
 

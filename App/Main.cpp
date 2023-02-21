@@ -2,8 +2,9 @@
 
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
-#include "..\Source\Archipelago\Client\apclientpp\apclient.hpp"
+
 #include "windows.h"
+
 #include <Richedit.h>
 
 #include "Main.h"
@@ -25,6 +26,8 @@
 
 #include "Converty.h"
 #include "Archipelago/APRandomizer.h"
+#include <Archipelago/APGameData.h>
+
 
 #define IDC_RANDOMIZE 0x401
 #define IDC_TOGGLESPEED 0x402
@@ -162,8 +165,10 @@ void Main::randomize() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
 
+	Memory* memory = Memory::get();
+
 	bool rerandomize = false;
-	if (Special::ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
+	if (memory->ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
 		if (clientWindow->showDialogPrompt("Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)") == true) {
 			rerandomize = true;
 		}
@@ -189,20 +194,20 @@ void Main::randomize() {
 	int seed = apRandomizer->Seed;
 	int puzzleRando = apRandomizer->PuzzleRandomization;
 
-	randomizer->ClearOffsets();
+	memory->ClearOffsets();
 	randomizer->AdjustSpeed(); //Makes certain moving objects move faster
 
 	//If the save was previously randomized, check that seed and difficulty match with the save file
-	int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+	int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
 	if (lastSeed > 0 && !rerandomize && !DEBUG) {
 		if (seed != lastSeed) {
 			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?") == false) {
 				return;
 			}
 
-			Special::WritePanelData(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
+			memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
 		}
-		lastPuzzleRandomisation = Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12);
+		lastPuzzleRandomisation = memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12);
 	}
 
 	//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
@@ -214,7 +219,7 @@ void Main::randomize() {
 	}
 
 	if (lastSeed == 0) {
-		Special::WritePanelData(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
+		memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
 	}
 
 	// Store AP credentials to in-game data.
@@ -244,8 +249,8 @@ void Main::randomize() {
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
 		apRandomizer->GenerateNormal();
 
-	Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-	Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
+	memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
+	memory->WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
 
 	apRandomizer->PostGeneration();
 
@@ -413,49 +418,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	ClientWindow::create(hInstance, nCmdShow);
 
 	//Initialize memory globals constant depending on game version
-	Memory memory("witness64_d3d11.exe");
-	Memory::showMsg = false;
-	for (int g : Memory::globalsTests) {
-		try {
-			Memory::GLOBALS = g;
-			if (memory.ReadPanelData<int>(0x17E52, STYLE_FLAGS) != 0xA040) throw std::exception();
-			break;
-		}
-		catch (std::exception) { Memory::GLOBALS = 0; }
-	}
-
-	memory.findGamelibRenderer();
-	memory.findMovementSpeed();
-	memory.findActivePanel();
-	memory.findPlayerPosition();
-	memory.findImportantFunctionAddresses();
-
-	if (!Memory::GLOBALS) {
-		std::ifstream file("WRPGglobals.txt");
-		if (file.is_open()) {
-			file >> std::hex >> Memory::GLOBALS;
-			file.close();
-		}
-		else {
-			std::wstring str = L"Globals ptr not found. Press OK to search for globals ptr (may take a minute or two). Please keep The Witness open during this time.";
-			if (MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK) != IDOK) return 0;
-			int address = memory.findGlobals();
-			if (address) {
-				std::wstringstream ss; ss << std::hex << "Address found: 0x" << address << ". This address wil be automatically loaded next time. Please post an issue on Github with this address so that it can be added in the future.";
-				MessageBox(GetActiveWindow(), ss.str().c_str(), NULL, MB_OK);
-				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
-				ofile << std::hex << address << std::endl;
-				ofile.close();
-			}
-			else {
-				str = L"Address could not be found. Please post an issue on the Github page.";
-				MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK);
-				return 0;
-			}
-		}
-	}
-	Memory::showMsg = true;
-
+	Memory::create();
+	Memory* memory = memory->get();
+	
 	InputWatchdog::initialize();
 
 	//Get the seed and difficulty previously used for this save file (if applicable)

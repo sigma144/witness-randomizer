@@ -1,17 +1,18 @@
 #pragma once
 
-#include "../DateTime.h"
-#include "../Generate.h"
-#include "../HUDManager.h"
+
 #include "../Watchdog.h"
 #include "APGameData.h"
 #include "APState.h"
-#include "PanelLocker.h"
-#include "nlohmann\json.hpp"
-#include "PanelRestore.h"
+#include "nlohmann/json.hpp"
 
 #include <chrono>
 #include <map>
+
+class APClient;
+class Generate;
+class HudManager;
+class PanelLocker;
 
 
 class APWatchdog : public Watchdog {
@@ -45,7 +46,7 @@ public:
 		}
 
 		lastFrameTime = std::chrono::system_clock::now();
-		hudManager = std::make_shared<HudManager>(_memory);
+		hudManager = std::make_shared<HudManager>();
 	}
 
 	int spentPuzzleSkips = 0;
@@ -72,7 +73,7 @@ public:
 
 	void DoubleDoorTargetHack(int id);
 
-	void SetItemReward(const int& id, const APClient::NetworkItem& item);
+	void SetItemRewardColor(const int& id, const int& itemFlags);
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
@@ -175,6 +176,9 @@ private:
 
 	void SetStatusMessages();
 
+	int GetActivePanel();
+	void WriteMovementSpeed(float currentSpeed);
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
@@ -216,37 +220,13 @@ private:
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 
 	std::vector<std::vector<__int64>> queuedItems;
-
-
-	int GetActivePanel() {
-		try {
-			return _memory->GetActivePanel();
-		}
-		catch (std::exception& e) {
-			OutputDebugStringW(L"Couldn't get active panel");
-			return -1;
-		}
-	}
-
-	void WriteMovementSpeed(float currentSpeed) {
-		try {
-			return _memory->WriteMovementSpeed(currentSpeed);
-		}
-		catch (std::exception& e) {
-			OutputDebugStringW(L"Couldn't get active panel");
-		}
-	}
 };
 
 class APServerPoller : public Watchdog {
 public:
-	APServerPoller(APClient* client) : Watchdog(0.1f) {
-		ap = client;
-	}
 
-	virtual void action() {
-		ap->poll();
-	}
+	APServerPoller(APClient* client);
+	virtual void action();
 
 private:
 	APClient* ap;

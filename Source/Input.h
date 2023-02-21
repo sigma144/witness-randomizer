@@ -2,6 +2,7 @@
 
 #include "Watchdog.h"
 #include <cstdint>
+#include <optional>
 
 #ifndef INPUT_KEYSTATE_SIZE
 // The size of the Keyboard::key_state array, which in the most recent build is an int[256]. Note that this differs from the PDB build.

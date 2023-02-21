@@ -35,10 +35,10 @@ void PuzzleList::GenerateShadowsN() {
 	generator->setLoadingData("Shadows", 13);
 	generator->resetConfig();
 
-	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
+	Memory* memory = Memory::get();
 
-	_memory->WritePanelData<int>(0x386FA, SEQUENCE_LEN , { 0 });
-	_memory->WritePanelData<int>(0x386FA, DOT_SEQUENCE_LEN, { 0 });
+	memory->WritePanelData<int>(0x386FA, SEQUENCE_LEN , { 0 });
+	memory->WritePanelData<int>(0x386FA, DOT_SEQUENCE_LEN, { 0 });
 	generator->generate(0x386FA, Decoration::Arrow1, 5);
 
 	generator->generate(0x1C33F, Decoration::Arrow2, 5);
@@ -246,6 +246,7 @@ void PuzzleList::GenerateSymmetryN()
 
 void PuzzleList::GenerateQuarryN()
 {
+	Memory* memory = Memory::get();
 	generator->setLoadingData("Quarry", 39);
 	generator->resetConfig();
 	//Entry Gates
@@ -302,14 +303,14 @@ void PuzzleList::GenerateQuarryN()
 	//Eraser + Shapes
 	generator->setFlag(Generate::Config::ResetColors);
 	generator->generate(0x021B3, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B4, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B0, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
 	generator->setFlagOnce(Generate::Config::SmallShapes);
 	generator->generate(0x021AF, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
 	generator->generate(0x021AE, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->removeFlag(Generate::Config::ResetColors);
@@ -1236,6 +1237,7 @@ void PuzzleList::GenerateSymmetryH()
 
 void PuzzleList::GenerateQuarryH()
 {
+	Memory* memory = Memory::get();
 	generator->setLoadingData("Quarry", 40);
 	generator->resetConfig();
 	//Entry Gates
@@ -1313,15 +1315,15 @@ void PuzzleList::GenerateQuarryH()
 	//Eraser + Shapes
 	generator->setFlag(Generate::Config::ResetColors);
 	generator->generate(0x021B3, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B4, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B0, Decoration::Poly, 4, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
 	generator->setGridSize(4, 4);
 	generator->generate(0x021AF, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 2, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
-	specialCase->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021AE, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->resetConfig();
 	//Eraser + Stars
@@ -2216,7 +2218,7 @@ void PuzzleList::GenerateCavesH()
 		Decoration::Eraser | Decoration::Color::Cyan, 1);
 	//Arrow Pillar
 	generator->resetConfig();
-	specialCase->WritePanelData(0x09DD5, PATH_COLOR, { 0.01f, 0, 0.02f, 1 });
+	Memory::get()->WritePanelData<float>(0x09DD5, PATH_COLOR, {0.01f, 0, 0.02f, 1});
 	generator->backgroundColor = { 0, 0, 0, 1 };
 	generator->arrowColor = { 0.6f, 0, 1, 1 };
 	generator->successColor = { 1, 1, 1, 1 };
