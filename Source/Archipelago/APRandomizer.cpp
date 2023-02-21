@@ -462,7 +462,7 @@ void APRandomizer::PostGeneration() {
 
 	async->ResetPowerSurge();
 
-	_memory->applyDestructivePatches();
+	Memory::get()->applyDestructivePatches();
 
 	randomizationFinished = true;
 	memory->showMsg = false;
@@ -506,8 +506,8 @@ void APRandomizer::GenerateNormal() {
 		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
 }
 
-void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+void APRandomizer::GenerateHard() {
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	//Mess with Town targets

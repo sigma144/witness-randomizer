@@ -19,6 +19,43 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.1f) {
+	generator = std::make_shared<Generate>();
+	ap = client;
+	panelIdToLocationId = mapping;
+	finalPanel = lastPanel;
+	panelLocker = p;
+	audioLogMessages = a;
+	state = s;
+	EPShuffle = ep;
+	obeliskHexToEPHexes = o;
+	epToName = epn;
+	solveModeSpeedFactor = smsf;
+
+	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
+	if (speedTime == 0.6999999881) { // original value
+		speedTime = 0;
+	}
+
+	for (auto [key, value] : obeliskHexToEPHexes) {
+		obeliskHexToAmountOfEPs[key] = (int)value.size();
+	}
+
+	PuzzleRandomization = puzzle_rando;
+
+	panelsThatHaveToBeSkippedForEPPurposes = {
+		0x09E86, 0x09ED8, // light controllers 2 3
+		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
+	};
+
+	if (puzzle_rando == SIGMA_EXPERT) {
+		panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
+		panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
+	}
+
+	lastFrameTime = std::chrono::system_clock::now();
+	hudManager = std::make_shared<HudManager>();
+}
 
 void APWatchdog::action() {
 	auto currentFrameTime = std::chrono::system_clock::now();

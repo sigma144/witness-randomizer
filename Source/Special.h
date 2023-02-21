@@ -198,7 +198,6 @@ public:
 	}
 
 private:
-	inline static std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
 
 	std::shared_ptr<Generate> generator;
 
