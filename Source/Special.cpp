@@ -1791,9 +1791,49 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 
 	if (id == 0x09FC1 || id == 0x09F8E || id == 0x09F01 || id == 0x09EFF) { 
+		ColorPanel(id, text);
 		SkipMetapuzzle(id, text, kickOut);
 		return;
 	}
+
+	if (id == 0x181F5) {
+		ColorPanel(id, text);
+		int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
+		std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
+
+		for (int i = 0; i < dec.size(); i++) {
+			int decoration = dec[i];
+
+			if((decoration & 0x700) == Decoration::Shape::Triangle || (decoration & 0x700) == Decoration::Shape::Stone || (decoration & 0xF00) == Decoration::Shape::Star) dec[i] = 0;
+		}
+
+		WriteArray(id, DECORATIONS, dec);
+		WritePanelData(id, NEEDS_REDRAW, { 1 });
+
+		return;
+	}
+
+	if (id == 0x334D8) {
+		int num_dec = ReadPanelData<int>(id, NUM_DECORATIONS);
+		std::vector<int> dec = ReadArray<int>(id, DECORATIONS, num_dec);
+
+		for (int i = 0; i < dec.size(); i++) {
+			int decoration = dec[i];
+
+			if ((decoration & 0x700) == Decoration::Shape::Triangle) dec[i] = 0;
+		}
+
+		WriteArray(id, DECORATIONS, dec);
+		WritePanelData(id, NEEDS_REDRAW, { 1 });
+		return;
+	}
+}
+
+void Special::SetVanillaMetapuzzleShapes() {
+	correctShapesById[0x09f01] = 0x00310400;
+	correctShapesById[0x09f8E] = 0x02230400;
+	correctShapesById[0x09fc1] = 0x00330400;
+	correctShapesById[0x09EFF] = 0x00130400;
 }
 
 void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
@@ -1809,7 +1849,7 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	int likelyShape = -1;
 	int definitelyShape = -1;
 
-	bool hardMode = memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0;
+	bool hardMode = memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) == 1;
 
 	for (int i = 0; i < dec.size(); i++) {
 		int decoration = dec[i];
@@ -1920,8 +1960,62 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 	//DrawSimplePanel(0x09FDA, text, kickOut);
 }
 
+void Special::ColorPanel(int id, std::string text) {
+	if (text != "Collected" && text != "Disabled" && skip_completelyExclude.count(id)) return;
+
+	if (text == "Collected" && id != 0x28998) {
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+	}
+	else if (text == "Skipped" && id != 0x28998) {
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+	}
+	else if (text == "Disabled" && id != 0x28998) {
+		_memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
+		_memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+	}
+
+	if (cutoutPanels.count(id)) {
+		if (text == "Collected") {
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+			_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Skipped") {
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+			_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+			_memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Disabled") {
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+			_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+			_memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.2f, 0.2f, 1.0f });
+		}
+	}
+	else
+	{
+		if (text == "Collected") {
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Skipped") {
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
+		}
+		else if (text == "Disabled") {
+			_memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+		}
+		_memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
+	}
+	
+	if (id != 0x28998) _memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+
+	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 {
+	ColorPanel(id, text);
+
 	if (skip_completelyExclude.count(id)) return;
 
 	Memory* memory = Memory::get();
@@ -2031,33 +2125,6 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
-
-	if (text == "Collected" && id != 0x28998) {
-		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
-	}
-	else if (text == "Skipped" && id != 0x28998) {
-		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
-	}
-
-	if (id == 0x28a69 || id == 0x15ADD || id == 0x00290 || id == 0x00038 || id == 0x00037 || id == 0x17caa ||
-		id == 0x09F7D || id == 0x09FDC || id == 0x09FF7 || id == 0x09F82 || 
-		id == 0x09D9F || id == 0x09FF8 || id == 0x09DA1 || id == 0x09DA2 || id == 0x09DAF ||
-		id == 0x0A010 || id == 0x0A01B || id == 0x0A01F || id == 0x17E63 || id == 0x17E67) {
-		if (text == "Collected") {
-			memory->WritePanelData<float>(id, PATH_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
-		}
-		else if (text == "Skipped") {
-			memory->WritePanelData<float>(id, PATH_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
-		}
-	}
-	else
-	{
-		memory->WritePanelData<float>(id, PATH_COLOR, { 0.25f, 0.25f, 0.25f, 1.0f });
-	}
-	memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
-	if(id != 0x28998) memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 

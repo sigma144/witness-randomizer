@@ -82,7 +82,11 @@ public:
 
 	static void SkipPanel(int id, std::string text, bool kickOut);
 
+	static void SetVanillaMetapuzzleShapes();
+
 	static void SkipMetapuzzle(int id, std::string text, bool kickOut);
+
+	static void ColorPanel(int id, std::string text);
 
 	static void DrawSimplePanel(int id, std::string text, bool kickOut);
 
@@ -194,6 +198,7 @@ public:
 	}
 
 private:
+	inline static std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
 
 	std::shared_ptr<Generate> generator;
 

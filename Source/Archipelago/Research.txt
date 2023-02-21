@@ -1,20 +1,3 @@
-TODO:
-try to make shadows editable to make them arrow puzzles
-Un-disable River Vault: It actually *is* randomized, turns out!
-Put bridge panels back into the panel locking.
-
-BUGS:
-major:
-
-
-minor: 
-Panel background gets scrambled when it show item send data
-
-Wont fix:
-quarry lazer didnt say missing shapers
-tetris briges are on
-
-
 RESEARCH:
   110010011100000000 = Some arrow
         011000000000 = triangles

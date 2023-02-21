@@ -69,12 +69,15 @@ void PuzzleData::Read() {
 				hasStarsWithOtherSymbol = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Poly) {
+			bool isRotated = (decorations[i] & 0x1000) == Decoration::Can_Rotate;
+
 			if ((decorations[i] & 0x2000) == Decoration::Negative)
 				hasTetrisNegative = true;
-			else if ((decorations[i] & 0x1000) == Decoration::Can_Rotate)
-				hasTetrisRotated = true;
-			else
+			else if (!isRotated)
 				hasTetris = true;
+
+			if (isRotated)
+				hasTetrisRotated = true;
 		}
 		else if ((decorations[i] & 0x700) == Decoration::Shape::Eraser) {
 			hasErasers = true;

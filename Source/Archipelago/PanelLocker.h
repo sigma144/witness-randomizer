@@ -10,7 +10,7 @@ struct PuzzleData;
 
 class PanelLocker {
 	public:
-		void DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels);
+		void DisableNonRandomizedPuzzles(std::set<int> disabledPuzzles, std::set<int> exemptDoorPanels);
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		bool PuzzleIsLocked(int id);

@@ -290,23 +290,23 @@ void Memory::SetInfiniteChallenge(bool enable) {
 	}
 }
 
+void Memory::applyDestructivePatches() {
+	//Cursor size
+	char asmBuff[] = "\xBB\x00\x00\x80\x3F\x66\x44\x0F\x6E\xCB\x90\x90\x90";
+	/*mov ebx, 3F800000
+	movd xmm9, ebx
+	nop
+	nop
+	nop*/
+
+	LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
+
+	WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+}
+
 void Memory::findImportantFunctionAddresses(){
 	executeSigScan({ 0x45, 0x0F, 0x28, 0xC8, 0xF3, 0x44 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		cursorSize = _baseAddress + offset + index;
-
-		char asmBuff[] = "\xBB\x00\x00\x80\x3F\x66\x44\x0F\x6E\xCB\x90\x90\x90";
-
-		/*mov ebx, 3F800000
-		movd xmm9, ebx
-		nop
-		nop
-		nop*/
-
-		LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
-
-		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
-
-		cursorSize++;
 
 		for (; index < data.size(); index++) {
 			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {

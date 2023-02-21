@@ -30,7 +30,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 6});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 8});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -184,6 +184,14 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		if (slotData.contains("disabled_panels")) {
+			for (std::string keys : slotData["disabled_panels"]) {
+				int key = std::stoul(keys, nullptr, 16);
+				if (!actuallyEveryPanel.count(key)) continue;
+				disabledPanels.insert(key);
+			}
+		}
+
 		if (slotData.contains("item_id_to_door_hexes")) {
 			for (auto& [key, val] : slotData["item_id_to_door_hexes"].items()) {
 				int itemId = std::stoul(key, nullptr, 10);
@@ -212,18 +220,15 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				int logId = std::stoul(key, nullptr, 10);
 				std::string message;
 				int64_t location_id_in_this_world = -1;
-				for (int i = 0; i < val.size(); i++) {
-					if (i < 3) {
-						std::string line = val[i];
-						if (!line.empty()) {
-							message.append(line);
-							message.append(" ");
-						}
-					}
-					else {
-						location_id_in_this_world = val[i];
+				for (int i = 0; i < val.size() - 1; i++) {
+					std::string line = val[i];
+					if (!line.empty()) {
+						message.append(line);
+						message.append(" ");
 					}
 				}
+
+				location_id_in_this_world = val[val.size() - 1];
 				
 				audioLogMessages.insert({ logId, std::pair(message, location_id_in_this_world) });
 			}
@@ -373,8 +378,6 @@ std::string APRandomizer::buildUri(std::string& server)
 {
 	std::string uri = server;
 
-	if (uri.rfind("ws://", 0) == std::string::npos)
-		uri = "ws://" + uri;
 	if (uri.find(":") == std::string::npos)
 		uri = uri + ":38281";
 	else if (uri.back() == ':')
@@ -459,6 +462,8 @@ void APRandomizer::PostGeneration() {
 
 	async->ResetPowerSurge();
 
+	_memory->applyDestructivePatches();
+
 	randomizationFinished = true;
 	memory->showMsg = false;
 
@@ -492,15 +497,17 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+	Special::SetVanillaMetapuzzleShapes();
+
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
+		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
 }
 
-void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	//Mess with Town targets
@@ -519,7 +526,7 @@ void APRandomizer::GenerateHard() {
 	Memory::get()->PowerNext(0x03629, 0x36);
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
+		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
 }
 
 void APRandomizer::PreventSnipes()
