@@ -1682,10 +1682,10 @@ void Special::SetRequiredLasers(int mountain, int challenge) {
 	int seqLen = 0;
 	std::vector<int> seq = { };
 
-	std::vector<int> decorations = { Decoration::Triangle };
-	std::vector<int> decorationsFlags = { 0 };
-
 	Memory* memory = Memory::get();
+
+	std::vector<int> decorations(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+	std::vector<int> decorationsFlags(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
 
 	memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
 	memory->WriteArray<int>(id, DECORATIONS, decorations);
@@ -2113,8 +2113,10 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 		memory->WriteArray<int>(id, DOT_FLAGS, newIntFlags);
 	}
 
-	std::vector<int> decorations = { Decoration::Triangle };
-	std::vector<int> decorationsFlags = { 0 };
+
+	std::vector<int> decorations(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+	std::vector<int> decorationsFlags(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+
 
 
 	memory->WritePanelData<int>(id, NUM_DECORATIONS, {static_cast<int>(decorations.size())});
