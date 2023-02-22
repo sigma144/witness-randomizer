@@ -1182,7 +1182,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
 
-	if(!laserActiveInGame)
+	if(!laserActiveInGame & collect)
 	{
 		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
@@ -1199,7 +1199,7 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 
 	if (epActiveInGame == epActiveAccordingToDataPackage) return;
 
-	if (!epActiveInGame)
+	if (!epActiveInGame && collect)
 	{
 		Memory::get()->SolveEP(epNo);
 		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo)) {
