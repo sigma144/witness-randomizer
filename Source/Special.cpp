@@ -1715,6 +1715,7 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		if (!memory->ReadPanelData<int>(0x288E9, 0x1E4))
 		{
 			memory->OpenDoor(0x288E9);
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 
@@ -1723,6 +1724,10 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 			memory->OpenDoor(0x28AD4);
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
+
+		memory->PowerGauge(0x1553, 0x1549, 2);
+		memory->PowerGauge(0x1553, 0x368A, 1);
+		//TODO: Probably also do this for Symmetry Island upper
 	}
 	else if (id == 0x1C349) { // Symmetry island upper latches
 		if (!memory->ReadPanelData<int>(0x28AE8, 0x1E4))
@@ -1737,6 +1742,8 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 	}
+
+	memory->UpdatePanelJunctions(id);
 
 	// Special Skipping Animations Done
 

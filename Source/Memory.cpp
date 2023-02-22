@@ -399,6 +399,12 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x56, 0x48, 0x83, 0xEC, 0x70 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->powerGaugeFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
 	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x49, 0x8B, 0xF8, 0x48, 0x8B, 0xF2, 0x48, 0x8B, 0xD9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->_getSoundFunction = _baseAddress + offset + index;
 
@@ -494,7 +500,7 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
-	//Update Entity Position
+	//Power Next Item
 	executeSigScan({ 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0x42, 0x18, 0x48, 0x8B, 0xFA, 0x48, 0x85, 0xC0, 0x0F, 0x84 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->powerNextFunction = _baseAddress + offset + index - 8;
 
@@ -907,6 +913,52 @@ void Memory::PowerNext(int source, int target) {
 	buffer[22] = (offset >> 40) & 0xff;
 	buffer[23] = (offset >> 48) & 0xff;
 	buffer[24] = (offset >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+}
+
+void Memory::PowerGauge(int id, int sourceId, int slot) {
+	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, id * 8, 0 }));
+	sourceId += 1;
+
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" // mov rax, function address
+		"\xBA\x00\x00\x00\x00" // mov edx, source_id
+		"\x41\xB8\x00\x00\x00\x00" // mov r8d, slot
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" // mov rcx, address of Gauge
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer[2] = powerGaugeFunction & 0xff;
+	buffer[3] = (powerGaugeFunction >> 8) & 0xff;
+	buffer[4] = (powerGaugeFunction >> 16) & 0xff;
+	buffer[5] = (powerGaugeFunction >> 24) & 0xff;
+	buffer[6] = (powerGaugeFunction >> 32) & 0xff;
+	buffer[7] = (powerGaugeFunction >> 40) & 0xff;
+	buffer[8] = (powerGaugeFunction >> 48) & 0xff;
+	buffer[9] = (powerGaugeFunction >> 56) & 0xff;
+	buffer[11] = sourceId & 0xff; //source
+	buffer[12] = (sourceId >> 8) & 0xff;
+	buffer[13] = (sourceId >> 16) & 0xff;
+	buffer[14] = (sourceId >> 24) & 0xff;
+	buffer[17] = slot & 0xff; //slot
+	buffer[18] = (slot >> 8) & 0xff;
+	buffer[19] = (slot >> 16) & 0xff;
+	buffer[20] = (slot >> 24) & 0xff;
+	buffer[23] = offset & 0xff;
+	buffer[24] = (offset >> 8) & 0xff;
+	buffer[25] = (offset >> 16) & 0xff;
+	buffer[26] = (offset >> 24) & 0xff;
+	buffer[27] = (offset >> 32) & 0xff;
+	buffer[28] = (offset >> 40) & 0xff;
+	buffer[29] = (offset >> 48) & 0xff;
+	buffer[30] = (offset >> 56) & 0xff;
 
 	SIZE_T allocation_size = sizeof(buffer);
 

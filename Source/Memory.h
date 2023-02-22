@@ -190,6 +190,8 @@ public:
 		CallVoidFunction(id, updateJunctionsFunction);
 	}
 
+	void PowerGauge(int id, int sourceId, int slot);
+
 	void PowerNext(int source, int target);
 
 	void UpdateEntityPosition(int id) {
@@ -282,6 +284,7 @@ public:
 	uint64_t _bytesLengthChallenge;
 	uint64_t completeEPFunction;
 	uint64_t updateJunctionsFunction;
+	uint64_t powerGaugeFunction;
 	uint64_t addToPatternMapFunction;
 	uint64_t removeFromPatternMapFunction;
 	uint64_t patternMap;
