@@ -12,7 +12,7 @@
 // Custom keys for randomizer-specific functionality.
 enum class CustomKey : int {
 	SKIP_PUZZLE,
-	MAX
+	COUNT
 };
 
 // A mapping of human-readable button names onto the hex codes used by the game.

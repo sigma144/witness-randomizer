@@ -8,6 +8,7 @@
 
 #include "../App/Version.h"
 #include "../App/Main.h"
+#include "Input.h"
 
 using json = nlohmann::json;
 
@@ -30,10 +31,18 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define SETTING_CONTROL_LEFT (STATIC_TEXT_MARGIN + SETTING_LABEL_WIDTH)
 #define SETTING_CONTROL_WIDTH (CLIENT_WINDOW_WIDTH - CONTROL_MARGIN - SETTING_CONTROL_LEFT)
 
+#define KEYBIND_BUTTON_WIDTH 100
+#define KEYBIND_BUTTON_LEFT (CLIENT_WINDOW_WIDTH - CONTROL_MARGIN - KEYBIND_BUTTON_WIDTH)
+#define KEYBIND_LABEL_LEFT SETTING_CONTROL_LEFT
+#define KEYBIND_LABEL_WIDTH (KEYBIND_LABEL_LEFT - KEYBIND_BUTTON_WIDTH - CONTROL_MARGIN)
+
 #define LINE_SPACING 5
 
 #define IDC_BUTTON_RANDOMIZE 0x401
 #define IDC_BUTTON_LOADCREDENTIALS 0x422
+
+// Root index for keybind controls.
+#define IDC_BUTTON_KEYBIND 0x4A0
 
 #define IDC_SETTING_COLORBLIND 0x503
 #define IDC_SETTING_COLLECT 0x550
@@ -85,6 +94,9 @@ void ClientWindow::loadSettings()
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 			setSetting(ClientToggleSetting::Collect, data.contains("collect") ? data["collect"].get<bool>() : true);
 			setSetting(ClientToggleSetting::ColorblindMode, data.contains("colorblind") ? data["colorblind"].get<bool>() : false);
+
+			// TODO: load keybinds
+			refreshKeybind(CustomKey::SKIP_PUZZLE);
 		}
 	}
 
@@ -129,6 +141,13 @@ void ClientWindow::setSetting(ClientStringSetting setting, std::string value) co
 	writeStringToTextBox(value, textBox);
 }
 
+void ClientWindow::refreshKeybind(const CustomKey& customKey) const {
+	InputWatchdog* input = InputWatchdog::get();
+
+	HWND label = customKeybindValues.find(customKey)->second;
+	writeStringToTextBox(input->getNameForInputButton(input->getCustomKeybind(customKey)), label);
+}
+
 void ClientWindow::setStatusMessage(std::string statusMessage) const
 {
 	writeStringToTextBox(statusMessage, hwndStatusText);
@@ -154,6 +173,11 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
+
+		for (auto keybindButton : customKeybindButtons) {
+			EnableWindow(keybindButton.second, false);
+		}
+
 		break;
 	case ClientWindowMode::PreConnect:
 		// Enable Archipelago credentials and actions.
@@ -170,6 +194,11 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
+		// Disable keybinds until connected.
+		for (auto keybindButton : customKeybindButtons) {
+			EnableWindow(keybindButton.second, false);
+		}
+
 		break;
 	case ClientWindowMode::Randomized:
 		// Disable Archipelago credentials and actions.
@@ -185,8 +214,57 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
+
+		// Enable keybinds.
+		for (auto keybindButton : customKeybindButtons) {
+			EnableWindow(keybindButton.second, true);
+		}
+
 		break;
 	}
+}
+
+void ClientWindow::focusGameWindow()
+{
+	// Find the game window by enumerating over all active windows.
+	struct WindowData {
+		DWORD processId = Memory::get()->getProcessID();
+		HWND windowHandle = HWND();
+		bool found = false;
+	} windowData;
+
+	auto enumWindowCallback = [](HWND handle, LPARAM param) -> BOOL {
+		WindowData& outData = *(WindowData*)param;
+		DWORD processId = 0;
+
+		GetWindowThreadProcessId(handle, &processId);
+		if (processId != outData.processId || !IsWindowVisible(handle)) {
+			// Continue.
+			return true;
+		}
+
+		// Found a visible window matching our process ID.
+		outData.windowHandle = handle;
+		outData.found = true;
+		return false;
+	};
+
+	bool foundWindow = EnumWindows(enumWindowCallback, (LPARAM)&windowData);
+	if (windowData.found) {
+		SetForegroundWindow(windowData.windowHandle);
+
+		// If the window has been minimized (such as when alt-tabbing out of fullscreen), show it.
+		WINDOWPLACEMENT windowPlacement;
+		GetWindowPlacement(windowData.windowHandle, &windowPlacement);
+		if (windowPlacement.showCmd == SW_SHOWMINIMIZED) {
+			ShowWindow(windowData.windowHandle, SW_NORMAL);
+		}
+	}
+}
+
+void ClientWindow::focusClientWindow()
+{
+	SetForegroundWindow(hwndRootWindow);
 }
 
 void ClientWindow::buildWindow() {
@@ -223,6 +301,8 @@ void ClientWindow::buildWindow() {
 	addArchipelagoCredentials(currentY);
 	addHorizontalRule(currentY);
 	addGameOptions(currentY);
+	addHorizontalRule(currentY);
+	addKeybindings(currentY);
 	addHorizontalRule(currentY);
 	addErrorMessage(currentY);
 
@@ -375,6 +455,49 @@ void ClientWindow::addGameOptions(int& currentY) {
 	currentY += STATIC_TEXT_HEIGHT;
 }
 
+void ClientWindow::addKeybindings(int& currentY)
+{
+	int customKeyCount = static_cast<int>(CustomKey::COUNT);
+	if (customKeyCount < 1) return;
+
+	CreateWindow(L"STATIC", L"Custom keybindings:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+	currentY += STATIC_TEXT_HEIGHT;
+
+	InputWatchdog* input = InputWatchdog::get();
+
+	for (int i = 0; i < customKeyCount; i++) {
+		CustomKey currentKey = static_cast<CustomKey>(i);
+		currentY += LINE_SPACING;
+
+		HWND hwndLabel = CreateWindow(L"STATIC", L"",
+			WS_VISIBLE | WS_CHILD | SS_RIGHT,
+			STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+			SETTING_LABEL_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+			hwndRootWindow, NULL, hAppInstance, NULL);
+		writeStringToTextBox(input->getNameForCustomKey(currentKey) + ":", hwndLabel);
+
+		HWND hwndValue = CreateWindow(L"STATIC", L"",
+			WS_VISIBLE | WS_CHILD | SS_LEFT,
+			KEYBIND_LABEL_LEFT, currentY + SETTING_LABEL_Y_OFFSET,
+			KEYBIND_LABEL_WIDTH, STATIC_TEXT_HEIGHT,
+			hwndRootWindow, NULL, hAppInstance, NULL);
+		customKeybindValues[currentKey] = hwndValue;
+
+		HWND hwndButton = CreateWindow(L"BUTTON", L"Bind",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			KEYBIND_BUTTON_LEFT, currentY,
+			KEYBIND_BUTTON_WIDTH, CONTROL_HEIGHT,
+			hwndRootWindow, (HMENU)(IDC_BUTTON_KEYBIND + i), hAppInstance, NULL);
+		customKeybindButtons[currentKey] = hwndButton;
+
+		currentY += CONTROL_HEIGHT;
+	}
+}
+
 void ClientWindow::addPuzzleEditor(int& currentY) {
 	// TODO
 }
@@ -443,6 +566,12 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			Main::loadCredentials();
 			break;
 		}
+// Keybindings.
+		case IDC_BUTTON_KEYBIND + static_cast<int>(CustomKey::SKIP_PUZZLE) : {
+			CustomKey key = static_cast<CustomKey>(LOWORD(wParam) - IDC_BUTTON_KEYBIND);
+			handleKeybind(key);
+			break;
+		}
 		}
 	}
 
@@ -460,4 +589,9 @@ std::string ClientWindow::readStringFromTextBox(HWND hwndTextBox) const {
 
 void ClientWindow::writeStringToTextBox(std::string string, HWND hwndTextBox) const {
 	SetWindowText(hwndTextBox, Converty::Utf8ToWide(string).c_str());
+}
+
+void ClientWindow::handleKeybind(const CustomKey& customKey)
+{
+	InputWatchdog::get()->beginCustomKeybind(customKey);
 }
