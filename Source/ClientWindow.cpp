@@ -72,6 +72,9 @@ void ClientWindow::saveSettings()
 	data["collect"] = getSetting(ClientToggleSetting::Collect);
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 
+	InputWatchdog* input = InputWatchdog::get();
+	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
+
 	data["apSlotName"] = getSetting(ClientStringSetting::ApSlotName);
 
 	std::remove("WRPGconfig.txt");
@@ -91,11 +94,16 @@ void ClientWindow::loadSettings()
 
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
+			// Load game settings.
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 			setSetting(ClientToggleSetting::Collect, data.contains("collect") ? data["collect"].get<bool>() : true);
 			setSetting(ClientToggleSetting::ColorblindMode, data.contains("colorblind") ? data["colorblind"].get<bool>() : false);
 
-			// TODO: load keybinds
+			// Load keybinds.
+			InputWatchdog* input = InputWatchdog::get();
+			input->loadCustomKeybind(CustomKey::SKIP_PUZZLE,
+				data.contains("key_skipPuzzle") ? static_cast<InputButton>(data["key_skipPuzzle"].get<int>()) : InputButton::KEY_Q);
+
 			refreshKeybind(CustomKey::SKIP_PUZZLE);
 		}
 	}
@@ -254,7 +262,7 @@ void ClientWindow::focusGameWindow()
 		SetForegroundWindow(windowData.windowHandle);
 
 		// If the window has been minimized (such as when alt-tabbing out of fullscreen), show it.
-		WINDOWPLACEMENT windowPlacement;
+		WINDOWPLACEMENT windowPlacement = WINDOWPLACEMENT();
 		GetWindowPlacement(windowData.windowHandle, &windowPlacement);
 		if (windowPlacement.showCmd == SW_SHOWMINIMIZED) {
 			ShowWindow(windowData.windowHandle, SW_NORMAL);

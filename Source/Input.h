@@ -213,6 +213,8 @@ public:
 	static std::string getNameForCustomKey(CustomKey key);
 	static std::string getNameForInputButton(InputButton button);
 
+	void loadCustomKeybind(CustomKey key, InputButton button);
+
 	void beginCustomKeybind(CustomKey key);
 	bool trySetCustomKeybind(InputButton button);
 	void cancelCustomKeybind();

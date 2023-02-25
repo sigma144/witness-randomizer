@@ -150,6 +150,10 @@ std::pair<std::vector<float>, std::vector<float>> InputWatchdog::getMouseRay()
 	return { playerPosition, direction };
 }
 
+void InputWatchdog::loadCustomKeybind(CustomKey key, InputButton button) {
+	customKeybinds[key] = button;
+}
+
 void InputWatchdog::beginCustomKeybind(CustomKey key) {
 	currentlyRebindingKey = key;
 	ClientWindow::get()->focusGameWindow();
@@ -164,6 +168,8 @@ bool InputWatchdog::trySetCustomKeybind(InputButton button) {
 		currentlyRebindingKey.reset();
 
 		clientWindow->focusClientWindow();
+		clientWindow->saveSettings();
+
 		return true;
 	}
 
