@@ -251,6 +251,8 @@ void HudManager::findSetSubtitleOffsets() {
 	}
 }
 void HudManager::overwriteSubtitleFunction() {
+	Memory* memory = Memory::get();
+
 	// Offsets of key functions. TODO: Determine these through sigscans.
 	uint32_t func_hud_draw_subtitles = 0x1E99A0;
 	uint32_t func_rendering_2D_right_handed = 0x25a330;
