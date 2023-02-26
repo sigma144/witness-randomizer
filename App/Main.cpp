@@ -173,6 +173,7 @@ void Main::randomize() {
 			rerandomize = true;
 		}
 		else {
+			clientWindow->setWindowMode(ClientWindowMode::PreConnect);
 			return;
 		}
 	}
@@ -189,6 +190,7 @@ void Main::randomize() {
 	clientWindow->setStatusMessage("Connecting to Archipelago...");
 	if (!apRandomizer->Connect(apAddress, apSlotName, apPassword)) {
 		clientWindow->setStatusMessage("");
+		clientWindow->setWindowMode(ClientWindowMode::PreConnect);
 		return;
 	}
 
@@ -590,14 +592,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//ShowWindow(hwndRootWindow, nCmdShow);
 	//UpdateWindow(hwndRootWindow);
 
-	ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}, { FVIRTKEY, VK_RETURN, IDC_RETURN} };
-	const HACCEL hAccel = CreateAcceleratorTable(Accel, sizeof(Accel) / sizeof(ACCEL));
+	//ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}, { FVIRTKEY, VK_RETURN, IDC_RETURN} };
+	//const HACCEL hAccel = CreateAcceleratorTable(Accel, sizeof(Accel) / sizeof(ACCEL));
 
     MSG msg;
 	ClientWindow* clientWindow = ClientWindow::get();
-	while (!GetMessage(&msg, nullptr, 0, 0) == 0)
+	while (GetMessage(&msg, nullptr, 0, 0))
 	{
-		if (!TranslateAccelerator(clientWindow->getRootWindow(), hAccel, &msg)) {
+		//if (!TranslateAccelerator(clientWindow->getRootWindow(), hAccel, &msg)) {
+		if (!IsDialogMessage(clientWindow->getRootWindow(), &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}

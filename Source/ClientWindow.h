@@ -61,7 +61,7 @@ public:
 	// Sets the "last error message" field.
 	void setErrorMessage(std::string errorMessage) const;
 
-	void setWindowMode(ClientWindowMode mode) const;
+	void setWindowMode(ClientWindowMode mode);
 
 	void focusGameWindow();
 	void focusClientWindow();
@@ -104,6 +104,8 @@ private:
 	HWND hwndStatusText, hwndErrorText;
 
 	HWND hwndTEMPfocusWindow;
+
+	ClientWindowMode currentWindowMode = ClientWindowMode::Disabled;
 
 	std::map<ClientToggleSetting, int> toggleSettingButtonIds;
 	std::map<ClientToggleSetting, HWND> toggleSettingCheckboxes;

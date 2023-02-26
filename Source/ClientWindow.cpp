@@ -38,15 +38,19 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 
 #define LINE_SPACING 5
 
-#define IDC_BUTTON_RANDOMIZE 0x401
-#define IDC_BUTTON_LOADCREDENTIALS 0x422
+#define IDC_FIELD_AP_ADDRESS 0x400
+#define IDC_FIELD_AP_SLOTNAME 0x401
+#define IDC_FIELD_AP_PASSWORD 0x402
+
+#define IDC_BUTTON_RANDOMIZE 0x440
+#define IDC_BUTTON_LOADCREDENTIALS 0x441
 
 // Root index for keybind controls.
-#define IDC_BUTTON_KEYBIND 0x4A0
+#define IDC_BUTTON_KEYBIND 0x480
 
-#define IDC_SETTING_COLORBLIND 0x503
-#define IDC_SETTING_COLLECT 0x550
-#define IDC_SETTING_CHALLENGE 0x560
+#define IDC_SETTING_COLORBLIND 0x500
+#define IDC_SETTING_COLLECT 0x501
+#define IDC_SETTING_CHALLENGE 0x502
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -166,10 +170,12 @@ void ClientWindow::setErrorMessage(std::string errorMessage) const
 	writeStringToTextBox(errorMessage, hwndErrorText);
 }
 
-void ClientWindow::setWindowMode(ClientWindowMode mode) const
+void ClientWindow::setWindowMode(ClientWindowMode mode)
 {
+	currentWindowMode = mode;
+
 	switch (mode) {
-	case ClientWindowMode::Disabled:
+	case ClientWindowMode::Disabled: {
 		// Disable everything.
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second, false);
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second, false);
@@ -187,7 +193,8 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 		}
 
 		break;
-	case ClientWindowMode::PreConnect:
+	}
+	case ClientWindowMode::PreConnect: {
 		// Enable Archipelago credentials and actions.
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second, true);
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second, true);
@@ -207,8 +214,15 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 			EnableWindow(keybindButton.second, false);
 		}
 
+		// Focus on the first AP setting field.
+		HWND focusField = stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second;
+		std::string focusFieldContents = readStringFromTextBox(focusField);
+		SetFocus(focusField);
+		SendMessage(focusField, EM_SETSEL, focusFieldContents.length(), focusFieldContents.length());
+
 		break;
-	case ClientWindowMode::Randomized:
+	}
+	case ClientWindowMode::Randomized: {
 		// Disable Archipelago credentials and actions.
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second, false);
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second, false);
@@ -229,6 +243,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 		}
 
 		break;
+	}
 	}
 }
 
@@ -282,7 +297,7 @@ void ClientWindow::buildWindow() {
 		CS_HREDRAW | CS_VREDRAW,
 		singletonHandleWndProc,
 		0,
-		0,
+		DLGWINDOWEXTRA,
 		hAppInstance,
 		NULL,
 		LoadCursor(nullptr, IDC_ARROW),
@@ -293,7 +308,7 @@ void ClientWindow::buildWindow() {
 	RegisterClassW(&wndClass);
 
 	// Create the root window.
-	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_TABSTOP,
 		650, 200, CLIENT_WINDOW_WIDTH, 100, nullptr, nullptr, hAppInstance, nullptr);
 
 	// HACK: Due to things like menu bar thickness, the root window won't actually be the requested size. Grab the actual size here for later comparison.
@@ -360,10 +375,10 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT,
 		hwndRootWindow, NULL, hAppInstance, NULL);
 	HWND hwndApAddress = CreateWindow(MSFTEDIT_CLASS, L"",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_GROUP,
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		SETTING_CONTROL_LEFT, currentY,
 		SETTING_CONTROL_WIDTH, CONTROL_HEIGHT,
-		hwndRootWindow, NULL, hAppInstance, NULL);
+		hwndRootWindow, (HMENU)IDC_FIELD_AP_ADDRESS, hAppInstance, NULL);
 	stringSettingTextBoxes[ClientStringSetting::ApAddress] = hwndApAddress;
 	SendMessage(hwndApAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
@@ -379,7 +394,7 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		SETTING_CONTROL_LEFT, currentY,
 		SETTING_CONTROL_WIDTH, CONTROL_HEIGHT,
-		hwndRootWindow, NULL, hAppInstance, NULL);
+		hwndRootWindow, (HMENU)IDC_FIELD_AP_SLOTNAME, hAppInstance, NULL);
 	stringSettingTextBoxes[ClientStringSetting::ApSlotName] = hwndApSlotName;
 	SendMessage(hwndApSlotName, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
@@ -395,7 +410,7 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		SETTING_CONTROL_LEFT, currentY,
 		SETTING_CONTROL_WIDTH, CONTROL_HEIGHT,
-		hwndRootWindow, NULL, hAppInstance, NULL);
+		hwndRootWindow, (HMENU)IDC_FIELD_AP_PASSWORD, hAppInstance, NULL);
 	stringSettingTextBoxes[ClientStringSetting::ApPassword] = hwndApPassword;
 	SendMessage(hwndApPassword, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
@@ -551,6 +566,17 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		PostQuitMessage(0);
 	}
 	else if (message == WM_COMMAND) {
+		if (currentWindowMode == ClientWindowMode::PreConnect && wParam == IDOK) {
+			HWND currentFocus = GetFocus();
+			if (currentFocus == stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second ||
+				currentFocus == stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second ||
+				currentFocus == stringSettingTextBoxes.find(ClientStringSetting::ApPassword)->second) {
+				// The user has pressed Enter while focused on an AP text box. Connect.
+				Main::randomize();
+				return 0;
+			}
+		}
+
 		switch (LOWORD(wParam)) {
 		// Setting checkboxes.
 		case IDC_SETTING_COLORBLIND: {
@@ -580,10 +606,15 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			handleKeybind(key);
 			break;
 		}
+		default:
+			return DefDlgProc(hwnd, message, wParam, lParam);
 		}
 	}
+	else {
+		return DefDlgProc(hwnd, message, wParam, lParam);
+	}
 
-	return DefWindowProc(hwnd, message, wParam, lParam);
+	return 0;
 }
 
 std::string ClientWindow::readStringFromTextBox(HWND hwndTextBox) const {
