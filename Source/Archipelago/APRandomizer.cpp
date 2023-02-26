@@ -19,6 +19,7 @@ APRandomizer::APRandomizer() {
 bool APRandomizer::Connect(std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
 
+	if (ap) ap->reset();
 	ap = new APClient("uuid", "The Witness", uri);
 
 	try {	ap->set_data_package_from_file(DATAPACKAGE_CACHE);	}

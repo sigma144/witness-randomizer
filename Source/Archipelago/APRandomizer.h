@@ -59,7 +59,7 @@ class APRandomizer {
 		std::set<int> precompletedLocations;
 		std::map<int, std::string> epToName;
 
-		class APClient* ap;
+		class APClient* ap = NULL;
 		class APWatchdog* async;
 		class PanelLocker* panelLocker;
 
