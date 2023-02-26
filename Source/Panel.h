@@ -1,8 +1,9 @@
 #pragma once
-#include "Memory.h"
-#include "Randomizer.h"
+
+#include <map>
 #include <stdint.h>
 #include <tuple>
+#include <vector>
 
 struct Point {
 	int first;
@@ -149,6 +150,8 @@ public:
 	void ClearGridSymbol(int x, int y);
 	void Resize(int width, int height);
 
+	Color GetBackgroundColor();
+
 	static void StartArrowWatchdogs(const std::map<int, int>& shuffleMappings = {});
 
 	enum Style {
@@ -212,7 +215,7 @@ private:
 	Point get_sym_point(Point p) { return get_sym_point(p.first, p.second, symmetry); }
 	Point get_sym_point(Point p, Symmetry symmetry) { return get_sym_point(p.first, p.second, symmetry); }
 	Endpoint::Direction get_sym_dir(Endpoint::Direction direction, Symmetry symmetry) {
-		int dirIndex;
+		int dirIndex = -1;
 		if (direction == Endpoint::Direction::LEFT) dirIndex = 0;
 		if (direction == Endpoint::Direction::RIGHT) dirIndex = 1;
 		if (direction == Endpoint::Direction::UP) dirIndex = 2;
@@ -260,7 +263,6 @@ private:
 			default: return { 0, 0, 0, 0 };
 			}
 		}
-		Color xcolor;
 		switch (color) {
 		case Decoration::Color::Black: return { 0, 0, 0, 1 };
 		case Decoration::Color::White: return { 1, 1, 1, 1 };
@@ -272,10 +274,11 @@ private:
 		case Decoration::Color::Yellow: return { 1, 1, 0, 1 };
 		case Decoration::Color::Orange: return { 1, 0.5, 0, 1 };
 		case Decoration::Color::Purple: return { 0.5, 0, 1, 1 };
-		case Decoration::Color::X: //Copy background color
-			xcolor = _memory->ReadPanelData<Color>(0x0008F, BACKGROUND_REGION_COLOR);
-			xcolor.a = 1;
-			return xcolor;
+		case Decoration::Color::X: {
+			Color xColor = GetBackgroundColor();
+			xColor.a = 1;
+			return xColor;
+		}
 		default: return { 0, 0, 0, 0 };
 		}
 	}
@@ -421,8 +424,6 @@ private:
 			polygons.push_back(polys[i] + baseIndex);
 		}
 	}
-
-	std::shared_ptr<Memory> _memory;
 
 	int _width, _height;
 

@@ -1,2 +1,0 @@
-colorblind:false
-collect:false

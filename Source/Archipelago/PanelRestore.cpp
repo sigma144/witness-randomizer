@@ -1,8 +1,11 @@
 #include "PanelRestore.h"
 #include "OriginalPanelData.h"
 #include "../Randomizer.h"
+#include "../Memory.h"
 
-void PanelRestore::RestoreOriginalPanelData(std::shared_ptr<Memory> memory) {
+void PanelRestore::RestoreOriginalPanelData() {
+	Memory* memory = Memory::get();
+
 	for (auto& [key, value] : originalBackgroundModes) {
 		memory->WritePanelData<int>(key, OUTER_BACKGROUND_MODE, { value });
 	}
@@ -22,4 +25,12 @@ void PanelRestore::RestoreOriginalPanelData(std::shared_ptr<Memory> memory) {
 	}
 
 	return;
+}
+
+std::vector<float> PanelRestore::GetPositions(int id) {
+	return correctPosition[id];
+}
+
+bool PanelRestore::HasPositions(int id) {
+	return correctPosition.count(id);
 }

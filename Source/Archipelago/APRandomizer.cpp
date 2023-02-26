@@ -1,12 +1,25 @@
-#include "../HUDManager.h"
 #include "APRandomizer.h"
-#include "APGameData.h"
+
+#include "../ClientWindow.h"
+#include "../HUDManager.h"
 #include "../Panels.h"
+#include "../Randomizer.h"
+#include "../Special.h"
+#include "APGameData.h"
+#include "APWatchdog.h"
+#include "Client/apclientpp/apclient.hpp"
+#include "PanelLocker.h"
+#include "../DateTime.h"
 #include "PanelRestore.h"
 
-bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::string& user, std::string& password) {
+APRandomizer::APRandomizer() {
+	panelLocker = new PanelLocker();
+};
+
+bool APRandomizer::Connect(std::string& server, std::string& user, std::string& password) {
 	std::string uri = buildUri(server);
 
+	if (ap) ap->reset();
 	ap = new APClient("uuid", "The Witness", uri);
 
 	try {	ap->set_data_package_from_file(DATAPACKAGE_CACHE);	}
@@ -18,7 +31,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 6});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 8});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -49,7 +62,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
-		_memory->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
+		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, {mostRecentItemId});
 		
 		for (const auto& item : items) {
 			int realitem = item.item;
@@ -80,9 +93,6 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				}
 			}
 
-
-
-
 			if (mostRecentItemId >= item.index + 1) continue;
 
 			if (unlockLater) {
@@ -91,7 +101,7 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 
 			mostRecentItemId = item.index + 1;
 
-			_memory->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
+			Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, {mostRecentItemId});
 
 			while (async->processingItemMessages) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -175,6 +185,14 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			}
 		}
 
+		if (slotData.contains("disabled_panels")) {
+			for (std::string keys : slotData["disabled_panels"]) {
+				int key = std::stoul(keys, nullptr, 16);
+				if (!actuallyEveryPanel.count(key)) continue;
+				disabledPanels.insert(key);
+			}
+		}
+
 		if (slotData.contains("item_id_to_door_hexes")) {
 			for (auto& [key, val] : slotData["item_id_to_door_hexes"].items()) {
 				int itemId = std::stoul(key, nullptr, 10);
@@ -203,18 +221,15 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				int logId = std::stoul(key, nullptr, 10);
 				std::string message;
 				int64_t location_id_in_this_world = -1;
-				for (int i = 0; i < val.size(); i++) {
-					if (i < 3) {
-						std::string line = val[i];
-						if (!line.empty()) {
-							message.append(line);
-							message.append(" ");
-						}
-					}
-					else {
-						location_id_in_this_world = val[i];
+				for (int i = 0; i < val.size() - 1; i++) {
+					std::string line = val[i];
+					if (!line.empty()) {
+						message.append(line);
+						message.append(" ");
 					}
 				}
+
+				location_id_in_this_world = val[val.size() - 1];
 				
 				audioLogMessages.insert({ logId, std::pair(message, location_id_in_this_world) });
 			}
@@ -230,15 +245,10 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 				return a + (a.length() > 0 ? "," : "") + b;
 			});
 
-		std::wstring wError = std::wstring(errorString.begin(), errorString.end());
-
 		connected = false;
 		hasConnectionResult = true;
 
-		WCHAR errorMessage[200] = L"Connection Failed: ";
-		wcscat_s(errorMessage, 200, wError.data());
-
-		MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
+		ClientWindow::get()->showMessageBox("Connection failed: " + errorString);
 	});
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
@@ -303,12 +313,12 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			int panelId = panelIdToLocationIdReverse[location];
 
 			if (panelIdToLocationIdReverse.count(location) && async->CheckPanelHasBeenSolved(panelId)) {
-				async->getHudManager()->queueBannerMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorForItem(item));
+				async->getHudManager()->queueBannerMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 			else
 			{
-				async->SetItemReward(findResult->first, item);
-				if(!receiving) async->getHudManager()->queueBannerMessage("Sent " + itemName + " to " + player + ".", getColorForItem(item));
+				async->SetItemRewardColor(findResult->first, item.flags);
+				if(!receiving) async->getHudManager()->queueBannerMessage("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 		}
 	});
@@ -326,12 +336,8 @@ bool APRandomizer::Connect(HWND& messageBoxHandle, std::string& server, std::str
 			connected = false;
 			hasConnectionResult = true;
 
-			std::wstring wideServer = Converty::Utf8ToWide(uri);
-
-			WCHAR errorMessage[200] = L"Timeout while connecting to server: ";
-			wcscat_s(errorMessage, 200, wideServer.data());
-
-			MessageBox(messageBoxHandle, errorMessage, NULL, MB_OK);
+			std::string errorMessage = "Timeout while connecting to server: " + uri;
+			ClientWindow::get()->showMessageBox(errorMessage);
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -373,8 +379,6 @@ std::string APRandomizer::buildUri(std::string& server)
 {
 	std::string uri = server;
 
-	if (uri.rfind("ws://", 0) == std::string::npos)
-		uri = "ws://" + uri;
 	if (uri.find(":") == std::string::npos)
 		uri = uri + ":38281";
 	else if (uri.back() == ':')
@@ -383,56 +387,56 @@ std::string APRandomizer::buildUri(std::string& server)
 	return uri;
 }
 
-void APRandomizer::PostGeneration(HWND loadingHandle) {
-	for (int eID : precompletedLocations) {
-		if (allEPs.count(eID)) {
-			_memory->SolveEP(eID);
-			if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
-				_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+void APRandomizer::PostGeneration() {
+	ClientWindow* clientWindow = ClientWindow::get();
+	Memory* memory = Memory::get();
+
+	if (precompletedLocations.size() > 0) {
+		clientWindow->setStatusMessage("Precompleting EPs...");
+		for (int eID : precompletedLocations) {
+			if (allEPs.count(eID)) {
+				memory->SolveEP(eID);
+				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+					memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+				}
 			}
 		}
 	}
 
 	// EP-related slowing down of certain bridges etc.
-
 	if (EPShuffle) {
-		_memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.02f }); // Swamp Rotating Bridge, 2x (Instead of 4x)
+		clientWindow->setStatusMessage("Adjusting EP element speeds...");
+
+		memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.02f }); // Swamp Rotating Bridge, 2x (Instead of 4x)
 		
-		_memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x (Instead of 2x)
-		_memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
-		_memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
-		_memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
-		_memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
-		_memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x (Instead of 2x)
+		memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
+		memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.25f }); // Monastery Shutters, 1x
 	}
 
 	// Bunker door colors
-
-	int num_dec = _memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
-
-	if(num_dec != 1){
-		std::vector<int> decorations = _memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
+	clientWindow->setStatusMessage("Setting additional colors...");
+	int num_dec = memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
+	if (num_dec != 1){
+		std::vector<int> decorations = memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
 
 		decorations[3] = 264;
 		decorations[12] = 264;
 
-		_memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
+		memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
 	}
 
 	// Challenge Timer Colors
+	memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_A, { 0.0f, 1.0f, 1.0f, 1.0f });
+	memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_B, { 1.0f, 1.0f, 0.0f, 1.0f });
 
-	_memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_A, { 0.0f, 1.0f, 1.0f, 1.0f });
-	_memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_B, { 1.0f, 1.0f, 0.0f, 1.0f });
-
+	clientWindow->setStatusMessage("Applying progression...");
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
-
-	async->SkipPreviouslySkippedPuzzles();
-
-	for (int panel : desertPanels) {
-		_memory->UpdatePanelJunctions(panel);
-	}
 
 	if (FinalPanel == 0x09F7F) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
@@ -447,52 +451,64 @@ void APRandomizer::PostGeneration(HWND loadingHandle) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", MountainLasers, ChallengeLasers);
 	}
 
-	_memory->DisplaySubtitles("", "", "");
+	async->SkipPreviouslySkippedPuzzles();
+
+	for (int panel : desertPanels) {
+		memory->UpdatePanelJunctions(panel);
+	}
+
+	memory->DisplaySubtitles("", "", "");
 	
-	setPuzzleLocks(loadingHandle);
+	setPuzzleLocks();
 
 	async->ResetPowerSurge();
 
+	Memory::get()->applyDestructivePatches();
+
 	randomizationFinished = true;
-	_memory->showMsg = false;
+	memory->showMsg = false;
 
 	async->getHudManager()->queueBannerMessage("Randomized!");
 
 	async->start();
 }
 
-void APRandomizer::setPuzzleLocks(HWND loadingHandle) {
-	for (int i = 0; i < sizeof(AllPuzzles) / sizeof(AllPuzzles[0]); i++)	{
-		std::wstring text = L"Locking puzzles: " + std::to_wstring(i) + L"/" + std::to_wstring(sizeof(AllPuzzles));
-		SetWindowText(loadingHandle, text.c_str());
+void APRandomizer::setPuzzleLocks() {
+	ClientWindow* clientWindow = ClientWindow::get();
+	Memory* memory = Memory::get();
 
-		if (!_memory->ReadPanelData<int>(AllPuzzles[i], SOLVED));
+	const int puzzleCount = sizeof(AllPuzzles) / sizeof(AllPuzzles[0]);
+	for (int i = 0; i < puzzleCount; i++)	{
+		clientWindow->setStatusMessage("Locking puzzles: " + std::to_string(i) + "/" + std::to_string(puzzleCount));
+		if (!memory->ReadPanelData<int>(AllPuzzles[i], SOLVED));
 			panelLocker->UpdatePuzzleLock(state, AllPuzzles[i]);
 	}
-
-	SetWindowText(loadingHandle, L"Done!");
 }
 
 void APRandomizer::Init() {
-	mostRecentItemId = _memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
+	Memory* memory = Memory::get();
+
+	mostRecentItemId = memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
 
 	for (int panel : AllPuzzles) {
-		_memory->InitPanel(panel);
+		memory->InitPanel(panel);
 	}
 
-	PanelRestore::RestoreOriginalPanelData(_memory);
+	PanelRestore::RestoreOriginalPanelData();
 }
 
-void APRandomizer::GenerateNormal(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+void APRandomizer::GenerateNormal() {
+	Special::SetVanillaMetapuzzleShapes();
+
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
+		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
 }
 
-void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, skipButton, availableSkips, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state);
+void APRandomizer::GenerateHard() {
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	//Mess with Town targets
@@ -508,16 +524,16 @@ void APRandomizer::GenerateHard(HWND skipButton, HWND availableSkips) {
 		Special::setTargetAndDeactivate(0x28998, 0x28A0D);
 	}
 
-	_memory->PowerNext(0x03629, 0x36);
+	Memory::get()->PowerNext(0x03629, 0x36);
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
+		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
 }
 
 void APRandomizer::PreventSnipes()
 {
 	// Distance-gate shadows laser to prevent sniping through the bars
-	_memory->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.7 });
+	Memory::get()->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, {2.7});
 }
 
 void APRandomizer::SkipPuzzle() {

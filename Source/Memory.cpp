@@ -9,27 +9,34 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <iostream>
+#include "ClientWindow.h"
+#include "Randomizer.h"
 
 #undef PROCESSENTRY32
 #undef Process32Next
+
+Memory* Memory::_singleton = nullptr;
 
 #define SIGSCAN_STRIDE   0x100000 // 100 KiB. Note that larger reads are not significantly slower than small reads, but have an increased chance of failing, since ReadProcessMemory fails if ANY of the memory is inaccessible.
 #define SIGSCAN_PADDING  0x000800 // The additional amount to scan in order to ensure that a useful amount of data is returned if the found signature is at the end of the buffer.
 #define PROGRAM_SIZE    0x5000000 // 5 MiB. (The application itself is only 4.7 MiB large.)
 
-Memory::Memory(const std::string& processName) {
+Memory::Memory() {
 	std::string process32 = "witness_d3d11.exe";
+	std::string process64 = "witness64_d3d11.exe";
 
-	// First, get the handle of the process
+	// First, attempt to find the process.
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	while (Process32Next(snapshot, &entry)) {
-		if (processName == entry.szExeFile) {
+		if (entry.szExeFile == process64) {
 			_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 			break;
 		}
 	}
+
+	// If we didn't find the process, terminate.
 	if (!_handle) {
 		PROCESSENTRY32 entry;
 		entry.dwSize = sizeof(entry);
@@ -54,11 +61,12 @@ Memory::Memory(const std::string& processName) {
 	for (DWORD i = 0; i < numModules / sizeof(HMODULE); i++) {
 		int length = GetModuleBaseNameA(_handle, moduleList[i], &name[0], static_cast<DWORD>(name.size()));
 		name.resize(length);
-		if (processName == name) {
+		if (name == process64) {
 			_baseAddress = (uintptr_t)moduleList[i];
 			break;
 		}
 	}
+
 	if (_baseAddress == 0) {
 		throw std::exception("Couldn't find the base process address!");
 	}
@@ -68,28 +76,79 @@ Memory::~Memory() {
 	CloseHandle(_handle);
 }
 
+void Memory::create() {
+	if (_singleton == nullptr) {
+		_singleton = new Memory();
 
+		_singleton->findGlobals();
+		_singleton->findGamelibRenderer();
+		_singleton->findMovementSpeed();
+		_singleton->findActivePanel();
+		_singleton->findPlayerPosition();
+		_singleton->findImportantFunctionAddresses();
+	}
+}
+
+Memory* Memory::get() {
+	return _singleton;
+}
+
+DWORD Memory::getProcessID() {
+	return GetProcessId(_handle);
+}
 
 // Copied from Witness Trainer https://github.com/jbzdarkid/witness-trainer/blob/master/Source/Memory.cpp#L218
-int Memory::findGlobals() {
-	const std::vector<byte> scanBytes = {0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10};
-	std::vector<byte> buff;
-	buff.resize(SIGSCAN_STRIDE + 0x100); // padding in case the sigscan is past the end of the buffer
+void Memory::findGlobals() {
+	if (!GLOBALS) {
+		// Check to see if this is a version with a known globals pointer.
+		for (int g : globalsTests) {
+			GLOBALS = g;
+			if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
+				return;
+			}
+		}
 
-	for (uintptr_t i = 0; i < PROGRAM_SIZE; i += SIGSCAN_STRIDE) {
-		SIZE_T numBytesWritten;
-		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
-		buff.resize(numBytesWritten);
-		int index = Utilities::findSequence(buff, scanBytes);
-		if (index == -1) continue;
+		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)")) {
+			return;
+		}
 
-		index = index + 0x14; // This scan targets a line slightly before the key instruction
-		// (address of next line) + (index interpreted as 4byte int)
-		Memory::GLOBALS = (int)(i + index + 4) + *(int*)&buff[index];
-		break;
+		// Checked for a cached value.
+		std::ifstream file("WRPGglobals.txt");
+		if (file.is_open()) {
+			file >> std::hex >> GLOBALS;
+			file.close();
+		}
+		else {
+			// We had no cached value; scan for it in the process instead.
+			const std::vector<byte> scanBytes = { 0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10 };
+			std::vector<byte> buff;
+			buff.resize(SIGSCAN_STRIDE + 0x100); // padding in case the sigscan is past the end of the buffer
+
+			GLOBALS = 0;
+			for (uintptr_t i = 0; i < PROGRAM_SIZE; i += SIGSCAN_STRIDE) {
+				SIZE_T numBytesWritten;
+				if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
+				buff.resize(numBytesWritten);
+				int index = Utilities::findSequence(buff, scanBytes);
+				if (index == -1) continue;
+
+				index = index + 0x14; // This scan targets a line slightly before the key instruction
+				// (address of next line) + (index interpreted as 4byte int)
+				GLOBALS = (int)(i + index + 4) + *(int*)&buff[index];
+				break;
+			}
+
+			if (GLOBALS) {
+				// Store the pointer to disk for faster lookup next time.
+				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
+				ofile << std::hex << GLOBALS << std::endl;
+				ofile.close();
+			}
+			else {
+				ThrowError("Unable to find globals pointer.");
+			}
+		}
 	}
-
-	return Memory::GLOBALS;
 }
 
 void Memory::findGamelibRenderer()
@@ -119,7 +178,7 @@ void Memory::findGamelibRenderer()
 void Memory::findPlayerPosition() {
 	executeSigScan({ 0x84, 0xC0, 0x75, 0x59, 0xBA, 0x20, 0x00, 0x00, 0x00 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		// This int is actually desired_movement_direction, which immediately preceeds camera_position
-		this->CAMERAPOSITION = Memory::ReadStaticInt(offset, index + 0x19, data) + 0x10;
+		this->CAMERAPOSITION = ReadStaticInt(offset, index + 0x19, data) + 0x10;
 
 		return true;
 	});
@@ -233,7 +292,48 @@ void Memory::SetInfiniteChallenge(bool enable) {
 	}
 }
 
+void Memory::applyDestructivePatches() {
+	//Cursor size
+	char asmBuff[] = "\xBB\x00\x00\x80\x3F\x66\x44\x0F\x6E\xCB\x90\x90\x90";
+	/*mov ebx, 3F800000
+	movd xmm9, ebx
+	nop
+	nop
+	nop*/
+
+	LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
+
+	WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+}
+
 void Memory::findImportantFunctionAddresses(){
+	executeSigScan({ 0x45, 0x0F, 0x28, 0xC8, 0xF3, 0x44 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		cursorSize = _baseAddress + offset + index;
+
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+				cursorR = _baseAddress + offset + index;
+				break;
+			}
+		}
+		index++;
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+				cursorG = _baseAddress + offset + index;
+				break;
+			}
+		}
+		index++;
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+				cursorB = _baseAddress + offset + index;
+				break;
+			}
+		}
+
+		return true;
+	});
+
 	executeSigScan ({0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x20, 0x48, 0x89, 0x48, 0x08, 0x55, 0x56, 0x57, 0x41, 0x54}, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0x78 && data[index - 1] == 0x10 && data[index] == 0xE8) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
@@ -301,6 +401,12 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x56, 0x48, 0x83, 0xEC, 0x70 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->powerGaugeFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
 	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x49, 0x8B, 0xF8, 0x48, 0x8B, 0xF2, 0x48, 0x8B, 0xD9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->_getSoundFunction = _baseAddress + offset + index;
 
@@ -340,7 +446,7 @@ void Memory::findImportantFunctionAddresses(){
 
 		for (; index < data.size(); index--) { // find rax statement at start of function (Subtitles setting)
 			if (data[index] == 0x48 && data[index + 1] == 0x8B && data[index+2] == 0x05) { 
-				u_int64 raxstatement = _baseAddress + offset + index + 3;
+				uint64_t raxstatement = _baseAddress + offset + index + 3;
 				
 				int buff[1];
 
@@ -354,7 +460,7 @@ void Memory::findImportantFunctionAddresses(){
 
 		for (; index < data.size(); index++) { // find rax statement at start of function (Subtitles setting)
 			if (data[index] == 0x48 && data[index + 1] == 0x8B && data[index + 2] == 0x1D) {
-				u_int64 rbxstatement = _baseAddress + offset + index + 3;
+				uint64_t rbxstatement = _baseAddress + offset + index + 3;
 
 				int buff[1];
 
@@ -396,7 +502,7 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
-	//Update Entity Position
+	//Power Next Item
 	executeSigScan({ 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0x42, 0x18, 0x48, 0x8B, 0xFA, 0x48, 0x85, 0xC0, 0x0F, 0x84 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->powerNextFunction = _baseAddress + offset + index - 8;
 
@@ -632,8 +738,8 @@ void Memory::findMovementSpeed() {
 		// This doesn't have a consistent offset from the scan, so search until we find "jmp +08"
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0xEB && data[index - 1] == 0x08) {
-				this->ACCELERATION = Memory::ReadStaticInt(offset, index - 0x06, data);
-				this->DECELERATION = Memory::ReadStaticInt(offset, index + 0x04, data);
+				this->ACCELERATION = ReadStaticInt(offset, index - 0x06, data);
+				this->DECELERATION = ReadStaticInt(offset, index + 0x04, data);
 				found++;
 				break;
 			}
@@ -642,7 +748,7 @@ void Memory::findMovementSpeed() {
 		// Once again, there's no consistent offset, so we read until "movss xmm1, [addr]"
 		for (; index < data.size(); index++) {
 			if (data[index - 4] == 0xF3 && data[index - 3] == 0x0F && data[index - 2] == 0x10 && data[index - 1] == 0x0D) {
-				this->RUNSPEED = Memory::ReadStaticInt(offset, index, data);
+				this->RUNSPEED = ReadStaticInt(offset, index, data);
 				found++;
 				break;
 			}
@@ -654,7 +760,7 @@ void Memory::findMovementSpeed() {
 void Memory::findActivePanel() {
 	executeSigScan({ 0xF2, 0x0F, 0x58, 0xC8, 0x66, 0x0F, 0x5A, 0xC1, 0xF2 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->ACTIVEPANELOFFSETS = {};
-		this->ACTIVEPANELOFFSETS.push_back(Memory::ReadStaticInt(offset, index + 0x36, data, 5));
+		this->ACTIVEPANELOFFSETS.push_back(ReadStaticInt(offset, index + 0x36, data, 5));
 		this->ACTIVEPANELOFFSETS.push_back(data[index + 0x5A]); // This is 0x10 in both versions I have, but who knows.
 
 		this->ACTIVEPANELOFFSETS.push_back(*(int*)&data[index + 0x54]);
@@ -714,15 +820,9 @@ uint64_t Memory::executeSigScan(const std::vector<byte>& signatureBytes) {
 
 void Memory::ThrowError(std::string message) {
 	if (!showMsg) {
-		if(errorWindow != NULL){
-			time_t now = time(NULL);
-			//char *str = asctime(localtime(&now));
-			tm now_tm = {};
-			char str[26] = {};
-			localtime_s(&now_tm, &now);
-			asctime_s(str, 26, &now_tm);
-			std::string str_r(str);
-			SetWindowText(errorWindow, (L"Most recent error on " + std::wstring(str_r.begin(), str_r.end()) + L"\n" + std::wstring(message.begin(), message.end())).c_str());
+		ClientWindow* clientWindow = ClientWindow::get();
+		if (clientWindow != nullptr) {
+			clientWindow->setErrorMessage("Most recent error: " + message);
 		}
 		throw std::exception(message.c_str());
 	}
@@ -783,8 +883,6 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 }
 
 void Memory::PowerNext(int source, int target) {
-	std::lock_guard<std::recursive_mutex> lock(mtx);
-
 	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, source * 8, 0 }));
 	target += 1;
 
@@ -825,9 +923,53 @@ void Memory::PowerNext(int source, int target) {
 	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
 }
 
-void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
-	std::lock_guard<std::recursive_mutex> lock(mtx);
+void Memory::PowerGauge(int id, int sourceId, int slot) {
+	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, id * 8, 0 }));
+	sourceId += 1;
 
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" // mov rax, function address
+		"\xBA\x00\x00\x00\x00" // mov edx, source_id
+		"\x41\xB8\x00\x00\x00\x00" // mov r8d, slot
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" // mov rcx, address of Gauge
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer[2] = powerGaugeFunction & 0xff;
+	buffer[3] = (powerGaugeFunction >> 8) & 0xff;
+	buffer[4] = (powerGaugeFunction >> 16) & 0xff;
+	buffer[5] = (powerGaugeFunction >> 24) & 0xff;
+	buffer[6] = (powerGaugeFunction >> 32) & 0xff;
+	buffer[7] = (powerGaugeFunction >> 40) & 0xff;
+	buffer[8] = (powerGaugeFunction >> 48) & 0xff;
+	buffer[9] = (powerGaugeFunction >> 56) & 0xff;
+	buffer[11] = sourceId & 0xff; //source
+	buffer[12] = (sourceId >> 8) & 0xff;
+	buffer[13] = (sourceId >> 16) & 0xff;
+	buffer[14] = (sourceId >> 24) & 0xff;
+	buffer[17] = slot & 0xff; //slot
+	buffer[18] = (slot >> 8) & 0xff;
+	buffer[19] = (slot >> 16) & 0xff;
+	buffer[20] = (slot >> 24) & 0xff;
+	buffer[23] = offset & 0xff;
+	buffer[24] = (offset >> 8) & 0xff;
+	buffer[25] = (offset >> 16) & 0xff;
+	buffer[26] = (offset >> 24) & 0xff;
+	buffer[27] = (offset >> 32) & 0xff;
+	buffer[28] = (offset >> 40) & 0xff;
+	buffer[29] = (offset >> 48) & 0xff;
+	buffer[30] = (offset >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+}
+
+void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, id * 8, 0 }));
 
 	unsigned char buffer[] =
@@ -865,7 +1007,6 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 }
 
 void Memory::DisplayHudMessage(std::string message, std::array<float, 3> rgbColor) {
-	std::lock_guard<std::recursive_mutex> lock(mtx);
 	char buffer[1024];
 
 	if (!_messageAddress) {
@@ -1090,7 +1231,6 @@ void Memory::DisplaySubtitles(std::string line1, std::string line2, std::string 
 }
 
 void Memory::RemoveMesh(int id) {
-	std::lock_guard<std::recursive_mutex> lock(mtx);
 	__int64 meshPointer = ReadPanelData<__int64>(id, 0x60); //Mesh
 	
 	__int64 buffer[1];
@@ -1110,10 +1250,10 @@ void Memory::MakeEPGlow(std::string name, std::vector<byte> patternPointBytes) {
 
 	auto alloc = VirtualAllocEx(_handle, NULL, sizeof(buffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-	u_int64 allocStart = reinterpret_cast<u_int64>(alloc);
-	u_int64 patternSolvedPart = allocStart + 0x100;
-	u_int64 namePointer = allocStart + 0x200;
-	u_int64 patternPointStart = allocStart + 0x300;
+	uint64_t allocStart = reinterpret_cast<uint64_t>(alloc);
+	uint64_t patternSolvedPart = allocStart + 0x100;
+	uint64_t namePointer = allocStart + 0x200;
+	uint64_t patternPointStart = allocStart + 0x300;
 
 	for (int i = 0; i < patternPointBytes.size(); i++) {
 		buffer[0x300 + i] = patternPointBytes[i];
@@ -1231,54 +1371,3 @@ void Memory::MakeEPGlow(std::string name, std::vector<byte> patternPointBytes) {
 
 	WaitForSingleObject(thread2, INFINITE);
 }
-
-std::recursive_mutex Memory::mtx = std::recursive_mutex();
-
-int Memory::GLOBALS = 0;
-int Memory::GAMELIB_RENDERER = 0;
-uint64_t Memory::GESTURE_MANAGER = 0;
-int Memory::RUNSPEED = 0;
-int Memory::CAMERAPOSITION = 0;
-int Memory::ACCELERATION = 0;
-int Memory::DECELERATION = 0;
-
-uint64_t Memory::relativeAddressOf6 = 0;
-uint64_t Memory::powerNextFunction = 0;
-uint64_t Memory::initPanelFunction = 0;
-uint64_t Memory::openDoorFunction = 0;
-uint64_t Memory::activateLaserFunction = 0;
-uint64_t Memory::hudTimePointer = 0;
-uint64_t Memory::updateEntityPositionFunction = 0;
-uint64_t Memory::displayHudFunction = 0;
-uint64_t Memory::hudMessageColorAddresses[3] = {0,0,0};
-uint64_t Memory::setBoatSpeed = 0;
-uint64_t Memory::boatSpeed4 = 0;
-uint64_t Memory::boatSpeed3 = 0;
-uint64_t Memory::boatSpeed2 = 0;
-uint64_t Memory::boatSpeed1 = 0;
-uint64_t Memory::relativeBoatSpeed4Address = 0;
-uint64_t Memory::relativeBoatSpeed3Address = 0;
-uint64_t Memory::relativeBoatSpeed2Address = 0;
-uint64_t Memory::relativeBoatSpeed1Address = 0;
-uint64_t Memory::displaySubtitlesFunction = 0;
-uint64_t Memory::displaySubtitlesFunction2 = 0;
-uint64_t Memory::displaySubtitlesFunction3 = 0;
-uint64_t Memory::subtitlesOnOrOff = 0;
-uint64_t Memory::subtitlesHashTable = 0;
-uint64_t Memory::_recordPlayerUpdate = 0;
-uint64_t Memory::_getSoundFunction = 0;
-uint64_t Memory::_bytesLengthChallenge = 0;
-uint64_t Memory::completeEPFunction = 0;
-uint64_t Memory::updateJunctionsFunction = 0;
-uint64_t Memory::addToPatternMapFunction = 0;
-uint64_t Memory::removeFromPatternMapFunction = 0;
-uint64_t Memory::patternMap = 0;
-
-std::vector<int> Memory::ACTIVEPANELOFFSETS = {};
-bool Memory::showMsg = false;
-HWND Memory::errorWindow = NULL;
-int Memory::globalsTests[3] = {
-	0x62D0A0, //Steam and Epic Games
-	0x62B0A0, //Good Old Games
-	0x5B28C0 //Older Versions
-};

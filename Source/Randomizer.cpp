@@ -12,6 +12,7 @@
 #include <numeric>
 #include "Random.h"
 #include "Quaternion.h"
+#include "ClientWindow.h"
 
 std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::vector<int>& toRemove) {
 	std::vector<int> result;
@@ -24,23 +25,22 @@ std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::v
 	return result;
 }
 
-void Randomizer::GenerateNormal(HWND loadingHandle) {
+void Randomizer::GenerateNormal() {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
-	puzzles->setLoadingHandle(loadingHandle);
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllN();
 	if (doubleMode) ShufflePanels(false);
 }
 
-void Randomizer::GenerateHard(HWND loadingHandle) {
+void Randomizer::GenerateHard() {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
-	puzzles->setLoadingHandle(loadingHandle);
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllH();
 	if (doubleMode) ShufflePanels(true);
-	SetWindowText(loadingHandle, L"Starting watchdogs...");
+
+	ClientWindow* clientWindow = ClientWindow::get();
+	clientWindow->setStatusMessage("Starting expert symbol watchdogs...");
 	Panel::StartArrowWatchdogs(_shuffleMapping);
-	SetWindowText(loadingHandle, L"Done!");
 }
 
 template <class T>
@@ -53,60 +53,61 @@ int find(const std::vector<T> &data, T search, size_t startIndex = 0) {
 }
 
 void Randomizer::AdjustSpeed() {
-	_memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
-	_memory->WritePanelData<float>(0x03839, OPEN_RATE, { 0.7f }); // Mill Ramp, 3x
-	_memory->WritePanelData<float>(0x021BA, OPEN_RATE, { 1.5f }); // Mill Lift, 3x
-	_memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Mill Elevator, 4x
-	_memory->WritePanelData<float>(0x0061A, OPEN_RATE, { 0.1f }); // Swamp Sliding Bridge, 4x
-	_memory->WritePanelData<float>(0x09EEC, OPEN_RATE, { 0.1f }); // Mountain 2 Elevator, 4x
-	_memory->WritePanelData<float>(0x17E74, OPEN_RATE, { 0.03f }); // Swamp Flood gate (inner), 2x //Keeping these slower for now to help with EP's
-	_memory->WritePanelData<float>(0x1802C, OPEN_RATE, { 0.03f }); // Swamp Flood gate (outer), 2x
-	_memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.04f }); // Swamp Rotating Bridge, 4x
-	_memory->WritePanelData<float>(0x17C6A, OPEN_RATE, { 0.25f }); // Ramp Angle, 5x
-	_memory->WritePanelData<float>(0x17F02, OPEN_RATE, { 0.15f }); // Ramp Position, 4x
-	_memory->WritePanelData<float>(0x17C50, OPEN_RATE, { 0.3f }); //Boathouse Barrier, 2x
+	Memory* memory = Memory::get();
+	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
+	memory->WritePanelData<float>(0x03839, OPEN_RATE, { 0.7f }); // Mill Ramp, 3x
+	memory->WritePanelData<float>(0x021BA, OPEN_RATE, { 1.5f }); // Mill Lift, 3x
+	memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Mill Elevator, 4x
+	memory->WritePanelData<float>(0x0061A, OPEN_RATE, { 0.1f }); // Swamp Sliding Bridge, 4x
+	memory->WritePanelData<float>(0x09EEC, OPEN_RATE, { 0.1f }); // Mountain 2 Elevator, 4x
+	memory->WritePanelData<float>(0x17E74, OPEN_RATE, { 0.03f }); // Swamp Flood gate (inner), 2x //Keeping these slower for now to help with EP's
+	memory->WritePanelData<float>(0x1802C, OPEN_RATE, { 0.03f }); // Swamp Flood gate (outer), 2x
+	memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.04f }); // Swamp Rotating Bridge, 4x
+	memory->WritePanelData<float>(0x17C6A, OPEN_RATE, { 0.25f }); // Ramp Angle, 5x
+	memory->WritePanelData<float>(0x17F02, OPEN_RATE, { 0.15f }); // Ramp Position, 4x
+	memory->WritePanelData<float>(0x17C50, OPEN_RATE, { 0.3f }); //Boathouse Barrier, 2x
 
-	_memory->WritePanelData<float>(0x00030, BOAT_DELTA_SPEED, { 1.0f }); // Boat accel, ~3x
+	memory->WritePanelData<float>(0x00030, BOAT_DELTA_SPEED, { 1.0f }); // Boat accel, ~3x
 
-	_memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Quarry Elevator, 4x
-	_memory->WritePanelData<float>(0x0A069, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A06A, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A06B, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A06C, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A070, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A071, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A072, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A073, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A074, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A075, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A076, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
-	_memory->WritePanelData<float>(0x0A077, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Quarry Elevator, 4x
+	memory->WritePanelData<float>(0x0A069, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A06A, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A06B, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A06C, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A070, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A071, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A072, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A073, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A074, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A075, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A076, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
+	memory->WritePanelData<float>(0x0A077, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
 
-	_memory->WritePanelData<float>(0x38ACB, OPEN_RATE, { 1.0f }); // UTM Elevator
+	memory->WritePanelData<float>(0x38ACB, OPEN_RATE, { 1.0f }); // UTM Elevator
 
 
-	_memory->WritePanelData<float>(0x09DA0, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E02, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E03, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E15, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E16, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E1D, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E1E, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F21, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F2A, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F2B, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F3C, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F3D, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x09F3E, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x0C160, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x0C161, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
-	_memory->WritePanelData<float>(0x0C164, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09DA0, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E02, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E03, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E15, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E16, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E1D, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E1E, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E26, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09E98, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09ED4, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09EE3, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F10, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F11, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F21, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F2A, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F2B, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F3C, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F3D, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x09F3E, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x0C160, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x0C161, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
+	memory->WritePanelData<float>(0x0C164, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
 }
 
 void Randomizer::RandomizeDesert() {
@@ -132,7 +133,7 @@ void Randomizer::RandomizeDesert() {
 			SwapPanels(puzzles[i], puzzles[target], SWAP::LINES);
 			std::swap(desertPanels[i], desertPanels[target]);
 		}
-		_memory->WritePanelData<float>(puzzles[i], PATH_WIDTH_SCALE, { 0.8f });
+		Memory::get()->WritePanelData<float>(puzzles[i], PATH_WIDTH_SCALE, {0.8f});
 	}
 	/* TODO: Add into v1.3 after doing more experimentation
 	if (_memory->ReadPanelData<float>(0x00295, POWER) < 1)
@@ -253,23 +254,26 @@ void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 		offsets[SPECULAR_TEXTURE] = sizeof(void*);
 	}
 
+	Memory* memory = Memory::get();
 	for (auto const&[offset, size] : offsets) {
-		std::vector<byte> panel1data = _memory->ReadPanelData<byte>(panel1, offset, size);
-		std::vector<byte> panel2data = _memory->ReadPanelData<byte>(panel2, offset, size);
-		_memory->WritePanelData<byte>(panel2, offset, panel1data);
-		_memory->WritePanelData<byte>(panel1, offset, panel2data);
+		std::vector<byte> panel1data = memory->ReadPanelData<byte>(panel1, offset, size);
+		std::vector<byte> panel2data = memory->ReadPanelData<byte>(panel2, offset, size);
+		memory->WritePanelData<byte>(panel2, offset, panel1data);
+		memory->WritePanelData<byte>(panel1, offset, panel2data);
 	}
-	_memory->WritePanelData<int>(panel1, NEEDS_REDRAW, { 1 });
-	_memory->WritePanelData<int>(panel2, NEEDS_REDRAW, { 1 });
+	memory->WritePanelData<int>(panel1, NEEDS_REDRAW, { 1 });
+	memory->WritePanelData<int>(panel2, NEEDS_REDRAW, { 1 });
 }
 
 void Randomizer::ReassignTargets(const std::vector<int>& panels, const std::vector<int>& order, std::vector<int> targets) {
+	Memory* memory = Memory::get();
+
 	if (targets.empty()) {
 		// This list is offset by 1, so the target of the Nth panel is in position N (aka the N+1th element)
 		// The first panel may not have a wire to power it, so we use the panel ID itself.
 		targets = { panels[0] + 1 };
 		for (const int panel : panels) {
-			int target = _memory->ReadPanelData<int>(panel, TARGET, 1)[0];
+			int target = memory->ReadPanelData<int>(panel, TARGET, 1)[0];
 			targets.push_back(target);
 		}
 	}
@@ -277,7 +281,7 @@ void Randomizer::ReassignTargets(const std::vector<int>& panels, const std::vect
 	for (size_t i = 0; i < order.size() - 1; i++) {
 		// Set the target of order[i] to order[i+1], using the "real" target as determined above.
 		const int panelTarget = targets[order[i + 1]];
-		_memory->WritePanelData<int>(panels[order[i]], TARGET, { panelTarget });
+		memory->WritePanelData<int>(panels[order[i]], TARGET, { panelTarget });
 	}
 }
 
@@ -305,6 +309,8 @@ void Randomizer::ShuffleRange(std::vector<int>& order, size_t startIndex, size_t
 }
 
 void Randomizer::ShufflePanels(bool hard) {
+	Memory* memory = Memory::get();
+
 	_alreadySwapped.clear();
 
 	// General shuffles.
@@ -350,7 +356,7 @@ void Randomizer::ShufflePanels(bool hard) {
 
 	// Don't power off Town Apple Tree on fail on Expert.
 	if (hard) {
-		_memory->WritePanelData<int>(0x28938, POWER_OFF_ON_FAIL, { 0 });
+		Memory::get()->WritePanelData<int>(0x28938, POWER_OFF_ON_FAIL, {0});
 	}
 
 	// Monastery.
@@ -380,7 +386,7 @@ void Randomizer::ShufflePanels(bool hard) {
 	// Randomize final pillars order
 	std::vector<int> pillarTargets = { pillars[0] + 1 };
 	for (const int pillar : pillars) {
-		int target = _memory->ReadPanelData<int>(pillar, TARGET, 1)[0];
+		int target = memory->ReadPanelData<int>(pillar, TARGET, 1)[0];
 		pillarTargets.push_back(target);
 	}
 	pillarTargets[5] = pillars[5] + 1;
@@ -390,9 +396,9 @@ void Randomizer::ShufflePanels(bool hard) {
 	ShuffleRange(pillarRandomOrder, 5, 9); // Right Pillars 1-4
 	ReassignTargets(pillars, pillarRandomOrder, pillarTargets);
 	// Turn off original starting panels
-	_memory->WritePanelData<float>(pillars[0], POWER, { 0.0f, 0.0f });
-	_memory->WritePanelData<float>(pillars[5], POWER, { 0.0f, 0.0f });
+	memory->WritePanelData<float>(pillars[0], POWER, { 0.0f, 0.0f });
+	memory->WritePanelData<float>(pillars[5], POWER, { 0.0f, 0.0f });
 	// Turn on new starting panels
-	_memory->WritePanelData<float>(pillars[pillarRandomOrder[0]], POWER, { 1.0f, 1.0f });
-	_memory->WritePanelData<float>(pillars[pillarRandomOrder[5]], POWER, { 1.0f, 1.0f });
+	memory->WritePanelData<float>(pillars[pillarRandomOrder[0]], POWER, { 1.0f, 1.0f });
+	memory->WritePanelData<float>(pillars[pillarRandomOrder[5]], POWER, { 1.0f, 1.0f });
 }

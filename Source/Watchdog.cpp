@@ -5,6 +5,8 @@
 #include "Watchdog.h"
 #include "Quaternion.h"
 #include <thread>
+#include "Panel.h"
+#include "Randomizer.h"
 
 void Watchdog::start()
 {
@@ -32,7 +34,28 @@ void KeepWatchdog::action() {
 		WritePanelData<int>(0x03317, NEEDS_REDRAW, { 1 });
 	}
 }
+
 //Arrow Watchdog - To run the arrow puzzles
+
+ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f) {
+	Panel panel(id);
+	this->id = id;
+	grid = backupGrid = panel._grid;
+	width = static_cast<int>(grid.size());
+	height = static_cast<int>(grid[0].size());
+	pillarWidth = tracedLength = 0;
+	complete = false;
+	style = ReadPanelData<int>(id, STYLE_FLAGS);
+	DIRECTIONS = { Point(0, 2), Point(0, -2), Point(2, 0), Point(-2, 0), Point(2, 2), Point(2, -2), Point(-2, -2), Point(-2, 2) };
+	exitPos = panel.xy_to_loc(panel._endpoints[0].GetX(), panel._endpoints[0].GetY());
+	exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
+	exitPoint = (width / 2 + 1) * (height / 2 + 1);
+}
+
+ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
+	this->pillarWidth = pillarWidth;
+	if (pillarWidth > 0) exitPoint = (width / 2) * (height / 2 + 1);
+}
 
 void ArrowWatchdog::action() {
 	int length = ReadPanelDataIntentionallyUnsafe<int>(id, TRACED_EDGES);
@@ -210,6 +233,20 @@ void TreehouseWatchdog::action()
 	}
 }
 
+// Jungle watchdog
+
+JungleWatchdog::JungleWatchdog(int id, std::vector<int> correctSeq1, std::vector<int> correctSeq2) : Watchdog(0.5f) {
+	this->id = id;
+	int size = ReadPanelData<int>(id, NUM_DOTS);
+	sizes = ReadArray<int>(id, DOT_FLAGS, ReadPanelData<int>(id, NUM_DOTS));
+	this->correctSeq1 = correctSeq1;
+	this->correctSeq2 = correctSeq2;
+	state = false;
+	tracedLength = 0;
+	ptr1 = ReadPanelData<long>(id, DOT_SEQUENCE);
+	ptr2 = ReadPanelData<long>(id, DOT_SEQUENCE_REFLECTION);
+}
+
 void JungleWatchdog::action()
 {
 	int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
@@ -234,6 +271,8 @@ void JungleWatchdog::action()
 		}
 	}
 }
+
+// Town door watchdog
 
 void TownDoorWatchdog::action()
 {

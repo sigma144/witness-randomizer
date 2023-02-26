@@ -22,25 +22,21 @@ int find(const std::vector<T> &data, T search, size_t startIndex = 0) {
 	return -1;
 }
 
-Panel::Panel() {
-	_memory = std::make_shared<Memory>("witness64_d3d11.exe");
-}
-
 Panel::Panel(int id) {
-	_memory = std::make_shared<Memory>("witness64_d3d11.exe");
 	Read(id);
 }
 
 void Panel::Read() {
-	_width = 2 * _memory->ReadPanelData<int>(id, GRID_SIZE_X) - 1;
-	if (_memory->ReadPanelData<int>(id, IS_CYLINDER)) {
+	Memory* memory = Memory::get();
+	_width = 2 * memory->ReadPanelData<int>(id, GRID_SIZE_X) - 1;
+	if (memory->ReadPanelData<int>(id, IS_CYLINDER)) {
 		_width++;
 		Point::pillarWidth = _width;
 	}
 	else Point::pillarWidth = 0;
-	_height = 2 * _memory->ReadPanelData<int>(id, GRID_SIZE_Y) - 1;
+	_height = 2 * memory->ReadPanelData<int>(id, GRID_SIZE_Y) - 1;
 	if (_width <= 0 || _height <= 0 || _width > 30 || _height > 30) {
-		int numIntersections = _memory->ReadPanelData<int>(id, NUM_DOTS);
+		int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
 		_width = _height = static_cast<int>(std::round(sqrt(numIntersections))) * 2 - 1;
 	}
 	_grid.resize(_width);
@@ -53,7 +49,7 @@ void Panel::Read() {
 	_startpoints.clear();
 	_endpoints.clear();
 
-	_style = _memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	_style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
 	ReadAllData();
 	ReadIntersections();
 	ReadDecorations();
@@ -65,18 +61,19 @@ void Panel::Read() {
 }
 
 void Panel::Write() {
-	_memory->WritePanelData<int>(id, GRID_SIZE_X, { (_width + 1) / 2 });
-	_memory->WritePanelData<int>(id, GRID_SIZE_Y, { (_height + 1) / 2 });
-	if (_resized && _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS) > 0) {
+	Memory* memory = Memory::get();
+	memory->WritePanelData<int>(id, GRID_SIZE_X, { (_width + 1) / 2 });
+	memory->WritePanelData<int>(id, GRID_SIZE_Y, { (_height + 1) / 2 });
+	if (_resized && memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS) > 0) {
 		//Make two triangles that cover the whole panel
 		std::vector<int> newRegions = { 0, xy_to_loc(_width - 1, 0), xy_to_loc(0, 0), 0, xy_to_loc(_width - 1, _height - 1), xy_to_loc(_width - 1, 0), 0, 0 };
-		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(newRegions.size()) / 4 });
-		_memory->WriteArray(id, COLORED_REGIONS, newRegions);
+		memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(newRegions.size()) / 4 });
+		memory->WriteArray(id, COLORED_REGIONS, newRegions);
 	}
 
 	if (!decorationsOnly) WriteIntersections();
 	else {
-		std::vector<int> iflags = _memory->ReadArray<int>(id, DOT_FLAGS, _memory->ReadPanelData<int>(id, NUM_DOTS));
+		std::vector<int> iflags = memory->ReadArray<int>(id, DOT_FLAGS, memory->ReadPanelData<int>(id, NUM_DOTS));
 		for (int x = 0; x < _width; x += 2) {
 			for (int y = 0; y < _height; y += 2) {
 				if (_grid[x][y] & Decoration::Dot) {
@@ -85,13 +82,13 @@ void Panel::Write() {
 				}
 			}
 		}
-		_memory->WriteArray<int>(id, DOT_FLAGS, iflags);
+		memory->WriteArray<int>(id, DOT_FLAGS, iflags);
 	}
 	WriteDecorations();
 	if (enableFlash) _style &= ~NO_BLINK;
-	_memory->WritePanelData<int>(id, STYLE_FLAGS, { _style });
-	if (pathWidth != 1) _memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { pathWidth });
-	_memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	memory->WritePanelData<int>(id, STYLE_FLAGS, { _style });
+	if (pathWidth != 1) memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { pathWidth });
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	generatedPanels.push_back(*this);
 }
 
@@ -188,70 +185,76 @@ void Panel::Resize(int width, int height)
 	_resized = true;
 }
 
+Color Panel::GetBackgroundColor() {
+	return Memory::get()->ReadPanelData<Color>(0x0008F, BACKGROUND_REGION_COLOR);
+}
+
 void Panel::ReadAllData() {
-	Color pathColor = _memory->ReadPanelData<Color>(id, PATH_COLOR);
-	Color rpathColor = _memory->ReadPanelData<Color>(id, REFLECTION_PATH_COLOR);
-	Color successColor = _memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
-	Color strobeColor = _memory->ReadPanelData<Color>(id, STROBE_COLOR_A);
-	Color errorColor = _memory->ReadPanelData<Color>(id, ERROR_COLOR);
-	int numDecorations = _memory->ReadPanelData<int>(id, NUM_DECORATIONS);
-	Color a = _memory->ReadPanelData<Color>(id, SYMBOL_A);
-	Color b = _memory->ReadPanelData<Color>(id, SYMBOL_B);
-	Color c = _memory->ReadPanelData<Color>(id, SYMBOL_C);
-	Color d = _memory->ReadPanelData<Color>(id, SYMBOL_D);
-	Color e = _memory->ReadPanelData<Color>(id, SYMBOL_E);
-	Color ppColor = _memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR);
-	Color ppColorA = _memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR_A);
-	Color ppColorB = _memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR_B);
-	int pushSymbolColors = _memory->ReadPanelData<int>(id, PUSH_SYMBOL_COLORS);
-	int numColored = _memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
-	std::vector<int> colored = _memory->ReadArray<int>(id, COLORED_REGIONS, numColored * 4);
-	int numConnections = _memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
-	int numDots = _memory->ReadPanelData<int>(id, NUM_DOTS);
-	int reflectionData = _memory->ReadPanelData<int>(id, REFLECTION_DATA);
-	std::vector<int> rdata; if (reflectionData) rdata = _memory->ReadArray<int>(id, REFLECTION_DATA, numDots);
-	int style = _memory->ReadPanelData<int>(id, STYLE_FLAGS);
-	std::vector<int> connections_a = _memory->ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
-	std::vector<int> connections_b = _memory->ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
-	int numIntersections = _memory->ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<float> intersections = _memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
-	std::vector<int> intersectionFlags = _memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
-	std::vector<int> decorations = _memory->ReadArray<int>(id, DECORATIONS, numDecorations);
-	std::vector<int> decorationFlags = _memory->ReadArray<int>(id, DECORATION_FLAGS, numDecorations);
-	float width = _memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
-	int seqLen = _memory->ReadPanelData<int>(id, SEQUENCE_LEN);
-	std::vector<int> seq = _memory->ReadArray<int>(id, SEQUENCE, seqLen);
-	std::vector<float> power = _memory->ReadPanelData<float>(id, POWER, 2);
-	float openRate = _memory->ReadPanelData<float>(id, OPEN_RATE);
-	int cptr = _memory->ReadPanelData<int>(id, DECORATION_COLORS);
-	std::vector<Color> colors; if (cptr) colors = _memory->ReadArray<Color>(id, DECORATION_COLORS, numDecorations);
-	Color outerBackground = _memory->ReadPanelData<Color>(id, OUTER_BACKGROUND);
-	int outerBackgroundMode = _memory->ReadPanelData<int>(id, OUTER_BACKGROUND_MODE);
-	Color bgRegionColor = _memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR);
-	short metadata = _memory->ReadPanelData<short>(id, METADATA);
-	//void* specularTexture = _memory->ReadPanelData<void*>(id, SPECULAR_TEXTURE);
-	//std::vector<float> data = _memory->ReadPanelData<float>(id, SPECULAR_TEXTURE, 1000);
-	int dotSeqLen = _memory->ReadPanelData<int>(id, DOT_SEQUENCE_LEN);
-	std::vector<int> dotSeq = _memory->ReadArray<int>(id, DOT_SEQUENCE, dotSeqLen);
-	int dotSeqLenR = _memory->ReadPanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION);
-	std::vector<int> dotSeqR = _memory->ReadArray<int>(id, DOT_SEQUENCE_REFLECTION, dotSeqLenR);
-	void* target = _memory->ReadPanelData<void*>(id, TARGET);
-	void* panelTarget = _memory->ReadPanelData<void*>(id, PANEL_TARGET);
-	Color cableTarget = _memory->ReadPanelData<Color>(id, CABLE_TARGET_2);
-	//std::vector<int> targets = _memory->ReadArray<int>(id, PANEL_TARGET, 6);
-	int isPillar = _memory->ReadPanelData<int>(id, IS_CYLINDER);
-	int numTraced = _memory->ReadPanelData<int>(id, TRACED_EDGES);
-	int numSol = _memory->ReadPanelData<int>(id, TRACED_EDGES + 4); //Don't know what this number is for yet
-	int tracedptr = _memory->ReadPanelData<int>(id, TRACED_EDGE_DATA);
-	//float solved = _memory->ReadPanelData<float>(id, SOLVED);
-	float distance = _memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
-	std::vector<SolutionPoint> traced; if (tracedptr) traced = _memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
+	Memory* memory = Memory::get();
+	Color pathColor = memory->ReadPanelData<Color>(id, PATH_COLOR);
+	Color rpathColor = memory->ReadPanelData<Color>(id, REFLECTION_PATH_COLOR);
+	Color successColor = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
+	Color strobeColor = memory->ReadPanelData<Color>(id, STROBE_COLOR_A);
+	Color errorColor = memory->ReadPanelData<Color>(id, ERROR_COLOR);
+	int numDecorations = memory->ReadPanelData<int>(id, NUM_DECORATIONS);
+	Color a = memory->ReadPanelData<Color>(id, SYMBOL_A);
+	Color b = memory->ReadPanelData<Color>(id, SYMBOL_B);
+	Color c = memory->ReadPanelData<Color>(id, SYMBOL_C);
+	Color d = memory->ReadPanelData<Color>(id, SYMBOL_D);
+	Color e = memory->ReadPanelData<Color>(id, SYMBOL_E);
+	Color ppColor = memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR);
+	Color ppColorA = memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR_A);
+	Color ppColorB = memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR_B);
+	int pushSymbolColors = memory->ReadPanelData<int>(id, PUSH_SYMBOL_COLORS);
+	int numColored = memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS);
+	std::vector<int> colored = memory->ReadArray<int>(id, COLORED_REGIONS, numColored * 4);
+	int numConnections = memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
+	int numDots = memory->ReadPanelData<int>(id, NUM_DOTS);
+	int reflectionData = memory->ReadPanelData<int>(id, REFLECTION_DATA);
+	std::vector<int> rdata; if (reflectionData) rdata = memory->ReadArray<int>(id, REFLECTION_DATA, numDots);
+	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	std::vector<int> connections_a = memory->ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
+	std::vector<int> connections_b = memory->ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
+	int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
+	std::vector<int> intersectionFlags = memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
+	std::vector<int> decorations = memory->ReadArray<int>(id, DECORATIONS, numDecorations);
+	std::vector<int> decorationFlags = memory->ReadArray<int>(id, DECORATION_FLAGS, numDecorations);
+	float width = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	int seqLen = memory->ReadPanelData<int>(id, SEQUENCE_LEN);
+	std::vector<int> seq = memory->ReadArray<int>(id, SEQUENCE, seqLen);
+	std::vector<float> power = memory->ReadPanelData<float>(id, POWER, 2);
+	float openRate = memory->ReadPanelData<float>(id, OPEN_RATE);
+	int cptr = memory->ReadPanelData<int>(id, DECORATION_COLORS);
+	std::vector<Color> colors; if (cptr) colors = memory->ReadArray<Color>(id, DECORATION_COLORS, numDecorations);
+	Color outerBackground = memory->ReadPanelData<Color>(id, OUTER_BACKGROUND);
+	int outerBackgroundMode = memory->ReadPanelData<int>(id, OUTER_BACKGROUND_MODE);
+	Color bgRegionColor = memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR);
+	short metadata = memory->ReadPanelData<short>(id, METADATA);
+	//void* specularTexture = memory->ReadPanelData<void*>(id, SPECULAR_TEXTURE);
+	//std::vector<float> data = memory->ReadPanelData<float>(id, SPECULAR_TEXTURE, 1000);
+	int dotSeqLen = memory->ReadPanelData<int>(id, DOT_SEQUENCE_LEN);
+	std::vector<int> dotSeq = memory->ReadArray<int>(id, DOT_SEQUENCE, dotSeqLen);
+	int dotSeqLenR = memory->ReadPanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION);
+	std::vector<int> dotSeqR = memory->ReadArray<int>(id, DOT_SEQUENCE_REFLECTION, dotSeqLenR);
+	void* target = memory->ReadPanelData<void*>(id, TARGET);
+	void* panelTarget = memory->ReadPanelData<void*>(id, PANEL_TARGET);
+	Color cableTarget = memory->ReadPanelData<Color>(id, CABLE_TARGET_2);
+	//std::vector<int> targets = memory->ReadArray<int>(id, PANEL_TARGET, 6);
+	int isPillar = memory->ReadPanelData<int>(id, IS_CYLINDER);
+	int numTraced = memory->ReadPanelData<int>(id, TRACED_EDGES);
+	int numSol = memory->ReadPanelData<int>(id, TRACED_EDGES + 4); //Don't know what this number is for yet
+	int tracedptr = memory->ReadPanelData<int>(id, TRACED_EDGE_DATA);
+	//float solved = memory->ReadPanelData<float>(id, SOLVED);
+	float distance = memory->ReadPanelData<float>(id, MAX_BROADCAST_DISTANCE);
+	std::vector<SolutionPoint> traced; if (tracedptr) traced = memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 }
 
 void Panel::ReadDecorations() {
-	int numDecorations = _memory->ReadPanelData<int>(id, NUM_DECORATIONS);
-	std::vector<int> decorations = _memory->ReadArray<int>(id, DECORATIONS, numDecorations);
-	std::vector<int> decorationFlags = _memory->ReadArray<int>(id, DECORATION_FLAGS, numDecorations);
+	Memory* memory = Memory::get();
+	int numDecorations = memory->ReadPanelData<int>(id, NUM_DECORATIONS);
+	std::vector<int> decorations = memory->ReadArray<int>(id, DECORATIONS, numDecorations);
+	std::vector<int> decorationFlags = memory->ReadArray<int>(id, DECORATION_FLAGS, numDecorations);
 
 	for (int i=0; i<numDecorations; i++) {
 		auto [x, y] = dloc_to_xy(i);
@@ -260,6 +263,7 @@ void Panel::ReadDecorations() {
 }
 
 void Panel::WriteDecorations() {
+	Memory* memory = Memory::get();
 	std::vector<int> decorations;
 	std::vector<Color> decorationColors;
 	bool any = false;
@@ -297,39 +301,39 @@ void Panel::WriteDecorations() {
 		for (int i = 0; i < decorations.size(); i++) {
 			if (decorations[i] == 0) decorations[i] = Decoration::Triangle; //To force it to be unsolvable
 		}
-		_memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+		memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 	}
 	if (!any) {
-		_memory->WritePanelData<int>(id, NUM_DECORATIONS, { 0 });
+		memory->WritePanelData<int>(id, NUM_DECORATIONS, { 0 });
 	}
 	else {
-		_memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-		if (colorMode == ColorMode::WriteColors || colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseAlternate || _memory->ReadPanelData<int>(id, DECORATION_COLORS))
-			_memory->WriteArray<Color>(id, DECORATION_COLORS, decorationColors);
+		memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+		if (colorMode == ColorMode::WriteColors || colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseAlternate || memory->ReadPanelData<int>(id, DECORATION_COLORS))
+			memory->WriteArray<Color>(id, DECORATION_COLORS, decorationColors);
 		else if (colorMode == ColorMode::Reset || colorMode == ColorMode::Alternate) {
-			_memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { colorMode == ColorMode::Reset ? 0 : 1 });
+			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { colorMode == ColorMode::Reset ? 0 : 1 });
 		}
 		if (colorMode == ColorMode::Treehouse) {
-			_memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
-			_memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } }); //Black
-			_memory->WritePanelData<Color>(id, SYMBOL_B, { { 1, 1, 1, 1 } }); //White
-			_memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
-			_memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
-			_memory->WritePanelData<Color>(id, SYMBOL_E, { { 0, 1, 0, 1 } }); //Green
+			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
+			memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } }); //Black
+			memory->WritePanelData<Color>(id, SYMBOL_B, { { 1, 1, 1, 1 } }); //White
+			memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
+			memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
+			memory->WritePanelData<Color>(id, SYMBOL_E, { { 0, 1, 0, 1 } }); //Green
 		}
 		else if (colorMode == ColorMode::TreehouseAlternate) {
-			_memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
-			_memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } }); //Black
-			_memory->WritePanelData<Color>(id, SYMBOL_B, { { 0, 0, 1, 1 } }); //White->Blue
-			_memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
-			_memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
-			_memory->WritePanelData<Color>(id, SYMBOL_E, { { 1, 1, 1, 1 } }); //Green->White
+			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
+			memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } }); //Black
+			memory->WritePanelData<Color>(id, SYMBOL_B, { { 0, 0, 1, 1 } }); //White->Blue
+			memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
+			memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
+			memory->WritePanelData<Color>(id, SYMBOL_E, { { 1, 1, 1, 1 } }); //Green->White
 		}
 	}
-	if (any || _memory->ReadPanelData<int>(id, DECORATIONS)) {
-		_memory->WriteArray<int>(id, DECORATIONS, decorations);
+	if (any || memory->ReadPanelData<int>(id, DECORATIONS)) {
+		memory->WriteArray<int>(id, DECORATIONS, decorations);
 		for (int i = 0; i < decorations.size(); i++) decorations[i] = 0;
-		_memory->WriteArray<int>(id, DECORATION_FLAGS, decorations);
+		memory->WriteArray<int>(id, DECORATION_FLAGS, decorations);
 	}
 	if (arrows) {
 		arrowPuzzles.emplace_back(id, Point::pillarWidth);
@@ -351,8 +355,9 @@ void Panel::StartArrowWatchdogs(const std::map<int, int>& shuffleMappings) {
 }
 
 void Panel::ReadIntersections() {
-	int numIntersections = _memory->ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<float> intersections = _memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
+	Memory* memory = Memory::get();
+	int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
 	int num_grid_points = this->get_num_grid_points();
 	minx = intersections[0]; miny = intersections[1];
 	maxx = intersections[num_grid_points * 2 - 2]; maxy = intersections[num_grid_points * 2 - 1];
@@ -361,9 +366,9 @@ void Panel::ReadIntersections() {
 	unitWidth = (maxx - minx) / (_width - 1);
 	if (Point::pillarWidth) unitWidth = 1.0f / _width;
 	unitHeight = (maxy - miny) / (_height - 1);
-	std::vector<int> intersectionFlags = _memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
-	std::vector<int> symmetryData = _memory->ReadPanelData<int>(id, REFLECTION_DATA) ? 
-		_memory->ReadArray<int>(id, REFLECTION_DATA, numIntersections) : std::vector<int>();
+	std::vector<int> intersectionFlags = memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
+	std::vector<int> symmetryData = memory->ReadPanelData<int>(id, REFLECTION_DATA) ? 
+		memory->ReadArray<int>(id, REFLECTION_DATA, numIntersections) : std::vector<int>();
 	if (symmetryData.size() == 0) symmetry = Symmetry::None;
 	else if (symmetryData[0] == num_grid_points - 1) symmetry = Symmetry::Rotational;
 	else if (symmetryData[0] == _width / 2 && intersections[1] == intersections[3]) symmetry = Symmetry::Vertical;
@@ -384,9 +389,9 @@ void Panel::ReadIntersections() {
 			_grid[x][y] = OPEN;
 		}
 	}
-	int numConnections = _memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
-	std::vector<int> connections_a = _memory->ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
-	std::vector<int> connections_b = _memory->ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
+	int numConnections = memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
+	std::vector<int> connections_a = memory->ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
+	std::vector<int> connections_b = memory->ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
 	//Remove non-existent connections
 	std::vector<std::string> out;
 	for (int i = 0; i < connections_a.size(); i++) {
@@ -463,6 +468,7 @@ void Panel::ReadIntersections() {
 }
 
 void Panel::WriteIntersections() {
+	Memory* memory = Memory::get();
 	std::vector<float> intersections;
 	std::vector<int> intersectionFlags;
 	std::vector<int> connections_a;
@@ -627,26 +633,26 @@ void Panel::WriteIntersections() {
 	//Symmetry Data
 	if (id == 0x01D3F && symmetry == Symmetry::None || id == 0x00076 && symmetry == Symmetry::None) {
 		_style &= ~Style::SYMMETRICAL;
-		_memory->WritePanelData<long long>(id, REFLECTION_DATA, { 0 });
+		memory->WritePanelData<long long>(id, REFLECTION_DATA, { 0 });
 	}
 	else if (symmetryData.size() > 0) {
 		_style |= Style::SYMMETRICAL;
-		_memory->WriteArray<int>(id, REFLECTION_DATA, symmetryData);
+		memory->WriteArray<int>(id, REFLECTION_DATA, symmetryData);
 	}
 	else {
 		_style &= ~Style::SYMMETRICAL;
-		_memory->WritePanelData<long long>(id, REFLECTION_DATA, { 0 });
+		memory->WritePanelData<long long>(id, REFLECTION_DATA, { 0 });
 	}
 
-	_memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	_memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	_memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	_memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connections_a.size()) });
-	_memory->WriteArray<int>(id, DOT_CONNECTION_A, connections_a);
-	_memory->WriteArray<int>(id, DOT_CONNECTION_B, connections_b);
+	memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connections_a.size()) });
+	memory->WriteArray<int>(id, DOT_CONNECTION_A, connections_a);
+	memory->WriteArray<int>(id, DOT_CONNECTION_B, connections_b);
 	
 	if (polygons.size() > 0) {
-		_memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 });
-		_memory->WriteArray<int>(id, COLORED_REGIONS, polygons);
+		memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(polygons.size()) / 4 });
+		memory->WriteArray<int>(id, COLORED_REGIONS, polygons);
 	}
 }
