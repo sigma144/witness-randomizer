@@ -67,6 +67,8 @@ void HudManager::setSubtitleSize(SubtitleSize size) {
 		break;
 	case SubtitleSize::Small:
 		sizeOffset = 0x10;
+	default:
+		sizeOffset = 0;
 	}
 
 	uint32_t fontPointerOffset = largeSubtitlePointerOffset + sizeOffset;
@@ -265,9 +267,26 @@ void HudManager::overwriteSubtitleFunction() {
 	uint32_t globals_shader_text = 0x62D400;
 	uint32_t global_subtitle_font = 0x62d458;
 
-	char tempString[] = "i have no idea what i am doing";
-	LPVOID tempStringAddress = VirtualAllocEx(memory->_handle, NULL, 0x100, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	WriteProcessMemory(memory->_handle, tempStringAddress, tempString, sizeof(tempString), NULL);
+	// TODO: find a sane size for this
+	uint64_t dataPayload = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+	uint64_t address_tempLineCount = dataPayload;
+	uint64_t address_tempString = dataPayload + 0x4;
+
+
+	uint32_t tempLineCount = 4;
+	WriteProcessMemory(memory->_handle, (LPVOID)address_tempLineCount, &tempLineCount, sizeof(uint32_t), NULL);
+
+
+	char tempString1[] = "i have no idea what i am doing";
+	char tempString2[] = "no, seriously, i have no idea what i am doing";
+	char tempString3[] = "can someone send me, like, idk";
+	char tempString4[] = "a functioning brain";
+
+	WriteProcessMemory(memory->_handle, (LPVOID)(address_tempString + 0x000), tempString4, sizeof(tempString4), NULL);
+	WriteProcessMemory(memory->_handle, (LPVOID)(address_tempString + 0x100), tempString3, sizeof(tempString3), NULL);
+	WriteProcessMemory(memory->_handle, (LPVOID)(address_tempString + 0x200), tempString2, sizeof(tempString2), NULL);
+	WriteProcessMemory(memory->_handle, (LPVOID)(address_tempString + 0x300), tempString1, sizeof(tempString1), NULL);
 
 ////// BEGIN REPLACEMENT FUNCTION
 
@@ -277,7 +296,9 @@ void HudManager::overwriteSubtitleFunction() {
 	func.add({ 0x48,0x81,0xEC })			// SUB RSP, 0xD8	<- it's what the main function does and i don't want to mess with it
 		.add({ 0xD8,0x00,0x00,0x00 })
 		.add({ 0x48,0x89,0x9C,0x24 })		// MOV qword ptr [RSP + 0xF0], RBX
-		.add({ 0xF0,0x00,0x00,0x00 });
+		.add({ 0xF0,0x00,0x00,0x00 })
+		.add({ 0x4C,0x89,0xA4,0x24 })		// MOV qword ptr [RSP + 0xF8], R12
+		.add({ 0xF8,0x00,0x00,0x00 });
 
 	// Set rendering mode to right-handed 2D.
 	//     ECX				renderingSpace (0 is indexed on pixels, 1 is unit UV)
@@ -295,35 +316,71 @@ void HudManager::overwriteSubtitleFunction() {
 	func.add({ 0xB9,0x03,0x00,0x00,0x00 })	// MOV ECX, 0x3
 		.add({ 0xE8 }).rel(func_im_begin);	// CALL <im_begin>
 
+	// Get information necessary for the loop. Note that we are drawing text from bottom to top, so our loop runs backwards.
+	//     R12D				int currentIndex
+	func.add({ 0x49,0xBC })					// MOV R12, <line count>
+		.abs(address_tempLineCount)
+		.add({ 0x45,0x8B,0x24,0x24 });		// MOV R12D, dword ptr [R12]
+
+	int loopStart = func.size();
+
 	//
 	// Write temporary string to screen at 0,0.
 	//
 
+	// Decrement the counter so that we're pointing at the next string.
+	func.add({ 0x41,0xFF,0xCC });			// DEC R12D
+
 	// Set parameters and call draw_text.
+	// draw_text parameters:
 	//     RCX:8			Dynamic_Font* font
 	//     XMM1_Da:4		float xPos
 	//     XMM2_Da:4		float yPos
 	//     R9D:4			ulong color (packed via argb_color())
 	//     Stack[0x28]		char* strings
 	//     Stack[0x30]		int zOrder
+	// scratch registers:
+	//     R10				string address
+	//     XMM3				loop counter as float
+	//     XMM4				vertical stride
 	// - Set font
 	func.add({ 0x48, 0x8B, 0x0D })			// MOV RCX, qword ptr [RIP + <font>]
 		.rel(global_subtitle_font);
-	// - Set xPos and yPos
+	// - Set xPos and yPos. (TEMP: 0x0)
 	func.add({ 0x0F, 0x57, 0xC9 })			// XORPS XMM1, XMM1
 		.add({ 0x0F, 0x57, 0xD2 });			// XORPS XMM2, XMM2
+	// - Compute the Y offset based on the current line.
+	func.add({ 0xF3,0x41,0x0F,0x2A,0xDC })	// CVTSI2SS XMM3, R12D					<-- convert the loop counter to a float
+		.add({ 0xF3,0x0F,0x10,0x61,0x64 })	// MOVSS XMM4, DWORD PTR [RCX + 0x64]	<-- get font's line height, which is our vertical stride
+		.add({ 0xF3,0x0F,0x59,0xE3 })		// MULSS XMM4, XMM3						<-- multiply the vertical stride by the loop counter to get the line offset
+		.add({ 0xF3,0x0F,0x58,0xD4 });		// ADDSS XMM2, XMM4						<-- add line offset to yPos
 	// - Set color
 	func.add({ 0x41, 0xB9 })				// MOV R9D, 0xFFFFFFFF
 		.add({ 0xFF, 0xFF, 0xFF, 0xFF });
 	// - Set string pointer
 	func.add({ 0x49, 0xBA })				// MOV R10, <string address>
-		.abs((uint64_t)tempStringAddress)
-		.add({ 0x4C, 0x89, 0x54, 0x24, 0x20 });	// MOV qword ptr [RSP + 0x20], R10
+		.abs(address_tempString);
+	// - Adjust the string pointer by an offset based on the current index.
+	func.add({ 0x41,0xBB })					// MOV R11D, <line allocation length>	<-- TEMP: currently a hardcoded value of 0x100
+		.val((uint32_t)0x100)
+		.add({ 0x45,0x0F,0xAF,0xDC })		// IMUL R11D, R12D						<-- multiply line allocation by loop count to get target address offset
+		.add({ 0x4D,0x01,0xDA });			// ADD R10,R11							<-- add the address offset. note that it's safe to go from a 32->64 bit int here, since the upper half is zeroed
+
+	// TEMP: offset by index to make sure the loop is working
+	//func.add({ 0x49,0x83,0xC2,0x02 });		// ADD R10, 0x2
+	
+	func.add({ 0x4C, 0x89, 0x54, 0x24, 0x20 });	// MOV qword ptr [RSP + 0x20], R10
 	// - Set zOrder
 	func.add({ 0xC7, 0x44, 0x24, 0x28 })	// MOV dword ptr [RSP + 0x28], 0x20
 		.add({ 0x20, 0x00, 0x00, 0x00 });
 	// - Call draw_text
 	func.add({ 0xE8 }).rel(func_draw_text);	// CALL <draw_text>
+
+	// Jump back in the loop if we haven't reached the end.
+	func.add({ 0x45,0x85,0xE4 });			// TEST R12D,R12D
+	int loopEnd = func.size();
+	func.add({ 0x75 })						// JMP <loopStart>
+		.val((int8_t)(loopStart - (loopEnd + 2)));
 
 	// Call im_flush().
 	func.add({ 0xE8 }).rel(func_im_flush);
@@ -331,6 +388,8 @@ void HudManager::overwriteSubtitleFunction() {
 	// Restore registers from the stack.
 	func.add({ 0x48,0x8B,0x9C,0x24 })		// MOV RBX, qword ptr [RSP + 0xF0]
 		.add({ 0xF0,0x00,0x00,0x00 })
+		.add({ 0x4C,0x8B,0xA4,0x24 })		// MOV R12, qword ptr [RSP + 0xF8]
+		.add({ 0xF8,0x00,0x00,0x00 })
 		.add({ 0x48,0x81,0xC4 })			// ADD RSP,0xD8
 		.add({ 0xD8,0x00,0x00,0x00 });
 		

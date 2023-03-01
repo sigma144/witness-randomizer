@@ -12,6 +12,14 @@ public:
 	AsmBuilder& abs(uint32_t referenceAddress);
 	AsmBuilder& abs(uint64_t referenceAddress);
 
+	template<typename T>
+	AsmBuilder& val(T value) {
+		uint8_t* bytes = static_cast<uint8_t*>(static_cast<void*>(&value));
+		builder.insert(builder.end(), bytes, bytes + sizeof(T));
+		
+		return *this;
+	}
+
 	const uint8_t* get() const;
 	const int size() const;
 
