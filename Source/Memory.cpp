@@ -306,7 +306,56 @@ void Memory::applyDestructivePatches() {
 	WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
 }
 
+void Memory::doSecretThing() {
+	// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x30, 0x48, 0x89, 0x74, 0x24, 0x38, 0x48, 0x8B, 0x35 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		uint64_t to_read = _baseAddress + offset + index - 11;
+		uint64_t localisation_ptr = 0;
+		uint64_t localisation_ptr2 = 0;
+
+		ReadAbsolute(reinterpret_cast<void*>(to_read), &localisation_ptr, sizeof(int));
+
+		localisation_ptr += to_read + 5;
+
+		ReadAbsolute(reinterpret_cast<void*>(localisation_ptr), &localisation_ptr2, sizeof(uint64_t));
+
+		ReadAbsolute(reinterpret_cast<void*>(localisation_ptr2), &localisation, sizeof(uint64_t));
+
+		char buf[13];
+
+		for (uint64_t i = localisation; i < localisation + 0x10000; i++) {
+			if (!ReadAbsolute(reinterpret_cast<void*>(i), &buf, sizeof(buf))) continue;
+
+			if (buf[0] == 0x00 && buf[1] == 0x54 && buf[2] == 0x68 && buf[3] == 0x65 && buf[4] == 0x20 && buf[5] == 0x57 && buf[6] == 0x69 && buf[12] == 0x00) {
+				the_witness_string = i + 1;
+
+				char writebuf[] = "\x54\x68\x65\x20\x57\x69\x6E\x74\x65\x73\x73";
+
+				WriteProcessMemory(_handle, reinterpret_cast<void*>(the_witness_string), writebuf, sizeof(writebuf) - 1, NULL);
+				return true;
+			}
+		}
+
+		return true;
+		});
+}
+
 void Memory::findImportantFunctionAddresses(){
+
+	time_t rawtime;
+	time(&rawtime);
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &rawtime);
+
+	int day = timeinfo.tm_mday;
+	int month = timeinfo.tm_mon + 1;
+
+	if (day == 1 && month == 4) {
+		doSecretThing();
+		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
+	}
+
 	executeSigScan({ 0x45, 0x0F, 0x28, 0xC8, 0xF3, 0x44 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		cursorSize = _baseAddress + offset + index;
 

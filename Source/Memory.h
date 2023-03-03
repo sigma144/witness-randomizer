@@ -295,6 +295,8 @@ public:
 	uint64_t cursorR;
 	uint64_t cursorG;
 	uint64_t cursorB;
+	uint64_t localisation;
+	uint64_t the_witness_string;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
@@ -328,6 +330,7 @@ private:
 	void findActivePanel();
 	void findPlayerPosition();
 	void findImportantFunctionAddresses();
+	void doSecretThing();
 
 	template<class T>
 	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
