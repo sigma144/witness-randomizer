@@ -66,6 +66,7 @@ private:
 	PanelLocker* panelLocker;
 	std::shared_ptr<Generate> generator;
 	std::map<int, int> panelIdToLocationId;
+	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	int finalPanel;
 	bool isCompleted = false;
 

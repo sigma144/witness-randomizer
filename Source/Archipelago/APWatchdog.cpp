@@ -23,6 +23,11 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
+
+	for (auto [key, value] : panelIdToLocationId) {
+		locationIdToPanelId_READ_ONLY[value] = key;
+	}
+
 	finalPanel = lastPanel;
 	panelLocker = p;
 	audioLogMessages = a;
@@ -313,67 +318,62 @@ void APWatchdog::CheckSolvedPanels() {
 
 void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 {
-	auto it = panelIdToLocationId.begin();
-	while (it != panelIdToLocationId.end())
-	{
-		if (it->second == locationId) {
-			if (actuallyEveryPanel.count(it->first)) {
-				if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
-					__int32 skipped = ReadPanelData<__int32>(it->first, VIDEO_STATUS_COLOR);
+	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
+	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
-					if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
-						it = panelIdToLocationId.erase(it);
-						continue;
-					}
+	if (actuallyEveryPanel.count(panelId)) {
+		if (collect && !ReadPanelData<int>(panelId, SOLVED)) {
+			__int32 skipped = ReadPanelData<__int32>(panelId, VIDEO_STATUS_COLOR);
 
-					if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
-						std::vector<int> bridgePanels;
-						if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
-						else if (it->first == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
-						else if (it->first == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
-						else if (it->first == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
-						else if (it->first == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
-						else if (it->first == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
-						else if (it->first == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
-						else if (it->first == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
-						else if (it->first == 0x034E3) bridgePanels = { 0x034E4 };
-
-						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-						Special::SkipPanel(it->first, "Collected", false);
-						WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED });
-
-						for (int panel : bridgePanels) {
-							if (ReadPanelData<int>(panel, SOLVED)) continue;
-
-							if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
-							Special::SkipPanel(panel, "Collected", false);
-							WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
-						}
-					}
-					else {
-						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-						Special::SkipPanel(it->first, "Collected", false);
-						if (it->first != 0x01983 && it->first != 0x01983) WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
-						if(!skip_completelyExclude.count(it->first)) WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
-						WritePanelData<__int32>(it->first, NEEDS_REDRAW, { 1 });
-					}
-				}
+			if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
+				if(panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
+				return;
 			}
 
-			else if (allEPs.count(it->first) && collect) {
-				int eID = it->first;
+			if (panelId == 0x17DC4 || panelId == 0x17D6C || panelId == 0x17DA2 || panelId == 0x17DC6 || panelId == 0x17DDB || panelId == 0x17E61 || panelId == 0x014D1 || panelId == 0x09FD2 || panelId == 0x034E3) {
+				std::vector<int> bridgePanels;
+				if (panelId == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
+				else if (panelId == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
+				else if (panelId == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
+				else if (panelId == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
+				else if (panelId == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
+				else if (panelId == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
+				else if (panelId == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
+				else if (panelId == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
+				else if (panelId == 0x034E3) bridgePanels = { 0x034E4 };
 
-				Memory::get()->SolveEP(eID);
-				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
-					Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
+				Special::SkipPanel(panelId, "Collected", false);
+				WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED });
+
+				for (int panel : bridgePanels) {
+					if (ReadPanelData<int>(panel, SOLVED)) continue;
+
+					if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
+					Special::SkipPanel(panel, "Collected", false);
+					WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
 				}
 			}
-
-			it = panelIdToLocationId.erase(it);
+			else {
+				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
+				Special::SkipPanel(panelId, "Collected", false);
+				if (panelId != 0x01983 && panelId != 0x01983) WritePanelData<float>(panelId, POWER, { 1.0f, 1.0f });
+				if (!skip_completelyExclude.count(panelId)) WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+				WritePanelData<__int32>(panelId, NEEDS_REDRAW, { 1 });
+			}
 		}
-		else
-			it++;
 	}
+
+	else if (allEPs.count(panelId) && collect) {
+		int eID = panelId;
+
+		Memory::get()->SolveEP(eID);
+		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+			Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+		}
+	}
+
+	if (panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
 }
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
