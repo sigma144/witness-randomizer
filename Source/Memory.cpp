@@ -338,7 +338,7 @@ void Memory::doSecretThing() {
 		}
 
 		return true;
-		});
+	});
 }
 
 void Memory::findImportantFunctionAddresses(){
