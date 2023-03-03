@@ -31,7 +31,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 8});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 9});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -495,11 +495,11 @@ void APRandomizer::Init() {
 	}
 
 	PanelRestore::RestoreOriginalPanelData();
+
+	Special::SetVanillaMetapuzzleShapes();
 }
 
 void APRandomizer::GenerateNormal() {
-	Special::SetVanillaMetapuzzleShapes();
-
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
