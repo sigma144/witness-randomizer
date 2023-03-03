@@ -76,8 +76,7 @@ Memory::~Memory() {
 	CloseHandle(_handle);
 }
 
-void Memory::create()
-{
+void Memory::create() {
 	if (_singleton == nullptr) {
 		_singleton = new Memory();
 
@@ -90,9 +89,12 @@ void Memory::create()
 	}
 }
 
-Memory* Memory::get()
-{
+Memory* Memory::get() {
 	return _singleton;
+}
+
+DWORD Memory::getProcessID() {
+	return GetProcessId(_handle);
 }
 
 // Copied from Witness Trainer https://github.com/jbzdarkid/witness-trainer/blob/master/Source/Memory.cpp#L218

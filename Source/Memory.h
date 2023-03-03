@@ -55,6 +55,8 @@ public:
 		return _baseAddress;
 	}
 
+	DWORD getProcessID();
+
 	// Reads data from program memory relative to the base address of the program.
 	bool ReadRelative(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);

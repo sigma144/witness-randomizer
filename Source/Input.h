@@ -12,7 +12,7 @@
 // Custom keys for randomizer-specific functionality.
 enum class CustomKey : int {
 	SKIP_PUZZLE,
-	MAX
+	COUNT
 };
 
 // A mapping of human-readable button names onto the hex codes used by the game.
@@ -212,6 +212,8 @@ public:
 
 	static std::string getNameForCustomKey(CustomKey key);
 	static std::string getNameForInputButton(InputButton button);
+
+	void loadCustomKeybind(CustomKey key, InputButton button);
 
 	void beginCustomKeybind(CustomKey key);
 	bool trySetCustomKeybind(InputButton button);

@@ -2,6 +2,7 @@
 
 #include "Memory.h"
 #include "Utilities.h"
+#include "ClientWindow.h"
 
 
 #define PRINT_INPUT_DEBUG 0
@@ -149,14 +150,25 @@ std::pair<std::vector<float>, std::vector<float>> InputWatchdog::getMouseRay()
 	return { playerPosition, direction };
 }
 
+void InputWatchdog::loadCustomKeybind(CustomKey key, InputButton button) {
+	customKeybinds[key] = button;
+}
+
 void InputWatchdog::beginCustomKeybind(CustomKey key) {
 	currentlyRebindingKey = key;
+	ClientWindow::get()->focusGameWindow();
 }
 
 bool InputWatchdog::trySetCustomKeybind(InputButton button) {
 	if (currentlyRebindingKey.has_value() && isValidForCustomKeybind(button)) {
+		ClientWindow* clientWindow = ClientWindow::get();
+
 		customKeybinds[currentlyRebindingKey.value()] = button;
+		clientWindow->refreshKeybind(currentlyRebindingKey.value());
 		currentlyRebindingKey.reset();
+
+		clientWindow->focusClientWindow();
+		clientWindow->saveSettings();
 
 		return true;
 	}
@@ -166,10 +178,11 @@ bool InputWatchdog::trySetCustomKeybind(InputButton button) {
 
 void InputWatchdog::cancelCustomKeybind() {
 	currentlyRebindingKey.reset();
+	ClientWindow::get()->focusClientWindow();
 }
 
 CustomKey InputWatchdog::getCurrentlyRebindingKey() const {
-	return currentlyRebindingKey.has_value() ? currentlyRebindingKey.value() : CustomKey::MAX;
+	return currentlyRebindingKey.has_value() ? currentlyRebindingKey.value() : CustomKey::COUNT;
 }
 
 bool InputWatchdog::isValidForCustomKeybind(InputButton button) const

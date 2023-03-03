@@ -8,6 +8,7 @@
 
 #include "../App/Version.h"
 #include "../App/Main.h"
+#include "Input.h"
 
 using json = nlohmann::json;
 
@@ -30,14 +31,26 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define SETTING_CONTROL_LEFT (STATIC_TEXT_MARGIN + SETTING_LABEL_WIDTH)
 #define SETTING_CONTROL_WIDTH (CLIENT_WINDOW_WIDTH - CONTROL_MARGIN - SETTING_CONTROL_LEFT)
 
+#define KEYBIND_BUTTON_WIDTH 100
+#define KEYBIND_BUTTON_LEFT (CLIENT_WINDOW_WIDTH - CONTROL_MARGIN - KEYBIND_BUTTON_WIDTH)
+#define KEYBIND_LABEL_LEFT SETTING_CONTROL_LEFT
+#define KEYBIND_LABEL_WIDTH (KEYBIND_LABEL_LEFT - KEYBIND_BUTTON_WIDTH - CONTROL_MARGIN)
+
 #define LINE_SPACING 5
 
-#define IDC_BUTTON_RANDOMIZE 0x401
-#define IDC_BUTTON_LOADCREDENTIALS 0x422
+#define IDC_FIELD_AP_ADDRESS 0x400
+#define IDC_FIELD_AP_SLOTNAME 0x401
+#define IDC_FIELD_AP_PASSWORD 0x402
 
-#define IDC_SETTING_COLORBLIND 0x503
-#define IDC_SETTING_COLLECT 0x550
-#define IDC_SETTING_CHALLENGE 0x560
+#define IDC_BUTTON_RANDOMIZE 0x440
+#define IDC_BUTTON_LOADCREDENTIALS 0x441
+
+// Root index for keybind controls.
+#define IDC_BUTTON_KEYBIND 0x480
+
+#define IDC_SETTING_COLORBLIND 0x500
+#define IDC_SETTING_COLLECT 0x501
+#define IDC_SETTING_CHALLENGE 0x502
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -63,6 +76,9 @@ void ClientWindow::saveSettings()
 	data["collect"] = getSetting(ClientToggleSetting::Collect);
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 
+	InputWatchdog* input = InputWatchdog::get();
+	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
+
 	data["apSlotName"] = getSetting(ClientStringSetting::ApSlotName);
 
 	std::remove("WRPGconfig.txt");
@@ -82,9 +98,17 @@ void ClientWindow::loadSettings()
 
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
+			// Load game settings.
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 			setSetting(ClientToggleSetting::Collect, data.contains("collect") ? data["collect"].get<bool>() : true);
 			setSetting(ClientToggleSetting::ColorblindMode, data.contains("colorblind") ? data["colorblind"].get<bool>() : false);
+
+			// Load keybinds.
+			InputWatchdog* input = InputWatchdog::get();
+			input->loadCustomKeybind(CustomKey::SKIP_PUZZLE,
+				data.contains("key_skipPuzzle") ? static_cast<InputButton>(data["key_skipPuzzle"].get<int>()) : InputButton::KEY_Q);
+
+			refreshKeybind(CustomKey::SKIP_PUZZLE);
 		}
 	}
 
@@ -129,6 +153,13 @@ void ClientWindow::setSetting(ClientStringSetting setting, std::string value) co
 	writeStringToTextBox(value, textBox);
 }
 
+void ClientWindow::refreshKeybind(const CustomKey& customKey) const {
+	InputWatchdog* input = InputWatchdog::get();
+
+	HWND label = customKeybindValues.find(customKey)->second;
+	writeStringToTextBox(input->getNameForInputButton(input->getCustomKeybind(customKey)), label);
+}
+
 void ClientWindow::setStatusMessage(std::string statusMessage) const
 {
 	writeStringToTextBox(statusMessage, hwndStatusText);
@@ -139,10 +170,12 @@ void ClientWindow::setErrorMessage(std::string errorMessage) const
 	writeStringToTextBox(errorMessage, hwndErrorText);
 }
 
-void ClientWindow::setWindowMode(ClientWindowMode mode) const
+void ClientWindow::setWindowMode(ClientWindowMode mode)
 {
+	currentWindowMode = mode;
+
 	switch (mode) {
-	case ClientWindowMode::Disabled:
+	case ClientWindowMode::Disabled: {
 		// Disable everything.
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second, false);
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second, false);
@@ -154,8 +187,14 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
+
+		for (auto keybindButton : customKeybindButtons) {
+			EnableWindow(keybindButton.second, false);
+		}
+
 		break;
-	case ClientWindowMode::PreConnect:
+	}
+	case ClientWindowMode::PreConnect: {
 		// Enable Archipelago credentials and actions.
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second, true);
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second, true);
@@ -170,8 +209,20 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
+		// Disable keybinds until connected.
+		for (auto keybindButton : customKeybindButtons) {
+			EnableWindow(keybindButton.second, false);
+		}
+
+		// Focus on the first AP setting field.
+		HWND focusField = stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second;
+		std::string focusFieldContents = readStringFromTextBox(focusField);
+		SetFocus(focusField);
+		SendMessage(focusField, EM_SETSEL, focusFieldContents.length(), focusFieldContents.length());
+
 		break;
-	case ClientWindowMode::Randomized:
+	}
+	case ClientWindowMode::Randomized: {
 		// Disable Archipelago credentials and actions.
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second, false);
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second, false);
@@ -185,8 +236,58 @@ void ClientWindow::setWindowMode(ClientWindowMode mode) const
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
+
+		// Enable keybinds.
+		for (auto keybindButton : customKeybindButtons) {
+			EnableWindow(keybindButton.second, true);
+		}
+
 		break;
 	}
+	}
+}
+
+void ClientWindow::focusGameWindow()
+{
+	// Find the game window by enumerating over all active windows.
+	struct WindowData {
+		DWORD processId = Memory::get()->getProcessID();
+		HWND windowHandle = HWND();
+		bool found = false;
+	} windowData;
+
+	auto enumWindowCallback = [](HWND handle, LPARAM param) -> BOOL {
+		WindowData& outData = *(WindowData*)param;
+		DWORD processId = 0;
+
+		GetWindowThreadProcessId(handle, &processId);
+		if (processId != outData.processId || !IsWindowVisible(handle)) {
+			// Continue.
+			return true;
+		}
+
+		// Found a visible window matching our process ID.
+		outData.windowHandle = handle;
+		outData.found = true;
+		return false;
+	};
+
+	bool foundWindow = EnumWindows(enumWindowCallback, (LPARAM)&windowData);
+	if (windowData.found) {
+		SetForegroundWindow(windowData.windowHandle);
+
+		// If the window has been minimized (such as when alt-tabbing out of fullscreen), show it.
+		WINDOWPLACEMENT windowPlacement = WINDOWPLACEMENT();
+		GetWindowPlacement(windowData.windowHandle, &windowPlacement);
+		if (windowPlacement.showCmd == SW_SHOWMINIMIZED) {
+			ShowWindow(windowData.windowHandle, SW_NORMAL);
+		}
+	}
+}
+
+void ClientWindow::focusClientWindow()
+{
+	SetForegroundWindow(hwndRootWindow);
 }
 
 void ClientWindow::buildWindow() {
@@ -196,7 +297,7 @@ void ClientWindow::buildWindow() {
 		CS_HREDRAW | CS_VREDRAW,
 		singletonHandleWndProc,
 		0,
-		0,
+		DLGWINDOWEXTRA,
 		hAppInstance,
 		NULL,
 		LoadCursor(nullptr, IDC_ARROW),
@@ -207,7 +308,7 @@ void ClientWindow::buildWindow() {
 	RegisterClassW(&wndClass);
 
 	// Create the root window.
-	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_TABSTOP,
 		650, 200, CLIENT_WINDOW_WIDTH, 100, nullptr, nullptr, hAppInstance, nullptr);
 
 	// HACK: Due to things like menu bar thickness, the root window won't actually be the requested size. Grab the actual size here for later comparison.
@@ -223,6 +324,8 @@ void ClientWindow::buildWindow() {
 	addArchipelagoCredentials(currentY);
 	addHorizontalRule(currentY);
 	addGameOptions(currentY);
+	addHorizontalRule(currentY);
+	addKeybindings(currentY);
 	addHorizontalRule(currentY);
 	addErrorMessage(currentY);
 
@@ -272,10 +375,10 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT,
 		hwndRootWindow, NULL, hAppInstance, NULL);
 	HWND hwndApAddress = CreateWindow(MSFTEDIT_CLASS, L"",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_GROUP,
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		SETTING_CONTROL_LEFT, currentY,
 		SETTING_CONTROL_WIDTH, CONTROL_HEIGHT,
-		hwndRootWindow, NULL, hAppInstance, NULL);
+		hwndRootWindow, (HMENU)IDC_FIELD_AP_ADDRESS, hAppInstance, NULL);
 	stringSettingTextBoxes[ClientStringSetting::ApAddress] = hwndApAddress;
 	SendMessage(hwndApAddress, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
@@ -291,7 +394,7 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		SETTING_CONTROL_LEFT, currentY,
 		SETTING_CONTROL_WIDTH, CONTROL_HEIGHT,
-		hwndRootWindow, NULL, hAppInstance, NULL);
+		hwndRootWindow, (HMENU)IDC_FIELD_AP_SLOTNAME, hAppInstance, NULL);
 	stringSettingTextBoxes[ClientStringSetting::ApSlotName] = hwndApSlotName;
 	SendMessage(hwndApSlotName, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
@@ -307,7 +410,7 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 		SETTING_CONTROL_LEFT, currentY,
 		SETTING_CONTROL_WIDTH, CONTROL_HEIGHT,
-		hwndRootWindow, NULL, hAppInstance, NULL);
+		hwndRootWindow, (HMENU)IDC_FIELD_AP_PASSWORD, hAppInstance, NULL);
 	stringSettingTextBoxes[ClientStringSetting::ApPassword] = hwndApPassword;
 	SendMessage(hwndApPassword, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
@@ -375,6 +478,49 @@ void ClientWindow::addGameOptions(int& currentY) {
 	currentY += STATIC_TEXT_HEIGHT;
 }
 
+void ClientWindow::addKeybindings(int& currentY)
+{
+	int customKeyCount = static_cast<int>(CustomKey::COUNT);
+	if (customKeyCount < 1) return;
+
+	CreateWindow(L"STATIC", L"Custom keybindings:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+	currentY += STATIC_TEXT_HEIGHT;
+
+	InputWatchdog* input = InputWatchdog::get();
+
+	for (int i = 0; i < customKeyCount; i++) {
+		CustomKey currentKey = static_cast<CustomKey>(i);
+		currentY += LINE_SPACING;
+
+		HWND hwndLabel = CreateWindow(L"STATIC", L"",
+			WS_VISIBLE | WS_CHILD | SS_RIGHT,
+			STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+			SETTING_LABEL_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+			hwndRootWindow, NULL, hAppInstance, NULL);
+		writeStringToTextBox(input->getNameForCustomKey(currentKey) + ":", hwndLabel);
+
+		HWND hwndValue = CreateWindow(L"STATIC", L"",
+			WS_VISIBLE | WS_CHILD | SS_LEFT,
+			KEYBIND_LABEL_LEFT, currentY + SETTING_LABEL_Y_OFFSET,
+			KEYBIND_LABEL_WIDTH, STATIC_TEXT_HEIGHT,
+			hwndRootWindow, NULL, hAppInstance, NULL);
+		customKeybindValues[currentKey] = hwndValue;
+
+		HWND hwndButton = CreateWindow(L"BUTTON", L"Bind",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			KEYBIND_BUTTON_LEFT, currentY,
+			KEYBIND_BUTTON_WIDTH, CONTROL_HEIGHT,
+			hwndRootWindow, (HMENU)(IDC_BUTTON_KEYBIND + i), hAppInstance, NULL);
+		customKeybindButtons[currentKey] = hwndButton;
+
+		currentY += CONTROL_HEIGHT;
+	}
+}
+
 void ClientWindow::addPuzzleEditor(int& currentY) {
 	// TODO
 }
@@ -420,6 +566,17 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		PostQuitMessage(0);
 	}
 	else if (message == WM_COMMAND) {
+		if (currentWindowMode == ClientWindowMode::PreConnect && wParam == IDOK) {
+			HWND currentFocus = GetFocus();
+			if (currentFocus == stringSettingTextBoxes.find(ClientStringSetting::ApAddress)->second ||
+				currentFocus == stringSettingTextBoxes.find(ClientStringSetting::ApSlotName)->second ||
+				currentFocus == stringSettingTextBoxes.find(ClientStringSetting::ApPassword)->second) {
+				// The user has pressed Enter while focused on an AP text box. Connect.
+				Main::randomize();
+				return 0;
+			}
+		}
+
 		switch (LOWORD(wParam)) {
 		// Setting checkboxes.
 		case IDC_SETTING_COLORBLIND: {
@@ -443,10 +600,21 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			Main::loadCredentials();
 			break;
 		}
+// Keybindings.
+		case IDC_BUTTON_KEYBIND + static_cast<int>(CustomKey::SKIP_PUZZLE) : {
+			CustomKey key = static_cast<CustomKey>(LOWORD(wParam) - IDC_BUTTON_KEYBIND);
+			handleKeybind(key);
+			break;
+		}
+		default:
+			return DefDlgProc(hwnd, message, wParam, lParam);
 		}
 	}
+	else {
+		return DefDlgProc(hwnd, message, wParam, lParam);
+	}
 
-	return DefWindowProc(hwnd, message, wParam, lParam);
+	return 0;
 }
 
 std::string ClientWindow::readStringFromTextBox(HWND hwndTextBox) const {
@@ -460,4 +628,9 @@ std::string ClientWindow::readStringFromTextBox(HWND hwndTextBox) const {
 
 void ClientWindow::writeStringToTextBox(std::string string, HWND hwndTextBox) const {
 	SetWindowText(hwndTextBox, Converty::Utf8ToWide(string).c_str());
+}
+
+void ClientWindow::handleKeybind(const CustomKey& customKey)
+{
+	InputWatchdog::get()->beginCustomKeybind(customKey);
 }
