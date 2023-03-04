@@ -672,8 +672,8 @@ void APWatchdog::UnlockDoor(int id) {
 	if (id == 0x0CF2A) { // River to Garden door
 		disableCollisionList.insert(id);
 
-		WritePanelData<float>(0x17CAA, POSITION, { 36.694f, -41.883f, 16.570f });
-		WritePanelData<float>(0x17CAA, SCALE, { 1.2f });
+		WritePanelData<float>(0x17CAA, POSITION, { 37.194f, -41.883f, 16.645f });
+		WritePanelData<float>(0x17CAA, SCALE, { 1.15f });
 
 		Memory::get()->UpdateEntityPosition(0x17CAA);
 	}
