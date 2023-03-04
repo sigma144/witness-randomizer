@@ -368,7 +368,7 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 		int eID = panelId;
 
 		Memory::get()->SolveEP(eID);
-		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
+		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
 		}
 	}
@@ -1202,7 +1202,7 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 	if (!epActiveInGame && collect)
 	{
 		Memory::get()->SolveEP(epNo);
-		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo)) {
+		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
 		hudManager->queueBannerMessage("EP Activated Remotely (Coop)"); //TODO: Names
