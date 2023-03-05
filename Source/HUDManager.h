@@ -77,12 +77,14 @@ private:
 	void findSetSubtitleOffsets();
 
 	struct HudTextLine {
-		RgbColor color;
+		RgbColor textColor;
+		RgbColor shadowColor = RgbColor(0.f,0.f,0.f,1.f);
 		std::string text;
 
 		const static uint32_t maxLineSize;
 
-		const static uint32_t address_color;
+		const static uint32_t address_textColor;
+		const static uint32_t address_shadowColor;
 		const static uint32_t address_string;
 		const static uint32_t totalDataSize;
 	};

@@ -283,6 +283,7 @@ void HudManager::overwriteSubtitleFunction() {
 	const float margin_width = 0.02f;
 	const float line_spacing = 1.0f;
 	const float line_top_adjust = 0.25f;
+	const float shadow_depth_pixels = 2.f;
 
 	//uint64_t temp_writer = address_payload;
 
@@ -349,6 +350,8 @@ void HudManager::overwriteSubtitleFunction() {
 	const uint32_t stack_draw_area_y = 0x78;
 	const uint32_t stack_currentBlock_horizAlignment = 0x70;
 	const uint32_t stack_currentBlock_horizPosition = 0x68;
+	const uint32_t stack_currentLine_xPos = 0x60;
+	const uint32_t stack_currentLine_yPos = 0x58;
 
 	////////////
 	// Save off registers to the stack.
@@ -650,7 +653,19 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 
 	////////////
-	// Set parameters and call draw_text.
+	// Save xPos and yPos to the stack so that we can reload it between draw_text calls.
+	// Input:
+	//     XMM1_Da:4		float xPos
+	//     XMM2_Da:4		float yPos
+	////////////
+	func.add({ 0xF3,0x0F,0x11,0x8C,0x24 })	// MOVSS dword ptr [RSP + stack_currentLine_xPos], XMM1
+		.val(stack_currentLine_xPos)
+		.add({ 0xF3,0x0F,0x11,0x94,0x24 })	// MOVSS dword ptr [RSP + stack_currentLine_yPos], XMM2
+		.val(stack_currentLine_yPos);
+	////////////
+
+	////////////
+	// Set parameters and call draw_text for the drop shadow.
 	// Input:
 	//     R13:8			void* read_head
 	//     XMM1_Da:4		float xPos
@@ -668,7 +683,63 @@ void HudManager::overwriteSubtitleFunction() {
 		.rel(global_subtitle_font);
 	// - Set color.
 	func.add({ 0x45,0x8B,0x8D })			// MOV R9D, dword ptr [R13 + line::address_color]
-		.val(HudManager::HudTextLine::address_color);
+		.val(HudManager::HudTextLine::address_shadowColor);
+	// - Set string pointer
+	func.add({ 0x4D,0x89,0xE8 })			// MOV R8, R13
+		.add({ 0x49,0x81,0xC0 })			// ADD R8, line::address_string
+		.val(HudManager::HudTextLine::address_string)
+		.add({ 0x4C,0x89,0x44,0x24,0x20 });	// MOV qword ptr [RSP + 0x20], R8
+	// - Set flags
+	func.add({ 0xC7, 0x44, 0x24, 0x28 })	// MOV dword ptr [RSP + 0x28], 0x20
+		.val<uint32_t>(0x20);
+	// - Call draw_text
+	func.add({ 0xE8 }).rel(func_draw_text);	// CALL <draw_text>
+	////////////
+
+	////////////
+	// Restore xPos and yPos from the stack and offset it by the shadow depth.
+	// Output:
+	//     XMM1_Da:4		float xPos
+	//     XMM2_Da:4		float yPos
+	////////////
+	// - Read the values from the stack.
+	//     XMM1_Da:4		float xPos
+	//     XMM2_Da:4		float yPos
+	func.add({ 0xF3,0x0F,0x10,0x8C,0x24 })	// MOVSS XMM1, dword ptr [RSP + stack_currentLine_xPos]
+		.val(stack_currentLine_xPos)
+		.add({ 0xF3,0x0F,0x10,0x94,0x24 })	// MOVSS XMM2, dword ptr [RSP + stack_currentLine_yPos]
+		.val(stack_currentLine_yPos);
+	// - Load the offset.
+	//     R8D				<scratch for loading const>
+	//     XMM3				float line_top_adjust
+	func.add({ 0x41,0xB8 })					// MOV R8D, <line_top_adjust>
+		.val(shadow_depth_pixels)
+		.add({ 0x66,0x41,0x0F,0x6E,0xD8 });	// MOVD XMM3, R8D
+	// - Adjust the X and Y positions.
+	func.add({ 0xF3,0x0F,0x5C,0xCB })		// SUBSS XMM1, XMM3
+		.add({ 0xF3,0x0F,0x58,0xD3 });		// ADDSS XMM2, XMM3
+	////////////
+
+	////////////
+	// Set parameters and call draw_text for the main text.
+	// Input:
+	//     R13:8			void* read_head
+	//     XMM1_Da:4		float xPos
+	//     XMM2_Da:4		float yPos
+	// draw_text parameters:
+	//     RCX:8			Dynamic_Font* font
+	//     XMM1_Da:4		float xPos			<-- already set
+	//     XMM2_Da:4		float yPos			<-- already set
+	//     R9D:4			ulong color (packed via argb_color())
+	//     Stack[0x28]		char* strings
+	//     Stack[0x30]		int32 flags			<-- always 0x20, no idea what these are
+	////////////
+	// - Set font.
+	func.add({ 0x48,0x8B,0x0D })			// MOV RCX, qword ptr [RIP + <font>]
+		.rel(global_subtitle_font);
+	// - Set color.
+	func.add({ 0x45,0x8B,0x8D })			// MOV R9D, dword ptr [R13 + line::address_color]
+		.val(HudManager::HudTextLine::address_textColor);
 	// - Set string pointer
 	func.add({ 0x4D,0x89,0xE8 })			// MOV R8, R13
 		.add({ 0x49,0x81,0xC0 })			// ADD R8, line::address_string
@@ -751,7 +822,8 @@ void HudManager::writePayload() const {
 	temp_block.verticalPosition = 0.f;
 
 	HudTextLine temp_line;
-	temp_line.color = RgbColor(1.f, 1.f, 1.f, 0.8f);
+	temp_line.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f);
+	temp_line.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f);
 	temp_line.text = "Hold [T] to skip puzzle. (3 skips remaining.)";
 	temp_block.lines.push_back(temp_line);
 
@@ -764,7 +836,8 @@ void HudManager::writePayload() const {
 
 	temp_block.lines.clear();
 
-	temp_line.color = RgbColor(1.f, 1.f, 1.f, 1.f);
+	temp_line.textColor = RgbColor(1.f, 1.f, 1.f, 1.f);
+	temp_line.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.6f);
 	temp_line.text = "Your Shapers may be found in blastron's world at";
 	temp_block.lines.push_back(temp_line);
 
@@ -780,19 +853,23 @@ void HudManager::writePayload() const {
 
 	temp_block.lines.clear();
 
-	temp_line.color = RgbColor(0.82f, 0.76f, 0.96f, 0.8f);
+	temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.8f);
+	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
 	temp_line.text = "Received Rotated Shapers from blastron.";
 	temp_block.lines.push_back(temp_line);
 
-	temp_line.color = RgbColor(0.68f, 0.75f, 0.94f, 0.6f);
+	temp_line.textColor = RgbColor(0.68f, 0.75f, 0.94f, 0.75f);
+	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
 	temp_line.text = "Received Puzzle Skip from blastron.";
 	temp_block.lines.push_back(temp_line);
 
-	temp_line.color = RgbColor(0.82f, 0.76f, 0.96f, 0.4f);
+	temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.675f);
+	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
 	temp_line.text = "Received Negative Shapers from blastron.";
 	temp_block.lines.push_back(temp_line);
 
-	temp_line.color = RgbColor(1.f, 0.7f, 0.67f, 0.2f);
+	temp_line.textColor = RgbColor(1.f, 0.7f, 0.67f, 0.4f);
+	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
 	temp_line.text = "Received Slowness from blastron.";
 	temp_block.lines.push_back(temp_line);
 
@@ -823,8 +900,11 @@ void HudManager::writePayload() const {
 
 		for (const HudTextLine& line : block.lines) {
 			// Write line information.
-			uint32_t argbColor = line.color.argb();
-			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_color), &argbColor, sizeof(uint32_t), NULL);
+			uint32_t argbTextColor = line.textColor.argb();
+			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_textColor), &argbTextColor, sizeof(uint32_t), NULL);
+
+			uint32_t arbgShadowColor = line.shadowColor.argb();
+			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t), NULL);
 
 			char stringBuff[SUBTITLE_MAX_LINE_LENGTH];
 			strncpy_s(stringBuff, line.text.c_str(), SUBTITLE_MAX_LINE_LENGTH);
@@ -849,6 +929,7 @@ const uint32_t HudManager::HudTextBlock::totalDataSize =				0x20;
 
 const uint32_t HudManager::HudTextLine::maxLineSize =					0x80;
 
-const uint32_t HudManager::HudTextLine::address_color =					0x00;
-const uint32_t HudManager::HudTextLine::address_string =				0x08;
-const uint32_t HudManager::HudTextLine::totalDataSize =					0x08 + HudManager::HudTextLine::maxLineSize;
+const uint32_t HudManager::HudTextLine::address_textColor =			0x00;
+const uint32_t HudManager::HudTextLine::address_shadowColor =			0x08;
+const uint32_t HudManager::HudTextLine::address_string =				0x10;
+const uint32_t HudManager::HudTextLine::totalDataSize =					0x10 + HudManager::HudTextLine::maxLineSize;
