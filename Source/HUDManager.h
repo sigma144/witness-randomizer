@@ -75,7 +75,51 @@ private:
 	bool subtitlesDirty = false;
 
 	void findSetSubtitleOffsets();
+
+	struct HudTextLine {
+		RgbColor color;
+		std::string text;
+
+		const static uint32_t maxLineSize;
+
+		const static uint32_t address_color;
+		const static uint32_t address_string;
+		const static uint32_t totalDataSize;
+	};
+
+	struct HudTextBlock {
+		// The vertical position of the block on screen. Computed based on the total height of the block.
+		// 0.f = bottom, 1.f = top.
+		float verticalPosition = 0.f;
+
+		// The horizontal position of the origin of the block on screen. This does not take into account the width of the
+		//   string and should be used in conjunction with the horizontal alignment parameter to determine the final position.
+		// 0.f = left, 1.f = right.
+		float horizontalPosition = 0.f;
+
+		// The offset of the horizontal origin of the block, based on the width of the string. Used to justify text.
+		// 0.f = left, 0.5f = center, 1.f = right.
+		float horizontalAlignment = 0.f;
+
+		std::vector<HudTextLine> lines;
+
+		const static uint32_t address_lineCount;
+		const static uint32_t address_verticalPosition;
+		const static uint32_t address_horizontalPosition;
+		const static uint32_t address_horizontalAlignment;
+		const static uint32_t totalDataSize;
+	};
+
+	struct HudTextPayload {
+		std::vector<HudTextBlock> blocks;
+
+		const static uint32_t address_blockCount;
+		const static uint32_t totalDataSize;
+	};
+
+	uint64_t address_hudTextPayload = 0;
 	void overwriteSubtitleFunction();
+	void writePayload() const;
 
 	uint64_t setSubtitleOffset;
 	uint32_t largeSubtitlePointerOffset;

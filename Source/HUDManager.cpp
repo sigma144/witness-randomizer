@@ -10,6 +10,7 @@ HudManager::HudManager() {
 	findSetSubtitleOffsets();
 	//setSubtitleSize(SubtitleSize::Small);
 	overwriteSubtitleFunction();
+	writePayload();
 }
 
 void HudManager::update(float deltaSeconds) {
@@ -252,6 +253,7 @@ void HudManager::findSetSubtitleOffsets() {
 		largeSubtitlePointerOffset = 0;
 	}
 }
+
 void HudManager::overwriteSubtitleFunction() {
 	Memory* memory = Memory::get();
 
@@ -270,69 +272,56 @@ void HudManager::overwriteSubtitleFunction() {
 	uint32_t screen_target_width = 0x469A5F0;
 	uint32_t screen_target_height = 0x469A5F4;
 
-	// TODO: find a sane size for this
-	uint64_t address_payload = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	// Reserve memory for the payload.
+	address_hudTextPayload = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
 	//uint64_t address_tempLineCount = dataPayload;
 	//uint64_t address_tempHorizAlignment = dataPayload + 0x08;
 	//uint64_t address_tempVerticalAlignment = dataPayload + 0x10;
 	//uint64_t address_tempString = dataPayload + 0x18;
 
-	uint32_t payloadInfo_address_blockCount = 0x0;
-	uint32_t payloadInfo_totalSize = 0x8;
-
-	uint32_t blockInfo_address_lineCount = 0x0;
-	uint32_t blockInfo_address_horizontalAlignment = 0x08;
-	uint32_t blockInfo_address_horizontalPosition = 0x10;
-	uint32_t blockInfo_address_vertPosition = 0x18;
-	uint32_t blockInfo_totalSize = 0x20;
-
-	uint32_t lineInfo_address_color = 0x0;
-	uint32_t lineInfo_address_string = 0x8;
-	uint32_t lineInfo_totalSize = 0x8 + SUBTITLE_MAX_LINE_LENGTH;
-
 	const float margin_width = 0.02f;
 	const float line_spacing = 1.0f;
 	const float line_top_adjust = 0.25f;
 
-	uint64_t temp_writer = address_payload;
+	//uint64_t temp_writer = address_payload;
 
-	// payload info
-	uint32_t tempBlockCount = 3;
-	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + payloadInfo_address_blockCount), &tempBlockCount, sizeof(uint32_t), NULL);
-	temp_writer += payloadInfo_totalSize;
+	//// payload info
+	//uint32_t tempBlockCount = 3;
+	//WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + payloadInfo_address_blockCount), &tempBlockCount, sizeof(uint32_t), NULL);
+	//temp_writer += payloadInfo_totalSize;
 
-	// block info
-	for (int blockId = 0; blockId < tempBlockCount; blockId++) {
-		uint32_t tempLineCount = 4;
-		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_lineCount), &tempLineCount, sizeof(uint32_t), NULL);
+	//// block info
+	//for (int blockId = 0; blockId < tempBlockCount; blockId++) {
+	//	uint32_t tempLineCount = 4;
+	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_lineCount), &tempLineCount, sizeof(uint32_t), NULL);
 
-		float tempHorizAlignment = blockId * 0.5f;
-		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_horizontalAlignment), &tempHorizAlignment, sizeof(float), NULL);
+	//	float tempHorizAlignment = blockId * 0.5f;
+	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_horizontalAlignment), &tempHorizAlignment, sizeof(float), NULL);
 
-		float tempHorizPosition = blockId * 0.5f;
-		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_horizontalPosition), &tempHorizPosition, sizeof(float), NULL);
+	//	float tempHorizPosition = blockId * 0.5f;
+	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_horizontalPosition), &tempHorizPosition, sizeof(float), NULL);
 
-		float tempVerticalAlignment = blockId * 0.5f;
-		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_vertPosition), &tempVerticalAlignment, sizeof(float), NULL);
+	//	float tempVerticalAlignment = blockId * 0.5f;
+	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_vertPosition), &tempVerticalAlignment, sizeof(float), NULL);
 
-		temp_writer += blockInfo_totalSize;
+	//	temp_writer += blockInfo_totalSize;
 
-		for (int lineId = 0; lineId < tempLineCount; lineId++) {
-			RgbColor tempColor(1.f,tempHorizAlignment,lineId*0.3f,0.5f+lineId*0.15f);
-			uint32_t tempArgb = tempColor.argb();
-			WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + lineInfo_address_color), &tempArgb, sizeof(uint32_t), NULL);
+	//	for (int lineId = 0; lineId < tempLineCount; lineId++) {
+	//		RgbColor tempColor(1.f,tempHorizAlignment,lineId*0.3f,0.5f+lineId*0.15f);
+	//		uint32_t tempArgb = tempColor.argb();
+	//		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + lineInfo_address_color), &tempArgb, sizeof(uint32_t), NULL);
 
-			std::stringstream lineText;
-			lineText << "BLOCK: " << blockId + 1 << ", string: " << (lineId + 1);
+	//		std::stringstream lineText;
+	//		lineText << "BLOCK: " << blockId + 1 << ", string: " << (lineId + 1);
 
-			char stringBuff[SUBTITLE_MAX_LINE_LENGTH];
-			strcpy_s(stringBuff, lineText.str().c_str());
-			WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + lineInfo_address_string), stringBuff, sizeof(stringBuff), NULL);
+	//		char stringBuff[SUBTITLE_MAX_LINE_LENGTH];
+	//		strcpy_s(stringBuff, lineText.str().c_str());
+	//		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + lineInfo_address_string), stringBuff, sizeof(stringBuff), NULL);
 
-			temp_writer += lineInfo_totalSize;
-		}
-	}
+	//		temp_writer += lineInfo_totalSize;
+	//	}
+	//}
 
 ////// BEGIN REPLACEMENT FUNCTION
 
@@ -442,13 +431,13 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 	// - Load the address of the payload into R13, which we will use as a read head as we move through our data.
 	func.add({ 0x49,0xBD })					// MOVABS R13, <address_payload>
-		.abs(address_payload)
+		.abs(address_hudTextPayload)
 	// - Load the number of blocks into R14.
-		.add({ 0x45,0x8B,0xB5 })			// MOV R14D, dword ptr [R13 + payloadInfo_address_blockCount]
-		.val(payloadInfo_address_blockCount)
+		.add({ 0x45,0x8B,0xB5 })			// MOV R14D, dword ptr [R13 + payload::address_blockCount]
+		.val(HudManager::HudTextPayload::address_blockCount)
 	// - Move the read head forward by the total payload size.
-		.add({ 0x49,0x81,0xC5 })			// ADD R13, payloadInfo_totalSize
-		.val(payloadInfo_totalSize);
+		.add({ 0x49,0x81,0xC5 })			// ADD R13, payload::totalDataSize
+		.val(HudManager::HudTextPayload::totalDataSize);
 	////////////
 
 	////////////
@@ -470,8 +459,8 @@ void HudManager::overwriteSubtitleFunction() {
 	// Output:
 	//     R12D:4			int32 line_count
 	////////////
-	func.add({ 0x45,0x8B,0xA5 })			// MOV R12D, dword ptr [R13 + blockInfo_address_lineCount]
-		.val(blockInfo_address_lineCount);
+	func.add({ 0x45,0x8B,0xA5 })			// MOV R12D, dword ptr [R13 + block::address_lineCount]
+		.val(HudManager::HudTextBlock::address_lineCount);
 	////////////
 	
 	////////////
@@ -481,14 +470,14 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 	// - Save the horizontal alignment.
 	//     R8D:4			(scratch for transferring)
-	func.add({ 0x45,0x8B,0x85 })			// MOV R8D, dword ptr [r13 + blockInfo_address_horizontalAlignment]
-		.val(blockInfo_address_horizontalAlignment)
+	func.add({ 0x45,0x8B,0x85 })			// MOV R8D, dword ptr [r13 + block::address_horizontalAlignment]
+		.val(HudManager::HudTextBlock::address_horizontalAlignment)
 		.add({ 0x44,0x89,0x84,0x24 })		// MOV dword ptr [rsp + stack_currentBlock_horizAlignment], R8D
 		.val(stack_currentBlock_horizAlignment);
 	// - Save the horizontal position.
 	//     R8D:4			(scratch for transferring)
-	func.add({ 0x45,0x8B,0x85 })			// MOV R8D, dword ptr [r13 + blockInfo_address_horizontalPosition]
-		.val(blockInfo_address_horizontalPosition)
+	func.add({ 0x45,0x8B,0x85 })			// MOV R8D, dword ptr [r13 + block::address_horizontalPosition]
+		.val(HudManager::HudTextBlock::address_horizontalPosition)
 		.add({ 0x44,0x89,0x84,0x24 })		// MOV dword ptr [rsp + stack_currentBlock_horizPosition], R8D
 		.val(stack_currentBlock_horizPosition);
 	////////////
@@ -546,8 +535,8 @@ void HudManager::overwriteSubtitleFunction() {
 	//     XMM1_Da:4		float vertical_alignment
 	//     XMM0_Da:4		float relative_position
 	func.add({ 0xF3,0x0F,0x5C,0xC3 })		// SUBSS XMM0, XMM3
-		.add({ 0x66,0x41,0x0F,0x6E,0x8D })	// MOVD XMM1, [R13 + blockInfo_address_vertPosition]
-		.val(blockInfo_address_vertPosition)
+		.add({ 0x66,0x41,0x0F,0x6E,0x8D })	// MOVD XMM1, [R13 + block::address_vertPosition]
+		.val(HudManager::HudTextBlock::address_verticalPosition)
 		.add({ 0xF3,0x0F,0x59,0xC1 });		// MULSS XMM0, XMM1
 	// - Load the margin, add it to the relative position in order to find the final absolute position, then save it off.
 	//     XMM0_Da:4		float absolute_position
@@ -562,8 +551,8 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 	// Advance the read head to past the block info.
 	////////////
-	func.add({ 0x49,0x81,0xC5 })			// ADD R13, blockInfo_totalSize
-		.val(blockInfo_totalSize);
+	func.add({ 0x49,0x81,0xC5 })			// ADD R13, block::totalDataSize
+		.val(HudManager::HudTextBlock::totalDataSize);
 	////////////
 
 	////////////
@@ -595,8 +584,8 @@ void HudManager::overwriteSubtitleFunction() {
 		.rel(global_subtitle_font);
 	// - Set string pointer
 	func.add({ 0x4C,0x89,0xEA })			// MOV RDX, R13
-		.add({ 0x48,0x81,0xC2 })			// ADD RDX, lineInfo_address_string
-		.val(lineInfo_address_string);
+		.add({ 0x48,0x81,0xC2 })			// ADD RDX, line::address_string
+		.val(HudManager::HudTextLine::address_string);
 	// - Set flags
 	func.add({ 0x41,0xB8 })					// MOV R8D, 0x20
 		.val<uint32_t>(0x20);
@@ -678,12 +667,12 @@ void HudManager::overwriteSubtitleFunction() {
 	func.add({ 0x48,0x8B,0x0D })			// MOV RCX, qword ptr [RIP + <font>]
 		.rel(global_subtitle_font);
 	// - Set color.
-	func.add({ 0x45,0x8B,0x8D })			// MOV R9D, dword ptr [R13 + lineInfo_address_color]
-		.val(lineInfo_address_color);
+	func.add({ 0x45,0x8B,0x8D })			// MOV R9D, dword ptr [R13 + line::address_color]
+		.val(HudManager::HudTextLine::address_color);
 	// - Set string pointer
 	func.add({ 0x4D,0x89,0xE8 })			// MOV R8, R13
-		.add({ 0x49,0x81,0xC0 })			// ADD R8, lineInfo_address_string
-		.val(lineInfo_address_string)
+		.add({ 0x49,0x81,0xC0 })			// ADD R8, line::address_string
+		.val(HudManager::HudTextLine::address_string)
 		.add({ 0x4C,0x89,0x44,0x24,0x20 });	// MOV qword ptr [RSP + 0x20], R8
 	// - Set flags
 	func.add({ 0xC7, 0x44, 0x24, 0x28 })	// MOV dword ptr [RSP + 0x28], 0x20
@@ -695,8 +684,8 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 	// Advance the read head to past the line info.
 	////////////
-	func.add({ 0x49,0x81,0xC5 })			// ADD R13, lineInfo_totalSize
-		.val(lineInfo_totalSize);
+	func.add({ 0x49,0x81,0xC5 })			// ADD R13, line::totalSize
+		.val(HudManager::HudTextLine::totalDataSize);
 	////////////
 
 	////////////
@@ -748,3 +737,118 @@ void HudManager::overwriteSubtitleFunction() {
 	func.printBytes();
 	bool bSuccess = WriteProcessMemory(memory->_handle, reinterpret_cast<const LPVOID>(func_hud_draw_subtitles + memory->_baseAddress), func.get(), func.size(), NULL);
 }
+
+void HudManager::writePayload() const {
+	Memory* memory = Memory::get();
+
+	// TEMP: static payload
+	HudTextPayload temp_payload;
+
+	// TEMP: puzzle skip
+	HudTextBlock temp_block;
+	temp_block.horizontalAlignment = 0.f;
+	temp_block.horizontalPosition = 0.f;
+	temp_block.verticalPosition = 0.f;
+
+	HudTextLine temp_line;
+	temp_line.color = RgbColor(1.f, 1.f, 1.f, 0.8f);
+	temp_line.text = "Hold [T] to skip puzzle. (3 skips remaining.)";
+	temp_block.lines.push_back(temp_line);
+
+	temp_payload.blocks.push_back(temp_block);
+
+	// TEMP: hint
+	temp_block.horizontalAlignment = 0.5f;
+	temp_block.horizontalPosition = 0.5f;
+	temp_block.verticalPosition = 0.25f;
+
+	temp_block.lines.clear();
+
+	temp_line.color = RgbColor(1.f, 1.f, 1.f, 1.f);
+	temp_line.text = "Your Shapers may be found in blastron's world at";
+	temp_block.lines.push_back(temp_line);
+
+	temp_line.text = "Inside Deku Tree back room Skulltulla 2.";
+	temp_block.lines.push_back(temp_line);
+
+	temp_payload.blocks.push_back(temp_block);
+
+	// TEMP: items
+	temp_block.horizontalAlignment = 1.f;
+	temp_block.horizontalPosition = 1.f;
+	temp_block.verticalPosition = 1.f;
+
+	temp_block.lines.clear();
+
+	temp_line.color = RgbColor(0.82f, 0.76f, 0.96f, 0.8f);
+	temp_line.text = "Received Rotated Shapers from blastron.";
+	temp_block.lines.push_back(temp_line);
+
+	temp_line.color = RgbColor(0.68f, 0.75f, 0.94f, 0.6f);
+	temp_line.text = "Received Puzzle Skip from blastron.";
+	temp_block.lines.push_back(temp_line);
+
+	temp_line.color = RgbColor(0.82f, 0.76f, 0.96f, 0.4f);
+	temp_line.text = "Received Negative Shapers from blastron.";
+	temp_block.lines.push_back(temp_line);
+
+	temp_line.color = RgbColor(1.f, 0.7f, 0.67f, 0.2f);
+	temp_line.text = "Received Slowness from blastron.";
+	temp_block.lines.push_back(temp_line);
+
+	temp_payload.blocks.push_back(temp_block);
+	
+
+
+
+	uint64_t writeAddress = address_hudTextPayload;
+
+	// Write payload information.
+	uint32_t blockCount = (uint32_t)temp_payload.blocks.size();
+	WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextPayload::address_blockCount), &blockCount, sizeof(uint32_t), NULL);
+
+	// Advance the write head past the payload information.
+	writeAddress += HudTextPayload::totalDataSize;
+
+	for (const HudTextBlock& block : temp_payload.blocks) {
+		// Write block information.
+		uint32_t lineCount = (uint32_t)block.lines.size();
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_lineCount), &lineCount, sizeof(uint32_t), NULL);
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_horizontalPosition), &block.horizontalPosition, sizeof(float), NULL);
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_horizontalAlignment), &block.horizontalAlignment, sizeof(float), NULL);
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_verticalPosition), &block.verticalPosition, sizeof(float), NULL);
+
+		// Advance write pointer past the block information.
+		writeAddress += HudTextBlock::totalDataSize;
+
+		for (const HudTextLine& line : block.lines) {
+			// Write line information.
+			uint32_t argbColor = line.color.argb();
+			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_color), &argbColor, sizeof(uint32_t), NULL);
+
+			char stringBuff[SUBTITLE_MAX_LINE_LENGTH];
+			strncpy_s(stringBuff, line.text.c_str(), SUBTITLE_MAX_LINE_LENGTH);
+			stringBuff[SUBTITLE_MAX_LINE_LENGTH - 1] = 0; // forcibly null-terminate in case the string is too long
+			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff), NULL);
+
+			// Advance write pointer past the line information.
+			writeAddress += HudTextLine::totalDataSize;
+		}
+	}
+}
+
+
+const uint32_t HudManager::HudTextPayload::address_blockCount =			0x00;
+const uint32_t HudManager::HudTextPayload::totalDataSize =				0x08;
+
+const uint32_t HudManager::HudTextBlock::address_lineCount =			0x00;
+const uint32_t HudManager::HudTextBlock::address_verticalPosition =		0x08;
+const uint32_t HudManager::HudTextBlock::address_horizontalPosition =	0x10;
+const uint32_t HudManager::HudTextBlock::address_horizontalAlignment =	0x18;
+const uint32_t HudManager::HudTextBlock::totalDataSize =				0x20;
+
+const uint32_t HudManager::HudTextLine::maxLineSize =					0x80;
+
+const uint32_t HudManager::HudTextLine::address_color =					0x00;
+const uint32_t HudManager::HudTextLine::address_string =				0x08;
+const uint32_t HudManager::HudTextLine::totalDataSize =					0x08 + HudManager::HudTextLine::maxLineSize;
