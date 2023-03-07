@@ -1655,7 +1655,7 @@ APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {
 void APServerPoller::action() {
 	ap->poll();
 }
-}
+
 
 void APWatchdog::CheckDeathLink() {
 	if (mostRecentActivePanelId == -1 || !actuallyEveryPanel.count(mostRecentActivePanelId)) return;
