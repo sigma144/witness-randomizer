@@ -1,16 +1,66 @@
 #include "APWatchdog.h"
 
+#include "../HudManager.h"
 #include "../Input.h"
+#include "../Memory.h"
 #include "../Panels.h"
 #include "../Quaternion.h"
+#include "../Special.h"
+#include "Client/apclientpp/apclient.hpp"
+#include "PanelLocker.h"
 #include "SkipSpecialCases.h"
 
 #include <thread>
+#include "../Randomizer.h"
+#include "../DateTime.h"
+#include "PanelRestore.h"
 
 
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.1f) {
+	generator = std::make_shared<Generate>();
+	ap = client;
+	panelIdToLocationId = mapping;
+
+	for (auto [key, value] : panelIdToLocationId) {
+		locationIdToPanelId_READ_ONLY[value] = key;
+	}
+
+	finalPanel = lastPanel;
+	panelLocker = p;
+	audioLogMessages = a;
+	state = s;
+	EPShuffle = ep;
+	obeliskHexToEPHexes = o;
+	epToName = epn;
+	solveModeSpeedFactor = smsf;
+
+	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
+	if (speedTime == 0.6999999881) { // original value
+		speedTime = 0;
+	}
+
+	for (auto [key, value] : obeliskHexToEPHexes) {
+		obeliskHexToAmountOfEPs[key] = (int)value.size();
+	}
+
+	PuzzleRandomization = puzzle_rando;
+
+	panelsThatHaveToBeSkippedForEPPurposes = {
+		0x09E86, 0x09ED8, // light controllers 2 3
+		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
+	};
+
+	if (puzzle_rando == SIGMA_EXPERT) {
+		panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
+		panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
+	}
+
+	lastFrameTime = std::chrono::system_clock::now();
+	hudManager = std::make_shared<HudManager>();
+}
 
 void APWatchdog::action() {
 	auto currentFrameTime = std::chrono::system_clock::now();
@@ -271,60 +321,62 @@ void APWatchdog::CheckSolvedPanels() {
 
 void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 {
-	auto it = panelIdToLocationId.begin();
-	while (it != panelIdToLocationId.end())
-	{
-		if (it->second == locationId) {
-			if (actuallyEveryPanel.count(it->first)) {
-				if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
-					if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
-						std::vector<int> bridgePanels;
-						if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
-						else if (it->first == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
-						else if (it->first == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
-						else if (it->first == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
-						else if (it->first == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
-						else if (it->first == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
-						else if (it->first == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
-						else if (it->first == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
-						else if (it->first == 0x034E3) bridgePanels = { 0x034E4 };
+	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
+	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
-						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-						Special::SkipPanel(it->first, "Collected", false);
-						WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED });
+	if (actuallyEveryPanel.count(panelId)) {
+		if (collect && !ReadPanelData<int>(panelId, SOLVED)) {
+			__int32 skipped = ReadPanelData<__int32>(panelId, VIDEO_STATUS_COLOR);
 
-						for (int panel : bridgePanels) {
-							if (ReadPanelData<int>(panel, SOLVED)) continue;
-
-							if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
-							Special::SkipPanel(panel, "Collected", false);
-							WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
-						}
-					}
-					else {
-						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-						Special::SkipPanel(it->first, "Collected", false);
-						if (it->first != 0x01983 && it->first != 0x01983) WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
-						if(!skip_completelyExclude.count(it->first)) WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
-						WritePanelData<__int32>(it->first, NEEDS_REDRAW, { 1 });
-					}
-				}
+			if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
+				if(panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
+				return;
 			}
 
-			else if (allEPs.count(it->first) && collect) {
-				int eID = it->first;
+			if (panelId == 0x17DC4 || panelId == 0x17D6C || panelId == 0x17DA2 || panelId == 0x17DC6 || panelId == 0x17DDB || panelId == 0x17E61 || panelId == 0x014D1 || panelId == 0x09FD2 || panelId == 0x034E3) {
+				std::vector<int> bridgePanels;
+				if (panelId == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
+				else if (panelId == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
+				else if (panelId == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
+				else if (panelId == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
+				else if (panelId == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
+				else if (panelId == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
+				else if (panelId == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
+				else if (panelId == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
+				else if (panelId == 0x034E3) bridgePanels = { 0x034E4 };
 
-				_memory->SolveEP(eID);
-				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
-					_memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
+				Special::SkipPanel(panelId, "Collected", false);
+				WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED });
+
+				for (int panel : bridgePanels) {
+					if (ReadPanelData<int>(panel, SOLVED)) continue;
+
+					if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
+					Special::SkipPanel(panel, "Collected", false);
+					WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
 				}
 			}
-
-			it = panelIdToLocationId.erase(it);
+			else {
+				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
+				Special::SkipPanel(panelId, "Collected", false);
+				if (panelId != 0x01983 && panelId != 0x01983) WritePanelData<float>(panelId, POWER, { 1.0f, 1.0f });
+				if (!skip_completelyExclude.count(panelId)) WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+				WritePanelData<__int32>(panelId, NEEDS_REDRAW, { 1 });
+			}
 		}
-		else
-			it++;
 	}
+
+	else if (allEPs.count(panelId) && collect) {
+		int eID = panelId;
+
+		Memory::get()->SolveEP(eID);
+		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID) && EPShuffle) {
+			Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+		}
+	}
+
+	if (panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
 }
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
@@ -411,8 +463,17 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
+void APWatchdog::StartRebindingKey(CustomKey key)
+{
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState == InteractionState::Walking) {
+		InputWatchdog::get()->beginCustomKeybind(key);
+	}
+}
+
+void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
+	const InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
 		// If we're tracking a panel for the purpose of puzzle skips, update our internal logic.
 		if (activePanelId != -1) {
@@ -423,7 +484,8 @@ void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
 				puzzleSkipCost = CalculatePuzzleSkipCost(activePanelId, puzzleSkipInfoMessage);
 
 				// Update skip button logic.
-				bool skipButtonHeld = InputWatchdog::get()->getButtonState(InputButton::KEY_T);
+				InputButton skipButton = inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE);
+				bool skipButtonHeld = skipButton != InputButton::NONE && inputWatchdog->getButtonState(skipButton);
 				if (skipButtonHeld) {
 					skipButtonHeldTime += deltaSeconds;
 					if (skipButtonHeldTime > SKIP_HOLD_DURATION) {
@@ -441,10 +503,6 @@ void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
 			}
 		}
 	}
-
-	// Update the client.
-	SetWindowText(availableSkips, (L"Available Skips: " + std::to_wstring(GetAvailablePuzzleSkips())).c_str());
-	EnableWindow(skipButton, CanUsePuzzleSkip());
 }
 
 bool APWatchdog::CanUsePuzzleSkip() const {
@@ -501,7 +559,7 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 		// Puzzle has already been skipped.
 		return false;
 	}
-	else if (statusColor == COLLECTED) {
+	else if (statusColor == COLLECTED || statusColor == DISABLED) {
 		// Puzzle has been collected and is not worth skipping.
 		return false;
 	}
@@ -590,6 +648,9 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 		else if (skipped == COLLECTED) {
 			Special::SkipPanel(id, "Collected", false);
 		}
+		else if (skipped == DISABLED) {
+			//Panellocker will do it again anyway
+		}
 	}
 }
 
@@ -599,13 +660,13 @@ void APWatchdog::AddPuzzleSkip() {
 
 void APWatchdog::UnlockDoor(int id) {
 	if (actuallyEveryPanel.count(id)) {
-		_memory->WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
-		_memory->WritePanelData<int>(id, NEEDS_REDRAW, {1});
+		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+		WritePanelData<int>(id, NEEDS_REDRAW, {1});
 		return;
 	}
 
 	if (allLasers.count(id)) {
-		_memory->ActivateLaser(id);
+		Memory::get()->ActivateLaser(id);
 		return;
 	}
 
@@ -614,10 +675,10 @@ void APWatchdog::UnlockDoor(int id) {
 	if (id == 0x0CF2A) { // River to Garden door
 		disableCollisionList.insert(id);
 
-		_memory->WritePanelData<float>(0x17CAA, POSITION, { 36.694f, -41.883f, 16.570f });
-		_memory->WritePanelData<float>(0x17CAA, SCALE, { 1.2f });
+		WritePanelData<float>(0x17CAA, POSITION, { 37.194f, -41.883f, 16.645f });
+		WritePanelData<float>(0x17CAA, SCALE, { 1.15f });
 
-		_memory->UpdateEntityPosition(0x17CAA);
+		Memory::get()->UpdateEntityPosition(0x17CAA);
 	}
 
 	if (ReadPanelData<int>(id, DOOR_OPEN)) {
@@ -628,15 +689,15 @@ void APWatchdog::UnlockDoor(int id) {
 	}
 
 	if (id == 0x0C310) {
-		_memory->WritePanelData<float>(0x02886, POSITION + 8, { 12.8f });
+		WritePanelData<float>(0x02886, POSITION + 8, { 12.8f });
 
-		_memory->UpdateEntityPosition(0x02886);
+		Memory::get()->UpdateEntityPosition(0x02886);
 	}
 
 	if (id == 0x2D73F) {
-		_memory->WritePanelData<float>(0x021D7, POSITION + 8, { 10.0f });
+		WritePanelData<float>(0x021D7, POSITION + 8, { 10.0f });
 
-		_memory->UpdateEntityPosition(0x021D7);
+		Memory::get()->UpdateEntityPosition(0x021D7);
 	}
 
 	if (doorCollisions.find(id) != doorCollisions.end()){
@@ -646,24 +707,24 @@ void APWatchdog::UnlockDoor(int id) {
 		}
 	}
 
-	_memory->OpenDoor(id);
+	Memory::get()->OpenDoor(id);
 }
 
 void APWatchdog::SeverDoor(int id) {
 	if (actuallyEveryPanel.count(id)) {
-		_memory->WritePanelData<float>(id, POWER, { 0.0f, 0.0f });
+		WritePanelData<float>(id, POWER, { 0.0f, 0.0f });
 	}
 
 	if (severTargetsById.count(id)) {
 		severedDoorsList.insert(id);
 
 		if (id == 0x01A0E) {
-			_memory->WritePanelData<int>(0x01A0F, TARGET, { 0x0360E + 1 });
+			WritePanelData<int>(0x01A0F, TARGET, { 0x0360E + 1 });
 			return;
 		}
 
 		if (id == 0x01D3F) {
-			_memory->WritePanelData<int>(0x01D3F, TARGET, { 0x03317 + 1 });
+			WritePanelData<int>(0x01D3F, TARGET, { 0x03317 + 1 });
 			return;
 		}
 
@@ -677,20 +738,20 @@ void APWatchdog::SeverDoor(int id) {
 			}
 
 			if (conn.id == 0x28A0D) {
-				_memory->WritePanelData<float>(conn.id, POSITION, { -31.0f, 7.1f });
+				WritePanelData<float>(conn.id, POSITION, { -31.0f, 7.1f });
 
-				_memory->UpdateEntityPosition(conn.id);
+				Memory::get()->UpdateEntityPosition(conn.id);
 			}
 
 			if (conn.id == 0x17CAB) {
-				_memory->WritePanelData<float>(0x0026D, POWER, { 1.0f, 1.0f });
-				_memory->WritePanelData<int>(0x0026D, NEEDS_REDRAW, { 1 });
+				WritePanelData<float>(0x0026D, POWER, { 1.0f, 1.0f });
+				WritePanelData<int>(0x0026D, NEEDS_REDRAW, { 1 });
 			}
 
 			if (conn.id == 0x01D8D) {
-				_memory->WritePanelData<float>(conn.id, POSITION, { -57.8f, 157.2f, 3.45f });
+				WritePanelData<float>(conn.id, POSITION, { -57.8f, 157.2f, 3.45f });
 
-				_memory->UpdateEntityPosition(conn.id);
+				Memory::get()->UpdateEntityPosition(conn.id);
 			}
 
 			if (conn.target_no == ENTITY_NAME) {
@@ -699,10 +760,10 @@ void APWatchdog::SeverDoor(int id) {
 				std::string result(stream.str());
 				std::vector<char> v(result.begin(), result.end());
 
-				_memory->WriteArray<char>(conn.id, ENTITY_NAME, v);
+				WriteArray<char>(conn.id, ENTITY_NAME, v);
 				continue;
 			}
-			_memory->WritePanelData<int>(conn.id, conn.target_no, { 0 });
+			WritePanelData<int>(conn.id, conn.target_no, { 0 });
 		}
 		return;
 	}
@@ -718,21 +779,21 @@ void APWatchdog::SeverDoor(int id) {
 void APWatchdog::DoubleDoorTargetHack(int id) {
 	if (id == 0x01954) { // Exit Door 1->2
 		if (severedDoorsList.count(0x018CE)) {
-			_memory->WritePanelData<int>(0x00139, TARGET, { 0 });
+			WritePanelData<int>(0x00139, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x00521, CABLE_TARGET_2, { 0 });
+		WritePanelData<int>(0x00521, CABLE_TARGET_2, { 0 });
 		return;
 	}
 
 	if (id == 0x018CE) { // Shortcut Door 1
 		if (severedDoorsList.count(0x01954)) {
-			_memory->WritePanelData<int>(0x00139, TARGET, { 0 });
+			WritePanelData<int>(0x00139, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x00139, TARGET, { 0x01954 + 1 });
+		WritePanelData<int>(0x00139, TARGET, { 0x01954 + 1 });
 		return;
 	}
 
@@ -740,21 +801,21 @@ void APWatchdog::DoubleDoorTargetHack(int id) {
 
 	if (id == 0x019D8) { // Exit Door 2->3
 		if (severedDoorsList.count(0x019B5)) {
-			_memory->WritePanelData<int>(0x019DC, TARGET, { 0 });
+			WritePanelData<int>(0x019DC, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x00525, CABLE_TARGET_2, { 0 });
+		WritePanelData<int>(0x00525, CABLE_TARGET_2, { 0 });
 		return;
 	}
 
 	if (id == 0x019B5) { // Shortcut Door 2
 		if (severedDoorsList.count(0x019D8)) {
-			_memory->WritePanelData<int>(0x019DC, TARGET, { 0 });
+			WritePanelData<int>(0x019DC, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x019DC, TARGET, { 0x019D8 + 1 });
+		WritePanelData<int>(0x019DC, TARGET, { 0x019D8 + 1 });
 		return;
 	}
 
@@ -762,21 +823,21 @@ void APWatchdog::DoubleDoorTargetHack(int id) {
 
 	if (id == 0x019E6) { // Exit Door 3->4
 		if (severedDoorsList.count(0x0199A)) {
-			_memory->WritePanelData<int>(0x019E7, TARGET, { 0 });
+			WritePanelData<int>(0x019E7, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x00529, CABLE_TARGET_2, { 0 });
+		WritePanelData<int>(0x00529, CABLE_TARGET_2, { 0 });
 		return;
 	}
 
 	if (id == 0x0199A) { // Shortcut Door 3
 		if (severedDoorsList.count(0x019E6)) {
-			_memory->WritePanelData<int>(0x019E7, TARGET, { 0 });
+			WritePanelData<int>(0x019E7, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x019E7, TARGET, { 0x019E6 + 1 });
+		WritePanelData<int>(0x019E7, TARGET, { 0x019E6 + 1 });
 		return;
 	}
 
@@ -784,56 +845,87 @@ void APWatchdog::DoubleDoorTargetHack(int id) {
 
 	if (id == 0x18482) { // Swamp Blue
 		if (severedDoorsList.count(0x0A1D6)) {
-			_memory->WritePanelData<int>(0x00E3A, TARGET, { 0 });
+			WritePanelData<int>(0x00E3A, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x00BDB, CABLE_TARGET_0, { 0 });
+		WritePanelData<int>(0x00BDB, CABLE_TARGET_0, { 0 });
 		return;
 	}
 
 	if (id == 0x0A1D6) { // Swamp Purple
 		if (severedDoorsList.count(0x18482)) {
-			_memory->WritePanelData<int>(0x00E3A, TARGET, { 0 });
+			WritePanelData<int>(0x00E3A, TARGET, { 0 });
 			return;
 		}
 
-		_memory->WritePanelData<int>(0x2FD5F, CABLE_TARGET_1, { 0 });
+		WritePanelData<int>(0x2FD5F, CABLE_TARGET_1, { 0 });
 		return;
 	}
 }
 
 void APWatchdog::HandleKeyTaps() {
-	std::vector<InputButton> tapEvents = InputWatchdog::get()->consumeTapEvents();
-	for (const InputButton& tappedButton : tapEvents) {
-		switch (tappedButton) {
-#if CHEAT_KEYS_ENABLED
-		case InputButton::KEY_MINUS:
-			hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
-			ApplyTemporarySlow();
-			break;
-		case InputButton::KEY_EQUALS:
-			hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
-			ApplyTemporarySpeedBoost();
-			break;
-		case InputButton::KEY_0:
-			hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
-			if (spentPuzzleSkips > foundPuzzleSkips) {
-				// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
-				//   previous app launch. Reset to zero before adding a new one.
-				foundPuzzleSkips = spentPuzzleSkips;
-			}
+	InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState interactionState = inputWatchdog->getInteractionState();
+	std::vector<InputButton> tapEvents = inputWatchdog->consumeTapEvents();
 
-			AddPuzzleSkip();
-			break;
+	for (const InputButton& tappedButton : tapEvents) {
+		if (interactionState == InteractionState::Keybinding) {
+			CustomKey bindingKey = inputWatchdog->getCurrentlyRebindingKey();
+			if (tappedButton == InputButton::KEY_ESCAPE) {
+				inputWatchdog->cancelCustomKeybind();
+			}
+			else if (!inputWatchdog->isValidForCustomKeybind(tappedButton)) {
+				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
+				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
+				hudManager->queueBannerMessage("Can't bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
+			}
+			else if (inputWatchdog->trySetCustomKeybind(tappedButton)) {
+
+				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
+				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
+				hudManager->queueBannerMessage("Bound [" + keyName + "] to " + bindName + ".", { 1.f, 1.f, 1.f }, 2.f);
+			}
+			else {
+				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
+				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
+				hudManager->queueBannerMessage("Failed to bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
+			}
+		}
+		else {
+			switch (tappedButton) {
+				// TEMP: keybind rebind
+			case InputButton::KEY_BACKSLASH:
+				StartRebindingKey(CustomKey::SKIP_PUZZLE);
+				break;
+#if CHEAT_KEYS_ENABLED
+			case InputButton::KEY_MINUS:
+				hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
+				ApplyTemporarySlow();
+				break;
+			case InputButton::KEY_EQUALS:
+				hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
+				ApplyTemporarySpeedBoost();
+				break;
+			case InputButton::KEY_0:
+				hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
+				if (spentPuzzleSkips > foundPuzzleSkips) {
+					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
+					//   previous app launch. Reset to zero before adding a new one.
+					foundPuzzleSkips = spentPuzzleSkips;
+				}
+
+				AddPuzzleSkip();
+				break;
 #endif
-		};
+			};
+		}
 	}
 }
 
 void APWatchdog::DisableCollisions() {
 	for (int id : disableCollisionList) {
-		_memory->RemoveMesh(id);
+		Memory::get()->RemoveMesh(id);
 	}
 }
 
@@ -845,7 +937,7 @@ void APWatchdog::RefreshDoorCollisions() {
 	std::vector<float> playerPosition;
 
 	try{
-		playerPosition = _memory->ReadPlayerPosition();
+		playerPosition = Memory::get()->ReadPlayerPosition();
 	}
 	catch (std::exception e) {
 		return;
@@ -899,7 +991,7 @@ void APWatchdog::RefreshDoorCollisions() {
 			if (PanelRestore::HasPositions(collisionToUpdate)) {
 				WritePanelData<int>(collisionToUpdate, MOUNT_PARENT_ID, { 0 });
 				WritePanelData<float>(collisionToUpdate, POSITION, PanelRestore::GetPositions(collisionToUpdate));
-				_memory->UpdateEntityPosition(collisionToUpdate);
+				Memory::get()->UpdateEntityPosition(collisionToUpdate);
 			}
 
 			return;
@@ -907,7 +999,7 @@ void APWatchdog::RefreshDoorCollisions() {
 
 		try {  
 			OutputDebugStringW(L"Updating using ingame function...\n");
-			_memory->UpdateEntityPosition(collisionToUpdate);
+			Memory::get()->UpdateEntityPosition(collisionToUpdate);
 			alreadyTriedUpdatingNormally.insert(collisionToUpdate);
 		}
 		catch (const std::exception& e) { 
@@ -1093,10 +1185,10 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
 
-	if(!laserActiveInGame)
+	if(!laserActiveInGame & collect)
 	{
-		if (laserNo == 0x012FB) _memory->OpenDoor(0x01317);
-		_memory->ActivateLaser(laserNo);
+		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
+		Memory::get()->ActivateLaser(laserNo);
 		hudManager->queueBannerMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
 	}
 }
@@ -1110,18 +1202,18 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 
 	if (epActiveInGame == epActiveAccordingToDataPackage) return;
 
-	if (!epActiveInGame)
+	if (!epActiveInGame && collect)
 	{
-		_memory->SolveEP(epNo);
-		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo)) {
-			_memory->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
+		Memory::get()->SolveEP(epNo);
+		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
+			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
 		hudManager->queueBannerMessage("EP Activated Remotely (Coop)"); //TODO: Names
 	}
 }
 
 void APWatchdog::InfiniteChallenge(bool enable) {
-	_memory->SetInfiniteChallenge(enable);
+	Memory::get()->SetInfiniteChallenge(enable);
 
 	if (enable) hudManager->queueBannerMessage("Challenge Timer disabled.");
 	if (!enable) hudManager->queueBannerMessage("Challenge Timer reenabled.");
@@ -1131,7 +1223,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	std::vector<float> playerPosition;
 
 	try {
-		playerPosition = _memory->ReadPlayerPosition();
+		playerPosition = Memory::get()->ReadPlayerPosition();
 	}
 	catch (std::exception e) {
 		return;
@@ -1181,15 +1273,15 @@ bool APWatchdog::CheckPanelHasBeenSolved(int panelId) {
 	return panelIdToLocationId.count(panelId);
 }
 
-void APWatchdog::SetItemReward(const int& id, const APClient::NetworkItem& item) {
+void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 	if (!actuallyEveryPanel.count(id)) return;
 
 	Color backgroundColor;
-	if (item.flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
+	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT)
 		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
-	else if (item.flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
+	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
 		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
-	else if (item.flags & APClient::ItemFlags::FLAG_TRAP)
+	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP)
 		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
 	else
 		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
@@ -1213,7 +1305,7 @@ void APWatchdog::CheckEPSkips() {
 	for (int panel : panelsThatHaveToBeSkippedForEPPurposes) {
 		__int32 skipped = ReadPanelData<__int32>(panel, VIDEO_STATUS_COLOR);
 
-		if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED) {
+		if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED || skipped == DISABLED) {
 			panelsToRemoveSilently.insert(panel);
 			continue;
 		}
@@ -1332,7 +1424,8 @@ void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
 }
 
 void APWatchdog::SetStatusMessages() {
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	const InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Walking) {
 		int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
@@ -1353,14 +1446,16 @@ void APWatchdog::SetStatusMessages() {
 			hudManager->setStatusMessage(puzzleSkipInfoMessage);
 
 			if (CanUsePuzzleSkip()) {
+				std::string skipInstruction = "Hold [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to use Puzzle Skip.";
+
 				if (puzzleSkipCost == 0) {
-					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Free!)");
+					hudManager->setActionHint(skipInstruction + " (Free!)");
 				}
 				else if (puzzleSkipCost == 1) {
-					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
+					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
 				}
 				else {
-					hudManager->setActionHint("Hold [T] to use Puzzle Skip. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
+					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
 				}
 			}
 			else if (GetAvailablePuzzleSkips() > 0 && puzzleSkipCost > GetAvailablePuzzleSkips()) {
@@ -1381,9 +1476,33 @@ void APWatchdog::SetStatusMessages() {
 			hudManager->clearActionHint();
 		}
 	}
+	else if (interactionState == InteractionState::Keybinding) {
+		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
+		hudManager->setActionHint("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
+		hudManager->clearStatusMessage();
+	}
 	else {
 		hudManager->clearStatusMessage();
 		hudManager->clearActionHint();
+	}
+}
+
+int APWatchdog::GetActivePanel() {
+	try {
+		return Memory::get()->GetActivePanel();
+	}
+	catch (std::exception& e) {
+		OutputDebugStringW(L"Couldn't get active panel");
+		return -1;
+	}
+}
+
+void APWatchdog::WriteMovementSpeed(float currentSpeed) {
+	try {
+		return Memory::get()->WriteMovementSpeed(currentSpeed);
+	}
+	catch (std::exception& e) {
+		OutputDebugStringW(L"Couldn't get active panel");
 	}
 }
 
@@ -1399,7 +1518,7 @@ void APWatchdog::LookingAtObelisk() {
 	std::vector<float> cursorDirection = ray.second;
 
 	for (int epID : allEPs) {
-		std::vector<float> obeliskPosition = _memory->ReadPanelData<float>(epID, POSITION, 3);
+		std::vector<float> obeliskPosition = ReadPanelData<float>(epID, POSITION, 3);
 
 		if (pow(headPosition[0] - obeliskPosition[0], 2) + pow(headPosition[1] - obeliskPosition[1], 2) + pow(headPosition[2] - obeliskPosition[2], 2) > 49) {
 			continue;
@@ -1428,7 +1547,7 @@ void APWatchdog::LookingAtObelisk() {
 	float distanceToCenter = 10000000.0f;
 
 	for (int epID : candidates) {
-		std::vector<float> epPosition = _memory->ReadPanelData<float>(epID, POSITION, 3);
+		std::vector<float> epPosition = ReadPanelData<float>(epID, POSITION, 3);
 
 		std::vector<float> v = { epPosition[0] - headPosition[0], epPosition[1] - headPosition[1], epPosition[2] - headPosition[2] };
 		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
@@ -1436,7 +1555,7 @@ void APWatchdog::LookingAtObelisk() {
 		
 		float distance = sqrt(pow(p[0] - epPosition[0], 2) + pow(p[1] - epPosition[1], 2) + pow(p[2] - epPosition[2], 2));
 
-		float boundingRadius = _memory->ReadPanelData<float>(epID, BOUNDING_RADIUS);
+		float boundingRadius = ReadPanelData<float>(epID, BOUNDING_RADIUS);
 
 		if (distance < boundingRadius && distance < distanceToCenter) {
 			distanceToCenter = distance;
@@ -1456,8 +1575,8 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	if (interactionState != InteractionState::Focusing) {
 		letGoSinceInteractModeOpen = false;
 		dogFrames = 0;
-		_memory->writeCursorSize(1.0f);
-		_memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+		Memory::get()->writeCursorSize(1.0f);
+		Memory::get()->writeCursorColor({ 1.0f, 1.0f, 1.0f });
 		return;
 	}
 
@@ -1490,12 +1609,12 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	}
 
 	if (smallestDistance > boundingRadius) {
-		_memory->writeCursorSize(1.0f);
-		_memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+		Memory::get()->writeCursorSize(1.0f);
+		Memory::get()->writeCursorColor({ 1.0f, 1.0f, 1.0f });
 		return;
 	}
 
-	_memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
+	Memory::get()->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
 	if (dogFrames >= 4.0f) {
 		hudManager->setWorldMessage("Woof Woof!");
@@ -1510,16 +1629,16 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
 		letGoSinceInteractModeOpen = true;
 
-		_memory->writeCursorSize(2.0f);
+		Memory::get()->writeCursorSize(2.0f);
 		return;
 	}
 
 	if (!letGoSinceInteractModeOpen) {
-		_memory->writeCursorSize(2.0f);
+		Memory::get()->writeCursorSize(2.0f);
 		return;
 	}
 
-	_memory->writeCursorSize(1.0f);
+	Memory::get()->writeCursorSize(1.0f);
 
 	if (lastMousePosition != cursorDirection)
 	{
@@ -1527,6 +1646,15 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	}
 
 	lastMousePosition = cursorDirection;
+}
+
+APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {
+	ap = client;
+}
+
+void APServerPoller::action() {
+	ap->poll();
+}
 }
 
 void APWatchdog::CheckDeathLink() {

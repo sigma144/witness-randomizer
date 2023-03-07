@@ -1,14 +1,16 @@
 #pragma once
 
-#include <functional>
-#include <map>
-#include <vector>
-#include <sstream>
-#include <iomanip>
+#include <array>
 #include <fstream>
+#include <functional>
+#include <iomanip>
+#include <map>
+#include <mutex>
+#include <sstream>
+#include <vector>
 
-#include "Archipelago\Client\apclientpp\apclient.hpp"
-#include <windows.h>
+#include <wtypes.h>
+
 // https://github.com/erayarslan/WriteProcessMemory-Example
 // http://stackoverflow.com/q/32798185
 // http://stackoverflow.com/q/36018838
@@ -16,21 +18,20 @@
 class Memory
 {
 private:
-	static std::recursive_mutex mtx;
+
+	Memory();
+	~Memory();
+
+	static Memory* _singleton;
 
 public:
 
+	static void create();
+	static Memory* get();
 
-	Memory(const std::string& processName);
-	int findGlobals();
-	void findGamelibRenderer();
-	void findMovementSpeed();
-	void findActivePanel();
-	void findPlayerPosition();
-	void findImportantFunctionAddresses();
 	int GetActivePanel();
 	static __int64 ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL = 4);
-	~Memory();
+
 
 	Memory(const Memory& memory) = delete;
 	Memory& operator=(const Memory& other) = delete;
@@ -54,8 +55,12 @@ public:
 		return _baseAddress;
 	}
 
+	DWORD getProcessID();
+
 	// Reads data from program memory relative to the base address of the program.
 	bool ReadRelative(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		lpBaseAddress = reinterpret_cast<LPCVOID>(reinterpret_cast<uintptr_t>(lpBaseAddress) + _baseAddress);
 		return ReadAbsolute(lpBaseAddress, lpBuffer, nSize);
 	}
@@ -75,6 +80,8 @@ public:
 
 	// Writes data to program memory relative to the base address of the program.
 	bool WriteRelative(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		lpBaseAddress = reinterpret_cast<LPVOID>(reinterpret_cast<uintptr_t>(lpBaseAddress) + _baseAddress);
 		return WriteAbsolute(lpBaseAddress, lpBuffer, nSize);
 	}
@@ -95,6 +102,7 @@ public:
 	template <class T>
 	std::vector<T> ReadArray(int panel, int offset, int size) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		if (size == 0) return std::vector<T>();
 		if (offset == 0x230 || offset == 0x238) { //Traced edge data - this moves sometimes so it should not be cached
 			//Invalidate cache entry for old array address
@@ -107,6 +115,7 @@ public:
 	template <class T>
 	void WriteArray(int panel, int offset, const std::vector<T>& data) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		if (data.size() == 0) return;
 		if (data.size() > _arraySizes[std::make_pair(panel, offset)]) {
 			//Invalidate cache entry for old array address
@@ -121,6 +130,7 @@ public:
 	template <class T>
 	void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
+
 		if (force) _arraySizes[std::make_pair(panel, offset)] = 0;
 		WriteArray(panel, offset, data);
 	}
@@ -141,6 +151,12 @@ public:
 		}
 
 		return result[0];
+	}
+
+	template <class T>
+	void WritePanelData(int panel, int offset, T data) {
+		std::vector<T> dataVector = { data };
+		WritePanelData<T>(panel, offset, dataVector);
 	}
 
 	template <class T>
@@ -175,6 +191,8 @@ public:
 	void UpdatePanelJunctions(int id) {
 		CallVoidFunction(id, updateJunctionsFunction);
 	}
+
+	void PowerGauge(int id, int sourceId, int slot);
 
 	void PowerNext(int source, int target);
 
@@ -235,54 +253,61 @@ public:
 	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
-	static int GLOBALS;
-	static int GAMELIB_RENDERER;
-	static int RUNSPEED;
-	static int CAMERAPOSITION;
+	int GLOBALS;
+	int GAMELIB_RENDERER;
+	int RUNSPEED;
+	int CAMERAPOSITION;
 
-	static uint64_t powerNextFunction;
-	static uint64_t initPanelFunction;
-	static uint64_t openDoorFunction;
-	static uint64_t updateEntityPositionFunction;
-	static uint64_t activateLaserFunction;
-	static uint64_t hudTimePointer;
-	static uint64_t relativeAddressOf6;
-	static uint64_t displayHudFunction;
-	static uint64_t hudMessageColorAddresses[3]; // addresses of constant floats used for HUD message coloring
-	static uint64_t setBoatSpeed;
-	static uint64_t boatSpeed4;
-	static uint64_t boatSpeed3;
-	static uint64_t boatSpeed2;
-	static uint64_t boatSpeed1;
-	static uint64_t relativeBoatSpeed4Address;
-	static uint64_t relativeBoatSpeed3Address;
-	static uint64_t relativeBoatSpeed2Address;
-	static uint64_t relativeBoatSpeed1Address;
-	static uint64_t displaySubtitlesFunction;
-	static uint64_t displaySubtitlesFunction2;
-	static uint64_t displaySubtitlesFunction3;
-	static uint64_t subtitlesOnOrOff;
-	static uint64_t subtitlesHashTable;
-	static uint64_t _recordPlayerUpdate;
-	static uint64_t _getSoundFunction;
-	static uint64_t _bytesLengthChallenge;
-	static uint64_t completeEPFunction;
-	static uint64_t updateJunctionsFunction;
-	static uint64_t addToPatternMapFunction;
-	static uint64_t removeFromPatternMapFunction;
-	static uint64_t patternMap;
-	static uint64_t GESTURE_MANAGER;
-	static uint64_t cursorSize;
-	static uint64_t cursorR;
-	static uint64_t cursorG;
-	static uint64_t cursorB;
+	uint64_t powerNextFunction;
+	uint64_t initPanelFunction;
+	uint64_t openDoorFunction;
+	uint64_t updateEntityPositionFunction;
+	uint64_t activateLaserFunction;
+	uint64_t hudTimePointer;
+	uint64_t relativeAddressOf6;
+	uint64_t displayHudFunction;
+	uint64_t hudMessageColorAddresses[3]; // addresses of constant floats used for HUD message coloring
+	uint64_t setBoatSpeed;
+	uint64_t boatSpeed4;
+	uint64_t boatSpeed3;
+	uint64_t boatSpeed2;
+	uint64_t boatSpeed1;
+	uint64_t relativeBoatSpeed4Address;
+	uint64_t relativeBoatSpeed3Address;
+	uint64_t relativeBoatSpeed2Address;
+	uint64_t relativeBoatSpeed1Address;
+	uint64_t displaySubtitlesFunction;
+	uint64_t displaySubtitlesFunction2;
+	uint64_t displaySubtitlesFunction3;
+	uint64_t subtitlesOnOrOff;
+	uint64_t subtitlesHashTable;
+	uint64_t _recordPlayerUpdate;
+	uint64_t _getSoundFunction;
+	uint64_t _bytesLengthChallenge;
+	uint64_t completeEPFunction;
+	uint64_t updateJunctionsFunction;
+	uint64_t powerGaugeFunction;
+	uint64_t addToPatternMapFunction;
+	uint64_t removeFromPatternMapFunction;
+	uint64_t patternMap;
+	uint64_t GESTURE_MANAGER;
+	uint64_t cursorSize;
+	uint64_t cursorR;
+	uint64_t cursorG;
+	uint64_t cursorB;
+	uint64_t localisation;
+	uint64_t the_witness_string;
 
-	static std::vector<int> ACTIVEPANELOFFSETS;
-	static int ACCELERATION;
-	static int DECELERATION;
-	static bool showMsg;
-	static int globalsTests[3];
-	static HWND errorWindow;
+	std::vector<int> ACTIVEPANELOFFSETS;
+	int ACCELERATION;
+	int DECELERATION;
+	bool showMsg;
+	int globalsTests[3] = {
+		0x62D0A0, //Steam and Epic Games
+		0x62B0A0, //Good Old Games
+		0x5B28C0 //Older Versions
+	};
+
 	bool retryOnFail = true;
 
 	// Scan the process's memory for the given signature, returning the address of the first byte of the signature relative to startAddress if found,
@@ -296,6 +321,17 @@ public:
 	uint64_t executeSigScan(const std::vector<byte>& signatureBytes);
 
 private:
+
+	std::recursive_mutex mtx;
+
+	void findGlobals();
+	void findGamelibRenderer();
+	void findMovementSpeed();
+	void findActivePanel();
+	void findPlayerPosition();
+	void findImportantFunctionAddresses();
+	void doSecretThing();
+
 	template<class T>
 	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);

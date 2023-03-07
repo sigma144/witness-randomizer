@@ -1,66 +1,26 @@
 #pragma once
 
-#include "../DateTime.h"
-#include "../Generate.h"
-#include "../HUDManager.h"
+
 #include "../Watchdog.h"
 #include "APGameData.h"
 #include "APState.h"
-#include "PanelLocker.h"
-#include "nlohmann\json.hpp"
-#include "PanelRestore.h"
+#include "nlohmann/json.hpp"
 
 #include <chrono>
 #include <map>
 
+class APClient;
+class Generate;
+class HudManager;
+class PanelLocker;
+
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, HWND skipButton1, HWND availableSkips1, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.1f) {
-		generator = std::make_shared<Generate>();
-		ap = client;
-		panelIdToLocationId = mapping;
-		finalPanel = lastPanel;
-		skipButton = skipButton1;
-		availableSkips = availableSkips1;
-		panelLocker = p;
-		audioLogMessages = a;
-		state = s;
-		EPShuffle = ep;
-		obeliskHexToEPHexes = o;
-		epToName = epn;
-		solveModeSpeedFactor = smsf;
-
-		speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
-		if (speedTime == 0.6999999881) { // original value
-			speedTime = 0;
-		}
-
-		for (auto [key, value] : obeliskHexToEPHexes) {
-			obeliskHexToAmountOfEPs[key] = (int)value.size();
-		}
-
-		PuzzleRandomization = puzzle_rando;
-
-		panelsThatHaveToBeSkippedForEPPurposes = {
-			0x09E86, 0x09ED8, // light controllers 2 3
-			0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
-		};
-
-		if (puzzle_rando == SIGMA_EXPERT) {
-			panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
-			panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
-		}
-
-		lastFrameTime = std::chrono::system_clock::now();
-		hudManager = std::make_shared<HudManager>(_memory);
-	}
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
-
-	HWND skipButton;
-	HWND availableSkips;
 
 	APState* state;
 
@@ -72,6 +32,8 @@ public:
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
 
+	void StartRebindingKey(enum class CustomKey key);
+
 	void AddPuzzleSkip();
 	void SkipPuzzle();
 	void SkipPreviouslySkippedPuzzles();
@@ -81,7 +43,7 @@ public:
 
 	void DoubleDoorTargetHack(int id);
 
-	void SetItemReward(const int& id, const APClient::NetworkItem& item);
+	void SetItemRewardColor(const int& id, const int& itemFlags);
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
@@ -104,6 +66,7 @@ private:
 	PanelLocker* panelLocker;
 	std::shared_ptr<Generate> generator;
 	std::map<int, int> panelIdToLocationId;
+	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	int finalPanel;
 	bool isCompleted = false;
 
@@ -187,6 +150,9 @@ private:
 
 	void SetStatusMessages();
 
+	int GetActivePanel();
+	void WriteMovementSpeed(float currentSpeed);
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
@@ -231,37 +197,13 @@ private:
 	bool metaPuzzleMessageHasBeenDisplayed = false;
 
 	std::vector<std::vector<__int64>> queuedItems;
-
-
-	int GetActivePanel() {
-		try {
-			return _memory->GetActivePanel();
-		}
-		catch (std::exception& e) {
-			OutputDebugStringW(L"Couldn't get active panel");
-			return -1;
-		}
-	}
-
-	void WriteMovementSpeed(float currentSpeed) {
-		try {
-			return _memory->WriteMovementSpeed(currentSpeed);
-		}
-		catch (std::exception& e) {
-			OutputDebugStringW(L"Couldn't get active panel");
-		}
-	}
 };
 
 class APServerPoller : public Watchdog {
 public:
-	APServerPoller(APClient* client) : Watchdog(0.1f) {
-		ap = client;
-	}
 
-	virtual void action() {
-		ap->poll();
-	}
+	APServerPoller(APClient* client);
+	virtual void action();
 
 private:
 	APClient* ap;

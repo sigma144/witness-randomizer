@@ -5,7 +5,7 @@
 
 #define SUBTITLE_MAX_LINE_LENGTH 70
 
-HudManager::HudManager(const std::shared_ptr<Memory>& memory) : memory(memory) {
+HudManager::HudManager() {
 	findSetSubtitleOffsets();
 	setSubtitleSize(SubtitleSize::Small);
 }
@@ -68,7 +68,7 @@ void HudManager::setSubtitleSize(SubtitleSize size) {
 	}
 
 	uint32_t fontPointerOffset = largeSubtitlePointerOffset + sizeOffset;
-	memory->WriteRelative(reinterpret_cast<void*>(setSubtitleOffset), &fontPointerOffset, 0x4);
+	Memory::get()->WriteRelative(reinterpret_cast<void*>(setSubtitleOffset), &fontPointerOffset, 0x4);
 }
 
 void HudManager::updateBannerMessages(float deltaSeconds) {
@@ -84,7 +84,7 @@ void HudManager::updateBannerMessages(float deltaSeconds) {
 	if (queuedBannerMessages.size() > 0) {
 		const BannerMessage& message = queuedBannerMessages.front();
 
-		memory->DisplayHudMessage(message.text, { message.color.R, message.color.G, message.color.B });
+		Memory::get()->DisplayHudMessage(message.text, { message.color.R, message.color.G, message.color.B });
 		bannerTimeRemaining = message.duration;
 
 		queuedBannerMessages.pop();
@@ -154,7 +154,7 @@ void HudManager::writeSubtitle(std::vector<std::string> lines) {
 	//   list corresponds to the last line in the subtitle.
 	int lineOffset = std::max(3 - (int)expandedLines.size(), 0); // NOTE: This will only display the first three lines.
 
-	memory->DisplaySubtitles(
+	Memory::get()->DisplaySubtitles(
 		0 - lineOffset >= 0 ? expandedLines[0 - lineOffset] : "",
 		1 - lineOffset >= 0 ? expandedLines[1 - lineOffset] : "",
 		2 - lineOffset >= 0 ? expandedLines[2 - lineOffset] : ""
@@ -216,7 +216,7 @@ std::vector<std::string> HudManager::separateLines(std::string input) {
 void HudManager::findSetSubtitleOffsets() {
 	// Find hud_draw_subtitles. We can do so by looking for where it loads its color information from constants, which seems to be
 	//   a unique set of instructions:
-	uint64_t drawSubtitleOffset = memory->executeSigScan({
+	uint64_t drawSubtitleOffset = Memory::get()->executeSigScan({
 		0x0F, 0x57, 0xFF,		// XORPS XMM7, XMM7
 		0x0F, 0x28, 0xD7,
 		0x0F, 0x28, 0xCF
@@ -243,7 +243,7 @@ void HudManager::findSetSubtitleOffsets() {
 	//   want to dereference this here, only get the address of the pointer itself, because we'll be changing which font we're
 	//   pointing to rather than modifying the font itself.
 	largeSubtitlePointerOffset = 0;
-	if (!memory->ReadRelative(reinterpret_cast<void*>(setSubtitleOffset), &largeSubtitlePointerOffset, 0x4)) {
+	if (!Memory::get()->ReadRelative(reinterpret_cast<void*>(setSubtitleOffset), &largeSubtitlePointerOffset, 0x4)) {
 		setSubtitleOffset = 0;
 		largeSubtitlePointerOffset = 0;
 	}
