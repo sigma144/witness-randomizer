@@ -33,6 +33,8 @@ inline const std::map<int, std::vector<float>> skip_specialLine = {
 };
 
 inline const std::set<int> skip_noLine = {
+	0x03629, // Tutorial Gate Open
+
 	0x0C373, // Patio Floor
 	0x17C31, // Desert Final Room Transparent Reflection
 	0x28A69, // Town Lattice
@@ -83,7 +85,7 @@ inline const std::set<int> skip_completelyExclude = {
 
 	//Needs to stay the same!
 
-	0x03629, 0x03505, // Tutorial Gate Close
+	0x03505, // Tutorial Gate Close
 	0x09F98, // Town Laser Redirect
 	0x0A079, // Bunker Elevator
 	0x00609, 0x17E2B, 0x18488, // Swamp Bridge Controls

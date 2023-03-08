@@ -247,7 +247,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (DeathLink) {
 			std::list<std::string> newTags = { "DeathLink" };
 
-			ap->ConnectUpdate(NULL, newTags);
+			ap->ConnectUpdate(false, 7, true, newTags);
 		}
 
 

@@ -57,6 +57,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	if (puzzle_rando == SIGMA_EXPERT) {
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
+		panelsThatHaveToBeSkippedForEPPurposes.insert(0x03629); // Tutorial Gate Open
 	}
 
 	lastFrameTime = std::chrono::system_clock::now();
@@ -601,6 +602,23 @@ int APWatchdog::CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessag
 		else {
 			specialMessage = "";
 			return 1;
+		}
+	}
+	else if (puzzleId == 0x03629) {
+		// Tutorial Gate Open. Check for latch.
+		int latchAmount = 0;
+
+		latchAmount += ReadPanelData<int>(0x288E8, DOOR_OPEN) == 0;
+		latchAmount += ReadPanelData<int>(0x288F3, DOOR_OPEN) == 0;
+		latchAmount += ReadPanelData<int>(0x28942, DOOR_OPEN) == 0;
+
+		if (latchAmount) {
+			specialMessage = "Skipping this panel costs 1 Puzzle Skip per unopened latch.";
+			return latchAmount;
+		}
+		else {
+			specialMessage = "";
+			return -1;
 		}
 	}
 	else if (puzzleId == 0x09FDA) {
@@ -1331,7 +1349,7 @@ void APWatchdog::CheckEPSkips() {
 			}
 		}
 
-		if (panel == 0x033EA || panel == 0x01BE9 || panel == 0x01CD3 || panel == 0x01D3F || panel == 0x181F5) {
+		if (panel == 0x033EA || panel == 0x01BE9 || panel == 0x01CD3 || panel == 0x01D3F || panel == 0x181F5 || panel == 0x03629) {
 			if (ReadPanelData<int>(panel, SOLVED)) {
 				panelsToSkip.insert(panel);
 				continue;
