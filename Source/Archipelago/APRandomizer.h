@@ -22,6 +22,7 @@ class APRandomizer {
 		bool EPShuffle = false;
 		int MountainLasers = 7;
 		int ChallengeLasers = 11;
+		bool DeathLink;
 
 		int mostRecentItemId = -1;
 

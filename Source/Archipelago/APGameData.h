@@ -797,6 +797,8 @@ const inline std::set<int> deathlinkExcludeList = {
 	0x00027, // UTM Invisible Dots Symmetry 1
 	0x00028, // UTM Invisible Dots Symmetry 2
 	0x00029, // UTM Invisible Dots Symmetry 3
+	0x0C373, // Patio Floor
+	0x0A079, // Bunker Elevator Panel
 };
 
 const inline std::set<int> allEPs = {

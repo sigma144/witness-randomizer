@@ -122,6 +122,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
 		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
+		DeathLink = slotData.contains("death_link") ? slotData["death_link"] == true : false;
 
 		if (!UnlockSymbols) {
 			state.unlockedArrows = true;
@@ -243,12 +244,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
-		if (slotData.contains("death_link")) {
-			if(slotData["death_link"] == true) {
-				std::list<std::string> newTags = { "DeathLink" };
+		if (DeathLink) {
+			std::list<std::string> newTags = { "DeathLink" };
 
-				ap->ConnectUpdate(NULL, newTags);
-			}
+			ap->ConnectUpdate(NULL, newTags);
 		}
 
 
@@ -539,7 +538,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -547,7 +546,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink);
 	SeverDoors();
 
 	//Mess with Town targets

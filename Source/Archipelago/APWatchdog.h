@@ -17,7 +17,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
@@ -79,6 +79,7 @@ private:
 
 	std::shared_ptr<HudManager> hudManager;
 
+	bool DeathLink = false;
 	bool EPShuffle = false;
 	int PuzzleRandomization = 0;
 
