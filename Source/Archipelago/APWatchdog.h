@@ -52,6 +52,8 @@ public:
 
 	void InfiniteChallenge(bool enable);
 
+	void ProcessDeathLink(double time, std::string cause, std::string source);
+
 	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
@@ -85,6 +87,8 @@ private:
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
 
+	std::set<double> deathLinkTimestamps;
+
 	const float baseSpeed = 2.0f;
 
 	bool laserRequirementMet = false;
@@ -108,6 +112,7 @@ private:
 	void CheckEPSkips();
 
 	void CheckDeathLink();
+	void SendDeathLink();
 
 	void QueueItemMessages();
 
@@ -177,7 +182,7 @@ private:
 	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
-	std::map<int, std::string> epToName = {};
+	std::map<int, std::string> entityToName = {};
 
 	std::vector<float> lastMousePosition = { 0,0,0 };
 	float dogFrames = 0.0f;

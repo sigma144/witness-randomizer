@@ -34,7 +34,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	state = s;
 	EPShuffle = ep;
 	obeliskHexToEPHexes = o;
-	epToName = epn;
+	entityToName = epn;
 	solveModeSpeedFactor = smsf;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
@@ -1563,8 +1563,8 @@ void APWatchdog::LookingAtObelisk() {
 		}
 	}
 
-	if (epToName.count(lookingAtEP)) {
-		hudManager->setWorldMessage(epToName[lookingAtEP]);
+	if (entityToName.count(lookingAtEP)) {
+		hudManager->setWorldMessage(entityToName[lookingAtEP]);
 	}
 
 	return;
@@ -1659,6 +1659,7 @@ void APServerPoller::action() {
 
 void APWatchdog::CheckDeathLink() {
 	if (mostRecentActivePanelId == -1 || !actuallyEveryPanel.count(mostRecentActivePanelId)) return;
+	if (deathlinkExcludeList.count(mostRecentActivePanelId)) return;
 
 	int newState = ReadPanelData<int>(mostRecentActivePanelId, FLASH_MODE);
 
@@ -1666,8 +1667,47 @@ void APWatchdog::CheckDeathLink() {
 		mostRecentPanelState = newState;
 
 		if (newState == 2) {
-			TriggerPowerSurge();
+			SendDeathLink();
 			hudManager->queueBannerMessage("Death Sent.");
 		}
 	}
+}
+
+void APWatchdog::SendDeathLink()
+{
+	auto now = std::chrono::system_clock::now();
+	double nowDouble = (double)std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() / 1000;
+
+	std::string entityName = std::to_string(mostRecentActivePanelId);
+
+	if (entityToName.count(mostRecentActivePanelId)) {
+		entityName = entityToName[mostRecentActivePanelId];
+	}
+
+	deathLinkTimestamps.insert(nowDouble);
+
+	auto data = nlohmann::json{ 
+		{"time", nowDouble},
+		{"cause", "Input an incorrect solution to " + entityName + "."},
+		{"source", ap->get_player_alias(ap->get_player_number())}
+	} ;
+	ap->Bounce(data, {}, {}, {"DeathLink"});
+}
+
+void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
+	TriggerPowerSurge();
+
+	if (deathLinkTimestamps.count(time)) return;
+	
+	std::string firstSentence = "Received Death.";
+	std::string secondSentence = "";
+
+	if (source != "") {
+		firstSentence = "Received Death from " + source + ".";
+	}
+	if (cause != "") {
+		secondSentence = " Reason: " + cause;
+	}
+
+	hudManager->queueBannerMessage(firstSentence + secondSentence);
 }

@@ -175,7 +175,15 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			for (auto& [key, val] : slotData["ep_to_name"].items()) {
 				int sideId = std::stoul(key, nullptr, 16);
 
-				epToName.insert({ sideId, val });
+				entityToName.insert({ sideId, val });
+			}
+		}
+
+		if (slotData.contains("entity_to_name")) {
+			for (auto& [key, val] : slotData["entity_to_name"].items()) {
+				int sideId = std::stoul(key, nullptr, 16);
+
+				entityToName.insert({ sideId, val });
 			}
 		}
 
@@ -235,6 +243,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		std::list<std::string> newTags = { "DeathLink" };
+
+		ap->ConnectUpdate(NULL, newTags);
+
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -249,6 +261,28 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		hasConnectionResult = true;
 
 		ClientWindow::get()->showMessageBox("Connection failed: " + errorString);
+	});
+
+	ap->set_bounced_handler([&](nlohmann::json packet) {
+		std::list<std::string> tags = packet["tags"];
+
+		bool deathlink = (std::find(tags.begin(), tags.end(), "DeathLink") != tags.end());
+
+		if (deathlink) {
+			auto data = packet["data"];
+			std::string cause = "";
+			if (data.contains("cause")) {
+				cause = data["cause"];
+			}
+			std::string source = "";
+			if (data.contains("source")) {
+				source = data["source"];
+			}
+
+			double timestamp = data["time"];
+
+			async->ProcessDeathLink(timestamp, cause, source);
+		}
 	});
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
@@ -500,7 +534,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -508,7 +542,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
 	SeverDoors();
 
 	//Mess with Town targets

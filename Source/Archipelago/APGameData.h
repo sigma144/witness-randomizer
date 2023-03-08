@@ -785,6 +785,20 @@ const inline int AllPuzzles[]{
 		0x3D9A9,
 };
 
+const inline std::set<int> deathlinkExcludeList = {
+	0x0008F, // UTM Invisible Dots 1
+	0x0006B, // UTM Invisible Dots 2
+	0x0008B, // UTM Invisible Dots 3
+	0x0008C, // UTM Invisible Dots 4
+	0x0008A, // UTM Invisible Dots 5
+	0x00089, // UTM Invisible Dots 6
+	0x0006A, // UTM Invisible Dots 7
+	0x0006C, // UTM Invisible Dots 8
+	0x00027, // UTM Invisible Dots Symmetry 1
+	0x00028, // UTM Invisible Dots Symmetry 2
+	0x00029, // UTM Invisible Dots Symmetry 3
+};
+
 const inline std::set<int> allEPs = {
 	0x0332B, 0x03367, 0x28B8A, 0x037B6, 0x037B2, 0x000F7, 0x3351D, 0x0053C
 	, 0x00771, 0x335C8, 0x335C9, 0x337F8, 0x037BB, 0x220E4, 0x220E5, 0x334B9

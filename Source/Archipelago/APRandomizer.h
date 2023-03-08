@@ -57,7 +57,7 @@ class APRandomizer {
 
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
 		std::set<int> precompletedLocations;
-		std::map<int, std::string> epToName;
+		std::map<int, std::string> entityToName;
 
 		class APClient* ap = NULL;
 		class APWatchdog* async;
