@@ -243,9 +243,14 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
-		std::list<std::string> newTags = { "DeathLink" };
+		if (slotData.contains("death_link")) {
+			if(slotData["death_link"] == true) {
+				std::list<std::string> newTags = { "DeathLink" };
 
-		ap->ConnectUpdate(NULL, newTags);
+				ap->ConnectUpdate(NULL, newTags);
+			}
+		}
+
 
 		connected = true;
 		hasConnectionResult = true;
