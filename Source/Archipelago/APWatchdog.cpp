@@ -39,7 +39,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	solveModeSpeedFactor = smsf;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
-	if (speedTime == 0.6999999881) { // original value
+	if (speedTime == 0.6999999881f) { // original value
 		speedTime = 0;
 	}
 
@@ -1718,7 +1718,18 @@ void APWatchdog::SendDeathLink()
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
 	TriggerPowerSurge();
 
-	if (deathLinkTimestamps.count(time)) return;
+	double a = -1;
+
+	for (double b : deathLinkTimestamps) {
+		if (fabs(a - b) < std::numeric_limits<double>::epsilon() * fmax(fabs(a), fabs(b))) { // double equality with some leeway because of conversion back and forth from/to JSON
+			a = b;
+		}
+	}
+
+	if (a != -1) {
+		deathLinkTimestamps.erase(a);
+		return;
+	}
 	
 	std::string firstSentence = "Received Death.";
 	std::string secondSentence = "";
