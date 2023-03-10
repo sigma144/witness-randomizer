@@ -13,6 +13,7 @@
 #include <thread>
 #include "../Randomizer.h"
 #include "../DateTime.h"
+#include "../ClientWindow.h"
 #include "PanelRestore.h"
 
 
@@ -92,6 +93,8 @@ void APWatchdog::action() {
 		DisableCollisions();
 		RefreshDoorCollisions();
 		AudioLogPlaying();
+
+		UpdateInfiniteChallenge();
 
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
@@ -1248,6 +1251,8 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		return;
 	}
 
+	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
+
 	// bonsai panel dots requirement
 	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
 		hudManager->setWorldMessage("Needs Dots.");
@@ -1742,4 +1747,23 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 	}
 
 	hudManager->queueBannerMessage(firstSentence + secondSentence);
+}
+
+void APWatchdog::UpdateInfiniteChallenge() {
+	if (!insideChallengeBoxRange || ReadPanelData<float>(0x00BFF, 0xC8) > 0.0f) {
+		infiniteChallenge = false;
+		return;
+	}
+
+	bool isChecked = ClientWindow::get()->getSetting(ClientToggleSetting::ChallengeTimer);
+	if (isChecked != infiniteChallenge) {
+		if (isChecked) {
+			Memory::get()->SetInfiniteChallenge(true);
+		}
+		else {
+			Memory::get()->SetInfiniteChallenge(false);
+		}
+
+		infiniteChallenge = isChecked;
+	}
 }

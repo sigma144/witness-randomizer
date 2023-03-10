@@ -54,6 +54,7 @@ public:
 
 	void ProcessDeathLink(double time, std::string cause, std::string source);
 
+
 	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
@@ -105,6 +106,9 @@ private:
 
 	float speedTime = 0.0f;
 	float solveModeSpeedFactor = 0.0f;
+
+	bool infiniteChallenge = false;
+	bool insideChallengeBoxRange = true;
 
 	void HandleKeyTaps();
 
@@ -159,6 +163,8 @@ private:
 	int GetActivePanel();
 	void WriteMovementSpeed(float currentSpeed);
 
+	void UpdateInfiniteChallenge();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
@@ -197,6 +203,7 @@ private:
 	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
 	CollisionCube quarryLaserPanel = CollisionCube(-59, 90, 17, -67, 100, 21);
 	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6f, -185, 37, 17);
+	CollisionCube challengeTimer = CollisionCube(-27, -40, -20, -50, -20, -4);
 
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 
