@@ -79,6 +79,8 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
+	CheckSymmetryPowerCableBug();
+
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -1765,5 +1767,40 @@ void APWatchdog::UpdateInfiniteChallenge() {
 		}
 
 		infiniteChallenge = isChecked;
+	}
+}
+
+void APWatchdog::CheckSymmetryPowerCableBug() {
+	if (!symmetryMessageDelivered) {
+		if (!ReadPanelData<int>(0x00026, SOLVED) && ReadPanelData<float>(0x00088, CABLE_POWER)) {
+			hudManager->queueBannerMessage("Symmetry Lower 5 Cable just turned on without Symmetry Lower 5 being solved");
+			hudManager->queueBannerMessage("Please report your last in-game actions to the devs (Discord/Github Issues)");
+
+			symmetryMessageDelivered = true;
+		}
+	}
+
+	if (!ppMessageDelivered) {
+		std::vector<float> playerPosition;
+		try {
+			playerPosition = Memory::get()->ReadPlayerPosition();
+		}
+		catch (std::exception e) {
+			return;
+		}
+
+		std::vector<float> ppPosition = ReadPanelData<float>(0x01A45, POSITION, 3);
+
+		float newPPState = ReadPanelData<int>(0x01A45, 0xCC);
+
+		if (newPPState && !lastPPState) {
+			if (pow(playerPosition[0] - ppPosition[0], 2) + pow(playerPosition[1] - ppPosition[1], 2) + pow(playerPosition[2] - ppPosition[2], 2) > 100) {
+				hudManager->queueBannerMessage("Pressure Plates just activated for no reason.");
+				hudManager->queueBannerMessage("Please report your last in-game actions to the devs (Discord/Github Issues)");
+				ppMessageDelivered = true;
+			}
+		}
+
+		lastPPState = newPPState;
 	}
 }
