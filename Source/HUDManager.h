@@ -16,8 +16,11 @@ public:
 	
 	void update(float deltaSeconds);
 
-	// Queue a message to be shown at the top of the screen, such as "Received Shapers".
+	// Queue a message to be shown at the top of the screen, such as "Connected to Archipelago".
 	void queueBannerMessage(std::string text, RgbColor color = RgbColor(), float duration = 5.f);
+
+	// Queue a message to be shown in the notifications block, such as "Received Shapers".
+	void queueNotification(std::string text, RgbColor color = RgbColor());
 
 	// Show a specific message using the subtitle display, overriding any other messages.
 	void showSubtitleMessage(std::string text, float duration);
@@ -49,6 +52,8 @@ public:
 private:
 
 	void updateBannerMessages(float deltaSeconds);
+	void updateNotifications(float deltaSeconds);
+
 	void updateSubtitleMessages(float deltaSeconds);
 
 	void writeSubtitle(std::vector<std::string> lines);
@@ -68,6 +73,18 @@ private:
 
 	std::queue<BannerMessage> queuedBannerMessages;
 	float bannerTimeRemaining = 0.f;
+
+	struct Notification {
+		Notification(std::string text, RgbColor color) : text(text), color(color) {}
+
+		std::string text;
+		RgbColor color;
+		float age = 0.f;
+	};
+
+	std::queue<Notification> queuedNotifications;
+	std::vector<Notification> activeNotifications;
+	float timeToNextNotification = 0.f;
 
 	float subtitleOverrideTimeRemaining = 0.f;
 

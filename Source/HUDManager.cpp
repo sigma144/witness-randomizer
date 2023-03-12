@@ -5,7 +5,14 @@
 #include "Memory.h"
 
 
-#define SUBTITLE_MAX_LINE_LENGTH 70
+#define MAX_STRING_LENGTH 0x80
+
+#define NOTIFICATION_FLASH_TIME 1.f
+#define NOTIFICATION_HOLD_BRIGHT_TIME 3.f
+#define NOTIFICATION_DIM_TIME 5.f
+#define NOTIFICATION_HOLD_DIM_TIME 10.f
+#define NOTIFICATION_FADE_TIME 10.f
+#define NOTIFICATION_TOTAL_TIME (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME + NOTIFICATION_FADE_TIME)
 
 
 HudManager::HudManager() {
@@ -17,6 +24,7 @@ HudManager::HudManager() {
 
 void HudManager::update(float deltaSeconds) {
 	updateBannerMessages(deltaSeconds);
+	updateNotifications(deltaSeconds);
 	//updateSubtitleMessages(deltaSeconds);
 
 	InputWatchdog* input = InputWatchdog::get();
@@ -40,6 +48,10 @@ void HudManager::update(float deltaSeconds) {
 
 void HudManager::queueBannerMessage(std::string text, RgbColor color, float duration) {
 	queuedBannerMessages.push(BannerMessage(text, color, duration));
+}
+
+void HudManager::queueNotification(std::string text, RgbColor color) {
+	queuedNotifications.push(Notification(text, color));
 }
 
 void HudManager::showSubtitleMessage(std::string text, float duration) {
@@ -110,6 +122,52 @@ void HudManager::updateBannerMessages(float deltaSeconds) {
 		bannerTimeRemaining = message.duration;
 
 		queuedBannerMessages.pop();
+	}
+}
+
+void HudManager::updateNotifications(float deltaSeconds) {
+	int seenNotifications = 0;
+
+	std::vector<Notification>::iterator iterator = activeNotifications.begin();
+	while (iterator != activeNotifications.end()) {
+		// Fade notifications out more quickly if there are a lot of them.
+		seenNotifications++;
+		float multiplier = 0.75f + 0.25f * seenNotifications;
+
+		iterator->age += deltaSeconds * multiplier;
+		if (iterator->age >= NOTIFICATION_TOTAL_TIME) {
+			iterator = activeNotifications.erase(iterator);
+			continue;
+		}
+
+		// Determine whether or not the notification is in a time block where it is fading in or out and, if so, mark it as dirty.
+		float relativeAge = iterator->age;
+		if (relativeAge < NOTIFICATION_FLASH_TIME) {
+			hudTextDirty = true;
+		}
+
+		relativeAge -= (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME);
+		if (relativeAge > 0 && relativeAge < NOTIFICATION_DIM_TIME) {
+			hudTextDirty = true;
+		}
+
+		relativeAge -= (NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME);
+		if (relativeAge > 0) {
+			hudTextDirty = true;
+		}
+
+		iterator++;
+	}
+
+	timeToNextNotification -= deltaSeconds;
+	if (timeToNextNotification <= 0) {
+		if (queuedNotifications.size() > 0) {
+			const Notification& notification = queuedNotifications.front();
+			activeNotifications.insert(activeNotifications.begin(), notification);
+			queuedNotifications.pop();
+
+			timeToNextNotification = 0.75f;
+		}
 	}
 }
 
@@ -205,12 +263,12 @@ std::vector<std::string> HudManager::separateLines(std::string input) {
 	// Next, check every line for length and, if they are exceedingly long, split them into wrapped strings by length.
 	std::vector<std::string> wrappedLines;
 	for (const std::string& line : splitLines) {
-		if (line.length() > SUBTITLE_MAX_LINE_LENGTH) {
+		if (line.length() > MAX_STRING_LENGTH) {
 			// The line is longer than our max width and needs to be wrapped.
 			std::string choppedLine = line;
-			while (choppedLine.length() > SUBTITLE_MAX_LINE_LENGTH) {
+			while (choppedLine.length() > MAX_STRING_LENGTH) {
 				// Find the closest space character to the end of the line.
-				searchIndex = choppedLine.rfind(' ', SUBTITLE_MAX_LINE_LENGTH);
+				searchIndex = choppedLine.rfind(' ', MAX_STRING_LENGTH);
 				if (searchIndex != std::string::npos) {
 					// We found a space. Separate the string at that character and keep working.
 					wrappedLines.push_back(choppedLine.substr(0, searchIndex));
@@ -218,8 +276,8 @@ std::vector<std::string> HudManager::separateLines(std::string input) {
 				}
 				else {
 					// There was no space in the previous line. Simply split the string mid-word.
-					wrappedLines.push_back(choppedLine.substr(0, SUBTITLE_MAX_LINE_LENGTH));
-					choppedLine = choppedLine.substr(SUBTITLE_MAX_LINE_LENGTH);
+					wrappedLines.push_back(choppedLine.substr(0, MAX_STRING_LENGTH));
+					choppedLine = choppedLine.substr(MAX_STRING_LENGTH);
 				}
 			}
 
@@ -882,6 +940,61 @@ void HudManager::writePayload() const {
 		temp_payload.blocks.push_back(walkTextBlock);
 	}
 
+	// Show notifications.
+	float notificationBrightValue = 1.f - 0.4f * solveFadePercent;
+	float notificationDimValue = 0.6f - 0.3f * solveFadePercent;
+	if (!activeNotifications.empty()) {
+		// Notifications go in the top-right corner of the screen.
+		HudTextBlock notificationBlock;
+		notificationBlock.horizontalAlignment = 1.f;
+		notificationBlock.horizontalPosition = 1.f;
+		notificationBlock.verticalPosition = 1.f;
+
+		for (const Notification& notification : activeNotifications) {
+			// Determine the alpha value of the notification based on its age.
+			float alpha;
+			if (notification.age < NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME) {
+				alpha = notificationBrightValue;
+			}
+			else if (notification.age < NOTIFICATION_DIM_TIME + (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME)) {
+				float relativeDimTime = notification.age - (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME);
+				float dimPercent = relativeDimTime / NOTIFICATION_DIM_TIME;
+				alpha = (1.f - dimPercent) * (notificationBrightValue - notificationDimValue) + notificationDimValue;
+			}
+			else if (notification.age < NOTIFICATION_HOLD_DIM_TIME + (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME)) {
+				alpha = notificationDimValue;
+			}
+			else {
+				float relativeFadeTime = notification.age - ((NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME));
+				float fadePercent = relativeFadeTime / NOTIFICATION_FADE_TIME;
+				alpha = (1.f - fadePercent) * notificationDimValue;
+			}
+
+			// Determine the foreground color of the text.
+			RgbColor textColor = notification.color;
+			textColor.A = alpha;
+			if (notification.age < NOTIFICATION_FLASH_TIME) {
+				float flashPercent = 1.f - notification.age / NOTIFICATION_FLASH_TIME;
+				textColor.R = (1.f - textColor.R) * flashPercent + textColor.R;
+				textColor.G = (1.f - textColor.G) * flashPercent + textColor.G;
+				textColor.B = (1.f - textColor.B) * flashPercent + textColor.B;
+				textColor.A = (1.f - notificationBrightValue) * flashPercent + notificationBrightValue;
+			}
+
+			std::vector<std::string> expandedLines = separateLines(notification.text);
+			for (const std::string& lineText : expandedLines) {
+				HudTextLine lineData;
+				lineData.textColor = textColor;
+				lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.6f * alpha);
+				lineData.text = lineText;
+
+				notificationBlock.lines.push_back(lineData);
+			}
+		}
+
+		temp_payload.blocks.push_back(notificationBlock);
+	}
+
 	//// TEMP: hint
 	//temp_block.horizontalAlignment = 0.5f;
 	//temp_block.horizontalPosition = 0.5f;
@@ -895,33 +1008,6 @@ void HudManager::writePayload() const {
 	//temp_line.text = "Inside Deku Tree back room Skulltulla 2.";
 	//temp_block.lines.push_back(temp_line);
 	//temp_payload.blocks.push_back(temp_block);
-
-	//// TEMP: items
-	//temp_block.horizontalAlignment = 1.f;
-	//temp_block.horizontalPosition = 1.f;
-	//temp_block.verticalPosition = 1.f;
-
-	//temp_block.lines.clear();
-
-	//temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.8f);
-	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	//temp_line.text = "Received Rotated Shapers from blastron.";
-	//temp_block.lines.push_back(temp_line);
-
-	//temp_line.textColor = RgbColor(0.68f, 0.75f, 0.94f, 0.75f);
-	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	//temp_line.text = "Received Puzzle Skip from blastron.";
-	//temp_block.lines.push_back(temp_line);
-
-	//temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.675f);
-	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	//temp_line.text = "Received Negative Shapers from blastron.";
-	//temp_block.lines.push_back(temp_line);
-
-	//temp_line.textColor = RgbColor(1.f, 0.7f, 0.67f, 0.4f);
-	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	//temp_line.text = "Received Slowness from blastron.";
-	//temp_block.lines.push_back(temp_line);
 
 	//temp_payload.blocks.push_back(temp_block);
 
@@ -965,9 +1051,9 @@ void HudManager::writePayload() const {
 			uint32_t arbgShadowColor = line.shadowColor.argb();
 			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t), NULL);
 
-			char stringBuff[SUBTITLE_MAX_LINE_LENGTH];
-			strncpy_s(stringBuff, line.text.c_str(), SUBTITLE_MAX_LINE_LENGTH);
-			stringBuff[SUBTITLE_MAX_LINE_LENGTH - 1] = 0; // forcibly null-terminate in case the string is too long
+			char stringBuff[MAX_STRING_LENGTH];
+			strncpy_s(stringBuff, line.text.c_str(), MAX_STRING_LENGTH);
+			stringBuff[MAX_STRING_LENGTH - 1] = 0; // forcibly null-terminate in case the string is too long
 			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff), NULL);
 
 			// Advance write pointer past the line information.

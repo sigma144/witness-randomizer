@@ -897,15 +897,15 @@ void APWatchdog::HandleKeyTaps() {
 				break;
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
-				hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
+				hudManager->queueNotification("Cheat: adding Slowness.", { 1.f, 0.f, 0.f });
 				ApplyTemporarySlow();
 				break;
 			case InputButton::KEY_EQUALS:
-				hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
+				hudManager->queueNotification("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f });
 				ApplyTemporarySpeedBoost();
 				break;
 			case InputButton::KEY_0:
-				hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
+				hudManager->queueNotification("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f });
 				if (spentPuzzleSkips > foundPuzzleSkips) {
 					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
 					//   previous app launch. Reset to zero before adding a new one.
@@ -1408,7 +1408,7 @@ void APWatchdog::QueueItemMessages() {
 			count = " (x" + std::to_string(itemCounts[name]) + ")";
 		}
 
-		hudManager->queueBannerMessage("Received " + name + count + ".", itemColors[name]);
+		hudManager->queueNotification("Received " + name + count + ".", itemColors[name]);
 	}
 
 	processingItemMessages = false;

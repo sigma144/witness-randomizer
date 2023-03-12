@@ -304,7 +304,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			std::string isFor = "";
 			if (!receiving) isFor = " for " + player;
 
-			if(!found) async->getHudManager()->queueBannerMessage("Hint: " + itemName + isFor + " is on " + locationName + ".");
+			if(!found) async->getHudManager()->queueNotification("Hint: " + itemName + isFor + " is on " + locationName + ".");
 		}
 		else {
 			int location = item.location;
