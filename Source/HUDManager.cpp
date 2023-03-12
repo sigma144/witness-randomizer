@@ -1,10 +1,12 @@
 #include "HUDManager.h"
 
 #include "ASMBuilder.h"
+#include "Input.h"
 #include "Memory.h"
 
 
 #define SUBTITLE_MAX_LINE_LENGTH 70
+
 
 HudManager::HudManager() {
 	findSetSubtitleOffsets();
@@ -15,7 +17,24 @@ HudManager::HudManager() {
 
 void HudManager::update(float deltaSeconds) {
 	updateBannerMessages(deltaSeconds);
-	updateSubtitleMessages(deltaSeconds);
+	//updateSubtitleMessages(deltaSeconds);
+
+	InputWatchdog* input = InputWatchdog::get();
+	InteractionState interactionState = input->getInteractionState();
+	bool isSolving = (interactionState == Focusing || interactionState == Solving);
+	if (isSolving && solveTextAlpha < 1.f) {
+		solveTextAlpha = std::min(solveTextAlpha + deltaSeconds, 1.f);
+		hudTextDirty = true;
+	}
+	else if (!isSolving && solveTextAlpha > 0.f) {
+		solveTextAlpha = std::max(solveTextAlpha - deltaSeconds * 3.f, 0.f);
+		hudTextDirty = true;
+	}
+
+	if (hudTextDirty) {
+		writePayload();
+		hudTextDirty = false;
+	}
 }
 
 void HudManager::queueBannerMessage(std::string text, RgbColor color, float duration) {
@@ -26,30 +45,29 @@ void HudManager::showSubtitleMessage(std::string text, float duration) {
 	writeSubtitle({ text });
 	subtitleOverrideTimeRemaining = duration;
 }
-
 void HudManager::clearSubtitleMessage() {
 	subtitleOverrideTimeRemaining = 0;
-	subtitlesDirty = true;
+	hudTextDirty = true;
 }
 
 void HudManager::setWorldMessage(std::string text) {
 	if (worldMessage != text) {
 		worldMessage = text;
-		subtitlesDirty = true;
+		hudTextDirty = true;
 	}
 }
 
 void HudManager::setStatusMessage(std::string text) {
 	if (statusMessage != text) {
 		statusMessage = text;
-		subtitlesDirty = true;
+		hudTextDirty = true;
 	}
 }
 
-void HudManager::setActionHint(std::string text) {
-	if (actionHint != text) {
-		actionHint = text;
-		subtitlesDirty = true;
+void HudManager::setSolveInputLegend(std::string text) {
+	if (solveInputLegend != text) {
+		solveInputLegend = text;
+		hudTextDirty = true;
 	}
 }
 
@@ -57,7 +75,6 @@ void HudManager::setSubtitleSize(SubtitleSize size) {
 	//if (setSubtitleOffset == 0 || largeSubtitlePointerOffset == 0) {
 	//	return;
 	//}
-
 	//uint32_t sizeOffset;
 	//switch (size) {
 	//case SubtitleSize::Large:
@@ -71,7 +88,6 @@ void HudManager::setSubtitleSize(SubtitleSize size) {
 	//default:
 	//	sizeOffset = 0;
 	//}
-
 	//uint32_t fontPointerOffset = largeSubtitlePointerOffset + sizeOffset;
 	//Memory::get()->WriteRelative(reinterpret_cast<void*>(setSubtitleOffset), &fontPointerOffset, 0x4);
 }
@@ -103,7 +119,7 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		subtitleOverrideTimeRemaining -= deltaSeconds;
 		if (subtitleOverrideTimeRemaining <= 0) {
 			// Mark subtitles as needing refreshing.
-			subtitlesDirty = true;
+			hudTextDirty = true;
 		}
 		else {
 			// Do not process any further subtitle logic, since we're still overriding the contents.
@@ -111,7 +127,7 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		}
 	}
 
-	if (subtitlesDirty) {
+	if (hudTextDirty) {
 		// When displaying system-level messages like input hints or status displays, we use the built-in subtitle functionality
 		//   to render the text. This shows up to three lines of text, represented as separate strings.
 		// We have up to three messages to show to the user, which we will show in a fixed order:
@@ -121,8 +137,8 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		// Additionally, we only want to show complete messages, so if any of these messages would not be fully representable in
 		//   the three available lines, don't show them.
 		std::vector<std::string> lines;
-		if (!actionHint.empty()) {
-			std::vector<std::string> expandedHint = separateLines(actionHint);
+		if (!solveInputLegend.empty()) {
+			std::vector<std::string> expandedHint = separateLines(solveInputLegend);
 			lines.insert(lines.begin(), expandedHint.begin(), expandedHint.end());
 		}
 
@@ -141,7 +157,7 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		}
 
 		writeSubtitle(lines);
-		subtitlesDirty = false;
+		hudTextDirty = false;
 	}
 }
 
@@ -812,72 +828,87 @@ void HudManager::overwriteSubtitleFunction() {
 void HudManager::writePayload() const {
 	Memory* memory = Memory::get();
 
+	// TODO: only update when dirty
+
 	// TEMP: static payload
 	HudTextPayload temp_payload;
 
-	// TEMP: puzzle skip
-	HudTextBlock temp_block;
-	temp_block.horizontalAlignment = 0.f;
-	temp_block.horizontalPosition = 0.f;
-	temp_block.verticalPosition = 0.f;
+	// Show the solve mode action hint.
+	if (!solveInputLegend.empty() && solveTextAlpha > 0.f) {
+		// The solve hint goes in the lower-left corner of the screen.
+		HudTextBlock solveLegendBlock;
+		solveLegendBlock.horizontalAlignment = 0.f;
+		solveLegendBlock.horizontalPosition = 0.f;
+		solveLegendBlock.verticalPosition = 0.f;
 
-	HudTextLine temp_line;
-	temp_line.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f);
-	temp_line.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f);
-	temp_line.text = "Hold [T] to skip puzzle. (3 skips remaining.)";
-	temp_block.lines.push_back(temp_line);
+		std::vector<std::string> expandedLines = separateLines(solveInputLegend);
+		for (const std::string& lineText : expandedLines) {
+			HudTextLine lineData;
+			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f * solveTextAlpha);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f * solveTextAlpha);
+			lineData.text = lineText;
 
-	temp_payload.blocks.push_back(temp_block);
+			solveLegendBlock.lines.push_back(lineData);
+		}
 
-	// TEMP: hint
-	temp_block.horizontalAlignment = 0.5f;
-	temp_block.horizontalPosition = 0.5f;
-	temp_block.verticalPosition = 0.25f;
+		temp_payload.blocks.push_back(solveLegendBlock);
+	}
 
-	temp_block.lines.clear();
+	//// TEMP: hint
+	//temp_block.horizontalAlignment = 0.5f;
+	//temp_block.horizontalPosition = 0.5f;
+	//temp_block.verticalPosition = 0.25f;
+	//temp_block.lines.clear();
 
-	temp_line.textColor = RgbColor(1.f, 1.f, 1.f, 1.f);
-	temp_line.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.6f);
-	temp_line.text = "Your Shapers may be found in blastron's world at";
-	temp_block.lines.push_back(temp_line);
+	//temp_line.textColor = RgbColor(1.f, 1.f, 1.f, 1.f);
+	//temp_line.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.6f);
+	//temp_line.text = "Your Shapers may be found in blastron's world at";
+	//temp_block.lines.push_back(temp_line);
+	//temp_line.text = "Inside Deku Tree back room Skulltulla 2.";
+	//temp_block.lines.push_back(temp_line);
+	//temp_payload.blocks.push_back(temp_block);
 
-	temp_line.text = "Inside Deku Tree back room Skulltulla 2.";
-	temp_block.lines.push_back(temp_line);
+	//// TEMP: items
+	//temp_block.horizontalAlignment = 1.f;
+	//temp_block.horizontalPosition = 1.f;
+	//temp_block.verticalPosition = 1.f;
 
-	temp_payload.blocks.push_back(temp_block);
+	//temp_block.lines.clear();
 
-	// TEMP: items
-	temp_block.horizontalAlignment = 1.f;
-	temp_block.horizontalPosition = 1.f;
-	temp_block.verticalPosition = 1.f;
+	//temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.8f);
+	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
+	//temp_line.text = "Received Rotated Shapers from blastron.";
+	//temp_block.lines.push_back(temp_line);
 
-	temp_block.lines.clear();
+	//temp_line.textColor = RgbColor(0.68f, 0.75f, 0.94f, 0.75f);
+	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
+	//temp_line.text = "Received Puzzle Skip from blastron.";
+	//temp_block.lines.push_back(temp_line);
 
-	temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.8f);
-	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	temp_line.text = "Received Rotated Shapers from blastron.";
-	temp_block.lines.push_back(temp_line);
+	//temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.675f);
+	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
+	//temp_line.text = "Received Negative Shapers from blastron.";
+	//temp_block.lines.push_back(temp_line);
 
-	temp_line.textColor = RgbColor(0.68f, 0.75f, 0.94f, 0.75f);
-	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	temp_line.text = "Received Puzzle Skip from blastron.";
-	temp_block.lines.push_back(temp_line);
+	//temp_line.textColor = RgbColor(1.f, 0.7f, 0.67f, 0.4f);
+	//temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
+	//temp_line.text = "Received Slowness from blastron.";
+	//temp_block.lines.push_back(temp_line);
 
-	temp_line.textColor = RgbColor(0.82f, 0.76f, 0.96f, 0.675f);
-	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	temp_line.text = "Received Negative Shapers from blastron.";
-	temp_block.lines.push_back(temp_line);
+	//temp_payload.blocks.push_back(temp_block);
 
-	temp_line.textColor = RgbColor(1.f, 0.7f, 0.67f, 0.4f);
-	temp_line.shadowColor = RgbColor(temp_line.textColor.R * 0.1f, temp_line.textColor.G * 0.1f, temp_line.textColor.B * 0.1f, temp_line.textColor.A * 0.6f);
-	temp_line.text = "Received Slowness from blastron.";
-	temp_block.lines.push_back(temp_line);
-
-	temp_payload.blocks.push_back(temp_block);
+	// HACK: The rendering code currently crashes if there are zero blocks present. Add a placeholder block.
+	if (temp_payload.blocks.size() == 0) {
+		HudTextBlock testBlock;
+		testBlock.verticalPosition = 1;
+		HudTextLine testLine;
+		testLine.textColor = RgbColor(1.f, 1.f, 1.f, 0.1f);
+		testLine.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.1f);
+		testLine.text = "we must always have a text block or we crash, oops";
+		testBlock.lines.push_back(testLine);
+		temp_payload.blocks.push_back(testBlock);
+	}
 	
-
-
-
 	uint64_t writeAddress = address_hudTextPayload;
 
 	// Write payload information.
@@ -929,7 +960,7 @@ const uint32_t HudManager::HudTextBlock::totalDataSize =				0x20;
 
 const uint32_t HudManager::HudTextLine::maxLineSize =					0x80;
 
-const uint32_t HudManager::HudTextLine::address_textColor =			0x00;
+const uint32_t HudManager::HudTextLine::address_textColor =				0x00;
 const uint32_t HudManager::HudTextLine::address_shadowColor =			0x08;
 const uint32_t HudManager::HudTextLine::address_string =				0x10;
 const uint32_t HudManager::HudTextLine::totalDataSize =					0x10 + HudManager::HudTextLine::maxLineSize;

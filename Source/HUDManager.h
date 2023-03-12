@@ -31,9 +31,9 @@ public:
 	void setStatusMessage(std::string text);
 	void clearStatusMessage() { setStatusMessage(std::string()); };
 
-	// Show an input action hint to the player, such as "Hold [TAB]: Skip Puzzle".
-	void setActionHint(std::string text);
-	void clearActionHint() { setActionHint(std::string()); };
+	// Show an input action hint to the player while in solve mode, such as "Hold [TAB]: Skip Puzzle".
+	void setSolveInputLegend(std::string text);
+	void clearSolveInputLegend() { setSolveInputLegend(std::string()); };
 
 	enum SubtitleSize {
 		Large,
@@ -64,20 +64,22 @@ private:
 		float duration;
 	};
 
+	float solveTextAlpha = 0.f;
+
 	std::queue<BannerMessage> queuedBannerMessages;
 	float bannerTimeRemaining = 0.f;
 
 	float subtitleOverrideTimeRemaining = 0.f;
 
 	std::string worldMessage;
-	std::string actionHint;
+	std::string solveInputLegend;
 	std::string statusMessage;
-	bool subtitlesDirty = false;
+	bool hudTextDirty = false;
 
 	void findSetSubtitleOffsets();
 
 	struct HudTextLine {
-		RgbColor textColor;
+		RgbColor textColor = RgbColor(1.f,1.f,1.f,1.f);
 		RgbColor shadowColor = RgbColor(0.f,0.f,0.f,1.f);
 		std::string text;
 

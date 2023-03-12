@@ -16,10 +16,10 @@
 #include "PanelRestore.h"
 
 
-#define CHEAT_KEYS_ENABLED 0
+#define CHEAT_KEYS_ENABLED 1
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.1f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -1435,52 +1435,46 @@ void APWatchdog::SetStatusMessages() {
 		else {
 			hudManager->clearStatusMessage();
 		}
-
-		hudManager->clearActionHint();
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+		// Always show the number of puzzle skips available while in focus mode.
+		int availableSkips = GetAvailablePuzzleSkips();
+		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
+
 		if (activePanelId != -1) {
-			hudManager->setStatusMessage(puzzleSkipInfoMessage);
+			// If we have a special skip message for the current puzzle, show it above the skip count.
+			if (puzzleSkipInfoMessage.size() > 0) {
+				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
+			}
 
 			if (CanUsePuzzleSkip()) {
-				std::string skipInstruction = "Hold [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to use Puzzle Skip.";
+				// We have a selected, skippable, affordablSe puzzle. Show an input hint.
+				skipMessage += " Hold [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to use.";
 
+				// Show special costs, if any.
 				if (puzzleSkipCost == 0) {
-					hudManager->setActionHint(skipInstruction + " (Free!)");
+					skipMessage += " (Free!)";
 				}
-				else if (puzzleSkipCost == 1) {
-					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
-				}
-				else {
-					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
+				else if (puzzleSkipCost > 1) {
+					skipMessage += " (Costs " + std::to_string(puzzleSkipCost) + ".)";
 				}
 			}
-			else if (GetAvailablePuzzleSkips() > 0 && puzzleSkipCost > GetAvailablePuzzleSkips()) {
-				// The player has some puzzle skips available, but not enough to solve the selected puzzle.
-				hudManager->setActionHint("Insufficient Puzzle Skips. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
-			}
-			else if (GetAvailablePuzzleSkips() == 0 && puzzleSkipCost != -1) {
-				// The player has no puzzle skips available, but the puzzle is skippable.
-				hudManager->setActionHint("No Puzzle Skips available.");
-			}
-			else {
-				// We can't use the puzzle skip for a different reason.
-				hudManager->clearActionHint();
+			else if (availableSkips > 0 && puzzleSkipCost > availableSkips) {
+				// The player has some puzzle skips available, but not enough to solve the selected puzzle. Note that this
+				//   message will only show for puzzles that cost more than one skip.
+				skipMessage += "(Costs " + std::to_string(puzzleSkipCost) + ".)";
 			}
 		}
-		else {
-			hudManager->clearStatusMessage();
-			hudManager->clearActionHint();
-		}
+
+		hudManager->clearStatusMessage();
+		hudManager->setSolveInputLegend(skipMessage);
 	}
 	else if (interactionState == InteractionState::Keybinding) {
 		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
-		hudManager->setActionHint("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
-		hudManager->clearStatusMessage();
+		hudManager->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
 	}
 	else {
 		hudManager->clearStatusMessage();
-		hudManager->clearActionHint();
 	}
 }
 
