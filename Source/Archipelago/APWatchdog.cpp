@@ -1427,13 +1427,13 @@ void APWatchdog::SetStatusMessages() {
 		int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
 		if (speedTime > 0) {
-			hudManager->setStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+			hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
 		}
 		else if (speedTime < 0) {
-			hudManager->setStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+			hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
 		}
 		else {
-			hudManager->clearStatusMessage();
+			hudManager->clearWalkStatusMessage();
 		}
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
@@ -1466,15 +1466,14 @@ void APWatchdog::SetStatusMessages() {
 			}
 		}
 
-		hudManager->clearStatusMessage();
-		hudManager->setSolveInputLegend(skipMessage);
+		hudManager->setSolveStatusMessage(skipMessage);
 	}
 	else if (interactionState == InteractionState::Keybinding) {
-		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
-		hudManager->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
+//		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
+//		hudManager->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
 	}
 	else {
-		hudManager->clearStatusMessage();
+//		hudManager->clearStatusMessage();
 	}
 }
 

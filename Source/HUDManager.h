@@ -27,13 +27,13 @@ public:
 	void setWorldMessage(std::string text);
 	void clearWorldMessage() { setWorldMessage(std::string()); };
 
-	// Show a status message to the player, such as "Slowed! 10 seconds remaining."
-	void setStatusMessage(std::string text);
-	void clearStatusMessage() { setStatusMessage(std::string()); };
+	// Show a message to the player, such as "Slowed! 10 seconds remaining."
+	void setWalkStatusMessage(std::string text);
+	void clearWalkStatusMessage() { setWalkStatusMessage(std::string()); };
 
 	// Show an input action hint to the player while in solve mode, such as "Hold [TAB]: Skip Puzzle".
-	void setSolveInputLegend(std::string text);
-	void clearSolveInputLegend() { setSolveInputLegend(std::string()); };
+	void setSolveStatusMessage(std::string text);
+	void clearSolveStatusMessage() { setSolveStatusMessage(std::string()); };
 
 	enum SubtitleSize {
 		Large,
@@ -64,7 +64,7 @@ private:
 		float duration;
 	};
 
-	float solveTextAlpha = 0.f;
+	float solveFadePercent = 0.f;
 
 	std::queue<BannerMessage> queuedBannerMessages;
 	float bannerTimeRemaining = 0.f;
@@ -72,8 +72,8 @@ private:
 	float subtitleOverrideTimeRemaining = 0.f;
 
 	std::string worldMessage;
-	std::string solveInputLegend;
-	std::string statusMessage;
+	std::string walkStatusMessage;
+	std::string solveStatusMessage;
 	bool hudTextDirty = false;
 
 	void findSetSubtitleOffsets();

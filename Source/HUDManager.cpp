@@ -22,12 +22,13 @@ void HudManager::update(float deltaSeconds) {
 	InputWatchdog* input = InputWatchdog::get();
 	InteractionState interactionState = input->getInteractionState();
 	bool isSolving = (interactionState == Focusing || interactionState == Solving);
-	if (isSolving && solveTextAlpha < 1.f) {
-		solveTextAlpha = std::min(solveTextAlpha + deltaSeconds, 1.f);
+
+	if (isSolving && solveFadePercent < 1.f) {
+		solveFadePercent = std::min(solveFadePercent + deltaSeconds, 1.f);
 		hudTextDirty = true;
 	}
-	else if (!isSolving && solveTextAlpha > 0.f) {
-		solveTextAlpha = std::max(solveTextAlpha - deltaSeconds * 3.f, 0.f);
+	else if (!isSolving && solveFadePercent > 0.f) {
+		solveFadePercent = std::max(solveFadePercent - deltaSeconds * 3.f, 0.f);
 		hudTextDirty = true;
 	}
 
@@ -57,16 +58,16 @@ void HudManager::setWorldMessage(std::string text) {
 	}
 }
 
-void HudManager::setStatusMessage(std::string text) {
-	if (statusMessage != text) {
-		statusMessage = text;
+void HudManager::setWalkStatusMessage(std::string text) {
+	if (walkStatusMessage != text) {
+		walkStatusMessage = text;
 		hudTextDirty = true;
 	}
 }
 
-void HudManager::setSolveInputLegend(std::string text) {
-	if (solveInputLegend != text) {
-		solveInputLegend = text;
+void HudManager::setSolveStatusMessage(std::string text) {
+	if (solveStatusMessage != text) {
+		solveStatusMessage = text;
 		hudTextDirty = true;
 	}
 }
@@ -137,13 +138,13 @@ void HudManager::updateSubtitleMessages(float deltaSeconds) {
 		// Additionally, we only want to show complete messages, so if any of these messages would not be fully representable in
 		//   the three available lines, don't show them.
 		std::vector<std::string> lines;
-		if (!solveInputLegend.empty()) {
-			std::vector<std::string> expandedHint = separateLines(solveInputLegend);
+		if (!solveStatusMessage.empty()) {
+			std::vector<std::string> expandedHint = separateLines(solveStatusMessage);
 			lines.insert(lines.begin(), expandedHint.begin(), expandedHint.end());
 		}
 
-		if (!statusMessage.empty()) {
-			std::vector<std::string> expandedStatus = separateLines(statusMessage);
+		if (!walkStatusMessage.empty()) {
+			std::vector<std::string> expandedStatus = separateLines(walkStatusMessage);
 			if (lines.size() + expandedStatus.size() <= 3) {
 				lines.insert(lines.begin(), expandedStatus.begin(), expandedStatus.end());
 			}
@@ -828,30 +829,57 @@ void HudManager::overwriteSubtitleFunction() {
 void HudManager::writePayload() const {
 	Memory* memory = Memory::get();
 
-	// TODO: only update when dirty
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	bool isSolving = (interactionState == Focusing || interactionState == Solving);
 
 	// TEMP: static payload
 	HudTextPayload temp_payload;
 
-	// Show the solve mode action hint.
-	if (!solveInputLegend.empty() && solveTextAlpha > 0.f) {
-		// The solve hint goes in the lower-left corner of the screen.
-		HudTextBlock solveLegendBlock;
-		solveLegendBlock.horizontalAlignment = 0.f;
-		solveLegendBlock.horizontalPosition = 0.f;
-		solveLegendBlock.verticalPosition = 0.f;
+	// Show the solve mode status message.
+	if (!solveStatusMessage.empty() && solveFadePercent > 0.f) {
+		// Status messages go in the lower-left corner of the screen.
+		HudTextBlock solveTextBlock;
+		solveTextBlock.horizontalAlignment = 0.f;
+		solveTextBlock.horizontalPosition = 0.f;
+		solveTextBlock.verticalPosition = 0.f;
 
-		std::vector<std::string> expandedLines = separateLines(solveInputLegend);
+		// When the game fades in the border, it immediately shows it at a low transparency factor rather than fading it in.
+		float solveTextAlpha = (solveFadePercent * 0.9f) + 0.1f;
+
+		std::vector<std::string> expandedLines = separateLines(solveStatusMessage);
 		for (const std::string& lineText : expandedLines) {
 			HudTextLine lineData;
 			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f * solveTextAlpha);
 			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f * solveTextAlpha);
 			lineData.text = lineText;
 
-			solveLegendBlock.lines.push_back(lineData);
+			solveTextBlock.lines.push_back(lineData);
 		}
 
-		temp_payload.blocks.push_back(solveLegendBlock);
+		temp_payload.blocks.push_back(solveTextBlock);
+	}
+
+	// Show the walk mode status message.
+	if (!walkStatusMessage.empty() && solveFadePercent < 1.f) {
+		// Status messages go in the lower-left corner of the screen.
+		HudTextBlock walkTextBlock;
+		walkTextBlock.horizontalAlignment = 0.f;
+		walkTextBlock.horizontalPosition = 0.f;
+		walkTextBlock.verticalPosition = 0.f;
+
+		float walkTextAlpha = 1.f - (isSolving ? std::clamp(2 * solveFadePercent, 0.f, 1.f) : solveFadePercent);
+
+		std::vector<std::string> expandedLines = separateLines(walkStatusMessage);
+		for (const std::string& lineText : expandedLines) {
+			HudTextLine lineData;
+			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f * walkTextAlpha);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f * walkTextAlpha);
+			lineData.text = lineText;
+
+			walkTextBlock.lines.push_back(lineData);
+		}
+
+		temp_payload.blocks.push_back(walkTextBlock);
 	}
 
 	//// TEMP: hint
