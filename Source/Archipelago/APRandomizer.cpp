@@ -467,6 +467,9 @@ void APRandomizer::PostGeneration() {
 		memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
 	}
 
+	// In Vanilla, Caves Invis Symmetry 3 turns on a power cable on Symmetry Island. This is never relevant in vanilla, but doors modes make it a legitimate issue.
+	memory->WritePanelData<int>(0x00029, TARGET, { 0 }); 
+
 	// Challenge Timer Colors
 	memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_A, { 0.0f, 1.0f, 1.0f, 1.0f });
 	memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_B, { 1.0f, 1.0f, 0.0f, 1.0f });
