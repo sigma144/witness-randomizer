@@ -22,13 +22,10 @@ public:
 	// Queue a message to be shown in the notifications block, such as "Received Shapers".
 	void queueNotification(std::string text, RgbColor color = RgbColor());
 
-	// Show a specific message using the subtitle display, overriding any other messages.
-	void showSubtitleMessage(std::string text, float duration);
-	void clearSubtitleMessage();
-
-	// Show a message about the world to the player, such as "This puzzle requires Triangles."
-	void setWorldMessage(std::string text);
-	void clearWorldMessage() { setWorldMessage(std::string()); };
+	// Show a message in the center of the screen. If a duration is specified, shows the message
+	//   for that amount of time, with a short fade-out at the end.
+	void showInformationalMessage(std::string text, float duration);
+	void clearInformationalMessage();
 
 	// Show a message to the player, such as "Slowed! 10 seconds remaining."
 	void setWalkStatusMessage(std::string text);
@@ -38,28 +35,14 @@ public:
 	void setSolveStatusMessage(std::string text);
 	void clearSolveStatusMessage() { setSolveStatusMessage(std::string()); };
 
-	enum SubtitleSize {
-		Large,
-		Medium,
-		Small
-	};
-
-	// Sets the default size of the subtitle. NOTE: When subtitles are drawn, the game will attempt to pick progressively smaller
-	//   fonts until it finds one where the entire subtitle line can fit on screen horizontally. As such, if we set a large font
-	//   here, then pass a long string, the game may not use the large font for that message.
-	void setSubtitleSize(SubtitleSize size);
-
 private:
 
 	void updateBannerMessages(float deltaSeconds);
 	void updateNotifications(float deltaSeconds);
-
-	void updateSubtitleMessages(float deltaSeconds);
-
-	void writeSubtitle(std::vector<std::string> lines);
+	void updateInformationalMessages(float deltaSeconds);
 
 	// Splits the given string into individual lines, first by chopping it by newlines, and second by wrapping any long strings.
-	static std::vector<std::string> separateLines(std::string input);
+	static std::vector<std::string> separateLines(std::string input, int maxLength = 80);
 
 	struct BannerMessage {
 		BannerMessage(std::string text, RgbColor color, float duration) : text(text), color(color), duration(duration) {}
@@ -86,7 +69,9 @@ private:
 	std::vector<Notification> activeNotifications;
 	float timeToNextNotification = 0.f;
 
-	float subtitleOverrideTimeRemaining = 0.f;
+	std::string informationalMessageString;
+	float informationalMessageFadePercentage = 0.f;
+	float informationalMessageTimeRemaining = 0.f;
 
 	std::string worldMessage;
 	std::string walkStatusMessage;

@@ -95,8 +95,6 @@ void APWatchdog::action() {
 		}
 	}
 
-	hudManager->clearWorldMessage();
-
 	CheckImportantCollisionCubes();
 	LookingAtObelisk();
 	LookingAtTheDog(frameDuration.count());
@@ -1034,8 +1032,7 @@ void APWatchdog::AudioLogPlaying() {
 			currentAudioLog = logId;
 
 			std::string message = audioLogMessages[logId].first;
-			hudManager->clearSubtitleMessage();
-			hudManager->showSubtitleMessage(message, 12.0f);
+			hudManager->showInformationalMessage(message, 12.0f);
 
 			APClient::DataStorageOperation operation;
 			operation.operation = "replace";
@@ -1057,6 +1054,7 @@ void APWatchdog::AudioLogPlaying() {
 		}
 		else if (!logPlaying && logId == currentAudioLog) {
 			currentAudioLog = -1;
+			hudManager->clearInformationalMessage();
 		}
 	}
 }
@@ -1228,41 +1226,38 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	// bonsai panel dots requirement
 	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
-		hudManager->setWorldMessage("Needs Dots.");
+		hudManager->showInformationalMessage("Needs Dots.", 1.f);
 	}
 	else if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
-		hudManager->setWorldMessage("Stone Pillar needs Triangles.");
+		hudManager->showInformationalMessage("Stone Pillar needs Triangles.", 1.f);
 	}
 	else if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
-		hudManager->setWorldMessage("Needs Dots, Black/White Squares.");
+		hudManager->showInformationalMessage("Needs Dots, Black/White Squares.", 1.f);
 	}
 	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
-		hudManager->setWorldMessage("Most Bunker panels need Black/White Squares and Colored Squares.");
+		hudManager->showInformationalMessage("Most Bunker panels need Black/White Squares and Colored Squares.", 1.f);
 	}
 	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Eraser, Triangles,\n"
-											  "Stars, Stars + Same Colored Symbol.");
-		else hudManager->setWorldMessage("Needs Shapers and Eraser.");
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage("Needs Eraser, Triangles,\n"
+											  "Stars, Stars + Same Colored Symbol.", 1.f);
+		else hudManager->showInformationalMessage("Needs Shapers and Eraser.", 1.f);
 	}
 	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Symmetry and Triangles.");
-		else hudManager->setWorldMessage("Needs Symmetry and Dots.");
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage("Needs Symmetry and Triangles.", 1.f);
+		else hudManager->showInformationalMessage("Needs Symmetry and Dots.", 1.f);
 	}
 	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
 		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-			hudManager->setWorldMessage("Left Panel needs Stars and Shapers.\n"
-										"Right Panel needs Dots and Colored Squares.");
+			hudManager->showInformationalMessage("Left Panel needs Stars and Shapers.\n"
+										"Right Panel needs Dots and Colored Squares.", 1.f);
 		}
 		else
 		{
-			hudManager->setWorldMessage("Left Panel needs Stars and Shapers.");
+			hudManager->showInformationalMessage("Left Panel needs Stars and Shapers.", 1.f);
 		}
 	}
 	else if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-		hudManager->setWorldMessage("Right Panel needs Dots and Colored Squares.");
-	}
-	else {
-		hudManager->clearWorldMessage();
+		hudManager->showInformationalMessage("Right Panel needs Dots and Colored Squares.", 1.f);
 	}
 }
 
@@ -1554,7 +1549,7 @@ void APWatchdog::LookingAtObelisk() {
 	}
 
 	if (epToName.count(lookingAtEP)) {
-		hudManager->setWorldMessage(epToName[lookingAtEP]);
+		hudManager->showInformationalMessage(epToName[lookingAtEP], 1.f);
 	}
 
 	return;
@@ -1607,13 +1602,12 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	Memory::get()->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
 	if (dogFrames >= 4.0f) {
-		hudManager->setWorldMessage("Woof Woof!");
-
+		hudManager->showInformationalMessage("Woof Woof!", 3.f);
 		sentDog = true;
 	}
 	else
 	{
-		hudManager->setWorldMessage("Petting progress: " + std::to_string((int)(dogFrames * 100 / 4.0f)) + "%");
+		hudManager->showInformationalMessage("Petting progress: " + std::to_string((int)(dogFrames * 100 / 4.0f)) + "%", 0.2f);
 	}
 
 	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {

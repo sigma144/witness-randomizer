@@ -5,7 +5,7 @@
 #include "Memory.h"
 
 
-#define MAX_STRING_LENGTH 0x80
+#define STRING_DATA_SIZE 0x80
 
 #define NOTIFICATION_FLASH_TIME 1.f
 #define NOTIFICATION_HOLD_BRIGHT_TIME 3.f
@@ -25,7 +25,7 @@ HudManager::HudManager() {
 void HudManager::update(float deltaSeconds) {
 	updateBannerMessages(deltaSeconds);
 	updateNotifications(deltaSeconds);
-	//updateSubtitleMessages(deltaSeconds);
+	updateInformationalMessages(deltaSeconds);
 
 	InputWatchdog* input = InputWatchdog::get();
 	InteractionState interactionState = input->getInteractionState();
@@ -54,20 +54,15 @@ void HudManager::queueNotification(std::string text, RgbColor color) {
 	queuedNotifications.push(Notification(text, color));
 }
 
-void HudManager::showSubtitleMessage(std::string text, float duration) {
-	writeSubtitle({ text });
-	subtitleOverrideTimeRemaining = duration;
-}
-void HudManager::clearSubtitleMessage() {
-	subtitleOverrideTimeRemaining = 0;
-	hudTextDirty = true;
+void HudManager::showInformationalMessage(std::string text, float duration) {
+	if (text != informationalMessageString || informationalMessageTimeRemaining <= 0.f) {
+		informationalMessageString = text;
+		informationalMessageTimeRemaining = duration;
+	}
 }
 
-void HudManager::setWorldMessage(std::string text) {
-	if (worldMessage != text) {
-		worldMessage = text;
-		hudTextDirty = true;
-	}
+void HudManager::clearInformationalMessage() {
+	informationalMessageTimeRemaining = 0;
 }
 
 void HudManager::setWalkStatusMessage(std::string text) {
@@ -82,27 +77,6 @@ void HudManager::setSolveStatusMessage(std::string text) {
 		solveStatusMessage = text;
 		hudTextDirty = true;
 	}
-}
-
-void HudManager::setSubtitleSize(SubtitleSize size) {
-	//if (setSubtitleOffset == 0 || largeSubtitlePointerOffset == 0) {
-	//	return;
-	//}
-	//uint32_t sizeOffset;
-	//switch (size) {
-	//case SubtitleSize::Large:
-	//	sizeOffset = 0;
-	//	break;
-	//case SubtitleSize::Medium:
-	//	sizeOffset = 0x08;
-	//	break;
-	//case SubtitleSize::Small:
-	//	sizeOffset = 0x10;
-	//default:
-	//	sizeOffset = 0;
-	//}
-	//uint32_t fontPointerOffset = largeSubtitlePointerOffset + sizeOffset;
-	//Memory::get()->WriteRelative(reinterpret_cast<void*>(setSubtitleOffset), &fontPointerOffset, 0x4);
 }
 
 void HudManager::updateBannerMessages(float deltaSeconds) {
@@ -167,81 +141,34 @@ void HudManager::updateNotifications(float deltaSeconds) {
 			queuedNotifications.pop();
 
 			timeToNextNotification = 0.75f;
-		}
-	}
-}
-
-void HudManager::updateSubtitleMessages(float deltaSeconds) {
-	// If we're currently displaying a subtitle message, decrement its remaining time. If this exhausts the remaining time, mark
-	//   subtitles as needing refresh.
-	if (subtitleOverrideTimeRemaining > 0) {
-		subtitleOverrideTimeRemaining -= deltaSeconds;
-		if (subtitleOverrideTimeRemaining <= 0) {
-			// Mark subtitles as needing refreshing.
 			hudTextDirty = true;
 		}
+	}
+}
+
+void HudManager::updateInformationalMessages(float deltaSeconds) {
+	if (!informationalMessageString.empty()) {
+		if (informationalMessageTimeRemaining > 0.f) {
+			if (informationalMessageFadePercentage < 1.f) {
+				informationalMessageFadePercentage = std::min(informationalMessageFadePercentage + deltaSeconds * 3.f, 1.f);
+				hudTextDirty = true;
+			}
+			else {
+				informationalMessageTimeRemaining -= deltaSeconds;
+			}
+		}
 		else {
-			// Do not process any further subtitle logic, since we're still overriding the contents.
-			return;
-		}
-	}
+			informationalMessageFadePercentage = std::max(informationalMessageFadePercentage - deltaSeconds * 3.f, 0.f);
+			hudTextDirty = true;
 
-	if (hudTextDirty) {
-		// When displaying system-level messages like input hints or status displays, we use the built-in subtitle functionality
-		//   to render the text. This shows up to three lines of text, represented as separate strings.
-		// We have up to three messages to show to the user, which we will show in a fixed order:
-		//  - world messages		Quarry Laser requires Shapers and Erasers.
-		//  - status messages		Speed boost! 30 seconds remaining.
-		//  - action hints			[Hold TAB] Skip puzzle (have 2 skips).
-		// Additionally, we only want to show complete messages, so if any of these messages would not be fully representable in
-		//   the three available lines, don't show them.
-		std::vector<std::string> lines;
-		if (!solveStatusMessage.empty()) {
-			std::vector<std::string> expandedHint = separateLines(solveStatusMessage);
-			lines.insert(lines.begin(), expandedHint.begin(), expandedHint.end());
-		}
-
-		if (!walkStatusMessage.empty()) {
-			std::vector<std::string> expandedStatus = separateLines(walkStatusMessage);
-			if (lines.size() + expandedStatus.size() <= 3) {
-				lines.insert(lines.begin(), expandedStatus.begin(), expandedStatus.end());
+			if (informationalMessageFadePercentage <= 0) {
+				informationalMessageString.clear();
 			}
 		}
-
-		if (!worldMessage.empty()) {
-			std::vector<std::string> expandedWorld = separateLines(worldMessage);
-			if (lines.size() + expandedWorld.size() <= 3) {
-				lines.insert(lines.begin(), expandedWorld.begin(), expandedWorld.end());
-			}
-		}
-
-		writeSubtitle(lines);
-		hudTextDirty = false;
 	}
 }
 
-void HudManager::writeSubtitle(std::vector<std::string> lines) {
-	// Subtitle rendering ignores newlines in favor of having separate draw calls for each line, so we need to split each input
-	//   line by newline characters and append those to the list.
-	std::vector<std::string> expandedLines;
-	for (const std::string& line : lines) {
-		std::vector<std::string> splitLines = separateLines(line);
-		expandedLines.insert(expandedLines.end(), splitLines.begin(), splitLines.end());
-	}
-
-	// Since we want to keep this text as low on the screen as possible, we need to write our text using the lowest possible rows.
-	//   In order to do this, we can compute an offset into the list of lines based on its size such that the last line in the
-	//   list corresponds to the last line in the subtitle.
-	int lineOffset = std::max(3 - (int)expandedLines.size(), 0); // NOTE: This will only display the first three lines.
-
-	Memory::get()->DisplaySubtitles(
-		0 - lineOffset >= 0 ? expandedLines[0 - lineOffset] : "",
-		1 - lineOffset >= 0 ? expandedLines[1 - lineOffset] : "",
-		2 - lineOffset >= 0 ? expandedLines[2 - lineOffset] : ""
-	);
-}
-
-std::vector<std::string> HudManager::separateLines(std::string input) {
+std::vector<std::string> HudManager::separateLines(std::string input, int maxLength) {
 	// First, split the string into lines based on newlines.
 	std::vector<std::string> splitLines;
 	std::string::size_type searchIndex = 0, previousIndex = 0;
@@ -263,12 +190,12 @@ std::vector<std::string> HudManager::separateLines(std::string input) {
 	// Next, check every line for length and, if they are exceedingly long, split them into wrapped strings by length.
 	std::vector<std::string> wrappedLines;
 	for (const std::string& line : splitLines) {
-		if (line.length() > MAX_STRING_LENGTH) {
+		if (line.length() > maxLength) {
 			// The line is longer than our max width and needs to be wrapped.
 			std::string choppedLine = line;
-			while (choppedLine.length() > MAX_STRING_LENGTH) {
+			while (choppedLine.length() > maxLength) {
 				// Find the closest space character to the end of the line.
-				searchIndex = choppedLine.rfind(' ', MAX_STRING_LENGTH);
+				searchIndex = choppedLine.rfind(' ', maxLength);
 				if (searchIndex != std::string::npos) {
 					// We found a space. Separate the string at that character and keep working.
 					wrappedLines.push_back(choppedLine.substr(0, searchIndex));
@@ -276,8 +203,8 @@ std::vector<std::string> HudManager::separateLines(std::string input) {
 				}
 				else {
 					// There was no space in the previous line. Simply split the string mid-word.
-					wrappedLines.push_back(choppedLine.substr(0, MAX_STRING_LENGTH));
-					choppedLine = choppedLine.substr(MAX_STRING_LENGTH);
+					wrappedLines.push_back(choppedLine.substr(0, maxLength));
+					choppedLine = choppedLine.substr(maxLength);
 				}
 			}
 
@@ -350,54 +277,10 @@ void HudManager::overwriteSubtitleFunction() {
 	// Reserve memory for the payload.
 	address_hudTextPayload = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-	//uint64_t address_tempLineCount = dataPayload;
-	//uint64_t address_tempHorizAlignment = dataPayload + 0x08;
-	//uint64_t address_tempVerticalAlignment = dataPayload + 0x10;
-	//uint64_t address_tempString = dataPayload + 0x18;
-
 	const float margin_width = 0.02f;
 	const float line_spacing = 1.0f;
 	const float line_top_adjust = 0.25f;
 	const float shadow_depth_pixels = 2.f;
-
-	//uint64_t temp_writer = address_payload;
-
-	//// payload info
-	//uint32_t tempBlockCount = 3;
-	//WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + payloadInfo_address_blockCount), &tempBlockCount, sizeof(uint32_t), NULL);
-	//temp_writer += payloadInfo_totalSize;
-
-	//// block info
-	//for (int blockId = 0; blockId < tempBlockCount; blockId++) {
-	//	uint32_t tempLineCount = 4;
-	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_lineCount), &tempLineCount, sizeof(uint32_t), NULL);
-
-	//	float tempHorizAlignment = blockId * 0.5f;
-	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_horizontalAlignment), &tempHorizAlignment, sizeof(float), NULL);
-
-	//	float tempHorizPosition = blockId * 0.5f;
-	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_horizontalPosition), &tempHorizPosition, sizeof(float), NULL);
-
-	//	float tempVerticalAlignment = blockId * 0.5f;
-	//	WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + blockInfo_address_vertPosition), &tempVerticalAlignment, sizeof(float), NULL);
-
-	//	temp_writer += blockInfo_totalSize;
-
-	//	for (int lineId = 0; lineId < tempLineCount; lineId++) {
-	//		RgbColor tempColor(1.f,tempHorizAlignment,lineId*0.3f,0.5f+lineId*0.15f);
-	//		uint32_t tempArgb = tempColor.argb();
-	//		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + lineInfo_address_color), &tempArgb, sizeof(uint32_t), NULL);
-
-	//		std::stringstream lineText;
-	//		lineText << "BLOCK: " << blockId + 1 << ", string: " << (lineId + 1);
-
-	//		char stringBuff[SUBTITLE_MAX_LINE_LENGTH];
-	//		strcpy_s(stringBuff, lineText.str().c_str());
-	//		WriteProcessMemory(memory->_handle, (LPVOID)(temp_writer + lineInfo_address_string), stringBuff, sizeof(stringBuff), NULL);
-
-	//		temp_writer += lineInfo_totalSize;
-	//	}
-	//}
 
 ////// BEGIN REPLACEMENT FUNCTION
 
@@ -981,7 +864,7 @@ void HudManager::writePayload() const {
 				textColor.A = (1.f - notificationBrightValue) * flashPercent + notificationBrightValue;
 			}
 
-			std::vector<std::string> expandedLines = separateLines(notification.text);
+			std::vector<std::string> expandedLines = separateLines(notification.text, 60);
 			for (const std::string& lineText : expandedLines) {
 				HudTextLine lineData;
 				lineData.textColor = textColor;
@@ -995,30 +878,34 @@ void HudManager::writePayload() const {
 		temp_payload.blocks.push_back(notificationBlock);
 	}
 
-	//// TEMP: hint
-	//temp_block.horizontalAlignment = 0.5f;
-	//temp_block.horizontalPosition = 0.5f;
-	//temp_block.verticalPosition = 0.25f;
-	//temp_block.lines.clear();
+	// Show informational message in the center of the screen.
+	if (!informationalMessageString.empty()) {
+		HudTextBlock informationalMessageBlock;
+		informationalMessageBlock.horizontalAlignment = 0.5f;
+		informationalMessageBlock.horizontalPosition = 0.5f;
+		informationalMessageBlock.verticalPosition = 0.15f;
 
-	//temp_line.textColor = RgbColor(1.f, 1.f, 1.f, 1.f);
-	//temp_line.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.6f);
-	//temp_line.text = "Your Shapers may be found in blastron's world at";
-	//temp_block.lines.push_back(temp_line);
-	//temp_line.text = "Inside Deku Tree back room Skulltulla 2.";
-	//temp_block.lines.push_back(temp_line);
-	//temp_payload.blocks.push_back(temp_block);
+		std::vector<std::string> expandedLines = separateLines(informationalMessageString);
+		for (const std::string& lineText : expandedLines) {
+			HudTextLine lineData;
+			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 1.f * informationalMessageFadePercentage);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.8f * informationalMessageFadePercentage);
+			lineData.text = lineText;
 
-	//temp_payload.blocks.push_back(temp_block);
+			informationalMessageBlock.lines.push_back(lineData);
+		}
+
+		temp_payload.blocks.push_back(informationalMessageBlock);
+	}
 
 	// HACK: The rendering code currently crashes if there are zero blocks present. Add a placeholder block.
 	if (temp_payload.blocks.size() == 0) {
 		HudTextBlock testBlock;
 		testBlock.verticalPosition = 1;
 		HudTextLine testLine;
-		testLine.textColor = RgbColor(1.f, 1.f, 1.f, 0.1f);
-		testLine.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.1f);
-		testLine.text = "we must always have a text block or we crash, oops";
+		testLine.textColor = RgbColor(1.f, 1.f, 1.f, 0.0f);
+		testLine.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.0f);
+		testLine.text = "hack";
 		testBlock.lines.push_back(testLine);
 		temp_payload.blocks.push_back(testBlock);
 	}
@@ -1051,9 +938,9 @@ void HudManager::writePayload() const {
 			uint32_t arbgShadowColor = line.shadowColor.argb();
 			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t), NULL);
 
-			char stringBuff[MAX_STRING_LENGTH];
-			strncpy_s(stringBuff, line.text.c_str(), MAX_STRING_LENGTH);
-			stringBuff[MAX_STRING_LENGTH - 1] = 0; // forcibly null-terminate in case the string is too long
+			char stringBuff[STRING_DATA_SIZE];
+			strncpy_s(stringBuff, line.text.c_str(), STRING_DATA_SIZE);
+			stringBuff[STRING_DATA_SIZE - 1] = 0; // forcibly null-terminate in case the string is too long
 			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff), NULL);
 
 			// Advance write pointer past the line information.
