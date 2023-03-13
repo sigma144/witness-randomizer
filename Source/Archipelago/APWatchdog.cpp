@@ -434,7 +434,7 @@ void APWatchdog::TriggerPowerSurge() {
 		hasPowerSurge = true;
 		powerSurgeStartTime = std::chrono::system_clock::now();
 
-		for (const auto& panelId : AllPuzzles) {
+		for (const auto& panelId : actuallyEveryPanel) {
 			/*if (ReadPanelData<int>(panelId, SOLVED))
 				continue;*/
 
@@ -456,7 +456,7 @@ void APWatchdog::HandlePowerSurge() {
 void APWatchdog::ResetPowerSurge() {
 	hasPowerSurge = false;
 
-	for (const auto& panelId : AllPuzzles) {
+	for (const auto& panelId : actuallyEveryPanel) {
 		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
 		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
@@ -1685,31 +1685,38 @@ void APServerPoller::action() {
 
 void APWatchdog::CheckDeathLink() {
 	if (!DeathLink) return;
-	if (mostRecentActivePanelId == -1 || !actuallyEveryPanel.count(mostRecentActivePanelId)) return;
-	if (deathlinkExcludeList.count(mostRecentActivePanelId)) return;
+
+	int panelIdToConsider = mostRecentActivePanelId;
+
+	for (int panelId : alwaysDeathLinkPanels) {
+		if (ReadPanelData<int>(panelId, FLASH_MODE) == 2) panelIdToConsider = panelId;
+	}
+
+	if (panelIdToConsider == -1 || !actuallyEveryPanel.count(panelIdToConsider)) return;
+	if (deathlinkExcludeList.count(panelIdToConsider)) return;
 	if (PuzzleRandomization == SIGMA_EXPERT && 0x03C0C) return;
 
-	int newState = ReadPanelData<int>(mostRecentActivePanelId, FLASH_MODE);
+	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE);
 
 	if (mostRecentPanelState != newState) {
 		mostRecentPanelState = newState;
 
 		if (newState == 2) {
-			SendDeathLink();
+			SendDeathLink(mostRecentActivePanelId);
 			hudManager->queueBannerMessage("Death Sent.");
 		}
 	}
 }
 
-void APWatchdog::SendDeathLink()
+void APWatchdog::SendDeathLink(int panelId)
 {
 	auto now = std::chrono::system_clock::now();
 	double nowDouble = (double)std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() / 1000;
 
-	std::string entityName = std::to_string(mostRecentActivePanelId);
+	std::string entityName = std::to_string(panelId);
 
-	if (entityToName.count(mostRecentActivePanelId)) {
-		entityName = entityToName[mostRecentActivePanelId];
+	if (entityToName.count(panelId)) {
+		entityName = entityToName[panelId];
 	}
 
 	deathLinkTimestamps.insert(nowDouble);
@@ -1728,7 +1735,7 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 	double a = -1;
 
 	for (double b : deathLinkTimestamps) {
-		if (fabs(a - b) < std::numeric_limits<double>::epsilon() * fmax(fabs(a), fabs(b))) { // double equality with some leeway because of conversion back and forth from/to JSON
+		if (fabs(time - b) < std::numeric_limits<double>::epsilon() * fmax(fabs(time), fabs(b))) { // double equality with some leeway because of conversion back and forth from/to JSON
 			a = b;
 		}
 	}

@@ -124,7 +124,7 @@ private:
 	void CheckEPSkips();
 
 	void CheckDeathLink();
-	void SendDeathLink();
+	void SendDeathLink(int panelId);
 
 	void QueueItemMessages();
 
