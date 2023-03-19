@@ -3,6 +3,7 @@
 #include "ASMBuilder.h"
 #include "Input.h"
 #include "Memory.h"
+#include <cassert>
 
 
 #define STRING_DATA_SIZE 0x80
@@ -14,10 +15,11 @@
 #define NOTIFICATION_FADE_TIME 10.f
 #define NOTIFICATION_TOTAL_TIME (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME + NOTIFICATION_FADE_TIME)
 
+// Verifies that sigscans are working by comparing them against hardcoded values in the Steam build.
+#define DEBUG_SIGSCAN 0
+
 
 HudManager::HudManager() {
-	findSetSubtitleOffsets();
-	//setSubtitleSize(SubtitleSize::Small);
 	overwriteSubtitleFunction();
 	writePayload();
 }
@@ -220,59 +222,131 @@ std::vector<std::string> HudManager::separateLines(std::string input, int maxLen
 	return wrappedLines;
 }
 
-void HudManager::findSetSubtitleOffsets() {
-	// Find hud_draw_subtitles. We can do so by looking for where it loads its color information from constants, which seems to be
-	//   a unique set of instructions:
-	uint64_t drawSubtitleOffset = Memory::get()->executeSigScan({
-		0x0F, 0x57, 0xFF,		// XORPS XMM7, XMM7
-		0x0F, 0x28, 0xD7,
-		0x0F, 0x28, 0xCF
-	});
+uint32_t HudManager::findSubtitleFunction() {
+	Memory* memory = Memory::get();
+	uint64_t processBaseAddress = memory->getBaseAddress();
 
-	if (drawSubtitleOffset == UINT64_MAX) {
-		setSubtitleOffset = 0;
-		largeSubtitlePointerOffset = 0;
-		return;
+	// Find a unique spot in hud_get_subtitles.
+	uint64_t nearSubtitleOffset = memory->executeSigScan({
+		0x48, 0x89, 0xB4, 0x24,			// MOV qword ptr [RSP + 0xC8], RSI
+		0xC8, 0x00, 0x00, 0x00,
+		0x48, 0x8D, 0x4B, 0x08,			// LEA RCX, [RBX + 0x8]
+		0x4C, 0x8D, 0x84, 0x24,			// LEA R8, [RSP + 0xE8]
+		0xE8, 0x00, 0x00, 0x00
+	}, processBaseAddress);
+
+	if (nearSubtitleOffset == UINT64_MAX) {
+		throw std::exception("Unable to find marker within hud_draw_subtitles.");
+		return UINT32_MAX;
 	}
 
-	// Next, find the address of the call that sets the subtitle size. Skip ahead:
-	//  0x0F, 0x11, 0x44, 0x24, 0x40
-	//  0x0F, 0x28, 0xC7
-	//  0xE8, 0x60, 0xF8, 0x0F, 0x00	// CALL argb_color (makes black)
-	//  0x48, 0x8D, 0x4C, 0x24, 0x40
-	//  0x44, 0x8B, 0xE0
-	//  0xE8, 0xF3, 0xF7, 0x0F, 0x00	// CALL argb_color (makes white)
-	//  0x4C, 0x8B, 0x3D				// |
-	//  ____, ____, ____, ____			// MOV R15, qword ptr [globals.subtitles_font]
-	setSubtitleOffset = drawSubtitleOffset + 0x9 + 0x1D;
+	// Work backwards to find the function.
+	uint64_t nearSubtitleAddress = processBaseAddress + nearSubtitleOffset;
+	uint64_t functionStartOffset = memory->executeSigScan({
+		0xCC, 0xCC, 0xCC, 0xCC,			// padding
+		0x48, 0x81, 0xEC,				// SUB RSP, 0xD8
+		0xD8, 0x00, 0x00, 0x00
+	}, nearSubtitleAddress - 0x80);
 
-	// Finally, get the offset that is ordinarily used by this MOV operation, which corresponds to globals.subtitles_font. (We don't
-	//   want to dereference this here, only get the address of the pointer itself, because we'll be changing which font we're
-	//   pointing to rather than modifying the font itself.
-	largeSubtitlePointerOffset = 0;
-	if (!Memory::get()->ReadRelative(reinterpret_cast<void*>(setSubtitleOffset), &largeSubtitlePointerOffset, 0x4)) {
-		setSubtitleOffset = 0;
-		largeSubtitlePointerOffset = 0;
+	if (functionStartOffset == UINT64_MAX || functionStartOffset > 0x80) {
+		throw std::exception("Unable to find start of hud_draw_subtitles.");
+		return UINT32_MAX;
 	}
+
+	uint64_t functionStartAddress = nearSubtitleAddress - 0x80 + functionStartOffset + 0x4;
+	uint32_t relativeAddress = functionStartAddress - processBaseAddress;
+
+#if DEBUG_SIGSCAN
+	if (relativeAddress != 0x1E99A0) {
+		throw std::exception("Found address for hud_draw_subtitles does not match expected value.");
+		return UINT32_MAX;
+	}
+#endif
+
+	return relativeAddress;
 }
 
 void HudManager::overwriteSubtitleFunction() {
 	Memory* memory = Memory::get();
+	uint64_t processBaseAddress = memory->getBaseAddress();
 
-	// Offsets of key functions. TODO: Determine these through sigscans.
-	uint32_t func_hud_draw_subtitles = 0x1E99A0;
-	uint32_t func_get_string_width = 0x3430A0;
-	uint32_t func_rendering_2D_right_handed = 0x25a330;
-	uint32_t func_apply_2D_shader = 0x2581C0;
-	uint32_t func_im_begin = 0x33f5b0;
-	uint32_t func_im_flush = 0x33f5e0;
-	uint32_t func_draw_text = 0x259380;
+	// Find the base subtitle function.
+	uint32_t func_hud_draw_subtitles = findSubtitleFunction();
+	if (func_hud_draw_subtitles == UINT32_MAX) return;
 
-	// Offsets of key globals
-	uint32_t globals_shader_text = 0x62D400;
-	uint32_t global_subtitle_font = 0x62D458;
-	uint32_t screen_target_width = 0x469A5F0;
-	uint32_t screen_target_height = 0x469A5F4;
+	// Scan forward from there to find remaining offsets.
+	uint32_t func_rendering_2D_right_handed = memory->scanForRelativeAddress({
+		0x44, 0x0F, 0x29, 0x44,		// MOVAPS xmmword ptr [rsp+0x70], xmm8
+		0x24, 0x70,
+		0x33, 0xC9,					// XOR ECX, ECX
+		0xE8 /*...*/				// CALL ...
+	}, func_hud_draw_subtitles) + 0x4;
+
+	uint32_t globals_shader_text = memory->scanForRelativeAddress({
+		0x44, 0x0F, 0x29, 0x44,		// MOVAPS xmmword ptr [rsp+0x70], xmm8
+		0x24, 0x70,
+		0x33, 0xC9,					// XOR ECX, ECX
+		0xE8 /*...*/				// CALL ...
+	}, func_hud_draw_subtitles, 7) + 0x4;
+
+	uint32_t func_apply_2D_shader = memory->scanForRelativeAddress({
+		0x44, 0x0F, 0x29, 0x44,		// MOVAPS xmmword ptr [rsp+0x70], xmm8
+		0x24, 0x70,
+		0x33, 0xC9,					// XOR ECX, ECX
+		0xE8 /*...*/				// CALL ...
+	}, func_hud_draw_subtitles, 12) + 0x4;
+
+	uint32_t func_get_string_width = memory->scanForRelativeAddress({
+		0x49, 0x8B, 0xCF,			// MOV RCX, R15
+		0x49, 0x8B, 0x14, 0x06,		// MOV RDX, qword ptr [R14 + RAX * 0x1]
+		0xE8						// CALL ...
+	}, func_hud_draw_subtitles) + 0x4;
+
+	uint32_t screen_target_width = memory->scanForRelativeAddress({
+		0x8B, 0x07,					// MOV EAX, dword ptr [RDI]
+		0x66, 0x0F, 0x6E, 0x05		// MOVD XMM0, dword ptr [...]
+	}, func_hud_draw_subtitles);
+	uint32_t screen_target_height = screen_target_width + 0x4;
+
+	uint32_t global_subtitle_font = memory->scanForRelativeAddress({
+		0x48, 0x8D, 0x4C, 0x24, 0x40, // LEA RCX, [RSP+0x40]
+		0x44, 0x8B, 0xE0,			// MOV R12D, EAX
+		0xE8						// CALL ...
+	}, func_hud_draw_subtitles, 0x7) + 0x4 + 0x10;
+
+	uint32_t func_im_begin = memory->scanForRelativeAddress({
+		0xF3, 0x41, 0x0F, 0x59, 0xF8, // MULSS XMM7, XMM8
+		0xF3, 0x0F, 0x58, 0xF8,		// ADDSS XMM7, XMM0
+		0xE8						// CALL ...
+	}, func_hud_draw_subtitles) + 0x4;
+
+	uint32_t func_im_flush = memory->scanForRelativeAddress({
+		0x44, 0x0F, 0x28, 0x54,		// MOVAPS XMM10, xmmword ptr [rsp+0x50]
+		0x24, 0x50,
+		0x44, 0x0F, 0x28, 0x4C,		// MOVAPS XMM9, xmmword ptr [rsp+0x60]
+		0x24, 0x60,
+		0xE8 /*...*/				// CALL ...
+	}, func_hud_draw_subtitles) + 0x4;
+
+	uint32_t func_draw_text = memory->scanForRelativeAddress({
+		0xF3, 0x41, 0x0F, 0x59, 0xF2, // MULSS XMM6, XMM10
+		0x0F, 0x28, 0xCE,			// MOVAPS XMM1, XMM6
+		0xE8 /*...*/				// CALL ...
+	}, func_hud_draw_subtitles) + 0x4;
+
+#if DEBUG_SIGSCAN
+	assert(func_get_string_width == 0x3430A0);
+	assert(func_rendering_2D_right_handed == 0x25a330);
+	assert(func_apply_2D_shader == 0x2581C0);
+	assert(func_im_begin == 0x33f5b0);
+	assert(func_im_flush == 0x33f5e0);
+	assert(func_draw_text == 0x259380);
+
+	assert(globals_shader_text == 0x62D400);
+	assert(global_subtitle_font == 0x62D458);
+	assert(screen_target_width == 0x469A5F0);
+	assert(screen_target_height == 0x469A5F4);
+#endif
 
 	// Reserve memory for the payload.
 	address_hudTextPayload = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);

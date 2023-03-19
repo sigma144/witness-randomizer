@@ -456,8 +456,6 @@ void APRandomizer::PostGeneration() {
 	for (int panel : desertPanels) {
 		memory->UpdatePanelJunctions(panel);
 	}
-
-	memory->DisplaySubtitles("", "", "");
 	
 	setPuzzleLocks();
 

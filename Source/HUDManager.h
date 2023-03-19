@@ -78,7 +78,6 @@ private:
 	std::string solveStatusMessage;
 	bool hudTextDirty = false;
 
-	void findSetSubtitleOffsets();
 
 	struct HudTextLine {
 		RgbColor textColor = RgbColor(1.f,1.f,1.f,1.f);
@@ -123,8 +122,11 @@ private:
 		const static uint32_t totalDataSize;
 	};
 
-	uint64_t address_hudTextPayload = 0;
+	uint32_t findSubtitleFunction();
+
 	void overwriteSubtitleFunction();
+
+	uint64_t address_hudTextPayload = 0;
 	void writePayload() const;
 
 	uint64_t setSubtitleOffset;
