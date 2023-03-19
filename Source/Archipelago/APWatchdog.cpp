@@ -16,7 +16,7 @@
 #include "PanelRestore.h"
 
 
-#define CHEAT_KEYS_ENABLED 1
+#define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
 APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf) : Watchdog(0.033f) {
