@@ -17,7 +17,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
@@ -52,6 +52,9 @@ public:
 
 	void InfiniteChallenge(bool enable);
 
+	void ProcessDeathLink(double time, std::string cause, std::string source);
+
+
 	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
@@ -66,6 +69,7 @@ private:
 	PanelLocker* panelLocker;
 	std::shared_ptr<Generate> generator;
 	std::map<int, int> panelIdToLocationId;
+	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	int finalPanel;
 	bool isCompleted = false;
 
@@ -76,6 +80,7 @@ private:
 
 	std::shared_ptr<HudManager> hudManager;
 
+	bool DeathLink = false;
 	bool EPShuffle = false;
 	int PuzzleRandomization = 0;
 
@@ -83,6 +88,8 @@ private:
 
 	bool hasPowerSurge = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
+
+	std::set<double> deathLinkTimestamps;
 
 	const float baseSpeed = 2.0f;
 
@@ -100,11 +107,24 @@ private:
 	float speedTime = 0.0f;
 	float solveModeSpeedFactor = 0.0f;
 
+	bool infiniteChallenge = false;
+	bool insideChallengeBoxRange = true;
+
+	bool symmetryMessageDelivered = false;
+	bool ppMessageDelivered = false;
+
+	float lastPPState = 1.0f;
+
+	void CheckSymmetryPowerCableBug();
+
 	void HandleKeyTaps();
 
 	void HandleInteractionState();
 	
 	void CheckEPSkips();
+
+	void CheckDeathLink();
+	void SendDeathLink(int panelId);
 
 	void QueueItemMessages();
 
@@ -150,6 +170,8 @@ private:
 	int GetActivePanel();
 	void WriteMovementSpeed(float currentSpeed);
 
+	void UpdateInfiniteChallenge();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
@@ -161,6 +183,9 @@ private:
 	int currentAudioLog = -1;
 
 	int activePanelId = -1;
+	int mostRecentActivePanelId = -1;
+	int mostRecentPanelState = -1;
+
 	std::string puzzleSkipInfoMessage;
 	float skipButtonHeldTime = 0.f; // Tracks how long the skip button has been held.
 
@@ -171,7 +196,7 @@ private:
 	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
-	std::map<int, std::string> epToName = {};
+	std::map<int, std::string> entityToName = {};
 
 	std::vector<float> lastMousePosition = { 0,0,0 };
 	float dogFrames = 0.0f;
@@ -185,6 +210,7 @@ private:
 	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
 	CollisionCube quarryLaserPanel = CollisionCube(-59, 90, 17, -67, 100, 21);
 	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6f, -185, 37, 17);
+	CollisionCube challengeTimer = CollisionCube(-27, -40, -20, -50, -20, -4);
 
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 

@@ -1742,6 +1742,29 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 	}
+	else if (id == 0x03629) { // Tutorial Gate Latches
+		if (!memory->ReadPanelData<int>(0x288E8, 0x1E4))
+		{
+			memory->OpenDoor(0x288E8);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+
+		if (!memory->ReadPanelData<int>(0x288F3, 0x1E4))
+		{
+			memory->OpenDoor(0x288F3);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+
+		if (!memory->ReadPanelData<int>(0x28942, 0x1E4))
+		{
+			memory->OpenDoor(0x28942);
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		}
+
+		memory->PowerGauge(0x003C4, 0x3F, 3);
+		memory->PowerGauge(0x003C4, 0x3C, 2);
+		memory->PowerGauge(0x003C4, 0x51, 1);
+	}
 
 	memory->UpdatePanelJunctions(id);
 

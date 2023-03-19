@@ -13,6 +13,7 @@
 #include <thread>
 #include "../Randomizer.h"
 #include "../DateTime.h"
+#include "../ClientWindow.h"
 #include "PanelRestore.h"
 
 
@@ -23,17 +24,23 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
+
+	for (auto [key, value] : panelIdToLocationId) {
+		locationIdToPanelId_READ_ONLY[value] = key;
+	}
+
+	DeathLink = dl;
 	finalPanel = lastPanel;
 	panelLocker = p;
 	audioLogMessages = a;
 	state = s;
 	EPShuffle = ep;
 	obeliskHexToEPHexes = o;
-	epToName = epn;
+	entityToName = epn;
 	solveModeSpeedFactor = smsf;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
-	if (speedTime == 0.6999999881) { // original value
+	if (speedTime == 0.6999999881f) { // original value
 		speedTime = 0;
 	}
 
@@ -51,6 +58,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	if (puzzle_rando == SIGMA_EXPERT) {
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
+		panelsThatHaveToBeSkippedForEPPurposes.insert(0x03629); // Tutorial Gate Open
 	}
 
 	lastFrameTime = std::chrono::system_clock::now();
@@ -69,6 +77,10 @@ void APWatchdog::action() {
 
 	UpdatePuzzleSkip(frameDuration.count());
 
+	CheckDeathLink();
+
+	CheckSymmetryPowerCableBug();
+
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -83,6 +95,8 @@ void APWatchdog::action() {
 		DisableCollisions();
 		RefreshDoorCollisions();
 		AudioLogPlaying();
+
+		UpdateInfiniteChallenge();
 
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
@@ -111,6 +125,7 @@ void APWatchdog::HandleInteractionState() {
 		if (stateChanged) {
 			// The player has started solving a puzzle. Update our active panel ID to match.
 			activePanelId = GetActivePanel();
+			mostRecentActivePanelId = activePanelId;
 		}
 	}
 	else if (interactionState != InteractionState::Focusing) {
@@ -311,67 +326,62 @@ void APWatchdog::CheckSolvedPanels() {
 
 void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 {
-	auto it = panelIdToLocationId.begin();
-	while (it != panelIdToLocationId.end())
-	{
-		if (it->second == locationId) {
-			if (actuallyEveryPanel.count(it->first)) {
-				if (collect && !ReadPanelData<int>(it->first, SOLVED)) {
-					__int32 skipped = ReadPanelData<__int32>(it->first, VIDEO_STATUS_COLOR);
+	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
+	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
-					if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
-						it = panelIdToLocationId.erase(it);
-						continue;
-					}
+	if (actuallyEveryPanel.count(panelId)) {
+		if (collect && !ReadPanelData<int>(panelId, SOLVED)) {
+			__int32 skipped = ReadPanelData<__int32>(panelId, VIDEO_STATUS_COLOR);
 
-					if (it->first == 0x17DC4 || it->first == 0x17D6C || it->first == 0x17DA2 || it->first == 0x17DC6 || it->first == 0x17DDB || it->first == 0x17E61 || it->first == 0x014D1 || it->first == 0x09FD2 || it->first == 0x034E3) {
-						std::vector<int> bridgePanels;
-						if (it->first == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
-						else if (it->first == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
-						else if (it->first == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
-						else if (it->first == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
-						else if (it->first == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
-						else if (it->first == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
-						else if (it->first == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
-						else if (it->first == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
-						else if (it->first == 0x034E3) bridgePanels = { 0x034E4 };
-
-						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-						Special::SkipPanel(it->first, "Collected", false);
-						WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED });
-
-						for (int panel : bridgePanels) {
-							if (ReadPanelData<int>(panel, SOLVED)) continue;
-
-							if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
-							Special::SkipPanel(panel, "Collected", false);
-							WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
-						}
-					}
-					else {
-						if (panelLocker->PuzzleIsLocked(it->first)) panelLocker->PermanentlyUnlockPuzzle(it->first);
-						Special::SkipPanel(it->first, "Collected", false);
-						if (it->first != 0x01983 && it->first != 0x01983) WritePanelData<float>(it->first, POWER, { 1.0f, 1.0f });
-						if(!skip_completelyExclude.count(it->first)) WritePanelData<__int32>(it->first, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
-						WritePanelData<__int32>(it->first, NEEDS_REDRAW, { 1 });
-					}
-				}
+			if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
+				if(panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
+				return;
 			}
 
-			else if (allEPs.count(it->first) && collect) {
-				int eID = it->first;
+			if (panelId == 0x17DC4 || panelId == 0x17D6C || panelId == 0x17DA2 || panelId == 0x17DC6 || panelId == 0x17DDB || panelId == 0x17E61 || panelId == 0x014D1 || panelId == 0x09FD2 || panelId == 0x034E3) {
+				std::vector<int> bridgePanels;
+				if (panelId == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
+				else if (panelId == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
+				else if (panelId == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
+				else if (panelId == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
+				else if (panelId == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
+				else if (panelId == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
+				else if (panelId == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
+				else if (panelId == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
+				else if (panelId == 0x034E3) bridgePanels = { 0x034E4 };
 
-				Memory::get()->SolveEP(eID);
-				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
-					Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
+				Special::SkipPanel(panelId, "Collected", false);
+				WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED });
+
+				for (int panel : bridgePanels) {
+					if (ReadPanelData<int>(panel, SOLVED)) continue;
+
+					if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
+					Special::SkipPanel(panel, "Collected", false);
+					WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
 				}
 			}
-
-			it = panelIdToLocationId.erase(it);
+			else {
+				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
+				Special::SkipPanel(panelId, "Collected", false);
+				if (panelId != 0x01983 && panelId != 0x01983) WritePanelData<float>(panelId, POWER, { 1.0f, 1.0f });
+				if (!skip_completelyExclude.count(panelId)) WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+				WritePanelData<__int32>(panelId, NEEDS_REDRAW, { 1 });
+			}
 		}
-		else
-			it++;
 	}
+
+	else if (allEPs.count(panelId) && collect) {
+		int eID = panelId;
+
+		Memory::get()->SolveEP(eID);
+		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID) && EPShuffle) {
+			Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+		}
+	}
+
+	if (panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
 }
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
@@ -422,9 +432,9 @@ void APWatchdog::TriggerPowerSurge() {
 		hasPowerSurge = true;
 		powerSurgeStartTime = std::chrono::system_clock::now();
 
-		for (const auto& panelId : AllPuzzles) {
-			if (ReadPanelData<int>(panelId, SOLVED))
-				continue;
+		for (const auto& panelId : actuallyEveryPanel) {
+			/*if (ReadPanelData<int>(panelId, SOLVED))
+				continue;*/
 
 			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
@@ -444,7 +454,7 @@ void APWatchdog::HandlePowerSurge() {
 void APWatchdog::ResetPowerSurge() {
 	hasPowerSurge = false;
 
-	for (const auto& panelId : AllPuzzles) {
+	for (const auto& panelId : actuallyEveryPanel) {
 		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
 		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
@@ -597,6 +607,23 @@ int APWatchdog::CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessag
 			return 1;
 		}
 	}
+	else if (puzzleId == 0x03629) {
+		// Tutorial Gate Open. Check for latch.
+		int latchAmount = 0;
+
+		latchAmount += ReadPanelData<int>(0x288E8, DOOR_OPEN) == 0;
+		latchAmount += ReadPanelData<int>(0x288F3, DOOR_OPEN) == 0;
+		latchAmount += ReadPanelData<int>(0x28942, DOOR_OPEN) == 0;
+
+		if (latchAmount) {
+			specialMessage = "Skipping this panel costs 1 Puzzle Skip per unopened latch.";
+			return latchAmount;
+		}
+		else {
+			specialMessage = "";
+			return -1;
+		}
+	}
 	else if (puzzleId == 0x09FDA) {
 		// Metapuzzle. This can only be skipped if all child puzzles are skipped too.
 		//   TODO: This flow here is a little confusing to read, because PuzzleIsSkippable returns true, but the cost
@@ -670,8 +697,8 @@ void APWatchdog::UnlockDoor(int id) {
 	if (id == 0x0CF2A) { // River to Garden door
 		disableCollisionList.insert(id);
 
-		WritePanelData<float>(0x17CAA, POSITION, { 36.694f, -41.883f, 16.570f });
-		WritePanelData<float>(0x17CAA, SCALE, { 1.2f });
+		WritePanelData<float>(0x17CAA, POSITION, { 37.194f, -41.883f, 16.645f });
+		WritePanelData<float>(0x17CAA, SCALE, { 1.15f });
 
 		Memory::get()->UpdateEntityPosition(0x17CAA);
 	}
@@ -1200,7 +1227,7 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 	if (!epActiveInGame && collect)
 	{
 		Memory::get()->SolveEP(epNo);
-		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo)) {
+		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
 		hudManager->queueBannerMessage("EP Activated Remotely (Coop)"); //TODO: Names
@@ -1223,6 +1250,8 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	catch (std::exception e) {
 		return;
 	}
+
+	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
 
 	// bonsai panel dots requirement
 	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
@@ -1322,7 +1351,7 @@ void APWatchdog::CheckEPSkips() {
 			}
 		}
 
-		if (panel == 0x033EA || panel == 0x01BE9 || panel == 0x01CD3 || panel == 0x01D3F || panel == 0x181F5) {
+		if (panel == 0x033EA || panel == 0x01BE9 || panel == 0x01CD3 || panel == 0x01D3F || panel == 0x181F5 || panel == 0x03629) {
 			if (ReadPanelData<int>(panel, SOLVED)) {
 				panelsToSkip.insert(panel);
 				continue;
@@ -1548,7 +1577,7 @@ void APWatchdog::LookingAtObelisk() {
 		}
 	}
 
-	if (epToName.count(lookingAtEP)) {
+	if (entityToName.count(lookingAtEP)) {
 		hudManager->showInformationalMessage(epToName[lookingAtEP], 1.f);
 	}
 
@@ -1638,4 +1667,125 @@ APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {
 
 void APServerPoller::action() {
 	ap->poll();
+}
+
+
+void APWatchdog::CheckDeathLink() {
+	if (!DeathLink) return;
+
+	int panelIdToConsider = mostRecentActivePanelId;
+
+	for (int panelId : alwaysDeathLinkPanels) {
+		if (ReadPanelData<int>(panelId, FLASH_MODE) == 2) panelIdToConsider = panelId;
+	}
+
+	if (panelIdToConsider == -1 || !actuallyEveryPanel.count(panelIdToConsider)) return;
+	if (deathlinkExcludeList.count(panelIdToConsider)) return;
+	if (PuzzleRandomization == SIGMA_EXPERT && 0x03C0C) return;
+
+	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE);
+
+	if (mostRecentPanelState != newState) {
+		mostRecentPanelState = newState;
+
+		if (newState == 2) {
+			SendDeathLink(mostRecentActivePanelId);
+			hudManager->queueBannerMessage("Death Sent.");
+		}
+	}
+}
+
+void APWatchdog::SendDeathLink(int panelId)
+{
+	auto now = std::chrono::system_clock::now();
+	double nowDouble = (double)std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() / 1000;
+
+	std::string entityName = std::to_string(panelId);
+
+	if (entityToName.count(panelId)) {
+		entityName = entityToName[panelId];
+	}
+
+	deathLinkTimestamps.insert(nowDouble);
+
+	auto data = nlohmann::json{ 
+		{"time", nowDouble},
+		{"cause", "Failed " + entityName + "."},
+		{"source", ap->get_player_alias(ap->get_player_number())}
+	} ;
+	ap->Bounce(data, {}, {}, {"DeathLink"});
+}
+
+void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
+	TriggerPowerSurge();
+
+	double a = -1;
+
+	for (double b : deathLinkTimestamps) {
+		if (fabs(time - b) < std::numeric_limits<double>::epsilon() * fmax(fabs(time), fabs(b))) { // double equality with some leeway because of conversion back and forth from/to JSON
+			a = b;
+		}
+	}
+
+	if (a != -1) {
+		deathLinkTimestamps.erase(a);
+		return;
+	}
+	
+	std::string firstSentence = "Received Death.";
+	std::string secondSentence = "";
+
+	if (source != "") {
+		firstSentence = "Received Death from " + source + ".";
+	}
+	if (cause != "") {
+		secondSentence = " Reason: " + cause;
+	}
+
+	hudManager->queueBannerMessage(firstSentence + secondSentence);
+}
+
+void APWatchdog::UpdateInfiniteChallenge() {
+	if (!insideChallengeBoxRange || ReadPanelData<float>(0x00BFF, 0xC8) > 0.0f) {
+		infiniteChallenge = false;
+		return;
+	}
+
+	bool isChecked = ClientWindow::get()->getSetting(ClientToggleSetting::ChallengeTimer);
+	if (isChecked != infiniteChallenge) {
+		if (isChecked) {
+			Memory::get()->SetInfiniteChallenge(true);
+		}
+		else {
+			Memory::get()->SetInfiniteChallenge(false);
+		}
+
+		infiniteChallenge = isChecked;
+	}
+}
+
+void APWatchdog::CheckSymmetryPowerCableBug() {
+	if (!ppMessageDelivered) {
+		std::vector<float> playerPosition;
+		try {
+			playerPosition = Memory::get()->ReadPlayerPosition();
+		}
+		catch (std::exception e) {
+			return;
+		}
+
+		std::vector<float> ppPosition = ReadPanelData<float>(0x01A45, POSITION, 3);
+
+		float newPPState = ReadPanelData<int>(0x01A45, 0xCC);
+
+		if ((newPPState != 0.0f) && (lastPPState == 0.0f)) {
+			if (pow(playerPosition[0] - ppPosition[0], 2) + pow(playerPosition[1] - ppPosition[1], 2) + pow(playerPosition[2] - ppPosition[2], 2) > 400) {
+				hudManager->queueBannerMessage("Pressure Plates just activated for no reason.");
+				hudManager->queueBannerMessage("Please report your last in-game actions to the devs (Discord/Github Issues)");
+				ppMessageDelivered = true;
+			}
+		}
+
+		lastPPState = newPPState;
+	}
 }

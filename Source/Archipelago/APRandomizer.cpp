@@ -31,7 +31,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 8});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 3, 9});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -122,6 +122,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
 		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
+		DeathLink = slotData.contains("death_link") ? slotData["death_link"] == true : false;
 
 		if (!UnlockSymbols) {
 			state.unlockedArrows = true;
@@ -175,7 +176,15 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			for (auto& [key, val] : slotData["ep_to_name"].items()) {
 				int sideId = std::stoul(key, nullptr, 16);
 
-				epToName.insert({ sideId, val });
+				entityToName.insert({ sideId, val });
+			}
+		}
+
+		if (slotData.contains("entity_to_name")) {
+			for (auto& [key, val] : slotData["entity_to_name"].items()) {
+				int sideId = std::stoul(key, nullptr, 16);
+
+				entityToName.insert({ sideId, val });
 			}
 		}
 
@@ -235,6 +244,13 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		if (DeathLink) {
+			std::list<std::string> newTags = { "DeathLink" };
+
+			ap->ConnectUpdate(false, 7, true, newTags);
+		}
+
+
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -249,6 +265,28 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		hasConnectionResult = true;
 
 		ClientWindow::get()->showMessageBox("Connection failed: " + errorString);
+	});
+
+	ap->set_bounced_handler([&](nlohmann::json packet) {
+		std::list<std::string> tags = packet["tags"];
+
+		bool deathlink = (std::find(tags.begin(), tags.end(), "DeathLink") != tags.end());
+
+		if (deathlink) {
+			auto data = packet["data"];
+			std::string cause = "";
+			if (data.contains("cause")) {
+				cause = data["cause"];
+			}
+			std::string source = "";
+			if (data.contains("source")) {
+				source = data["source"];
+			}
+
+			double timestamp = data["time"];
+
+			async->ProcessDeathLink(timestamp, cause, source);
+		}
 	});
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
@@ -429,6 +467,9 @@ void APRandomizer::PostGeneration() {
 		memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
 	}
 
+	// In Vanilla, Caves Invis Symmetry 3 turns on a power cable on Symmetry Island. This is never relevant in vanilla, but doors modes make it a legitimate issue.
+	memory->WritePanelData<int>(0x00029, TARGET, { 0 }); 
+
 	// Challenge Timer Colors
 	memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_A, { 0.0f, 1.0f, 1.0f, 1.0f });
 	memory->WritePanelData<float>(0x0A332, PATTERN_POINT_COLOR_B, { 1.0f, 1.0f, 0.0f, 1.0f });
@@ -493,12 +534,12 @@ void APRandomizer::Init() {
 	}
 
 	PanelRestore::RestoreOriginalPanelData();
+
+	Special::SetVanillaMetapuzzleShapes();
 }
 
 void APRandomizer::GenerateNormal() {
-	Special::SetVanillaMetapuzzleShapes();
-
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -506,7 +547,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, epToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink);
 	SeverDoors();
 
 	//Mess with Town targets
