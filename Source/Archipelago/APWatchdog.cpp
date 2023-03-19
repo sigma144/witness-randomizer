@@ -895,15 +895,15 @@ void APWatchdog::HandleKeyTaps() {
 				break;
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
-				hudManager->queueNotification("Cheat: adding Slowness.", { 1.f, 0.f, 0.f });
+				hudManager->queueNotification("Cheat: adding Slowness.", { 1.f, 0.6f, 0.5f });
 				ApplyTemporarySlow();
 				break;
 			case InputButton::KEY_EQUALS:
-				hudManager->queueNotification("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f });
+				hudManager->queueNotification("Cheat: adding Speed Boost.", { 1.f, 0.6f, 0.5f });
 				ApplyTemporarySpeedBoost();
 				break;
 			case InputButton::KEY_0:
-				hudManager->queueNotification("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f });
+				hudManager->queueNotification("Cheat: adding Puzzle Skip.", { 1.f, 0.6f, 0.5f });
 				if (spentPuzzleSkips > foundPuzzleSkips) {
 					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
 					//   previous app launch. Reset to zero before adding a new one.

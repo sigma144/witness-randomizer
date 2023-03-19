@@ -52,7 +52,7 @@ private:
 		float duration;
 	};
 
-	float solveFadePercent = 0.f;
+	float solveTweenFactor = 0.f;
 
 	std::queue<BannerMessage> queuedBannerMessages;
 	float bannerTimeRemaining = 0.f;
@@ -97,6 +97,11 @@ private:
 		// 0.f = bottom, 1.f = top.
 		float verticalPosition = 0.f;
 
+		// Additional offsets for controlling vertical position. These add fractional lines to the top and bottom of the block
+		//   in order to adjust its total height and starting position.
+		float linePaddingTop = 0.f;
+		float linePaddingBottom = 0.f;
+
 		// The horizontal position of the origin of the block on screen. This does not take into account the width of the
 		//   string and should be used in conjunction with the horizontal alignment parameter to determine the final position.
 		// 0.f = left, 1.f = right.
@@ -110,6 +115,8 @@ private:
 
 		const static uint32_t address_lineCount;
 		const static uint32_t address_verticalPosition;
+		const static uint32_t address_linePaddingTop;
+		const static uint32_t address_linePaddingBottom;
 		const static uint32_t address_horizontalPosition;
 		const static uint32_t address_horizontalAlignment;
 		const static uint32_t totalDataSize;
@@ -128,6 +135,15 @@ private:
 
 	uint64_t address_hudTextPayload = 0;
 	void writePayload() const;
+
+	float getNotificationAlpha(const Notification& notification, float bright, float dim) const;
+	RgbColor getNotificationColor(const Notification& notification) const;
+	
+	static float easeIn(float val);
+	static float easeOut(float val);
+	static float easeInOut(float val);
+
+	static float shadowAlpha(float alpha);
 
 	uint64_t setSubtitleOffset;
 	uint32_t largeSubtitlePointerOffset;

@@ -4,6 +4,7 @@ struct RgbColor {
 	RgbColor() : R(1.f), G(1.f), B(1.f), A(1.f) {}
 	RgbColor(float R, float G, float B) : R(R), G(G), B(B), A(1.f) {}
 	RgbColor(float R, float G, float B, float A) : R(R), G(G), B(B), A(A) {}
+	RgbColor(const RgbColor& color, float A) : R(color.R), G(color.G), B(color.B), A(A) {}
 
 	float R;
 	float G;

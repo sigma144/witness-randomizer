@@ -8,12 +8,16 @@
 
 #define STRING_DATA_SIZE 0x80
 
-#define NOTIFICATION_FLASH_TIME 1.f
-#define NOTIFICATION_HOLD_BRIGHT_TIME 3.f
+#define NOTIFICATION_FADEIN_TIME 0.15f
+#define NOTIFICATION_FLASH_TIME 1.5f
+#define NOTIFICATION_HOLD_BRIGHT_TIME 8.f
 #define NOTIFICATION_DIM_TIME 5.f
 #define NOTIFICATION_HOLD_DIM_TIME 10.f
-#define NOTIFICATION_FADE_TIME 10.f
-#define NOTIFICATION_TOTAL_TIME (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME + NOTIFICATION_FADE_TIME)
+#define NOTIFICATION_FADEOUT_TIME 10.f
+#define NOTIFICATION_TOTAL_TIME (NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME + NOTIFICATION_FADEOUT_TIME)
+
+#define TIME_BETWEEN_NOTIFICATIONS 1.5f
+#define NOTIFICATION_SCROLL_TIME 0.5f
 
 // Verifies that sigscans are working by comparing them against hardcoded values in the Steam build.
 #define DEBUG_SIGSCAN 0
@@ -33,12 +37,12 @@ void HudManager::update(float deltaSeconds) {
 	InteractionState interactionState = input->getInteractionState();
 	bool isSolving = (interactionState == Focusing || interactionState == Solving);
 
-	if (isSolving && solveFadePercent < 1.f) {
-		solveFadePercent = std::min(solveFadePercent + deltaSeconds, 1.f);
+	if (isSolving && solveTweenFactor < 1.f) {
+		solveTweenFactor = std::min(solveTweenFactor + deltaSeconds * 0.8f, 1.f);
 		hudTextDirty = true;
 	}
-	else if (!isSolving && solveFadePercent > 0.f) {
-		solveFadePercent = std::max(solveFadePercent - deltaSeconds * 3.f, 0.f);
+	else if (!isSolving && solveTweenFactor > 0.f) {
+		solveTweenFactor = std::max(solveTweenFactor - deltaSeconds * 3.f, 0.f);
 		hudTextDirty = true;
 	}
 
@@ -118,11 +122,11 @@ void HudManager::updateNotifications(float deltaSeconds) {
 
 		// Determine whether or not the notification is in a time block where it is fading in or out and, if so, mark it as dirty.
 		float relativeAge = iterator->age;
-		if (relativeAge < NOTIFICATION_FLASH_TIME) {
+		if (relativeAge < NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME) {
 			hudTextDirty = true;
 		}
 
-		relativeAge -= (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME);
+		relativeAge -= (NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME);
 		if (relativeAge > 0 && relativeAge < NOTIFICATION_DIM_TIME) {
 			hudTextDirty = true;
 		}
@@ -142,7 +146,7 @@ void HudManager::updateNotifications(float deltaSeconds) {
 			activeNotifications.insert(activeNotifications.begin(), notification);
 			queuedNotifications.pop();
 
-			timeToNextNotification = 0.75f;
+			timeToNextNotification = TIME_BETWEEN_NOTIFICATIONS;
 			hudTextDirty = true;
 		}
 	}
@@ -254,7 +258,7 @@ uint32_t HudManager::findSubtitleFunction() {
 	}
 
 	uint64_t functionStartAddress = nearSubtitleAddress - 0x80 + functionStartOffset + 0x4;
-	uint32_t relativeAddress = functionStartAddress - processBaseAddress;
+	uint32_t relativeAddress = (uint32_t)(functionStartAddress - processBaseAddress);
 
 #if DEBUG_SIGSCAN
 	if (relativeAddress != 0x1E99A0) {
@@ -504,13 +508,13 @@ void HudManager::overwriteSubtitleFunction() {
 	//     R13				void* read_head
 	////////////
 	// - Save the horizontal alignment.
-	//     R8D:4			(scratch for transferring)
+	//     R8D:4			<buffer for loading block data>
 	func.add({ 0x45,0x8B,0x85 })			// MOV R8D, dword ptr [r13 + block::address_horizontalAlignment]
 		.val(HudManager::HudTextBlock::address_horizontalAlignment)
 		.add({ 0x44,0x89,0x84,0x24 })		// MOV dword ptr [rsp + stack_currentBlock_horizAlignment], R8D
 		.val(stack_currentBlock_horizAlignment);
 	// - Save the horizontal position.
-	//     R8D:4			(scratch for transferring)
+	//     R8D:4			<buffer for loading block data>
 	func.add({ 0x45,0x8B,0x85 })			// MOV R8D, dword ptr [r13 + block::address_horizontalPosition]
 		.val(HudManager::HudTextBlock::address_horizontalPosition)
 		.add({ 0x44,0x89,0x84,0x24 })		// MOV dword ptr [rsp + stack_currentBlock_horizPosition], R8D
@@ -524,6 +528,7 @@ void HudManager::overwriteSubtitleFunction() {
 	//     R13				void* read_head
 	////////////
 	// - Load the drawable area of the screen.
+	//     XMM0_Da:4		float draw_area_y
 	func.add({ 0xF3,0x0F,0x10,0x84,0x24 })	// MOVSS XMM0, dword ptr [RSP + stack_draw_area_y]
 		.val(stack_draw_area_y);
 	// - Retrieve our font and find its line height.
@@ -534,8 +539,8 @@ void HudManager::overwriteSubtitleFunction() {
 		.add({ 0xF3,0x41,0x0F,0x10,0x48 })	// MOVSS XMM1, dword ptr [R8 + 0x64]
 		.add({ 0x64 });
 	// - Load the line spacing parameter, then multiply it by the font height to find the actual line height.
-	//     R8D:4				<buffer for loading constant>
-	//     XMM2_Da:4			float line_height
+	//     R8D:4			<buffer for loading constant>
+	//     XMM2_Da:4		float line_height
 	func.add({ 0x41,0xB8 })					// MOV R8D, <line_spacing>
 		.val(line_spacing)
 		.add({ 0x66,0x41,0x0F,0x6E,0xD0 })	// MOVD XMM2, R8D
@@ -543,20 +548,38 @@ void HudManager::overwriteSubtitleFunction() {
 	// - Save off the line height for future reference.
 	func.add({ 0xF3,0x0F,0x11,0x94,0x24 })	// MOVSS dword ptr [RSP + stack_line_height], XMM2
 		.val(stack_line_height);
-	// - Compute the total height of all but one of the lines based on the spaced line height. (We need to do this because
-	//   we only want to add spacing between every row. Our formula will be: [(font_height + spacing) * (N-1) + font_height],
-	//   which evaluates to [N * font_height + (N-1) * spacing].
+	// - Compute the total number of lines in the block minus one and convert it to a float. We're specifically subtracting
+	//   one here because we will be multiplying this value by the spaced line height in order to compute the size of the
+	//   block, and we don't want the last line to be padded.
+	// 
+	//   Our formula will eventually be [(font_height + spacing) * (rows - 1) + font_height], which evaluates to
+	//   [rows * font_height + (rows - 1) * spacing].
 	//     R8D:4			int32 line_count - 1
-	//     XMM3_Da:4		float (font_height + spacing) * 3
+	//     XMM3_Da:4		float spaced_lines
 	func.add({ 0x45,0x89,0xE0 })			// MOV R8D, R12D
 		.add({ 0x41,0x83,0xE8,0x01 })		// SUB R8D, 0x1
-		.add({ 0xF3,0x41,0x0F,0x2A,0xD8 })	// CVTSI2SS XMM3, R8D
-		.add({ 0xF3,0x0F,0x59,0xDA });		// MULSS XMM3, XMM2
+		.add({ 0xF3,0x41,0x0F,0x2A,0xD8 });	// CVTSI2SS XMM3, R8D
+	// - Add additional lines to the count based on the block's padding parameters.
+	//     XMM3_Da:4		float spaced_lines
+	//     XMM4_Da:4		float address_linePaddingBottom
+	func.add({ 0x66,0x41,0x0F,0x6E,0xA5 })	// MOVD XMM4, [R13 + block::address_linePaddingTop]
+		.val(HudManager::HudTextBlock::address_linePaddingTop)
+		.add({ 0xF3,0x0F,0x58,0xDC })		// ADDSS XMM3, XMM4
+		.add({ 0x66,0x41,0x0F,0x6E,0xA5 })	// MOVD XMM4, [R13 + block::address_linePaddingBottom]
+		.val(HudManager::HudTextBlock::address_linePaddingBottom)
+		.add({ 0xF3,0x0F,0x58,0xDC });		// ADDSS XMM3, XMM4
+	// - Multiply the bottom line padding by the line spacing parameter to get the offset for the first actual line.
+	//     XMM4_Da:4		float padding_offset
+	func.add({ 0xF3,0x0F,0x59,0xE2 });		// MULSS XMM4, XMM2
+	// - Multiply the number of spaced lines by the line spacing.
+	//     XMM3_Da:4		float block_height
+	func.add({ 0xF3,0x0F,0x59,0xDA });		// MULSS XMM3, XMM2
 	// - Add the height of an un-spaced line to get the total height of the block.
 	//     XMM3_Da:4		float block_height
 	func.add({ 0xF3,0x0F,0x58,0xD9 });		// ADDSS XMM3, XMM1
 	// - Next, remove a fraction of a line's worth of text from the block in order to compensate for the fact that the
 	//   font's height already has spacing built-in.
+	//     R8D:4			<buffer for loading constant>
 	//     XMM2_Da:4		float adjustment
 	//     XMM3_Da:4		float block_height
 	func.add({ 0x41,0xB8 })					// MOV R8D, <line_top_adjust>
@@ -573,6 +596,9 @@ void HudManager::overwriteSubtitleFunction() {
 		.add({ 0x66,0x41,0x0F,0x6E,0x8D })	// MOVD XMM1, [R13 + block::address_vertPosition]
 		.val(HudManager::HudTextBlock::address_verticalPosition)
 		.add({ 0xF3,0x0F,0x59,0xC1 });		// MULSS XMM0, XMM1
+	// - Add the vertical padding to the relative position.
+	//     XMM0_Da:4		float relative_position
+	func.add({ 0xF3,0x0F,0x5C,0xC4 });		// SUBSS XMM0, XMM4
 	// - Load the margin, add it to the relative position in order to find the final absolute position, then save it off.
 	//     XMM0_Da:4		float absolute_position
 	//     XMM1_Da:4		float margin
@@ -850,6 +876,8 @@ void HudManager::writePayload() const {
 	// TEMP: static payload
 	HudTextPayload temp_payload;
 
+	float solveFadePercent = solveTweenFactor;
+
 	// Show the solve mode status message.
 	if (!solveStatusMessage.empty() && solveFadePercent > 0.f) {
 		// Status messages go in the lower-left corner of the screen.
@@ -858,14 +886,15 @@ void HudManager::writePayload() const {
 		solveTextBlock.horizontalPosition = 0.f;
 		solveTextBlock.verticalPosition = 0.f;
 
-		// When the game fades in the border, it immediately shows it at a low transparency factor rather than fading it in.
-		float solveTextAlpha = (solveFadePercent * 0.9f) + 0.1f;
+		// When the game fades in the border, it immediately shows it at a low transparency factor rather than fading
+		//   it in from nothing.
+		float solveTextAlpha = (solveFadePercent * 0.95f) + 0.05f;
 
 		std::vector<std::string> expandedLines = separateLines(solveStatusMessage);
 		for (const std::string& lineText : expandedLines) {
 			HudTextLine lineData;
 			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f * solveTextAlpha);
-			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f * solveTextAlpha);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(solveTextAlpha));
 			lineData.text = lineText;
 
 			solveTextBlock.lines.push_back(lineData);
@@ -888,7 +917,7 @@ void HudManager::writePayload() const {
 		for (const std::string& lineText : expandedLines) {
 			HudTextLine lineData;
 			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 0.7f * walkTextAlpha);
-			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.4f * walkTextAlpha);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(walkTextAlpha));
 			lineData.text = lineText;
 
 			walkTextBlock.lines.push_back(lineData);
@@ -897,59 +926,65 @@ void HudManager::writePayload() const {
 		temp_payload.blocks.push_back(walkTextBlock);
 	}
 
-	// Show notifications.
-	float notificationBrightValue = 1.f - 0.4f * solveFadePercent;
-	float notificationDimValue = 0.6f - 0.3f * solveFadePercent;
+	// Show notifications. Notifications go in the top-right corner of the screen.
 	if (!activeNotifications.empty()) {
-		// Notifications go in the top-right corner of the screen.
-		HudTextBlock notificationBlock;
-		notificationBlock.horizontalAlignment = 1.f;
-		notificationBlock.horizontalPosition = 1.f;
-		notificationBlock.verticalPosition = 1.f;
+		float brightAlpha = 0.9f - 0.2f * solveFadePercent;
+		float dimAlpha = 0.5f * (1 - solveFadePercent);
 
-		for (const Notification& notification : activeNotifications) {
-			// Determine the alpha value of the notification based on its age.
-			float alpha;
-			if (notification.age < NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME) {
-				alpha = notificationBrightValue;
-			}
-			else if (notification.age < NOTIFICATION_DIM_TIME + (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME)) {
-				float relativeDimTime = notification.age - (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME);
-				float dimPercent = relativeDimTime / NOTIFICATION_DIM_TIME;
-				alpha = (1.f - dimPercent) * (notificationBrightValue - notificationDimValue) + notificationDimValue;
-			}
-			else if (notification.age < NOTIFICATION_HOLD_DIM_TIME + (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME)) {
-				alpha = notificationDimValue;
-			}
-			else {
-				float relativeFadeTime = notification.age - ((NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME + NOTIFICATION_DIM_TIME + NOTIFICATION_HOLD_DIM_TIME));
-				float fadePercent = relativeFadeTime / NOTIFICATION_FADE_TIME;
-				alpha = (1.f - fadePercent) * notificationDimValue;
-			}
+		// If we have more than one notification, separate the first notification from the rest so that we can smoothly
+		//   scroll the blocks down as new ones come in.
+		const Notification& firstNotification = activeNotifications[0];
+		std::vector<std::string> firstNotificationLines = separateLines(firstNotification.text, 60);
 
-			// Determine the foreground color of the text.
-			RgbColor textColor = notification.color;
-			textColor.A = alpha;
-			if (notification.age < NOTIFICATION_FLASH_TIME) {
-				float flashPercent = 1.f - notification.age / NOTIFICATION_FLASH_TIME;
-				textColor.R = (1.f - textColor.R) * flashPercent + textColor.R;
-				textColor.G = (1.f - textColor.G) * flashPercent + textColor.G;
-				textColor.B = (1.f - textColor.B) * flashPercent + textColor.B;
-				textColor.A = (1.f - notificationBrightValue) * flashPercent + notificationBrightValue;
+		// Draw the rest of the notifications first so that they will be drawn under the first notification.
+		if (activeNotifications.size() > 1) {
+			HudTextBlock otherNotificationBlock;
+			otherNotificationBlock.horizontalAlignment = 1.f;
+			otherNotificationBlock.horizontalPosition = 1.f;
+			otherNotificationBlock.verticalPosition = 1.f;
+
+			// Offset the block by the height of the first notification, scaled based on how recently that notification
+			//   faded in, so as to provide a nice scroll effect as notifications arrive.
+			float scrollPercent = std::min(1.f, firstNotification.age / NOTIFICATION_SCROLL_TIME);
+			otherNotificationBlock.linePaddingTop = firstNotificationLines.size() * easeInOut(scrollPercent);
+
+			for (int i = 1; i < activeNotifications.size(); i++) {
+				const Notification& currentNotification = activeNotifications[i];
+				float notificationAlpha = getNotificationAlpha(currentNotification, brightAlpha, dimAlpha);
+
+				std::vector<std::string> expandedLines = separateLines(currentNotification.text, 60);
+				for (const std::string& lineText : expandedLines) {
+					HudTextLine lineData;
+					lineData.textColor = RgbColor(getNotificationColor(currentNotification), notificationAlpha);
+					lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(notificationAlpha));
+					lineData.text = lineText;
+
+					otherNotificationBlock.lines.push_back(lineData);
+				}
 			}
 
-			std::vector<std::string> expandedLines = separateLines(notification.text, 60);
-			for (const std::string& lineText : expandedLines) {
-				HudTextLine lineData;
-				lineData.textColor = textColor;
-				lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.6f * alpha);
-				lineData.text = lineText;
-
-				notificationBlock.lines.push_back(lineData);
-			}
+			temp_payload.blocks.push_back(otherNotificationBlock);
 		}
 
-		temp_payload.blocks.push_back(notificationBlock);
+		// Draw the first notification in its own block.
+		HudTextBlock firstNotificationBlock;
+		firstNotificationBlock.horizontalAlignment = 1.f;
+		firstNotificationBlock.horizontalPosition = 1.f;
+		firstNotificationBlock.verticalPosition = 1.f;
+
+		float notificationAlpha = getNotificationAlpha(firstNotification, brightAlpha, dimAlpha);
+		RgbColor notificationColor = getNotificationColor(firstNotification);
+		firstNotificationLines = separateLines(firstNotification.text, 60);
+		for (const std::string& lineText : firstNotificationLines) {
+			HudTextLine lineData;
+			lineData.textColor = RgbColor(notificationColor, notificationAlpha);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(notificationAlpha));
+			lineData.text = lineText;
+
+			firstNotificationBlock.lines.push_back(lineData);
+		}
+
+		temp_payload.blocks.push_back(firstNotificationBlock);
 	}
 
 	// Show informational message in the center of the screen.
@@ -963,7 +998,7 @@ void HudManager::writePayload() const {
 		for (const std::string& lineText : expandedLines) {
 			HudTextLine lineData;
 			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 1.f * informationalMessageFadePercentage);
-			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.8f * informationalMessageFadePercentage);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(informationalMessageFadePercentage));
 			lineData.text = lineText;
 
 			informationalMessageBlock.lines.push_back(lineData);
@@ -997,9 +1032,11 @@ void HudManager::writePayload() const {
 		// Write block information.
 		uint32_t lineCount = (uint32_t)block.lines.size();
 		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_lineCount), &lineCount, sizeof(uint32_t), NULL);
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_verticalPosition), &block.verticalPosition, sizeof(float), NULL);
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_linePaddingTop), &block.linePaddingTop, sizeof(float), NULL);
+		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_linePaddingBottom), &block.linePaddingBottom, sizeof(float), NULL);
 		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_horizontalPosition), &block.horizontalPosition, sizeof(float), NULL);
 		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_horizontalAlignment), &block.horizontalAlignment, sizeof(float), NULL);
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_verticalPosition), &block.verticalPosition, sizeof(float), NULL);
 
 		// Advance write pointer past the block information.
 		writeAddress += HudTextBlock::totalDataSize;
@@ -1023,15 +1060,102 @@ void HudManager::writePayload() const {
 	}
 }
 
+float HudManager::getNotificationAlpha(const Notification& notification, float bright, float dim) const {
+	float targetAge = NOTIFICATION_FADEIN_TIME;
+	if (notification.age < targetAge) {
+		// The notification is brand-new and fading in to 100% alpha.
+		return easeIn(notification.age / NOTIFICATION_FADEIN_TIME);
+	}
+
+	float previousTargetAge = targetAge;
+	targetAge += NOTIFICATION_FLASH_TIME;
+	if (notification.age < targetAge) {
+		// The notification has flashed in and is dimming to its normal color.
+		float flashPercentage = 1.f - (notification.age - previousTargetAge) / NOTIFICATION_FLASH_TIME;
+		return easeInOut(flashPercentage) * (1.f - bright) + bright;
+	}
+
+	previousTargetAge = targetAge;
+	targetAge += NOTIFICATION_HOLD_BRIGHT_TIME;
+	if (notification.age < targetAge) {
+		// The notification is holding at its bright value.
+		return bright;
+	}
+
+	previousTargetAge = targetAge;
+	targetAge += NOTIFICATION_DIM_TIME;
+	if (notification.age < targetAge) {
+		// The notification is dimming from the bright to dim values.
+		float dimPercentage = 1 - (notification.age - previousTargetAge) / NOTIFICATION_DIM_TIME;
+		return easeInOut(dimPercentage) * (bright - dim) + dim;
+	}
+
+	previousTargetAge = targetAge;
+	targetAge += NOTIFICATION_HOLD_DIM_TIME;
+	if (notification.age < targetAge) {
+		// The notification is holding at the dim value.
+		return dim;
+	}
+
+	previousTargetAge = targetAge;
+	targetAge += NOTIFICATION_FADEOUT_TIME;
+	if (notification.age < targetAge) {
+		// The notification is fading out from dim to invisible.
+		float fadePercentage = 1 - (notification.age - previousTargetAge) / NOTIFICATION_FADEOUT_TIME;
+		return easeOut(fadePercentage) * dim;
+	}
+
+	return 0.f;
+}
+
+RgbColor HudManager::getNotificationColor(const Notification& notification) const {
+	if (notification.age < NOTIFICATION_FADEIN_TIME) {
+		// The notification is brand-new and is flashing in.
+		return RgbColor(1.f, 1.f, 1.f);
+	}
+
+	RgbColor color = notification.color;
+
+	if (notification.age < (NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME)) {
+		float flashPercent = 1.f - (notification.age - NOTIFICATION_FADEIN_TIME) / NOTIFICATION_FLASH_TIME;
+		color.R = (1.f - color.R) * flashPercent + color.R;
+		color.G = (1.f - color.G) * flashPercent + color.G;
+		color.B = (1.f - color.B) * flashPercent + color.B;
+	}
+
+	return color;
+}
+
+float HudManager::easeIn(float val)
+{
+	return std::pow(val, 2.f);
+}
+
+float HudManager::easeOut(float val)
+{
+	return 1.f - std::pow(1.f - val, 2.f);
+}
+
+float HudManager::easeInOut(float val)
+{
+	return val * val * (3.f - 2.f * val);
+}
+
+float HudManager::shadowAlpha(float alpha)
+{
+	return std::pow(alpha * 0.7f, 3.f);
+}
 
 const uint32_t HudManager::HudTextPayload::address_blockCount =			0x00;
 const uint32_t HudManager::HudTextPayload::totalDataSize =				0x08;
 
 const uint32_t HudManager::HudTextBlock::address_lineCount =			0x00;
 const uint32_t HudManager::HudTextBlock::address_verticalPosition =		0x08;
-const uint32_t HudManager::HudTextBlock::address_horizontalPosition =	0x10;
-const uint32_t HudManager::HudTextBlock::address_horizontalAlignment =	0x18;
-const uint32_t HudManager::HudTextBlock::totalDataSize =				0x20;
+const uint32_t HudManager::HudTextBlock::address_linePaddingTop =		0x10;
+const uint32_t HudManager::HudTextBlock::address_linePaddingBottom =	0x18;
+const uint32_t HudManager::HudTextBlock::address_horizontalPosition =	0x20;
+const uint32_t HudManager::HudTextBlock::address_horizontalAlignment =	0x28;
+const uint32_t HudManager::HudTextBlock::totalDataSize =				0x30;
 
 const uint32_t HudManager::HudTextLine::maxLineSize =					0x80;
 
