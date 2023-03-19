@@ -112,7 +112,7 @@ void HudManager::updateNotifications(float deltaSeconds) {
 	while (iterator != activeNotifications.end()) {
 		// Fade notifications out more quickly if there are a lot of them.
 		seenNotifications++;
-		float multiplier = 0.75f + 0.25f * seenNotifications;
+		float multiplier = 0.7f + 0.3f * std::max(seenNotifications - 4, 1);
 
 		iterator->age += deltaSeconds * multiplier;
 		if (iterator->age >= NOTIFICATION_TOTAL_TIME) {
