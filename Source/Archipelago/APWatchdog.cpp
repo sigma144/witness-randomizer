@@ -1025,6 +1025,7 @@ void APWatchdog::RefreshDoorCollisions() {
 			OutputDebugStringW(L"Updating using ingame function...\n");
 			Memory::get()->UpdateEntityPosition(collisionToUpdate);
 			alreadyTriedUpdatingNormally.insert(collisionToUpdate);
+			collisionsToRefresh[collisionToUpdate] = 2;
 		}
 		catch (const std::exception& e) { 
 			collisionsToRefresh[collisionToUpdate] = 2;
