@@ -11,6 +11,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #define _APCLIENT_HPP
 
 
+#if defined _WSWRAP_HPP && !defined WSWRAP_SEND_EXCEPTIONS
+#warning "Can't set exception behavior. wswrap already included"
+#elif !defined WSWRAP_SEND_EXCEPTIONS
+#define WSWRAP_SEND_EXCEPTIONS // backwards compatibility for at least 1 version
+#endif
+
+
 #include <wswrap.hpp>
 #include <string>
 #include <list>
@@ -35,7 +42,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <limits>
 
 
+#ifndef WSWRAP_VERSION
+#define WSWRAP_VERSION 10000 // 1.0 did not have this define
+#endif
+
+
 //#define APCLIENT_DEBUG // to get debug output
+//#define AP_NO_DEFAULT_DATA_PACKAGE_STORE // to disable auto-construction of data package store
+
+
+class APDataPackageStore {
+protected:
+    typedef nlohmann::json json;
+
+    APDataPackageStore() {}
+
+public:
+    virtual bool load(const std::string& game, const std::string& checksum, json& data) = 0;
+    virtual bool save(const std::string& game, const json& data) = 0;
+};
+
+
+#ifndef AP_NO_DEFAULT_DATA_PACKAGE_STORE
+#include "defaultdatapackagestore.hpp"
+#endif
 
 
 class APClient {
@@ -50,21 +80,45 @@ protected:
 
 public:
     static constexpr int64_t INVALID_NAME_ID = std::numeric_limits<int64_t>::min();
+    static constexpr char DEFAULT_URI[] = "localhost:38281";
 
-    APClient(const std::string& uuid, const std::string& game, const std::string& uri = "ws://localhost:38281")
+    APClient(const std::string& uuid, const std::string& game, const std::string& uri = DEFAULT_URI,
+             const std::string& certStore="", APDataPackageStore* dataPackageStore = nullptr)
+        : _dataPackageStore(dataPackageStore)
     {
+        // check if certStore is supported and required
+        #if WSWRAP_VERSION < 10100 && !defined __EMSCRIPTEN__
+        if (!certStore.empty()) {
+            log("Cert store not supported, please update wswrap!\n");
+        }
+        #elif !defined __EMSCRIPTEN__
+        _certStore = certStore;
+        #else
+        (void)certStore; // avoid warning
+        #endif
+
+        // check if wss is requested and supported
+        #if WSWRAP_VERSION < 10100 && !defined __EMSCRIPTEN__
+        if (uri.rfind("wss://", 0) == 0) {
+            auto msg = "No SSL support. Please update wswrap library!";
+            log(msg);
+            throw std::invalid_argument(msg);
+        } else
+        #endif
+
         // fix up URI (add ws:// and default port if none is given)
-        // TODO: move this to the front-end once we have wss:// and ws://
-        //       or multiple rooms on the same port
         if (!uri.empty()) {
             auto p = uri.find("://");
             if (p == uri.npos) {
+                #if WSWRAP_VERSION >= 10100 || defined __EMSCRIPTEN__
+                _tryWSS = true;
+                #endif
                 _uri = "ws://" + uri;
                 p = 2;
             } else {
                 _uri = uri;
             }
-            auto pColon = _uri.find(":", p + 3);
+            auto pColon = _uri.find(":", p + 3); // FIXME: this fails for IPv6 addresses
             auto pSlash = _uri.find("/", p + 3);
             if (pColon == _uri.npos || (pSlash != _uri.npos && pColon > pSlash)) {
                 auto tmp = _uri.substr(0, pSlash) + ":38281";
@@ -72,6 +126,20 @@ public:
                 _uri = tmp;
             }
         }
+
+        #ifndef AP_NO_DEFAULT_DATA_PACKAGE_STORE
+        if (!_dataPackageStore) {
+            _dataPackageStore = new DefaultDataPackageStore();
+            _dataPackageStoreAllocated = true;
+        }
+        #else
+        const char* msg = "dataPackageStore is required if compiled with AP_NO_DEFAULT_DATA_PACKAGE_STORE";
+        fprintf(stderr, "APClient: %s!\n", msg);
+        #ifdef __cpp_exceptions
+        throw std::runtime_error(msg);
+        #endif
+        #endif
+
         _uuid = uuid;
         _game = game;
         _dataPackage = {
@@ -87,6 +155,10 @@ public:
 
     virtual ~APClient()
     {
+#ifndef AP_NO_DEFAULT_DATA_PACKAGE_STORE
+        if (_dataPackageStoreAllocated)
+            delete _dataPackageStore;
+#endif
         delete _ws;
         _ws = nullptr;
     }
@@ -344,39 +416,40 @@ public:
         _hOnRetrieved = f;
     }
 
-    void set_set_reply_handler(std::function<void(const std::string&, const json&, const json&)> f)
+    void set_set_reply_handler(std::function<void(const json& command)> f)
     {
         _hOnSetReply = f;
     }
 
+    void set_set_reply_handler(std::function<void(const std::string&, const json&, const json&)> f) {
+        set_set_reply_handler([f](const json& command) {
+            if (!f) return;
+            f(command["key"].get<std::string>(), command["value"], command["original_value"]);
+        });
+    }
+
+    [[deprecated("Data package is handled through APDataPackageStore now")]]
     void set_data_package(const json& data)
     {
         // only apply from cache if not updated and it looks valid
-        if (!_dataPackageValid && data.find("games") != data.end()) {
-            _dataPackage = data;
-            for (auto gamepair: _dataPackage["games"].items()) {
-                const auto& gamedata = gamepair.value();
-                _dataPackage["games"][gamepair.key()] = gamedata;
-                for (auto pair: gamedata["item_name_to_id"].items()) {
-                    _items[pair.value().get<int64_t>()] = pair.key();
-                }
-                for (auto pair: gamedata["location_name_to_id"].items()) {
-                    _locations[pair.value().get<int64_t>()] = pair.key();
-                }
-            }
-        }
+        if (!_dataPackageValid && data.find("games") != data.end())
+            _set_data_package(data);
     }
 
+    [[deprecated("Data package is handled through APDataPackageStore now")]]
     bool set_data_package_from_file(const std::string& path)
     {
         FILE* f;
+
+        if (!_dataPackageValid)
+            return true;
+
 #ifdef _MSC_VER
-        if ((fopen_s(&f, path.c_str(), "rb")) != 0) {
+        if ((fopen_s(&f, path.c_str(), "rb")) != 0)
 #else
-        if ((f = fopen(path.c_str(), "rb")) == NULL) {
+        if ((f = fopen(path.c_str(), "rb")) == NULL)
 #endif
             return false;
-        }
         char* buf = nullptr;
         size_t len = (size_t)0;
         if ((0 == fseek(f, 0, SEEK_END)) &&
@@ -387,8 +460,10 @@ public:
         {
             buf[len] = 0;
             try {
-                set_data_package(json::parse(buf));
-            } catch (std::exception) {
+                auto data = json::parse(buf);
+                if (data.find("games") != data.end())
+                    _set_data_package(data);
+            } catch (const std::exception&) {
                 free(buf);
                 fclose(f);
                 throw;
@@ -399,16 +474,16 @@ public:
         return true;
     }
 
+    [[deprecated("Data package is handled through APDataPackageStore now")]]
     bool save_data_package(const std::string& path)
     {
         FILE* f;
 #ifdef _MSC_VER
-        if ((fopen_s(&f, path.c_str(), "wb")) != 0) {
+        if ((fopen_s(&f, path.c_str(), "wb")) != 0)
 #else
-        if ((f = fopen(path.c_str(), "wb")) == NULL) {
+        if ((f = fopen(path.c_str(), "wb")) == NULL)
 #endif
             return false;
-        }
         std::string s = _dataPackage.dump();
         fwrite(s.c_str(), 1, s.length(), f);
         fclose(f);
@@ -688,16 +763,21 @@ public:
     }
 
     bool Set(const std::string& key, const json& dflt, bool want_reply,
-             const std::list<DataStorageOperation>& operations)
+             const std::list<DataStorageOperation>& operations, const json& extras = json::value_t::object)
     {
         if (_state < State::SLOT_CONNECTED) return false;
+
         auto packet = json{{
            {"cmd", "Set"},
            {"key", key},
            {"default", dflt},
            {"want_reply", want_reply},
-           {"operations", operations}
+           {"operations", operations},
         }};
+
+        if (!extras.is_null())
+            packet[0].update(extras);
+
         debug("> " + packet[0]["cmd"].get<std::string>() + ": " + packet.dump());
         _ws->send(packet.dump());
         return true;
@@ -763,7 +843,7 @@ public:
         if (_ws) _ws->poll();
         if (_state < State::SOCKET_CONNECTED) {
             auto t = now();
-            if (t - _lastSocketConnect > _socketReconnectInterval) {
+            if (t - _lastSocketConnect > _socketReconnectInterval || _reconnectNow) {
                 if (_state != State::DISCONNECTED)
                     log("Connect timed out. Retrying.");
                 else
@@ -793,10 +873,12 @@ private:
     {
         printf("APClient: %s\n", msg);
     }
+
     void log(const std::string& msg)
     {
         log(msg.c_str());
     }
+
     void debug(const char* msg)
     {
 #ifdef APCLIENT_DEBUG
@@ -805,6 +887,7 @@ private:
         (void)msg;
 #endif
     }
+
     void debug(const std::string& msg)
     {
         debug(msg.c_str());
@@ -865,47 +948,95 @@ private:
                     if (_hOnRoomInfo) _hOnRoomInfo();
 
                     // check if cached data package is already valid
-                    // we are nice and check and query individual games
+                    // if not, build a list to query
                     _dataPackageValid = true;
                     std::list<std::string> exclude;
                     std::list<std::string> include;
                     std::set<std::string> playedGames;
                     auto itGames = command.find("games");
                     if (itGames != command.end() && itGames->is_array()) {
+                        // 0.2.0+: use games list, always include "Archipelago"
                         playedGames = itGames->get<std::set<std::string>>();
+                        playedGames.emplace("Archipelago");
+                    } else if (command["datapackage_versions"].is_array()) {
+                        // 0.1.x: get games from datapackage_versions
+                        for (auto itV: command["datapackage_versions"].items()) {
+                            playedGames.emplace(itV.key());
+                        }
+                    } else {
+                        // alpha: summed datapackage_version, not supported, always fetch all
+                        _dataPackageValid = false;
                     }
-                    for (auto itV: command["datapackage_versions"].items()) {
-                        if (!playedGames.empty() && !playedGames.count(itV.key()) && itV.key() != "Archipelago") {
-                            // game exists but is not being played
-                            exclude.push_back(itV.key());
-                            continue;
+
+                    auto itVersions = command.find("datapackage_versions");
+                    if (itVersions != command.end() && !itVersions->is_object()) itVersions = command.end();
+                    auto itChecksums = command.find("datapackage_checksums");
+                    if (itChecksums != command.end() && !itChecksums->is_object()) itChecksums = command.end();
+
+                    if (itVersions != command.end() && !playedGames.empty()) {
+                        // pre 0.3.2: exclude games that exist but are not being played
+                        for (auto itV: command["datapackage_versions"].items()) {
+                            if (!playedGames.count(itV.key())) {
+                                exclude.push_back(itV.key());
+                            }
                         }
-                        if (!itV.value().is_number()) continue;
-                        int v = itV.value().get<int>();
-                        if (v < 1) {
-                            // 0 means don't cache
-                            _dataPackageValid = false;
-                            include.push_back(itV.key());
-                            continue;
-                        }
-                        auto itDp = _dataPackage["games"].find(itV.key());
-                        if (itDp == _dataPackage["games"].end()) {
-                            // new game
-                            _dataPackageValid = false;
-                            include.push_back(itV.key());
-                            continue;
-                        }
-                        if ((*itDp)["version"] != v) {
-                            // different version
-                            _dataPackageValid = false;
-                            include.push_back(itV.key());
-                            continue;
-                        }
-                        // ok, cache valid
-                        exclude.push_back(itV.key());
                     }
+
+                    for (const auto& game: playedGames) {
+                        std::string remoteChecksum;
+                        int remoteVersion = 0;
+                        if (itChecksums != command.end()) {
+                            auto itChecksum = itChecksums->find(game);
+                            if (itChecksum != itChecksums->end() && itChecksum->is_string())
+                                remoteChecksum = *itChecksum;
+                        }
+                        if (itVersions != command.end()) {
+                            auto itVersion = itVersions->find(game);
+                            if (itVersion != itVersions->end() && itVersion->is_number_integer())
+                                remoteVersion = *itVersion;
+                        }
+                        json localData;
+                        if (!_dataPackageStore || !_dataPackageStore->load(game, remoteChecksum, localData)) {
+                            if (remoteChecksum.empty() && remoteVersion != 0) {
+                                auto itOld = _dataPackage["games"].find(game);
+                                if (itOld != _dataPackage["games"].end()) {
+                                    // exists in migrated cache
+                                    auto itOldVersion = itOld->find("version");
+                                    if (itOldVersion != itOld->end() && *itOldVersion == remoteVersion) {
+                                        // and is recent
+                                        exclude.push_back(game);
+                                        continue;
+                                    }
+                                }
+                            }
+                            include.push_back(game);
+                            _dataPackageValid = false;
+                        } else if (!remoteChecksum.empty()) {
+                            // compare checksum
+                            auto it = localData.find("checksum");
+                            if (it != localData.end() && it->is_string() && *it == remoteChecksum) {
+                                _dataPackage["games"][game] = localData;
+                                exclude.push_back(game);
+                            } else {
+                                include.push_back(game);
+                                _dataPackageValid = false;
+                            }
+                        } else {
+                            const auto it = localData.find("version");
+                            if (remoteVersion != 0 && it != localData.end() && it->is_number_integer() && *it == remoteVersion) {
+                                _dataPackage["games"][game] = localData;
+                                exclude.push_back(game);
+                            } else {
+                                include.push_back(game);
+                                _dataPackageValid = false;
+                            }
+                        }
+                    }
+
+                    if (!exclude.empty())
+                        _set_data_package(_dataPackage);  // apply loaded strings
                     if (!_dataPackageValid) GetDataPackage(exclude, include);
-                    else debug("DataPackage up to date");
+                    else debug("Data package up to date");
                 }
                 else if (cmd == "ConnectionRefused") {
                     if (_hOnSlotRefused) {
@@ -1004,11 +1135,14 @@ private:
                     auto data = _dataPackage;
                     if (!data["games"].is_object())
                         data["games"] = json(json::value_t::object);
-                    for (auto gamepair: command["data"]["games"].items())
+                    for (auto gamepair: command["data"]["games"].items()) {
+                        if (_dataPackageStore)
+                            _dataPackageStore->save(gamepair.key(), gamepair.value());
                         data["games"][gamepair.key()] = gamepair.value();
-                    data["version"] = command["data"]["version"];
+                    }
+                    data["version"] = command["data"].value<int>("version", -1); // -1 for backwards compatibility
                     _dataPackageValid = false;
-                    set_data_package(data);
+                    _set_data_package(data);
                     _dataPackageValid = true;
                     if (_hOnDataPackageChanged) _hOnDataPackageChanged(_dataPackage);
                 }
@@ -1031,14 +1165,15 @@ private:
                 }
                 else if (cmd == "SetReply") {
                     if (_hOnSetReply) {
-                        _hOnSetReply(command["key"].get<std::string>(), command["value"], command["original_value"]);
+                        command["original_value"]; // insert null if missing
+                        _hOnSetReply(command);
                     }
                 }
                 else {
                     debug("unhandled cmd");
                 }
             }
-        } catch (std::exception& ex) {
+        } catch (const std::exception& ex) {
             log((std::string("onmessage() error: ") + ex.what()).c_str());
         }
     }
@@ -1046,10 +1181,20 @@ private:
     void onerror()
     {
         debug("onerror()");
+        // TODO: on desktop, we could check if the error was handle_read_http_response before switching to wss://
+        //       and handle_transport_init before switching to ws://
+        if (_tryWSS && _uri.rfind("ws://", 0) == 0) {
+            _uri = "wss://" + _uri.substr(5);
+            if (_state == State::SOCKET_CONNECTING)
+                _reconnectNow = true; // force immediate connect attempt
+        } else if (_tryWSS && _uri.rfind("wss://", 0) == 0) {
+            _uri = "ws://" + _uri.substr(6);
+        }
     }
 
     void connect_socket()
     {
+        _reconnectNow = false;
         delete _ws;
         if (_uri.empty()) {
             _ws = nullptr;
@@ -1057,12 +1202,21 @@ private:
             return;
         }
         _state = State::SOCKET_CONNECTING;
-        _ws = new WS(_uri,
-                [this]() { onopen(); },
-                [this]() { onclose(); },
-                [this](const std::string& s) { onmessage(s); },
-                [this]() { onerror(); }
-        );
+
+        try {
+            _ws = new WS(_uri,
+                    [this]() { onopen(); },
+                    [this]() { onclose(); },
+                    [this](const std::string& s) { onmessage(s); },
+                    [this]() { onerror(); }
+#if WSWRAP_VERSION >= 10100
+                    , _certStore
+#endif
+            );
+        } catch (const std::exception& ex) {
+            _ws = nullptr;
+            log((std::string("error connecting: ") + ex.what()).c_str());
+        }
         _lastSocketConnect = now();
         _socketReconnectInterval *= 2;
         // NOTE: browsers have a very badly implemented connection rate limit
@@ -1070,6 +1224,21 @@ private:
         // allowed rate once we are over it
         unsigned long maxReconnectInterval = std::max(15000UL, _ws->get_ok_connect_interval());
         if (_socketReconnectInterval > maxReconnectInterval) _socketReconnectInterval = maxReconnectInterval;
+    }
+
+    void _set_data_package(const json& data)
+    {
+        _dataPackage = data;
+        for (auto gamepair: _dataPackage["games"].items()) {
+            const auto& gamedata = gamepair.value();
+            _dataPackage["games"][gamepair.key()] = gamedata;
+            for (auto pair: gamedata["item_name_to_id"].items()) {
+                _items[pair.value().get<int64_t>()] = pair.key();
+            }
+            for (auto pair: gamedata["location_name_to_id"].items()) {
+                _locations[pair.value().get<int64_t>()] = pair.key();
+            }
+        }
     }
 
     std::string color2ansi(const std::string& color)
@@ -1109,8 +1278,10 @@ private:
     std::string _uri;
     std::string _game;
     std::string _uuid;
+    std::string _certStore;
     WS* _ws = nullptr;
     State _state = State::DISCONNECTED;
+    bool _tryWSS = false;
 
     std::function<void(void)> _hOnSocketConnected = nullptr;
     std::function<void(void)> _hOnSocketDisconnected = nullptr;
@@ -1126,10 +1297,11 @@ private:
     std::function<void(const json&)> _hOnBounced = nullptr;
     std::function<void(const std::list<int64_t>&)> _hOnLocationChecked = nullptr;
     std::function<void(const std::map<std::string, json>&)> _hOnRetrieved = nullptr;
-    std::function<void(const std::string&, const json&, const json&)> _hOnSetReply = nullptr;
+    std::function<void(const json&)> _hOnSetReply = nullptr;
 
     unsigned long _lastSocketConnect;
     unsigned long _socketReconnectInterval = 1500;
+    bool _reconnectNow = false;
     std::set<int64_t> _checkQueue;
     std::map<int, std::set<int64_t>> _scoutQueues;
     ClientStatus _clientStatus = ClientStatus::UNKNOWN;
@@ -1145,6 +1317,10 @@ private:
     double _serverConnectTime = 0;
     std::chrono::steady_clock::time_point _localConnectTime;
     Version _serverVersion = {0,0,0};
+    APDataPackageStore* _dataPackageStore;
+#ifndef AP_NO_DEFAULT_DATA_PACKAGE_STORE
+    bool _dataPackageStoreAllocated = false;
+#endif
 
     const json _packetSchemaJson = R"({
         "type": "array",

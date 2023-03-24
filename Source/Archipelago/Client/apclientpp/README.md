@@ -21,10 +21,12 @@ C++ Archipelago multiworld randomizer client library. See [archipelago.gg](https
   * not all websocketpp versions are compatible to all asio versions
     * [try those](https://github.com/black-sliver/ap-soeclient/tree/master/subprojects) (download repo as zip and extract)
   * make sure to set up include paths correctly, the dependencies are all header-only
+  * for desktop: link with openssl (`-lssl -lcrypto -Wno-deprecated-declarations`) and on windows `crypt32` and add a
+    cert store for wss support or define `WSWRAP_NO_SSL` to disable SSL/wss support.
+    See [SSL Support](#ssl-support) for more details.
 * include apclient.hpp
 * instantiate APClient and use its API
   * you can use `ap_get_uuid` from `apuuid.hpp` helper to generate a UUID
-  * use `set_data_package` and `set_data_package_changed_handler` to load and save data package
   * use `set_*_handler` to set event callbacks
   * call `poll` repeatedly (e.g. once per frame) for it to connect and callbacks to fire
   * use `ConnectSlot` to connect to a slot after RoomInfo
@@ -33,8 +35,20 @@ C++ Archipelago multiworld randomizer client library. See [archipelago.gg](https
   * use `Bounce` to send a bounce (deathlink, ...)
   * use `Get`, `Set` and `SetNotify` to access data storage api,
     see [Archipelago network protocol](https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/network%20protocol.md#get)
+  * by default we now use the shared data package cache in %LocalAppData%/Archipelago/Cache or ~/.cache/Archipelago.
+    This can be changed by passing a custom APDataPackageStore into APClient.
+* when upgrading from 0.3.8 or older
+  * remove calls to `save_data_package` and don't save data package in `set_data_package_changed_handler`
+  * you can still use `set_data_package` or `set_data_package_from_file` during migration to make use of the old cache
+    (they are marked as deprecated and will go away in the next version)
 * see [ap-soeclient](https://github.com/black-sliver/ap-soeclient) for an example
 * see [Gotchas](#gotchas)
+
+
+## Additional Configuration
+
+* use `-DWSWRAP_SEND_EXCEPTIONS` or `#define WSWRAP_SEND_EXCEPTIONS` before including anything to get exceptions when
+  a send fails
 
 
 ## When using Visual Studio for building
@@ -68,6 +82,23 @@ C++ Archipelago multiworld randomizer client library. See [archipelago.gg](https
   VS2019, msvc, Windows
 * [Dark Souls III Archipelago client](https://github.com/Marechal-L/Dark-Souls-III-Archipelago-client) \
   VS2022, msvc, Windows
+
+
+## SSL Support
+
+APClient will automatically try both plain and SSL if SSL support is enabled and the supplied uri has no schema
+(neither ws:// nor wss:// specified).
+
+To add SSL/wss support on desktop, the following steps are required:
+
+* update wswrap to the latest version
+* add openssl (libssl and libcrypt) and optionally crypt32 to the "link libraries". Either static or dynamic.
+* include the OpenSSL DLLs (if linked dynamically) and license file
+* to make certificate verifaction work cross-platform
+  * include a cert store file and its license, e.g. [curl's CA Extract](https://curl.se/docs/caextract.html)
+  * load the cert store by passing the path as 4th argument to APClient's constructor
+* apclient will try to load system certs, but this should only be used for testing:
+  outdated Windows has outdated certs, macos/Linux without OpenSSL or with a different version won't find any certs
 
 
 ## Gotchas

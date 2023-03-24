@@ -787,12 +787,6 @@ void APWatchdog::SeverDoor(int id) {
 				WriteArray<char>(conn.id, ENTITY_NAME, v);
 				continue;
 			}
-			if (conn.target_no == PRESSURE_PLATE_TARGET) {
-				// If the game crashes on solving timer panels or panel 0x00001 (Swamp Red Underwater 1) behaves incorrectly in the future, this may be why.
-				// 0 does not work, though. If it's 0, every pressure plate in the world turns on.
-				WritePanelData<int>(conn.id, conn.target_no, { 1 });
-				continue;
-			}
 			WritePanelData<int>(conn.id, conn.target_no, { 0 });
 		}
 		return;

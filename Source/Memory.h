@@ -253,7 +253,7 @@ public:
 	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
-	int GLOBALS;
+	int GLOBALS = 0;
 	int GAMELIB_RENDERER;
 	int RUNSPEED;
 	int CAMERAPOSITION;

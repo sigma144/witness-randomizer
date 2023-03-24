@@ -172,7 +172,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 
 	{ 0x0C141, {{0x01983, PANEL, TARGET}, {0x01987, PANEL, TARGET}} }, // Final Room Entry Door
 
-	{ 0x17F33, {{0x17FA2, PANEL, TARGET}, {0x0A3AF, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}} }, // Rock
+	{ 0x17F33, {{0x17FA2, PANEL, TARGET},{0x17FA2, PANEL, ENTITY_NAME}, {0x334E1, PANEL, TARGET},{0x334E1, PANEL, ENTITY_NAME}, {0x0A3AF, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}} }, // Rock
 
 	{ 0x2D77D, {{0x00FF8, PANEL, TARGET}} }, // Door to Caves
 	{ 0x019A5, {{0x09DD5, PANEL, TARGET}} }, // Pillar Door
