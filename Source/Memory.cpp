@@ -906,7 +906,7 @@ void Memory::ThrowError() {
 	ThrowError(message);
 }
 
-void* Memory::ComputeOffset(std::vector<int> offsets)
+void* Memory::ComputeOffset(std::vector<int> offsets, bool forceRecalculatePointer)
 {
 	// Leave off the last offset, since it will be either read/write, and may not be of type unitptr_t.
 	int final_offset = offsets.back();
@@ -917,7 +917,7 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 		cumulativeAddress += offset;
 
 		const auto search = _computedAddresses.find(cumulativeAddress);
-		if (search == std::end(_computedAddresses)) {
+		if (search == std::end(_computedAddresses) || forceRecalculatePointer) {
 			// If the address is not yet computed, then compute it.
 			uintptr_t computedAddress = 0;
 			if (!ReadAbsolute(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {

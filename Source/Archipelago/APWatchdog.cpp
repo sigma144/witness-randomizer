@@ -438,11 +438,11 @@ void APWatchdog::TriggerPowerSurge() {
 			/*if (ReadPanelData<int>(panelId, SOLVED))
 				continue;*/
 
-			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
+			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, true);
 
 			if (powerValues[0] > 0) {
 				//using -20f as offset to create a unique recogniseable value that is also stored in the save
-				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] });
+				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] }, movingMemoryPanels.count(panelId));
 			}
 		}
 	}
@@ -1695,9 +1695,18 @@ void APWatchdog::CheckDeathLink() {
 
 	if (panelIdToConsider == -1 || !actuallyEveryPanel.count(panelIdToConsider)) return;
 	if (deathlinkExcludeList.count(panelIdToConsider)) return;
-	if (PuzzleRandomization == SIGMA_EXPERT && 0x03C0C) return;
+	if (PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(panelIdToConsider)) return;
 
-	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE);
+	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE, 1, movingMemoryPanels.count(panelIdToConsider))[0];
+
+	std::wstringstream s;
+
+	s << std::hex << panelIdToConsider;
+	s << " - ";
+	s << newState;
+	s << "\n";
+
+	OutputDebugStringW(s.str().c_str());
 
 	if (mostRecentPanelState != newState) {
 		mostRecentPanelState = newState;
