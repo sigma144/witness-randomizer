@@ -915,11 +915,9 @@ void HudManager::writePayload() const {
 
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	bool isSolving = (interactionState == Focusing || interactionState == Solving);
-
-	// TEMP: static payload
-	HudTextPayload temp_payload;
-
 	float solveFadePercent = solveTweenFactor;
+
+	HudTextPayload payload;
 
 	// Show the solve mode status message.
 	if (!solveStatusMessage.empty() && solveFadePercent > 0.f) {
@@ -943,7 +941,7 @@ void HudManager::writePayload() const {
 			solveTextBlock.lines.push_back(lineData);
 		}
 
-		temp_payload.blocks.push_back(solveTextBlock);
+		payload.blocks.push_back(solveTextBlock);
 	}
 
 	// Show the walk mode status message.
@@ -966,7 +964,7 @@ void HudManager::writePayload() const {
 			walkTextBlock.lines.push_back(lineData);
 		}
 
-		temp_payload.blocks.push_back(walkTextBlock);
+		payload.blocks.push_back(walkTextBlock);
 	}
 
 	// Show notifications. Notifications go in the top-right corner of the screen.
@@ -1006,7 +1004,7 @@ void HudManager::writePayload() const {
 				}
 			}
 
-			temp_payload.blocks.push_back(otherNotificationBlock);
+			payload.blocks.push_back(otherNotificationBlock);
 		}
 
 		// Draw the first notification in its own block.
@@ -1027,7 +1025,7 @@ void HudManager::writePayload() const {
 			firstNotificationBlock.lines.push_back(lineData);
 		}
 
-		temp_payload.blocks.push_back(firstNotificationBlock);
+		payload.blocks.push_back(firstNotificationBlock);
 	}
 
 	// Show informational message in the center of the screen.
@@ -1049,19 +1047,19 @@ void HudManager::writePayload() const {
 			informationalMessageBlock.lines.push_back(lineData);
 		}
 
-		temp_payload.blocks.push_back(informationalMessageBlock);
+		payload.blocks.push_back(informationalMessageBlock);
 	}
 	
 	uint64_t writeAddress = address_hudTextPayload;
 
 	// Write payload information.
-	uint32_t blockCount = (uint32_t)temp_payload.blocks.size();
+	uint32_t blockCount = (uint32_t)payload.blocks.size();
 	WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextPayload::address_blockCount), &blockCount, sizeof(uint32_t), NULL);
 
 	// Advance the write head past the payload information.
 	writeAddress += HudTextPayload::totalDataSize;
 
-	for (const HudTextBlock& block : temp_payload.blocks) {
+	for (const HudTextBlock& block : payload.blocks) {
 		// Write block information.
 		uint32_t lineCount = (uint32_t)block.lines.size();
 		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_lineCount), &lineCount, sizeof(uint32_t), NULL);
