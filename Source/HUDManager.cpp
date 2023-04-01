@@ -60,15 +60,30 @@ void HudManager::queueNotification(std::string text, RgbColor color) {
 	queuedNotifications.push(Notification(text, color));
 }
 
-void HudManager::showInformationalMessage(std::string text, float duration) {
-	if (text != informationalMessageString || informationalMessageTimeRemaining <= 0.f) {
-		informationalMessageString = text;
-		informationalMessageTimeRemaining = duration;
+void HudManager::showInformationalMessage(InfoMessageCategory category, const std::string& text) {
+	if (informationalMessages[static_cast<int>(category)] == text) {
+		return;
+	}
+
+	informationalMessages[static_cast<int>(category)] = text;
+
+	// Determine which message to actually show, based on priority.
+	shouldShowInformationalMessage = false;
+	for (const std::string& message : informationalMessages) {
+		if (!message.empty()) {
+			shouldShowInformationalMessage = true;
+			if (currentInformationalMessage != message) {
+				currentInformationalMessage = message;
+				hudTextDirty = true;
+			}
+
+			return;
+		}
 	}
 }
 
-void HudManager::clearInformationalMessage() {
-	informationalMessageTimeRemaining = 0;
+void HudManager::clearInformationalMessage(InfoMessageCategory category) {
+	showInformationalMessage(category, "");
 }
 
 void HudManager::setWalkStatusMessage(std::string text) {
@@ -153,24 +168,13 @@ void HudManager::updateNotifications(float deltaSeconds) {
 }
 
 void HudManager::updateInformationalMessages(float deltaSeconds) {
-	if (!informationalMessageString.empty()) {
-		if (informationalMessageTimeRemaining > 0.f) {
-			if (informationalMessageFadePercentage < 1.f) {
-				informationalMessageFadePercentage = std::min(informationalMessageFadePercentage + deltaSeconds * 3.f, 1.f);
-				hudTextDirty = true;
-			}
-			else {
-				informationalMessageTimeRemaining -= deltaSeconds;
-			}
-		}
-		else {
-			informationalMessageFadePercentage = std::max(informationalMessageFadePercentage - deltaSeconds * 3.f, 0.f);
-			hudTextDirty = true;
-
-			if (informationalMessageFadePercentage <= 0) {
-				informationalMessageString.clear();
-			}
-		}
+	if (shouldShowInformationalMessage && informationalMessageFade < 1.f) {
+		informationalMessageFade = std::min(1.f, informationalMessageFade + deltaSeconds * 3.f);
+		hudTextDirty = true;
+	}
+	else if (!shouldShowInformationalMessage && informationalMessageFade > 0.f) {
+		informationalMessageFade = std::max(0.f, informationalMessageFade - deltaSeconds * 3.f);
+		hudTextDirty = true;
 	}
 }
 
@@ -988,17 +992,19 @@ void HudManager::writePayload() const {
 	}
 
 	// Show informational message in the center of the screen.
-	if (!informationalMessageString.empty()) {
+	if (!currentInformationalMessage.empty() && informationalMessageFade > 0.f) {
 		HudTextBlock informationalMessageBlock;
 		informationalMessageBlock.horizontalAlignment = 0.5f;
 		informationalMessageBlock.horizontalPosition = 0.5f;
 		informationalMessageBlock.verticalPosition = 0.15f;
 
-		std::vector<std::string> expandedLines = separateLines(informationalMessageString);
+		float curvedFade = easeOut(informationalMessageFade);
+
+		std::vector<std::string> expandedLines = separateLines(currentInformationalMessage);
 		for (const std::string& lineText : expandedLines) {
 			HudTextLine lineData;
-			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 1.f * informationalMessageFadePercentage);
-			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(informationalMessageFadePercentage));
+			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 1.f * curvedFade);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(curvedFade));
 			lineData.text = lineText;
 
 			informationalMessageBlock.lines.push_back(lineData);

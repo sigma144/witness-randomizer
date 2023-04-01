@@ -1,5 +1,6 @@
 #include "APWatchdog.h"
 
+#include "../DataTypes.h"
 #include "../HudManager.h"
 #include "../Input.h"
 #include "../Memory.h"
@@ -67,21 +68,21 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 
 void APWatchdog::action() {
 	auto currentFrameTime = std::chrono::system_clock::now();
-	std::chrono::duration<float> frameDuration = currentFrameTime - lastFrameTime;
+	float frameDuration = std::chrono::duration<float>(currentFrameTime - lastFrameTime).count();
 	lastFrameTime = currentFrameTime;
 
 	HandleInteractionState();
-	HandleMovementSpeed(frameDuration.count());
+	HandleMovementSpeed(frameDuration);
 	
 	HandleKeyTaps();
 
-	UpdatePuzzleSkip(frameDuration.count());
+	UpdatePuzzleSkip(frameDuration);
 
 	CheckDeathLink();
 
 	CheckSymmetryPowerCableBug();
 
-	halfSecondCountdown -= frameDuration.count();
+	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
 
@@ -94,7 +95,7 @@ void APWatchdog::action() {
 		HandlePowerSurge();
 		DisableCollisions();
 		RefreshDoorCollisions();
-		AudioLogPlaying();
+		AudioLogPlaying(0.5f);
 
 		UpdateInfiniteChallenge();
 
@@ -111,10 +112,10 @@ void APWatchdog::action() {
 
 	CheckImportantCollisionCubes();
 	LookingAtObelisk();
-	LookingAtTheDog(frameDuration.count());
+	PettingTheDog(frameDuration);
 
 	SetStatusMessages();
-	hudManager->update(frameDuration.count());
+	hudManager->update(frameDuration);
 }
 
 void APWatchdog::HandleInteractionState() {
@@ -1048,7 +1049,7 @@ void APWatchdog::RefreshDoorCollisions() {
 	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }
 
-void APWatchdog::AudioLogPlaying() {
+void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	std::string line1 = "";
 	std::string line2 = "";
 	std::string line3 = "";
@@ -1059,7 +1060,8 @@ void APWatchdog::AudioLogPlaying() {
 			currentAudioLog = logId;
 
 			std::string message = audioLogMessages[logId].first;
-			hudManager->showInformationalMessage(message, 12.0f);
+			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
+			currentAudioLogDuration = 8.f;
 
 			APClient::DataStorageOperation operation;
 			operation.operation = "replace";
@@ -1078,11 +1080,28 @@ void APWatchdog::AudioLogPlaying() {
 				ap->LocationScouts({ locationId }, 2);
 				seenAudioMessages.insert(locationId);
 			}
+
+			break;
 		}
 		else if (!logPlaying && logId == currentAudioLog) {
 			currentAudioLog = -1;
-			hudManager->clearInformationalMessage();
+			break;
 		}
+	}
+
+	if (currentAudioLog != -1) {
+		// We're playing an audio log. Track how long it's been playing for.
+		currentAudioLogDuration -= deltaSeconds;
+	}
+	else if (currentAudioLogDuration > 0.f) {
+		// We don't have an audio log playing. Run out the timer on the hint display.
+		currentAudioLogDuration -= deltaSeconds;
+		if (currentAudioLogDuration <= 0.f) {
+			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+		}
+	}
+	else {
+		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 }
 
@@ -1255,38 +1274,52 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	// bonsai panel dots requirement
 	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
-		hudManager->showInformationalMessage("Needs Dots.", 1.f);
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Dots.");
 	}
 	else if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
-		hudManager->showInformationalMessage("Stone Pillar needs Triangles.", 1.f);
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Stone Pillar needs Triangles.");
 	}
 	else if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
-		hudManager->showInformationalMessage("Needs Dots, Black/White Squares.", 1.f);
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Dots, Black/White Squares.");
 	}
 	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
-		hudManager->showInformationalMessage("Most Bunker panels need Black/White Squares and Colored Squares.", 1.f);
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Most Bunker panels need Black/White Squares and Colored Squares.");
 	}
 	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage("Needs Eraser, Triangles,\n"
-											  "Stars, Stars + Same Colored Symbol.", 1.f);
-		else hudManager->showInformationalMessage("Needs Shapers and Eraser.", 1.f);
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Eraser, Triangles,\n"
+			"Stars, Stars + Same Colored Symbol.");
+		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Shapers and Eraser.");
 	}
 	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage("Needs Symmetry and Triangles.", 1.f);
-		else hudManager->showInformationalMessage("Needs Symmetry and Dots.", 1.f);
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Symmetry and Triangles.");
+		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Symmetry and Dots.");
 	}
 	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
 		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-			hudManager->showInformationalMessage("Left Panel needs Stars and Shapers.\n"
-										"Right Panel needs Dots and Colored Squares.", 1.f);
+			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+				"Left Panel needs Stars and Shapers.\n"
+				"Right Panel needs Dots and Colored Squares.");
 		}
 		else
 		{
-			hudManager->showInformationalMessage("Left Panel needs Stars and Shapers.", 1.f);
+			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+				"Left Panel needs Stars and Shapers.");
 		}
 	}
 	else if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-		hudManager->showInformationalMessage("Right Panel needs Dots and Colored Squares.", 1.f);
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Right Panel needs Dots and Colored Squares.");
+	}
+	else {
+		hudManager->clearInformationalMessage(InfoMessageCategory::MissingSymbol);
 	}
 }
 
@@ -1526,10 +1559,8 @@ void APWatchdog::LookingAtObelisk() {
 
 	std::set<int> candidates;
 
-	auto ray = InputWatchdog::get()->getMouseRay();
-
-	std::vector<float> headPosition = ray.first;
-	std::vector<float> cursorDirection = ray.second;
+	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+	std::vector<float> cursorDirection = InputWatchdog::get()->getMouseDirection();
 
 	for (int epID : allEPs) {
 		std::vector<float> obeliskPosition = ReadPanelData<float>(epID, POSITION, 3);
@@ -1578,33 +1609,101 @@ void APWatchdog::LookingAtObelisk() {
 	}
 
 	if (entityToName.count(lookingAtEP)) {
-		hudManager->showInformationalMessage(entityToName[lookingAtEP], 1.f);
+		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP]);
+	}
+	else {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 	}
 
 	return;
 }
 
-void APWatchdog::LookingAtTheDog(float frameLength) {
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-	if (interactionState != InteractionState::Focusing) {
+void APWatchdog::PettingTheDog(float deltaSeconds) {
+	Memory* memory = Memory::get();
+
+	if (!LookingAtTheDog()) {
 		letGoSinceInteractModeOpen = false;
-		dogFrames = 0;
-		Memory::get()->writeCursorSize(1.0f);
-		Memory::get()->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+		dogPettingDuration = 0;
+
+		memory->writeCursorSize(1.0f);
+		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+
+		if (dogBarkDuration > 0.f) {
+			dogBarkDuration -= deltaSeconds;
+			if (dogBarkDuration <= 1.f) {
+				hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+			}
+		}
+		else {
+			hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+		}
+
+		return;
+	}
+	else if (dogBarkDuration > 0.f) {
+		dogBarkDuration -= deltaSeconds;
+		if (dogBarkDuration <= 1.f) {
+			hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+		}
+
 		return;
 	}
 
-	auto ray = InputWatchdog::get()->getMouseRay();
+	memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
-	std::vector<float> headPosition = ray.first;
-	std::vector<float> cursorDirection = ray.second;
+	if (dogPettingDuration >= 4.0f) {
+		hudManager->showInformationalMessage(InfoMessageCategory::Dog, "Woof Woof!");
+
+		Memory::get()->writeCursorSize(1.0f);
+		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+
+
+		dogPettingDuration = 0.f;
+		dogBarkDuration = 4.f;
+		sentDog = true;
+	}
+	else if (dogPettingDuration > 0.f) {
+		hudManager->showInformationalMessage(InfoMessageCategory::Dog, "Petting progress: " + std::to_string((int)(dogPettingDuration * 100 / 4.0f)) + "%");
+	}
+
+	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
+		letGoSinceInteractModeOpen = true;
+
+		Memory::get()->writeCursorSize(2.0f);
+		return;
+	}
+
+	if (!letGoSinceInteractModeOpen) {
+		Memory::get()->writeCursorSize(2.0f);
+		return;
+	}
+
+	Memory::get()->writeCursorSize(1.0f);
+
+	std::vector<float> currentMouseDirection = InputWatchdog::get()->getMouseDirection();
+	if (lastMouseDirection != currentMouseDirection)
+	{
+		dogPettingDuration += deltaSeconds;
+	}
+
+	lastMouseDirection = currentMouseDirection;
+}
+
+bool APWatchdog::LookingAtTheDog() const {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) {
+		return false;
+	}
+
+	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+	const std::vector<float>& cursorDirection = InputWatchdog::get()->getMouseDirection();
 
 	std::vector<std::vector<float>> dogPositions = { {-107.954, -101.36, 4.078}, {-107.9, -101.312, 4.1},{-107.866, -101.232, 4.16},{ -107.871, -101.150, 4.22 }, { -107.86, -101.06, 4.3 }, { -107.88, -100.967, 4.397 } };
 
 	float distanceToDog = pow(headPosition[0] - dogPositions[1][0], 2) + pow(headPosition[1] - dogPositions[1][1], 2) + pow(headPosition[2] - dogPositions[1][2], 2);
 
 	if (distanceToDog > 49) {
-		return;
+		return false;
 	}
 
 	float smallestDistance = 10000000.0f;
@@ -1623,42 +1722,10 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 	}
 
 	if (smallestDistance > boundingRadius) {
-		Memory::get()->writeCursorSize(1.0f);
-		Memory::get()->writeCursorColor({ 1.0f, 1.0f, 1.0f });
-		return;
+		return false;
 	}
 
-	Memory::get()->writeCursorColor({ 1.0f, 0.5f, 1.0f });
-
-	if (dogFrames >= 4.0f) {
-		hudManager->showInformationalMessage("Woof Woof!", 3.f);
-		sentDog = true;
-	}
-	else
-	{
-		hudManager->showInformationalMessage("Petting progress: " + std::to_string((int)(dogFrames * 100 / 4.0f)) + "%", 0.2f);
-	}
-
-	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
-		letGoSinceInteractModeOpen = true;
-
-		Memory::get()->writeCursorSize(2.0f);
-		return;
-	}
-
-	if (!letGoSinceInteractModeOpen) {
-		Memory::get()->writeCursorSize(2.0f);
-		return;
-	}
-
-	Memory::get()->writeCursorSize(1.0f);
-
-	if (lastMousePosition != cursorDirection)
-	{
-		dogFrames += frameLength;
-	}
-
-	lastMousePosition = cursorDirection;
+	return true;
 }
 
 APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {

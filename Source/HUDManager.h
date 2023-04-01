@@ -1,13 +1,22 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <queue>
 
 #include "DataTypes.h"
 
-
 class Memory;
 
+
+// Categories for the informational messages shown in the lower center of the screen. Ordered from highest to lowest priority.
+enum class InfoMessageCategory : int {
+	EnvironmentalPuzzle = 0,
+	MissingSymbol = 1,
+	ApHint = 2,
+	Dog = 3,
+	COUNT = 4
+};
 
 class HudManager {
 public:
@@ -22,10 +31,9 @@ public:
 	// Queue a message to be shown in the notifications block, such as "Received Shapers".
 	void queueNotification(std::string text, RgbColor color = RgbColor());
 
-	// Show a message in the center of the screen. If a duration is specified, shows the message
-	//   for that amount of time, with a short fade-out at the end.
-	void showInformationalMessage(std::string text, float duration);
-	void clearInformationalMessage();
+	// Show a message in the center of the screen.
+	void showInformationalMessage(InfoMessageCategory category, const std::string& text);
+	void clearInformationalMessage(InfoMessageCategory category);
 
 	// Show a message to the player, such as "Slowed! 10 seconds remaining."
 	void setWalkStatusMessage(std::string text);
@@ -69,9 +77,10 @@ private:
 	std::vector<Notification> activeNotifications;
 	float timeToNextNotification = 0.f;
 
-	std::string informationalMessageString;
-	float informationalMessageFadePercentage = 0.f;
-	float informationalMessageTimeRemaining = 0.f;
+	std::array<std::string, static_cast<int>(InfoMessageCategory::COUNT)> informationalMessages;
+	std::string currentInformationalMessage;
+	bool shouldShowInformationalMessage;
+	float informationalMessageFade = 0.f;
 
 	std::string worldMessage;
 	std::string walkStatusMessage;

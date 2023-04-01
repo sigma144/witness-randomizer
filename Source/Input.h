@@ -208,7 +208,8 @@ public:
 	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
 	std::vector<InputButton> consumeTapEvents();
 
-	std::pair<std::vector<float>, std::vector<float>> getMouseRay();
+	// Returns the most recently calculated direction of the mouse.
+	const std::vector<float>& getMouseDirection() const;
 
 	static std::string getNameForCustomKey(CustomKey key);
 	static std::string getNameForInputButton(InputButton button);
@@ -233,6 +234,11 @@ private:
 	int32_t currentKeyState[INPUT_KEYSTATE_SIZE];
 
 	void updateKeyState();
+
+	// The direction, in world coordinates, of the player's mouse. Updated once per tick.
+	std::vector<float> mouseDirection;
+	
+	void updateMouseVector();
 
 	// The raw interact mode integer retrieved from game memory. Updated once per tick.
 	int32_t currentInteractMode;
