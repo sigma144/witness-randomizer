@@ -1049,7 +1049,7 @@ void HudManager::writePayload() const {
 
 		payload.blocks.push_back(informationalMessageBlock);
 	}
-	
+
 	uint64_t writeAddress = address_hudTextPayload;
 
 	// Write payload information.
@@ -1081,8 +1081,7 @@ void HudManager::writePayload() const {
 			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t), NULL);
 
 			char stringBuff[STRING_DATA_SIZE];
-			strncpy_s(stringBuff, line.text.c_str(), STRING_DATA_SIZE);
-			stringBuff[STRING_DATA_SIZE - 1] = 0; // forcibly null-terminate in case the string is too long
+			strncpy_s(stringBuff, line.text.c_str(), _TRUNCATE);
 			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff), NULL);
 
 			// Advance write pointer past the line information.
