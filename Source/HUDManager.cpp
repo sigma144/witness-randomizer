@@ -474,7 +474,7 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 	// - Load the address of the payload into R13, which we will use as a read head as we move through our data.
 	func.add({ 0x49,0xBD })					// MOVABS R13, <address_payload>
-		.abs(address_hudTextPayload)
+		.val(address_hudTextPayload)
 	// - Load the number of blocks into R14.
 		.add({ 0x45,0x8B,0xB5 })			// MOV R14D, dword ptr [R13 + payload::address_blockCount]
 		.val(HudManager::HudTextPayload::address_blockCount)
@@ -484,9 +484,19 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 
 	////////////
+	// Early-out if we have no blocks.
+	// Input:
+	//     R14D:4			int32 block_count
+	////////////
+	func.add({ 0x45,0x85,0xF6 })			// TEST R14D,R14D
+		.add({ 0x0F,0x84 })					// JE <noBlocks>
+		.jump("noBlocks");
+	////////////
+
+	////////////
 	// Start the block loop.
 	////////////
-	int blockLoopStart = func.size();
+	func.mark("blockLoop");
 	////////////
 
 	////////////
@@ -505,6 +515,24 @@ void HudManager::overwriteSubtitleFunction() {
 	func.add({ 0x45,0x8B,0xA5 })			// MOV R12D, dword ptr [R13 + block::address_lineCount]
 		.val(HudManager::HudTextBlock::address_lineCount);
 	////////////
+
+	////////////
+	// Verify that this block has lines and, if not, move the read head forward and skip the 
+	// Input:
+	//     R13				void* read_head
+	//     R12D:4			in32_line_count
+	////////////
+	// - Test for lines and, if found, skip forward.
+	func.add({ 0x45,0x85,0xE4 })			// TEST R12D,R12D
+		.add({ 0x0F,0x85 })					// JNE <hasLines>
+		.jump("hasLines");
+	// - We found no lines. Advance the read head, then skip past the block.
+	func.add({ 0x49,0x81,0xC5 })			// ADD R13, block::totalDataSize
+		.val(HudManager::HudTextBlock::totalDataSize)
+		.add({ 0xE9 })						// JMP <noLines>
+		.jump("noLines");
+	// - End of the early-out logic.
+	func.mark("hasLines");
 	
 	////////////
 	// Save off the horizontal position and alignment parameters for the block.
@@ -624,7 +652,7 @@ void HudManager::overwriteSubtitleFunction() {
 	// Start the line loop.
 	// NOTE: R12D goes from being line_count to current_index here.
 	////////////
-	int lineLoopStart = func.size();
+	func.mark("lineLoop");
 	////////////
 
 	////////////
@@ -824,18 +852,29 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 	// Jump back in the line loop if we haven't reached the end.
 	////////////
-	func.add({ 0x45,0x85,0xE4 });			// TEST R12D,R12D
-	func.add({ 0x0F,0x85 })					// JNE <loopStart>
-		.val((lineLoopStart - (func.size() + 4)));
+	func.add({ 0x45,0x85,0xE4 })			// TEST R12D,R12D
+		.add({ 0x0F,0x85 })					// JNE <loopStart>
+		.jump("lineLoop");
 	////////////
 
 	////////////
-	// Jump back in the line loop if we haven't reached the end.
+	// Landing point for the early-out when a block has no lines.
 	////////////
-	func.add({ 0x45,0x85,0xF6 });			// TEST R14D,R14D
-	func.add({ 0x0F,0x85 })					// JNE <loopStart>
-		.val((blockLoopStart - (func.size() + 4)));
+	func.mark("noLines");
 	////////////
+
+	////////////
+	// Jump back in the block loop if we haven't reached the end.
+	////////////
+	func.add({ 0x45,0x85,0xF6 })			// TEST R14D,R14D
+		.add({ 0x0F,0x85 })					// JNE <loopStart>
+		.jump("blockLoop");
+	////////////
+
+	////////////
+	// Landing point for the early-out when we have no blocks.
+	////////////
+	func.mark("noBlocks");
 
 	////////////
 	// Call im_flush().
@@ -1011,18 +1050,6 @@ void HudManager::writePayload() const {
 		}
 
 		temp_payload.blocks.push_back(informationalMessageBlock);
-	}
-
-	// HACK: The rendering code currently crashes if there are zero blocks present. Add a placeholder block.
-	if (temp_payload.blocks.size() == 0) {
-		HudTextBlock testBlock;
-		testBlock.verticalPosition = 1;
-		HudTextLine testLine;
-		testLine.textColor = RgbColor(1.f, 1.f, 1.f, 0.0f);
-		testLine.shadowColor = RgbColor(0.f, 0.f, 0.f, 0.0f);
-		testLine.text = "hack";
-		testBlock.lines.push_back(testLine);
-		temp_payload.blocks.push_back(testBlock);
 	}
 	
 	uint64_t writeAddress = address_hudTextPayload;

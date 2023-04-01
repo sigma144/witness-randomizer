@@ -26,23 +26,35 @@ AsmBuilder& AsmBuilder::rel(uint32_t referenceAddress)
 
 	return *this;
 }
+AsmBuilder& AsmBuilder::mark(std::string label) {
+	if (bookmarks.find(label) != bookmarks.end()) {
+		throw std::exception("Attempted to create a bookmark with a duplicate name.");
+		return *this;
+	}
 
-AsmBuilder& AsmBuilder::abs(uint32_t referenceAddress)
-{
-	// Global references are relative to the address of the next operation. Here, we assume that the next operation
-	//   is always 4 bytes after the given address.
-	uint8_t* bytes = static_cast<uint8_t*>(static_cast<void*>(&referenceAddress));
-	builder.insert(builder.end(), bytes, bytes + 4);
+	const uint32_t address = (uint32_t)builder.size();
+	bookmarks[label] = address;
+
+	// Resolve any pending jumps.
+	for (auto jumpIterator = unmatchedJumps.lower_bound(label); jumpIterator != unmatchedJumps.upper_bound(label);) {
+		const int32_t relativeJump = address - (jumpIterator->second + 4);
+		*((int32_t*)&builder[jumpIterator->second]) = relativeJump;
+
+		jumpIterator = unmatchedJumps.erase(jumpIterator);
+	}
 
 	return *this;
 }
 
-AsmBuilder& AsmBuilder::abs(uint64_t referenceAddress)
-{
-	// Global references are relative to the address of the next operation. Here, we assume that the next operation
-	//   is always 4 bytes after the given address.
-	uint8_t* bytes = static_cast<uint8_t*>(static_cast<void*>(&referenceAddress));
-	builder.insert(builder.end(), bytes, bytes + 8);
+AsmBuilder& AsmBuilder::jump(std::string label) {
+	auto foundBookmark = bookmarks.find(label);
+	if (foundBookmark != bookmarks.end()) {
+		val<int32_t>(foundBookmark->second - ((uint32_t)builder.size() + 4));
+	}
+	else {
+		unmatchedJumps.insert(std::make_pair(label, builder.size()));
+		val<int32_t>(0);
+	}
 
 	return *this;
 }
