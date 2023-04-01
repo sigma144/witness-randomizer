@@ -1555,7 +1555,10 @@ void APWatchdog::WriteMovementSpeed(float currentSpeed) {
 
 void APWatchdog::LookingAtObelisk() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-	if (interactionState != InteractionState::Focusing) return;
+	if (interactionState != InteractionState::Focusing) {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		return;
+	}
 
 	std::set<int> candidates;
 
