@@ -1560,7 +1560,7 @@ void APWatchdog::LookingAtObelisk() {
 	std::set<int> candidates;
 
 	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
-	std::vector<float> cursorDirection = InputWatchdog::get()->getMouseDirection();
+	Vector3 cursorDirection = InputWatchdog::get()->getMouseDirection();
 
 	for (int epID : allEPs) {
 		std::vector<float> obeliskPosition = ReadPanelData<float>(epID, POSITION, 3);
@@ -1581,7 +1581,7 @@ void APWatchdog::LookingAtObelisk() {
 
 		q.RotateVector(facing);
 
-		float dotProduct = cursorDirection[0] * facing[0] + cursorDirection[1] * facing[1] + cursorDirection[2] * facing[2];
+		float dotProduct = cursorDirection.X * facing[0] + cursorDirection.Y * facing[1] + cursorDirection.Z * facing[2];
 
 		if (dotProduct < 0) candidates.insert(epID);
 
@@ -1595,8 +1595,8 @@ void APWatchdog::LookingAtObelisk() {
 		std::vector<float> epPosition = ReadPanelData<float>(epID, POSITION, 3);
 
 		std::vector<float> v = { epPosition[0] - headPosition[0], epPosition[1] - headPosition[1], epPosition[2] - headPosition[2] };
-		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
-		std::vector<float> p = { headPosition[0] + t * cursorDirection[0], headPosition[1] + t * cursorDirection[1], headPosition[2] + t * cursorDirection[2] };
+		float t = v[0] * cursorDirection.X + v[1] * cursorDirection.Y + v[2] * cursorDirection.Z;
+		std::vector<float> p = { headPosition[0] + t * cursorDirection.X, headPosition[1] + t * cursorDirection.Y, headPosition[2] + t * cursorDirection.Z };
 		
 		float distance = sqrt(pow(p[0] - epPosition[0], 2) + pow(p[1] - epPosition[1], 2) + pow(p[2] - epPosition[2], 2));
 
@@ -1680,7 +1680,7 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 
 	Memory::get()->writeCursorSize(1.0f);
 
-	std::vector<float> currentMouseDirection = InputWatchdog::get()->getMouseDirection();
+	const Vector3& currentMouseDirection = InputWatchdog::get()->getMouseDirection();
 	if (lastMouseDirection != currentMouseDirection)
 	{
 		dogPettingDuration += deltaSeconds;
@@ -1696,7 +1696,7 @@ bool APWatchdog::LookingAtTheDog() const {
 	}
 
 	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
-	const std::vector<float>& cursorDirection = InputWatchdog::get()->getMouseDirection();
+	const Vector3& cursorDirection = InputWatchdog::get()->getMouseDirection();
 
 	std::vector<std::vector<float>> dogPositions = { {-107.954, -101.36, 4.078}, {-107.9, -101.312, 4.1},{-107.866, -101.232, 4.16},{ -107.871, -101.150, 4.22 }, { -107.86, -101.06, 4.3 }, { -107.88, -100.967, 4.397 } };
 
@@ -1711,8 +1711,8 @@ bool APWatchdog::LookingAtTheDog() const {
 
 	for (auto dogPosition : dogPositions) {
 		std::vector<float> v = { dogPosition[0] - headPosition[0], dogPosition[1] - headPosition[1], dogPosition[2] - headPosition[2] };
-		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
-		std::vector<float> p = { headPosition[0] + t * cursorDirection[0], headPosition[1] + t * cursorDirection[1], headPosition[2] + t * cursorDirection[2] };
+		float t = v[0] * cursorDirection.X + v[1] * cursorDirection.Y + v[2] * cursorDirection.Z;
+		std::vector<float> p = { headPosition[0] + t * cursorDirection.X, headPosition[1] + t * cursorDirection.Y, headPosition[2] + t * cursorDirection.Z };
 
 		float distance = sqrt(pow(p[0] - dogPosition[0], 2) + pow(p[1] - dogPosition[1], 2) + pow(p[2] - dogPosition[2], 2));
 

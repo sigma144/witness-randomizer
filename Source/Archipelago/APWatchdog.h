@@ -200,7 +200,7 @@ private:
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> entityToName = {};
 
-	std::vector<float> lastMouseDirection;
+	Vector3 lastMouseDirection;
 	float dogPettingDuration = 0.f;
 	float dogBarkDuration = 0.f;
 	bool sentDog = false;
