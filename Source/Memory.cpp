@@ -917,7 +917,7 @@ void* Memory::ComputeOffset(std::vector<int> offsets, bool forceRecalculatePoint
 		cumulativeAddress += offset;
 
 		const auto search = _computedAddresses.find(cumulativeAddress);
-		if (search == std::end(_computedAddresses) || forceRecalculatePointer) {
+		if (search == std::end(_computedAddresses) || (forceRecalculatePointer && cumulativeAddress != _baseAddress + GLOBALS)) { // GLOBALS pointer can change temporarily for a split second.
 			// If the address is not yet computed, then compute it.
 			uintptr_t computedAddress = 0;
 			if (!ReadAbsolute(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {
