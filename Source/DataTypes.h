@@ -18,3 +18,74 @@ struct RgbColor {
 			((int)(B * 255.5));
 	}
 };
+
+struct Vector2 {
+	Vector2() : X(0), Y(0) {}
+	Vector2(float X, float Y) : X(X), Y(Y) {}
+
+	float X;
+	float Y;
+
+	friend bool operator==(const Vector2& lhs, const Vector2& rhs) {
+		return lhs.X == rhs.X && lhs.Y == rhs.Y;
+	}
+
+	friend bool operator!=(const Vector2& lhs, const Vector2& rhs) {
+		return !(lhs == rhs);
+	}
+
+	friend Vector2 operator+(const Vector2& lhs, const Vector2& rhs) {
+		return Vector2(lhs.X + rhs.X, lhs.Y + rhs.Y);
+	}
+
+	friend Vector2 operator-(const Vector2& lhs, const Vector2& rhs) {
+		return Vector2(lhs.X - rhs.X, lhs.Y - rhs.Y);
+	}
+
+	friend Vector2 operator*(const Vector2& lhs, const float& rhs) {
+		return Vector2(lhs.X * rhs, lhs.Y * rhs);
+	}
+
+	friend Vector2 operator/(const Vector2& lhs, const float& rhs) {
+		return Vector2(lhs.X / rhs, lhs.Y / rhs);
+	}
+
+	float length() const;
+	Vector2 normalized() const;
+};
+
+struct Vector3 {
+	Vector3() : X(0), Y(0), Z(0) {}
+	Vector3(float X, float Y, float Z) : X(X), Y(Y), Z(Z) {}
+
+	float X;
+	float Y;
+	float Z;
+
+	friend bool operator==(const Vector3& lhs, const Vector3& rhs) {
+		return lhs.X == rhs.X && lhs.Y == rhs.Y && lhs.Z == rhs.Z;
+	}
+
+	friend bool operator!=(const Vector3& lhs, const Vector3& rhs) {
+		return !(lhs == rhs);
+	}
+
+	friend Vector3 operator+(const Vector3& lhs, const Vector3& rhs) {
+		return Vector3(lhs.X + rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z);
+	}
+
+	friend Vector3 operator-(const Vector3& lhs, const Vector3& rhs) {
+		return Vector3(lhs.X - rhs.X, lhs.Y - rhs.Y, lhs.Z - rhs.Z);
+	}
+
+	friend Vector3 operator*(const Vector3& lhs, const float& rhs) {
+		return Vector3(lhs.X * rhs, lhs.Y * rhs, lhs.Z * rhs);
+	}
+
+	friend Vector3 operator/(const Vector3& lhs, const float& rhs) {
+		return Vector3(lhs.X / rhs, lhs.Y / rhs, lhs.Z / rhs);
+	}
+
+	float length() const;
+	Vector3 normalized() const;
+};

@@ -213,6 +213,7 @@
     <ClCompile Include="Archipelago\PanelRestore.cpp" />
     <ClCompile Include="ASMBuilder.cpp" />
     <ClCompile Include="ClientWindow.cpp" />
+    <ClCompile Include="DataTypes.cpp" />
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="HUDManager.cpp" />
     <ClCompile Include="Input.cpp" />
