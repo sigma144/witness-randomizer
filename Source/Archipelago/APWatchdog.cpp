@@ -79,8 +79,6 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
-	CheckSymmetryPowerCableBug();
-
 	halfSecondCountdown -= frameDuration.count();
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -438,7 +436,12 @@ void APWatchdog::TriggerPowerSurge() {
 			/*if (ReadPanelData<int>(panelId, SOLVED))
 				continue;*/
 
-			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, true);
+			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, movingMemoryPanels.count(panelId));
+
+			if (powerValues.size() == 0) {
+				hudManager->queueBannerMessage("Error reading power values on panel: " + std::to_string(panelId));
+				continue;
+			}
 
 			if (powerValues[0] > 0) {
 				//using -20f as offset to create a unique recogniseable value that is also stored in the save
@@ -1699,15 +1702,6 @@ void APWatchdog::CheckDeathLink() {
 
 	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE, 1, movingMemoryPanels.count(panelIdToConsider))[0];
 
-	std::wstringstream s;
-
-	s << std::hex << panelIdToConsider;
-	s << " - ";
-	s << newState;
-	s << "\n";
-
-	OutputDebugStringW(s.str().c_str());
-
 	if (mostRecentPanelState != newState) {
 		mostRecentPanelState = newState;
 
@@ -1784,31 +1778,5 @@ void APWatchdog::UpdateInfiniteChallenge() {
 		}
 
 		infiniteChallenge = isChecked;
-	}
-}
-
-void APWatchdog::CheckSymmetryPowerCableBug() {
-	if (!ppMessageDelivered) {
-		std::vector<float> playerPosition;
-		try {
-			playerPosition = Memory::get()->ReadPlayerPosition();
-		}
-		catch (std::exception e) {
-			return;
-		}
-
-		std::vector<float> ppPosition = ReadPanelData<float>(0x01A45, POSITION, 3);
-
-		float newPPState = ReadPanelData<int>(0x01A45, 0xCC);
-
-		if ((newPPState != 0.0f) && (lastPPState == 0.0f)) {
-			if (pow(playerPosition[0] - ppPosition[0], 2) + pow(playerPosition[1] - ppPosition[1], 2) + pow(playerPosition[2] - ppPosition[2], 2) > 400) {
-				hudManager->queueBannerMessage("Pressure Plates just activated for no reason.");
-				hudManager->queueBannerMessage("Please report your last in-game actions to the devs (Discord/Github Issues)");
-				ppMessageDelivered = true;
-			}
-		}
-
-		lastPPState = newPPState;
 	}
 }

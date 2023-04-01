@@ -115,8 +115,6 @@ private:
 
 	float lastPPState = 1.0f;
 
-	void CheckSymmetryPowerCableBug();
-
 	void HandleKeyTaps();
 
 	void HandleInteractionState();
