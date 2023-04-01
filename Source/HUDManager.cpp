@@ -52,11 +52,11 @@ void HudManager::update(float deltaSeconds) {
 	}
 }
 
-void HudManager::queueBannerMessage(std::string text, RgbColor color, float duration) {
+void HudManager::queueBannerMessage(const std::string& text, RgbColor color, float duration) {
 	queuedBannerMessages.push(BannerMessage(text, color, duration));
 }
 
-void HudManager::queueNotification(std::string text, RgbColor color) {
+void HudManager::queueNotification(const std::string& text, RgbColor color) {
 	queuedNotifications.push(Notification(text, color));
 }
 
@@ -86,16 +86,23 @@ void HudManager::clearInformationalMessage(InfoMessageCategory category) {
 	showInformationalMessage(category, "");
 }
 
-void HudManager::setWalkStatusMessage(std::string text) {
+void HudManager::setWalkStatusMessage(const std::string& text) {
 	if (walkStatusMessage != text) {
 		walkStatusMessage = text;
 		hudTextDirty = true;
 	}
 }
 
-void HudManager::setSolveStatusMessage(std::string text) {
+void HudManager::setSolveStatusMessage(const std::string& text) {
 	if (solveStatusMessage != text) {
 		solveStatusMessage = text;
+		hudTextDirty = true;
+	}
+}
+
+void HudManager::setDebugText(const std::string& text) {
+	if (debugText != text) {
+		debugText = text;
 		hudTextDirty = true;
 	}
 }
@@ -1048,6 +1055,24 @@ void HudManager::writePayload() const {
 		}
 
 		payload.blocks.push_back(informationalMessageBlock);
+	}
+
+	// Show debug text in the upper-left corner of the screen.
+	if (!debugText.empty()) {
+		HudTextBlock debugMessageBlock;
+		debugMessageBlock.verticalPosition = 1.f;
+
+		std::vector<std::string> expandedLines = separateLines(debugText);
+		for (const std::string& lineText : expandedLines) {
+			HudTextLine lineData;
+			lineData.textColor = RgbColor(1.f, 1.f, 1.f, 1.f);
+			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(1.f));
+			lineData.text = lineText;
+
+			debugMessageBlock.lines.push_back(lineData);
+		}
+
+		payload.blocks.push_back(debugMessageBlock);
 	}
 
 	uint64_t writeAddress = address_hudTextPayload;

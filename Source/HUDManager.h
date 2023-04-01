@@ -26,22 +26,26 @@ public:
 	void update(float deltaSeconds);
 
 	// Queue a message to be shown at the top of the screen, such as "Connected to Archipelago".
-	void queueBannerMessage(std::string text, RgbColor color = RgbColor(), float duration = 5.f);
+	void queueBannerMessage(const std::string& text, RgbColor color = RgbColor(), float duration = 5.f);
 
 	// Queue a message to be shown in the notifications block, such as "Received Shapers".
-	void queueNotification(std::string text, RgbColor color = RgbColor());
+	void queueNotification(const std::string& text, RgbColor color = RgbColor());
 
 	// Show a message in the center of the screen.
 	void showInformationalMessage(InfoMessageCategory category, const std::string& text);
 	void clearInformationalMessage(InfoMessageCategory category);
 
 	// Show a message to the player, such as "Slowed! 10 seconds remaining."
-	void setWalkStatusMessage(std::string text);
+	void setWalkStatusMessage(const std::string& text);
 	void clearWalkStatusMessage() { setWalkStatusMessage(std::string()); };
 
 	// Show an input action hint to the player while in solve mode, such as "Hold [TAB]: Skip Puzzle".
-	void setSolveStatusMessage(std::string text);
+	void setSolveStatusMessage(const std::string& text);
 	void clearSolveStatusMessage() { setSolveStatusMessage(std::string()); };
+
+	// Show debug text in the upper-left corner of the screen.
+	void setDebugText(const std::string& text);
+	void clearDebugText() { setDebugText(std::string()); }
 
 private:
 
@@ -85,6 +89,7 @@ private:
 	std::string worldMessage;
 	std::string walkStatusMessage;
 	std::string solveStatusMessage;
+	std::string debugText;
 	bool hudTextDirty = false;
 
 
