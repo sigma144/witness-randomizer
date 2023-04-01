@@ -333,7 +333,8 @@ void Memory::doSecretThing() {
 				char writebuf[] = "\x54\x68\x65\x20\x57\x69\x6E\x74\x65\x73\x73";
 
 				WriteProcessMemory(_handle, reinterpret_cast<void*>(the_witness_string), writebuf, sizeof(writebuf) - 1, NULL);
-				return true;
+				return true; // This return call makes it not work for e.g. the French version where the title is the *second* occurance of the string.
+				// But if I just remove it it might cause bugs. The real answer is to somehow work out the end of the "localisation_text" allocation. No clue how to do that
 			}
 		}
 
