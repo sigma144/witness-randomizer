@@ -18,7 +18,7 @@
 #include "PanelRestore.h"
 
 
-#define CHEAT_KEYS_ENABLED 1
+#define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
 APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl) : Watchdog(0.033f) {
@@ -917,10 +917,6 @@ void APWatchdog::HandleKeyTaps() {
 		}
 		else {
 			switch (tappedButton) {
-				// TEMP: keybind rebind
-			case InputButton::KEY_BACKSLASH:
-				StartRebindingKey(CustomKey::SKIP_PUZZLE);
-				break;
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
 				hudManager->queueNotification("Cheat: adding Slowness.", { 1.f, 0.6f, 0.5f });
