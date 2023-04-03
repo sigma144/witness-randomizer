@@ -172,7 +172,7 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 
 	{ 0x0C141, {{0x01983, PANEL, TARGET}, {0x01987, PANEL, TARGET}} }, // Final Room Entry Door
 
-	{ 0x17F33, {{0x17FA2, PANEL, TARGET}, {0x0A3AF, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}} }, // Rock
+	{ 0x17F33, {{0x17FA2, PANEL, TARGET},{0x17FA2, PANEL, ENTITY_NAME}, {0x334E1, PANEL, TARGET},{0x334E1, PANEL, ENTITY_NAME}, {0x0A3AF, PRESSURE_PLATE, PRESSURE_PLATE_TARGET}} }, // Rock
 
 	{ 0x2D77D, {{0x00FF8, PANEL, TARGET}} }, // Door to Caves
 	{ 0x019A5, {{0x09DD5, PANEL, TARGET}} }, // Pillar Door
@@ -801,9 +801,19 @@ const inline std::set<int> deathlinkExcludeList = {
 	0x0A079, // Bunker Elevator Panel
 };
 
+const inline std::set<int> deathlinkExpertExcludeList = {
+	0x03C0C, // Town RGB Room Left
+	0x00065, 0x0006D, 0x00072, 0x0006F, 0x00070, 0x00071, 0x00076, // Symmetry Island Fading Lines
+	0x288EA, 0x288FC, 0x289E7, 0x288AA, // Caves Wooden Beams
+};
+
 const inline std::vector<int> alwaysDeathLinkPanels = {
 	0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Same Solution Set
 	0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Keep Pressure Plates
+};
+
+const inline std::set<int> movingMemoryPanels = {
+	0x00CDB, 0x0051F, 0x00524, 0x00CD4
 };
 
 const inline std::set<int> allEPs = {

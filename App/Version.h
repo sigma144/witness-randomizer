@@ -5,11 +5,11 @@
 
 #define MAJOR 3
 #define MINOR 1
-#define PATCH 0
+#define PATCH 1
 
 #define VERSION_STR     TO_STRING(MAJOR) "." TO_STRING(MINOR) "." TO_STRING(PATCH)
 #define VERSION			MAJOR, MINOR, PATCH
 
-#define AP_VERSION_STR	"0.3.9"
+#define AP_VERSION_STR	"0.4.0"
 
 #define PRODUCT_NAME L"Witness Random Puzzle Generator for Archipelago.gg"

@@ -4,11 +4,11 @@ C++ websocket client library for emscripten webbrowser contexts.
 
 ## How to use
 
-* Submodule or copy into project.
-* Add wsjs.cpp to sources and `#include <wsjs.hpp>`
+* Submodule or copy into project
+* `#include <wsjs.hpp>` - it's header-only
 * Constructor and destructor (de)registers WS with JS
 * Callbacks will fire from JS event loop
-* Use `::send` (defaults to text), `::send_text`, `::send_binary` to write to the socket
+* Use `::send` (defaults to text), `::send_text` or `::send_binary` to write to the socket
 
 ## Example
 

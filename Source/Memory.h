@@ -136,9 +136,14 @@ public:
 	}
 
 	template <class T>
-	std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
+	std::vector<T> ReadPanelData(int panel, int offset, size_t size, bool forceRecalculatePointer) {
 		if (size == 0) return std::vector<T>();
-		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, size);
+		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, size, forceRecalculatePointer);
+	}
+
+	template <class T>
+	std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
+		return ReadPanelData<T>(panel, offset, size, false);
 	}
 
 	template <class T>
@@ -154,14 +159,24 @@ public:
 	}
 
 	template <class T>
-	void WritePanelData(int panel, int offset, T data) {
+	void WritePanelData(int panel, int offset, T data, bool forceRecalculatePointer) {
 		std::vector<T> dataVector = { data };
-		WritePanelData<T>(panel, offset, dataVector);
+		WritePanelData<T>(panel, offset, dataVector, forceRecalculatePointer);
+	}
+
+	template <class T>
+	void WritePanelData(int panel, int offset, T data) {
+		WritePanelData<T>(panel, offset, data, false);
+	}
+
+	template <class T>
+	void WritePanelData(int panel, int offset, const std::vector<T>& data, bool forceRecalculatePointer) {
+		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data, forceRecalculatePointer);
 	}
 
 	template <class T>
 	void WritePanelData(int panel, int offset, const std::vector<T>& data) {
-		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
+		WritePanelData<T>(panel, offset, data, false);
 	}
 
 	void WriteMovementSpeed(float speed) {
@@ -246,12 +261,15 @@ public:
 	//   root index. For example, if you wish to compute GLOBAL_VALUE::pointerA->pointerB, then you would pass the address of GLOBAL_VALUE
 	//   relative to the program's root, then the offset of pointerA in that structure, then the offset of pointerB in pointerA's structure.
 	// Caches values for quick lookup.
-	void* ComputeOffset(std::vector<int> offsets);
+	void* ComputeOffset(std::vector<int> offsets) {
+		return ComputeOffset(offsets, false);
+	}
+	void* ComputeOffset(std::vector<int> offsets, bool forceRecalculatePointer);
 
 	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
-	int GLOBALS;
+	int GLOBALS = 0;
 	int GAMELIB_RENDERER;
 	int RUNSPEED;
 	int CAMERAPOSITION;
@@ -333,24 +351,34 @@ private:
 	void doSecretThing();
 
 	template<class T>
-	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
+	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems, bool forceRecalculatePointer) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
 		std::vector<T> data;
 		data.resize(numItems);
-		if (ReadAbsolute(ComputeOffset(offsets), &data[0], sizeof(T) * numItems)) {
+		if (ReadAbsolute(ComputeOffset(offsets, forceRecalculatePointer), &data[0], sizeof(T) * numItems)) {
 			return data;
 		}
 		ThrowError(offsets, false);
 		return {};
 	}
 
+	template<class T>
+	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
+		return ReadData<T>(offsets, numItems, false);
+	}
+
 	template <class T>
-	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
+	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data, bool forceRecalculatePointer) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
-		if (WriteAbsolute(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
+		if (WriteAbsolute(ComputeOffset(offsets, forceRecalculatePointer), &data[0], sizeof(T) * data.size())) {
 			return;
 		}
 		ThrowError(offsets, true);
+	}
+
+	template <class T>
+	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
+		WriteData(offsets, data, false);
 	}
 
 

@@ -100,13 +100,22 @@ DWORD Memory::getProcessID() {
 // Copied from Witness Trainer https://github.com/jbzdarkid/witness-trainer/blob/master/Source/Memory.cpp#L218
 void Memory::findGlobals() {
 	if (!GLOBALS) {
+		bool showMsgTemp = _singleton->showMsg;
+		_singleton->showMsg = false;
 		// Check to see if this is a version with a known globals pointer.
 		for (int g : globalsTests) {
 			GLOBALS = g;
-			if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
-				return;
+			try {
+				if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
+					_singleton->showMsg = showMsgTemp;
+					return;
+				}
+			}
+			catch (std::exception e) {
 			}
 		}
+
+		_singleton->showMsg = showMsgTemp;
 
 		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)")) {
 			return;
@@ -333,7 +342,8 @@ void Memory::doSecretThing() {
 				char writebuf[] = "\x54\x68\x65\x20\x57\x69\x6E\x74\x65\x73\x73";
 
 				WriteProcessMemory(_handle, reinterpret_cast<void*>(the_witness_string), writebuf, sizeof(writebuf) - 1, NULL);
-				return true;
+				return true; // This return call makes it not work for e.g. the French version where the title is the *second* occurance of the string.
+				// But if I just remove it it might cause bugs. The real answer is to somehow work out the end of the "localisation_text" allocation. No clue how to do that
 			}
 		}
 
@@ -360,21 +370,21 @@ void Memory::findImportantFunctionAddresses(){
 		cursorSize = _baseAddress + offset + index;
 
 		for (; index < data.size(); index++) {
-			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45 && data[index - 1] == 0x40) {
 				cursorR = _baseAddress + offset + index;
 				break;
 			}
 		}
 		index++;
 		for (; index < data.size(); index++) {
-			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45 && data[index - 1] == 0x44) {
 				cursorG = _baseAddress + offset + index;
 				break;
 			}
 		}
 		index++;
 		for (; index < data.size(); index++) {
-			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45 && data[index - 1] == 0x48) {
 				cursorB = _baseAddress + offset + index;
 				break;
 			}
@@ -928,7 +938,7 @@ void Memory::ThrowError() {
 	ThrowError(message);
 }
 
-void* Memory::ComputeOffset(std::vector<int> offsets)
+void* Memory::ComputeOffset(std::vector<int> offsets, bool forceRecalculatePointer)
 {
 	// Leave off the last offset, since it will be either read/write, and may not be of type unitptr_t.
 	int final_offset = offsets.back();
@@ -939,7 +949,7 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 		cumulativeAddress += offset;
 
 		const auto search = _computedAddresses.find(cumulativeAddress);
-		if (search == std::end(_computedAddresses)) {
+		if (search == std::end(_computedAddresses) || (forceRecalculatePointer && cumulativeAddress != _baseAddress + GLOBALS)) { // GLOBALS pointer can change temporarily for a split second.
 			// If the address is not yet computed, then compute it.
 			uintptr_t computedAddress = 0;
 			if (!ReadAbsolute(reinterpret_cast<LPVOID>(cumulativeAddress), &computedAddress, sizeof(uintptr_t))) {

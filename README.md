@@ -10,7 +10,7 @@ To play a randomizer version of The Witness with this project, you will need:
 
 1. **A compatible version of The Witness**
    
-   Officially supported versions are: Steam, Epic Games, (Humble Store)
+   Officially supported versions are: Steam, Epic Games, Humble DRM-Free
    
    Supported Operating System: Windows, 64bit
 

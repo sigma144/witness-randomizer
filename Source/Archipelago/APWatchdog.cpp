@@ -80,8 +80,6 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
-	CheckSymmetryPowerCableBug();
-
 	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -437,11 +435,16 @@ void APWatchdog::TriggerPowerSurge() {
 			/*if (ReadPanelData<int>(panelId, SOLVED))
 				continue;*/
 
-			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
+			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, movingMemoryPanels.count(panelId));
+
+			if (powerValues.size() == 0) {
+				hudManager->queueBannerMessage("Error reading power values on panel: " + std::to_string(panelId));
+				continue;
+			}
 
 			if (powerValues[0] > 0) {
 				//using -20f as offset to create a unique recogniseable value that is also stored in the save
-				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] });
+				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] }, movingMemoryPanels.count(panelId));
 			}
 		}
 	}
@@ -1027,6 +1030,7 @@ void APWatchdog::RefreshDoorCollisions() {
 			OutputDebugStringW(L"Updating using ingame function...\n");
 			Memory::get()->UpdateEntityPosition(collisionToUpdate);
 			alreadyTriedUpdatingNormally.insert(collisionToUpdate);
+			collisionsToRefresh[collisionToUpdate] = 2;
 		}
 		catch (const std::exception& e) { 
 			collisionsToRefresh[collisionToUpdate] = 2;
@@ -1754,9 +1758,9 @@ void APWatchdog::CheckDeathLink() {
 
 	if (panelIdToConsider == -1 || !actuallyEveryPanel.count(panelIdToConsider)) return;
 	if (deathlinkExcludeList.count(panelIdToConsider)) return;
-	if (PuzzleRandomization == SIGMA_EXPERT && 0x03C0C) return;
+	if (PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(panelIdToConsider)) return;
 
-	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE);
+	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE, 1, movingMemoryPanels.count(panelIdToConsider))[0];
 
 	if (mostRecentPanelState != newState) {
 		mostRecentPanelState = newState;
@@ -1834,31 +1838,5 @@ void APWatchdog::UpdateInfiniteChallenge() {
 		}
 
 		infiniteChallenge = isChecked;
-	}
-}
-
-void APWatchdog::CheckSymmetryPowerCableBug() {
-	if (!ppMessageDelivered) {
-		std::vector<float> playerPosition;
-		try {
-			playerPosition = Memory::get()->ReadPlayerPosition();
-		}
-		catch (std::exception e) {
-			return;
-		}
-
-		std::vector<float> ppPosition = ReadPanelData<float>(0x01A45, POSITION, 3);
-
-		float newPPState = ReadPanelData<int>(0x01A45, 0xCC);
-
-		if ((newPPState != 0.0f) && (lastPPState == 0.0f)) {
-			if (pow(playerPosition[0] - ppPosition[0], 2) + pow(playerPosition[1] - ppPosition[1], 2) + pow(playerPosition[2] - ppPosition[2], 2) > 400) {
-				hudManager->queueBannerMessage("Pressure Plates just activated for no reason.");
-				hudManager->queueBannerMessage("Please report your last in-game actions to the devs (Discord/Github Issues)");
-				ppMessageDelivered = true;
-			}
-		}
-
-		lastPPState = newPPState;
 	}
 }

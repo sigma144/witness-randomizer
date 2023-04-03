@@ -16,8 +16,12 @@ public:
 	bool terminate;
 protected:
 	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size) const {
-		try{
-			return Memory::get()->ReadPanelData<T>(panel, offset, size);
+		return ReadPanelData<T>(panel, offset, size, false);
+	}
+
+	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size, bool forceRecalculate) const {
+		try {
+			return Memory::get()->ReadPanelData<T>(panel, offset, size, forceRecalculate);
 		}
 		catch (std::exception& e) {
 			OutputDebugStringW(L"Watchdog Read Problem");
@@ -49,15 +53,19 @@ protected:
 		}
 	}
 
-	template <class T> bool WritePanelData(int panel, int offset, const std::vector<T>& data) const {
+	template <class T> bool WritePanelData(int panel, int offset, const std::vector<T>& data, bool forceRecalculatePointer) const {
 		try {
-			Memory::get()->WritePanelData<T>(panel, offset, data);
+			Memory::get()->WritePanelData<T>(panel, offset, data, forceRecalculatePointer);
 			return true;
 		}
 		catch (std::exception& e) {
 			OutputDebugStringW(L"Watchdog Write Problem");
 			return false;
 		}
+	}
+
+	template <class T> bool WritePanelData(int panel, int offset, const std::vector<T>& data) const {
+		return WritePanelData(panel, offset, data, false);
 	}
 
 	template <class T> bool WriteArray(int panel, int offset, const std::vector<T>& data) const {
