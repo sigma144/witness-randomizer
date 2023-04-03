@@ -100,13 +100,22 @@ DWORD Memory::getProcessID() {
 // Copied from Witness Trainer https://github.com/jbzdarkid/witness-trainer/blob/master/Source/Memory.cpp#L218
 void Memory::findGlobals() {
 	if (!GLOBALS) {
+		bool showMsgTemp = _singleton->showMsg;
+		_singleton->showMsg = false;
 		// Check to see if this is a version with a known globals pointer.
 		for (int g : globalsTests) {
 			GLOBALS = g;
-			if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
-				return;
+			try {
+				if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
+					_singleton->showMsg = showMsgTemp;
+					return;
+				}
+			}
+			catch (std::exception e) {
 			}
 		}
+
+		_singleton->showMsg = showMsgTemp;
 
 		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)")) {
 			return;
@@ -361,21 +370,21 @@ void Memory::findImportantFunctionAddresses(){
 		cursorSize = _baseAddress + offset + index;
 
 		for (; index < data.size(); index++) {
-			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45 && data[index - 1] == 0x40) {
 				cursorR = _baseAddress + offset + index;
 				break;
 			}
 		}
 		index++;
 		for (; index < data.size(); index++) {
-			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45 && data[index - 1] == 0x44) {
 				cursorG = _baseAddress + offset + index;
 				break;
 			}
 		}
 		index++;
 		for (; index < data.size(); index++) {
-			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45) {
+			if (data[index - 3] == 0xC7 && data[index - 2] == 0x45 && data[index - 1] == 0x48) {
 				cursorB = _baseAddress + offset + index;
 				break;
 			}
