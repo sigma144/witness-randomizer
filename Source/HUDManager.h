@@ -147,8 +147,14 @@ private:
 
 	void overwriteSubtitleFunction();
 
-	uint64_t address_hudTextPayload = 0;
-	void writePayload() const;
+	uint64_t address_readPayloadIndex = 0;
+	uint64_t address_writePayloadIndex = 0;
+	uint64_t address_hudTextPayload_1 = 0;
+	uint64_t address_hudTextPayload_2 = 0;
+
+	void updatePayloads();
+	HudTextPayload buildPayload() const;
+	void writePayload(const HudTextPayload& payload, uint64_t writeAddress) const;
 
 	float getNotificationAlpha(const Notification& notification, float bright, float dim) const;
 	RgbColor getNotificationColor(const Notification& notification) const;

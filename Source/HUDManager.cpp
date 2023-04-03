@@ -25,7 +25,6 @@
 
 HudManager::HudManager() {
 	overwriteSubtitleFunction();
-	writePayload();
 }
 
 void HudManager::update(float deltaSeconds) {
@@ -47,8 +46,7 @@ void HudManager::update(float deltaSeconds) {
 	}
 
 	if (hudTextDirty) {
-		writePayload();
-		hudTextDirty = false;
+		updatePayloads();
 	}
 }
 
@@ -363,8 +361,15 @@ void HudManager::overwriteSubtitleFunction() {
 	assert(screen_target_height == 0x469A5F4);
 #endif
 
-	// Reserve memory for the payload.
-	address_hudTextPayload = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	// Reserve memory for the payloads. (See updatePayloads() for more information.)
+	address_readPayloadIndex = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1008, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	address_writePayloadIndex = address_readPayloadIndex + 0x4;
+	address_hudTextPayload_1 = address_writePayloadIndex + 0x4;
+	address_hudTextPayload_2 = address_hudTextPayload_1 + 0x800;
+
+	// Initialize the payloads.
+	writePayload(HudTextPayload(), address_hudTextPayload_1);
+	writePayload(HudTextPayload(), address_hudTextPayload_2);
 
 	const float margin_width = 0.02f;
 	const float line_spacing = 1.0f;
@@ -474,19 +479,49 @@ void HudManager::overwriteSubtitleFunction() {
 	////////////
 
 	////////////
-	// Load data about the overall set of blocks into stable registers.
+	// Determine which payload to read from and mark that we are doing so. (See updatePayloads() for more information.)
 	// Output:
 	//     R13				void* read_head
+	////////////
+	// - Retrieve the counter for the last written payload, then mark that we're now reading to it.
+	//     R12D				int32 writePayloadIndex
+	//     R13				int32* address_readPayloadIndex
+	func.add({ 0x49,0xBC })					// MOVABS R12, <address_writePayloadIndex>
+		.val(address_writePayloadIndex)
+		.add({ 0x45,0x8B,0x24,0x24 })		// MOV R12D, dword ptr [R12]
+		.add({ 0x49,0xBD })					// MOVABS R13, <address_readPayloadIndex>
+		.val(address_readPayloadIndex)
+		.add({ 0x45,0x89,0x65,0x00 });		// MOV dword ptr [R13], R12D
+	// - Pick which payload to use.
+	//     R13				void* read_head
+	func.add({ 0x41,0x83,0xFC,0x00 })		// CMP R12D, 0x0
+		.add({ 0x0F,0x85 })					// JNE <usePayload2>
+		.jump("usePayload2");
+		// Load payload 1.
+	func.add({ 0x49,0xBD })					// MOVABS R13, <address_hudTextPayload_1>
+		.val(address_hudTextPayload_1)
+		.add({ 0xE9 })						// JMP <payloadSelected>
+		.jump("payloadSelected");
+		// Load payload 2.
+	func.mark("usePayload2");
+	func.add({ 0x49,0xBD })					// MOVABS R13, <address_hudTextPayload_1>
+		.val(address_hudTextPayload_2);
+		// Done.
+	func.mark("payloadSelected");
+	////////////
+
+	////////////
+	// Load data about the overall set of blocks into stable registers.
+	// Input:
+	//     R13				void* read_head
+	// Output:
 	//     R14D:4			int32 block_count
 	////////////
-	// - Load the address of the payload into R13, which we will use as a read head as we move through our data.
-	func.add({ 0x49,0xBD })					// MOVABS R13, <address_payload>
-		.val(address_hudTextPayload)
 	// - Load the number of blocks into R14.
-		.add({ 0x45,0x8B,0xB5 })			// MOV R14D, dword ptr [R13 + payload::address_blockCount]
-		.val(HudManager::HudTextPayload::address_blockCount)
+	func.add({ 0x45,0x8B,0xB5 })			// MOV R14D, dword ptr [R13 + payload::address_blockCount]
+		.val(HudManager::HudTextPayload::address_blockCount);
 	// - Move the read head forward by the total payload size.
-		.add({ 0x49,0x81,0xC5 })			// ADD R13, payload::totalDataSize
+	func.add({ 0x49,0x81,0xC5 })			// ADD R13, payload::totalDataSize
 		.val(HudManager::HudTextPayload::totalDataSize);
 	////////////
 
@@ -882,6 +917,7 @@ void HudManager::overwriteSubtitleFunction() {
 	// Landing point for the early-out when we have no blocks.
 	////////////
 	func.mark("noBlocks");
+	////////////
 
 	////////////
 	// Call im_flush().
@@ -913,13 +949,50 @@ void HudManager::overwriteSubtitleFunction() {
 ////// END REPLACEMENT FUNCTION
 
 	// Write function to memory.
-	func.printBytes();
-	bool bSuccess = WriteProcessMemory(memory->_handle, reinterpret_cast<const LPVOID>(func_hud_draw_subtitles + memory->_baseAddress), func.get(), func.size(), NULL);
+	//func.printBytes();
+	memory->WriteRelative(reinterpret_cast<const LPVOID>(func_hud_draw_subtitles), func.get(), func.size());
 }
 
-void HudManager::writePayload() const {
+void HudManager::updatePayloads() {
 	Memory* memory = Memory::get();
 
+	// Since the game and the client run on different threads, there is no guarantee that the game will not be
+	//   attempting to read payload data at the same time that the client is attempting to write it, which may cause a
+	//   crash. In order to guard against that, we use two different payloads so that there will always be one that is
+	//   safe to write to and one safe to read from.
+	// To coordinate between the two threads, we have two flags: one that indicates the payload that has been most
+	//   recently read from, and one that indicates the one that has most recently been written to. At the start of
+	//   every read/write operation, these flags are checked to see what is safe to do, if anything.
+	// When reading, the game checks to see which payload has been written to most recently, then selects that one to
+	//   read from. Before actually reading the payload, it immediately indicates that it has switched to that payload,
+	//   meaning both that it is no longer safe to write to that payload and also that it is now safe(-ish) to write to
+	//   the other one.
+	// When writing, the client checks to see which payload the game is reading from in order to determine which
+	//   payload is explicitly unsafe to write to. It then checks to see if it has already written data to the other
+	//   one and, if it has not, does so, then marks that it has finished writing. This write-once strategy is required
+	//   because as soon as the client indicates that the payload has been written to, the game may start reading from
+	//   it at any point, meaning that it is no longer safe to assume that the payload can be safely written to.
+
+	int32_t readPayloadIndex, writePayloadIndex;
+	memory->ReadAbsolute((LPVOID)(address_readPayloadIndex), &readPayloadIndex, sizeof(int32_t));
+	memory->ReadAbsolute((LPVOID)(address_writePayloadIndex), &writePayloadIndex, sizeof(int32_t));
+
+	if (readPayloadIndex == writePayloadIndex) {
+		// The game has most recently read from the payload we have most recently written to and will continue to do so
+		//   until informed otherwise, so it is now safe to write to the other one.
+		writePayloadIndex = writePayloadIndex == 0 ? 1 : 0;
+
+		// Build and write the payload to the given address.
+		HudTextPayload payload = buildPayload();
+		writePayload(payload, writePayloadIndex == 0 ? address_hudTextPayload_1 : address_hudTextPayload_2);
+
+		// Finally, now that we are finished writing the payload, mark that it is ready for reading.
+		memory->WriteAbsolute((LPVOID)(address_writePayloadIndex), &writePayloadIndex, sizeof(int32_t));
+		hudTextDirty = false;
+	}
+}
+
+HudManager::HudTextPayload HudManager::buildPayload() const {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	bool isSolving = (interactionState == Focusing || interactionState == Solving);
 	float solveFadePercent = solveTweenFactor;
@@ -1075,11 +1148,15 @@ void HudManager::writePayload() const {
 		payload.blocks.push_back(debugMessageBlock);
 	}
 
-	uint64_t writeAddress = address_hudTextPayload;
+	return payload;
+}
+
+void HudManager::writePayload(const HudTextPayload& payload, uint64_t writeAddress) const {
+	Memory* memory = Memory::get();
 
 	// Write payload information.
 	uint32_t blockCount = (uint32_t)payload.blocks.size();
-	WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextPayload::address_blockCount), &blockCount, sizeof(uint32_t), NULL);
+	memory->WriteAbsolute((LPVOID)(writeAddress + HudTextPayload::address_blockCount), &blockCount, sizeof(uint32_t));
 
 	// Advance the write head past the payload information.
 	writeAddress += HudTextPayload::totalDataSize;
@@ -1087,12 +1164,12 @@ void HudManager::writePayload() const {
 	for (const HudTextBlock& block : payload.blocks) {
 		// Write block information.
 		uint32_t lineCount = (uint32_t)block.lines.size();
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_lineCount), &lineCount, sizeof(uint32_t), NULL);
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_verticalPosition), &block.verticalPosition, sizeof(float), NULL);
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_linePaddingTop), &block.linePaddingTop, sizeof(float), NULL);
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_linePaddingBottom), &block.linePaddingBottom, sizeof(float), NULL);
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_horizontalPosition), &block.horizontalPosition, sizeof(float), NULL);
-		WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextBlock::address_horizontalAlignment), &block.horizontalAlignment, sizeof(float), NULL);
+		memory->WriteAbsolute((LPVOID)(writeAddress + HudTextBlock::address_lineCount), &lineCount, sizeof(uint32_t));
+		memory->WriteAbsolute((LPVOID)(writeAddress + HudTextBlock::address_verticalPosition), &block.verticalPosition, sizeof(float));
+		memory->WriteAbsolute((LPVOID)(writeAddress + HudTextBlock::address_linePaddingTop), &block.linePaddingTop, sizeof(float));
+		memory->WriteAbsolute((LPVOID)(writeAddress + HudTextBlock::address_linePaddingBottom), &block.linePaddingBottom, sizeof(float));
+		memory->WriteAbsolute((LPVOID)(writeAddress + HudTextBlock::address_horizontalPosition), &block.horizontalPosition, sizeof(float));
+		memory->WriteAbsolute((LPVOID)(writeAddress + HudTextBlock::address_horizontalAlignment), &block.horizontalAlignment, sizeof(float));
 
 		// Advance write pointer past the block information.
 		writeAddress += HudTextBlock::totalDataSize;
@@ -1100,14 +1177,14 @@ void HudManager::writePayload() const {
 		for (const HudTextLine& line : block.lines) {
 			// Write line information.
 			uint32_t argbTextColor = line.textColor.argb();
-			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_textColor), &argbTextColor, sizeof(uint32_t), NULL);
+			memory->WriteAbsolute((LPVOID)(writeAddress + HudTextLine::address_textColor), &argbTextColor, sizeof(uint32_t));
 
 			uint32_t arbgShadowColor = line.shadowColor.argb();
-			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t), NULL);
+			memory->WriteAbsolute((LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t));
 
 			char stringBuff[STRING_DATA_SIZE];
 			strncpy_s(stringBuff, line.text.c_str(), _TRUNCATE);
-			WriteProcessMemory(memory->_handle, (LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff), NULL);
+			memory->WriteAbsolute((LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff));
 
 			// Advance write pointer past the line information.
 			writeAddress += HudTextLine::totalDataSize;
@@ -1202,19 +1279,19 @@ float HudManager::shadowAlpha(float alpha)
 }
 
 const uint32_t HudManager::HudTextPayload::address_blockCount =			0x00;
-const uint32_t HudManager::HudTextPayload::totalDataSize =				0x08;
+const uint32_t HudManager::HudTextPayload::totalDataSize =				0x04;
 
 const uint32_t HudManager::HudTextBlock::address_lineCount =			0x00;
-const uint32_t HudManager::HudTextBlock::address_verticalPosition =		0x08;
-const uint32_t HudManager::HudTextBlock::address_linePaddingTop =		0x10;
-const uint32_t HudManager::HudTextBlock::address_linePaddingBottom =	0x18;
-const uint32_t HudManager::HudTextBlock::address_horizontalPosition =	0x20;
-const uint32_t HudManager::HudTextBlock::address_horizontalAlignment =	0x28;
-const uint32_t HudManager::HudTextBlock::totalDataSize =				0x30;
+const uint32_t HudManager::HudTextBlock::address_verticalPosition =		0x04;
+const uint32_t HudManager::HudTextBlock::address_linePaddingTop =		0x08;
+const uint32_t HudManager::HudTextBlock::address_linePaddingBottom =	0x0C;
+const uint32_t HudManager::HudTextBlock::address_horizontalPosition =	0x10;
+const uint32_t HudManager::HudTextBlock::address_horizontalAlignment =	0x14;
+const uint32_t HudManager::HudTextBlock::totalDataSize =				0x18;
 
 const uint32_t HudManager::HudTextLine::maxLineSize =					0x80;
 
 const uint32_t HudManager::HudTextLine::address_textColor =				0x00;
-const uint32_t HudManager::HudTextLine::address_shadowColor =			0x08;
-const uint32_t HudManager::HudTextLine::address_string =				0x10;
-const uint32_t HudManager::HudTextLine::totalDataSize =					0x10 + HudManager::HudTextLine::maxLineSize;
+const uint32_t HudManager::HudTextLine::address_shadowColor =			0x04;
+const uint32_t HudManager::HudTextLine::address_string =				0x08;
+const uint32_t HudManager::HudTextLine::totalDataSize =					0x08 + HudManager::HudTextLine::maxLineSize;
