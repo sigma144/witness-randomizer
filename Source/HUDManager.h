@@ -168,6 +168,4 @@ private:
 	uint64_t setSubtitleOffset;
 	uint32_t largeSubtitlePointerOffset;
 
-	float colorDebug = 0.f;
-
 };

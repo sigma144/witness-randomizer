@@ -45,10 +45,6 @@ void HudManager::update(float deltaSeconds) {
 		hudTextDirty = true;
 	}
 
-	colorDebug += deltaSeconds * .5f;
-	while (colorDebug > 1.f) colorDebug -= 1.f;
-	hudTextDirty = true;
-
 	if (hudTextDirty) {
 		updatePayloads();
 	}
