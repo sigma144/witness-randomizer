@@ -342,7 +342,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			std::string isFor = "";
 			if (!receiving) isFor = " for " + player;
 
-			if(!found) async->getHudManager()->queueBannerMessage("Hint: " + itemName + isFor + " is on " + locationName + ".");
+			if(!found) async->getHudManager()->queueNotification("Hint: " + itemName + isFor + " is on " + locationName + ".");
 		}
 		else {
 			int location = item.location;
@@ -351,12 +351,12 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			int panelId = panelIdToLocationIdReverse[location];
 
 			if (panelIdToLocationIdReverse.count(location) && async->CheckPanelHasBeenSolved(panelId)) {
-				async->getHudManager()->queueBannerMessage("(Collect) Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
+				async->getHudManager()->queueNotification("(Collect) Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 			else
 			{
 				async->SetItemRewardColor(findResult->first, item.flags);
-				if(!receiving) async->getHudManager()->queueBannerMessage("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
+				if(!receiving) async->getHudManager()->queueNotification("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 		}
 	});
@@ -497,8 +497,6 @@ void APRandomizer::PostGeneration() {
 	for (int panel : desertPanels) {
 		memory->UpdatePanelJunctions(panel);
 	}
-
-	memory->DisplaySubtitles("", "", "");
 	
 	setPuzzleLocks();
 

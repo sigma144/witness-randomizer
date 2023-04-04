@@ -257,8 +257,6 @@ public:
 
 	void DisplayHudMessage(std::string message, std::array<float, 3> rgbColor);
 
-	void DisplaySubtitles(std::string line1, std::string line2, std::string line3);
-
 	// Given a list of offsets, computes an address in memory by recursively dereferencing pointers at each offset, starting at the program's
 	//   root index. For example, if you wish to compute GLOBAL_VALUE::pointerA->pointerB, then you would pass the address of GLOBAL_VALUE
 	//   relative to the program's root, then the offset of pointerA in that structure, then the offset of pointerB in pointerA's structure.
@@ -294,11 +292,6 @@ public:
 	uint64_t relativeBoatSpeed3Address;
 	uint64_t relativeBoatSpeed2Address;
 	uint64_t relativeBoatSpeed1Address;
-	uint64_t displaySubtitlesFunction;
-	uint64_t displaySubtitlesFunction2;
-	uint64_t displaySubtitlesFunction3;
-	uint64_t subtitlesOnOrOff;
-	uint64_t subtitlesHashTable;
 	uint64_t _recordPlayerUpdate;
 	uint64_t _getSoundFunction;
 	uint64_t _bytesLengthChallenge;
@@ -337,6 +330,13 @@ public:
 	uint64_t executeSigScan(const std::vector<byte>& signatureBytes, const SigScanDelegate& scanFunc);
 	uint64_t executeSigScan(const std::vector<byte>& signatureBytes, uint64_t startAddress);
 	uint64_t executeSigScan(const std::vector<byte>& signatureBytes);
+
+	// Scan the process's memory for the given signature, then return the 4 bytes immediately after that signature plus the address of that value,
+	//   or UINT32_MAX if the signature was not found. This value, and the given offset, are relative to the base address of the program.
+	// NOTE: If using this to determing the address of a function from a CALL statement, add 4 to this value.
+	uint32_t scanForRelativeAddress(const std::vector<byte>& signatureBytes, uint32_t scanOffset = 0, uint32_t valueOffset = 0);
+
+	uint64_t getBaseAddress() const;
 
 private:
 
@@ -399,4 +399,5 @@ private:
 
 	friend class Randomizer;
 	friend class Special;
+	friend class HudManager;
 };

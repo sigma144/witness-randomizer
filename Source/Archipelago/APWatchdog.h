@@ -126,7 +126,7 @@ private:
 
 	void DisableCollisions();
 
-	void AudioLogPlaying();
+	void AudioLogPlaying(float deltaSeconds);
 
 	void RefreshDoorCollisions();
 
@@ -136,7 +136,8 @@ private:
 
 	void LookingAtObelisk();
 
-	void LookingAtTheDog(float frameLength);
+	void PettingTheDog(float deltaSeconds);
+	bool LookingAtTheDog() const;
 
 	// Updates puzzle skip logic.
 	void UpdatePuzzleSkip(float deltaSeconds);
@@ -177,6 +178,7 @@ private:
 	std::map<int, bool> EPStates;
 
 	int currentAudioLog = -1;
+	float currentAudioLogDuration = 0.f;
 
 	int activePanelId = -1;
 	int mostRecentActivePanelId = -1;
@@ -194,8 +196,9 @@ private:
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> entityToName = {};
 
-	std::vector<float> lastMousePosition = { 0,0,0 };
-	float dogFrames = 0.0f;
+	Vector3 lastMouseDirection;
+	float dogPettingDuration = 0.f;
+	float dogBarkDuration = 0.f;
 	bool sentDog = false;
 	bool letGoSinceInteractModeOpen = false;
 

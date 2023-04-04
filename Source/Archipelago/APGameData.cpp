@@ -2,21 +2,20 @@
 #include "Client/apclientpp/apclient.hpp"
 
 RgbColor getColorByItemFlag(const __int64 flags) {
-	// Pick the appropriate color for this item based on its progression flags. Colors are loosely based on AP codes but somewhat
-	// paler to match the Witness aesthetic. See https://github.com/ArchipelagoMW/Archipelago/blob/main/NetUtils.py for details.
-
+	// Pick the appropriate color for this item based on its progression flags. Colors are loosely based on AP codes but
+	//   much more vivid for contrast. See https://github.com/ArchipelagoMW/Archipelago/blob/main/NetUtils.py for details.
 	if (flags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-		return { 0.82f, 0.76f, 0.96f };
+		return { 188/255.f, 81/255.f, 224/255.f };
 	}
 	else if (flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 		// NOTE: "never exclude" here maps onto "useful" in the AP source.
-		return { 0.68f, 0.75f, 0.94f };
+		return { 43/255.f, 103/255.f, 255/255.f };
 	}
 	else if (flags & APClient::ItemFlags::FLAG_TRAP) {
-		return { 1.f, 0.7f, 0.67f };
+		return { 214/255.f, 58/255.f, 34/255.5f };
 	}
 	else {
-		return { 0.81f, 1.f, 1.f };
+		return { 20/255.f, 222/255.f, 158/255.f };
 	}
 }
 

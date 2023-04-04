@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DataTypes.h"
 #include "Watchdog.h"
 #include <cstdint>
 #include <optional>
@@ -8,6 +9,7 @@
 // The size of the Keyboard::key_state array, which in the most recent build is an int[256]. Note that this differs from the PDB build.
 #define INPUT_KEYSTATE_SIZE 0x200
 #endif
+
 
 // Custom keys for randomizer-specific functionality.
 enum class CustomKey : int {
@@ -208,7 +210,8 @@ public:
 	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
 	std::vector<InputButton> consumeTapEvents();
 
-	std::pair<std::vector<float>, std::vector<float>> getMouseRay();
+	// Returns the most recently calculated direction of the mouse.
+	const Vector3& getMouseDirection() const;
 
 	static std::string getNameForCustomKey(CustomKey key);
 	static std::string getNameForInputButton(InputButton button);
@@ -234,6 +237,11 @@ private:
 
 	void updateKeyState();
 
+	// The direction, in world coordinates, of the player's mouse. Updated once per tick.
+	Vector3 mouseDirection;
+	
+	void updateMouseVector();
+
 	// The raw interact mode integer retrieved from game memory. Updated once per tick.
 	int32_t currentInteractMode;
 
@@ -247,17 +255,12 @@ private:
 
 	void findInteractModeOffset();
 	void findMenuOpenOffset();
-	void findCursorRelatedOffsets();
 
 	std::optional<CustomKey> currentlyRebindingKey;
 	std::map<CustomKey, InputButton> customKeybinds;
 
 	uint64_t interactModeOffset;
 	uint64_t menuOpenOffset;
-
-	uint64_t cursorToDirectionFunction;
-
-	LPVOID cursorResultsAllocation;
 	
 	std::map<InputButton, std::chrono::system_clock::time_point> pressTimes;
 	std::vector<InputButton> pendingTapEvents;

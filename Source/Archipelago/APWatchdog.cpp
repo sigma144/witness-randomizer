@@ -1,5 +1,6 @@
 #include "APWatchdog.h"
 
+#include "../DataTypes.h"
 #include "../HudManager.h"
 #include "../Input.h"
 #include "../Memory.h"
@@ -20,7 +21,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl) : Watchdog(0.1f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -67,19 +68,19 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 
 void APWatchdog::action() {
 	auto currentFrameTime = std::chrono::system_clock::now();
-	std::chrono::duration<float> frameDuration = currentFrameTime - lastFrameTime;
+	float frameDuration = std::chrono::duration<float>(currentFrameTime - lastFrameTime).count();
 	lastFrameTime = currentFrameTime;
 
 	HandleInteractionState();
-	HandleMovementSpeed(frameDuration.count());
+	HandleMovementSpeed(frameDuration);
 	
 	HandleKeyTaps();
 
-	UpdatePuzzleSkip(frameDuration.count());
+	UpdatePuzzleSkip(frameDuration);
 
 	CheckDeathLink();
 
-	halfSecondCountdown -= frameDuration.count();
+	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
 
@@ -92,7 +93,7 @@ void APWatchdog::action() {
 		HandlePowerSurge();
 		DisableCollisions();
 		RefreshDoorCollisions();
-		AudioLogPlaying();
+		AudioLogPlaying(0.5f);
 
 		UpdateInfiniteChallenge();
 
@@ -107,14 +108,12 @@ void APWatchdog::action() {
 		}
 	}
 
-	hudManager->clearWorldMessage();
-
 	CheckImportantCollisionCubes();
 	LookingAtObelisk();
-	LookingAtTheDog(frameDuration.count());
+	PettingTheDog(frameDuration);
 
 	SetStatusMessages();
-	hudManager->update(frameDuration.count());
+	hudManager->update(frameDuration);
 }
 
 void APWatchdog::HandleInteractionState() {
@@ -921,21 +920,17 @@ void APWatchdog::HandleKeyTaps() {
 		}
 		else {
 			switch (tappedButton) {
-				// TEMP: keybind rebind
-			case InputButton::KEY_BACKSLASH:
-				StartRebindingKey(CustomKey::SKIP_PUZZLE);
-				break;
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
-				hudManager->queueBannerMessage("Cheat: adding Slowness.", { 1.f, 0.f, 0.f }, 2.f);
+				hudManager->queueNotification("Cheat: adding Slowness.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				ApplyTemporarySlow();
 				break;
 			case InputButton::KEY_EQUALS:
-				hudManager->queueBannerMessage("Cheat: adding Speed Boost.", { 1.f, 0.f, 0.f }, 2.f);
+				hudManager->queueNotification("Cheat: adding Speed Boost.", getColorByItemFlag(APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
 				ApplyTemporarySpeedBoost();
 				break;
 			case InputButton::KEY_0:
-				hudManager->queueBannerMessage("Cheat: adding Puzzle Skip.", { 1.f, 0.f, 0.f }, 2.f);
+				hudManager->queueNotification("Cheat: adding Puzzle Skip.", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 				if (spentPuzzleSkips > foundPuzzleSkips) {
 					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
 					//   previous app launch. Reset to zero before adding a new one.
@@ -944,6 +939,13 @@ void APWatchdog::HandleKeyTaps() {
 
 				AddPuzzleSkip();
 				break;
+			case InputButton::KEY_NUMPAD_0:
+				for (int spamCount = 0; spamCount < 100; spamCount++) {
+					std::stringstream spamString;
+					spamString << "spam message " << spamCount + 1 << "/100";
+					hudManager->queueNotification(spamString.str());
+				}
+				hudManager->queueNotification("sorry (not sorry)");
 #endif
 			};
 		}
@@ -1054,7 +1056,7 @@ void APWatchdog::RefreshDoorCollisions() {
 	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }
 
-void APWatchdog::AudioLogPlaying() {
+void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	std::string line1 = "";
 	std::string line2 = "";
 	std::string line3 = "";
@@ -1065,8 +1067,8 @@ void APWatchdog::AudioLogPlaying() {
 			currentAudioLog = logId;
 
 			std::string message = audioLogMessages[logId].first;
-			hudManager->clearSubtitleMessage();
-			hudManager->showSubtitleMessage(message, 12.0f);
+			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
+			currentAudioLogDuration = 8.f;
 
 			APClient::DataStorageOperation operation;
 			operation.operation = "replace";
@@ -1085,10 +1087,28 @@ void APWatchdog::AudioLogPlaying() {
 				ap->LocationScouts({ locationId }, 2);
 				seenAudioMessages.insert(locationId);
 			}
+
+			break;
 		}
 		else if (!logPlaying && logId == currentAudioLog) {
 			currentAudioLog = -1;
+			break;
 		}
+	}
+
+	if (currentAudioLog != -1) {
+		// We're playing an audio log. Track how long it's been playing for.
+		currentAudioLogDuration -= deltaSeconds;
+	}
+	else if (currentAudioLogDuration > 0.f) {
+		// We don't have an audio log playing. Run out the timer on the hint display.
+		currentAudioLogDuration -= deltaSeconds;
+		if (currentAudioLogDuration <= 0.f) {
+			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+		}
+	}
+	else {
+		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 }
 
@@ -1217,7 +1237,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 	{
 		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
-		hudManager->queueBannerMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
+		hudManager->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
 }
 
@@ -1236,7 +1256,7 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
-		hudManager->queueBannerMessage("EP Activated Remotely (Coop)"); //TODO: Names
+		hudManager->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 	}
 }
 
@@ -1261,41 +1281,52 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	// bonsai panel dots requirement
 	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
-		hudManager->setWorldMessage("Needs Dots.");
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Dots.");
 	}
 	else if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
-		hudManager->setWorldMessage("Stone Pillar needs Triangles.");
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Stone Pillar needs Triangles.");
 	}
 	else if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
-		hudManager->setWorldMessage("Needs Dots, Black/White Squares.");
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Dots, Black/White Squares.");
 	}
 	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
-		hudManager->setWorldMessage("Most Bunker panels need Black/White Squares and Colored Squares.");
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Most Bunker panels need Black/White Squares and Colored Squares.");
 	}
 	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Eraser, Triangles,\n"
-											  "Stars, Stars + Same Colored Symbol.");
-		else hudManager->setWorldMessage("Needs Shapers and Eraser.");
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Eraser, Triangles,\n"
+			"Stars, Stars + Same Colored Symbol.");
+		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Shapers and Eraser.");
 	}
 	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->setWorldMessage("Needs Symmetry and Triangles.");
-		else hudManager->setWorldMessage("Needs Symmetry and Dots.");
+		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Symmetry and Triangles.");
+		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Needs Symmetry and Dots.");
 	}
 	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
 		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-			hudManager->setWorldMessage("Left Panel needs Stars and Shapers.\n"
-										"Right Panel needs Dots and Colored Squares.");
+			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+				"Left Panel needs Stars and Shapers.\n"
+				"Right Panel needs Dots and Colored Squares.");
 		}
 		else
 		{
-			hudManager->setWorldMessage("Left Panel needs Stars and Shapers.");
+			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+				"Left Panel needs Stars and Shapers.");
 		}
 	}
 	else if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-		hudManager->setWorldMessage("Right Panel needs Dots and Colored Squares.");
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"Right Panel needs Dots and Colored Squares.");
 	}
 	else {
-		hudManager->clearWorldMessage();
+		hudManager->clearInformationalMessage(InfoMessageCategory::MissingSymbol);
 	}
 }
 
@@ -1441,7 +1472,7 @@ void APWatchdog::QueueItemMessages() {
 			count = " (x" + std::to_string(itemCounts[name]) + ")";
 		}
 
-		hudManager->queueBannerMessage("Received " + name + count + ".", itemColors[name]);
+		hudManager->queueNotification("Received " + name + count + ".", itemColors[name]);
 	}
 
 	processingItemMessages = false;
@@ -1460,60 +1491,53 @@ void APWatchdog::SetStatusMessages() {
 		int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
 		if (speedTime > 0) {
-			hudManager->setStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+			hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
 		}
 		else if (speedTime < 0) {
-			hudManager->setStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+			hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
 		}
 		else {
-			hudManager->clearStatusMessage();
+			hudManager->clearWalkStatusMessage();
 		}
-
-		hudManager->clearActionHint();
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+		// Always show the number of puzzle skips available while in focus mode.
+		int availableSkips = GetAvailablePuzzleSkips();
+		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
+
 		if (activePanelId != -1) {
-			hudManager->setStatusMessage(puzzleSkipInfoMessage);
+			// If we have a special skip message for the current puzzle, show it above the skip count.
+			if (puzzleSkipInfoMessage.size() > 0) {
+				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
+			}
 
 			if (CanUsePuzzleSkip()) {
-				std::string skipInstruction = "Hold [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to use Puzzle Skip.";
+				// We have a selected, skippable, affordablSe puzzle. Show an input hint.
+				skipMessage += " Hold [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to use.";
 
+				// Show special costs, if any.
 				if (puzzleSkipCost == 0) {
-					hudManager->setActionHint(skipInstruction + " (Free!)");
+					skipMessage += " (Free!)";
 				}
-				else if (puzzleSkipCost == 1) {
-					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ".)");
-				}
-				else {
-					hudManager->setActionHint(skipInstruction + " (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
+				else if (puzzleSkipCost > 1) {
+					skipMessage += " (Costs " + std::to_string(puzzleSkipCost) + ".)";
 				}
 			}
-			else if (GetAvailablePuzzleSkips() > 0 && puzzleSkipCost > GetAvailablePuzzleSkips()) {
-				// The player has some puzzle skips available, but not enough to solve the selected puzzle.
-				hudManager->setActionHint("Insufficient Puzzle Skips. (Have " + std::to_string(GetAvailablePuzzleSkips()) + ", costs " + std::to_string(puzzleSkipCost) + ".)");
-			}
-			else if (GetAvailablePuzzleSkips() == 0 && puzzleSkipCost != -1) {
-				// The player has no puzzle skips available, but the puzzle is skippable.
-				hudManager->setActionHint("No Puzzle Skips available.");
-			}
-			else {
-				// We can't use the puzzle skip for a different reason.
-				hudManager->clearActionHint();
+			else if (availableSkips > 0 && puzzleSkipCost > availableSkips) {
+				// The player has some puzzle skips available, but not enough to solve the selected puzzle. Note that this
+				//   message will only show for puzzles that cost more than one skip.
+				skipMessage += "(Costs " + std::to_string(puzzleSkipCost) + ".)";
 			}
 		}
-		else {
-			hudManager->clearStatusMessage();
-			hudManager->clearActionHint();
-		}
+
+		hudManager->setSolveStatusMessage(skipMessage);
 	}
 	else if (interactionState == InteractionState::Keybinding) {
-		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
-		hudManager->setActionHint("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
-		hudManager->clearStatusMessage();
+//		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
+//		hudManager->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
 	}
 	else {
-		hudManager->clearStatusMessage();
-		hudManager->clearActionHint();
+//		hudManager->clearStatusMessage();
 	}
 }
 
@@ -1538,14 +1562,15 @@ void APWatchdog::WriteMovementSpeed(float currentSpeed) {
 
 void APWatchdog::LookingAtObelisk() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-	if (interactionState != InteractionState::Focusing) return;
+	if (interactionState != InteractionState::Focusing) {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		return;
+	}
 
 	std::set<int> candidates;
 
-	auto ray = InputWatchdog::get()->getMouseRay();
-
-	std::vector<float> headPosition = ray.first;
-	std::vector<float> cursorDirection = ray.second;
+	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+	Vector3 cursorDirection = InputWatchdog::get()->getMouseDirection();
 
 	for (int epID : allEPs) {
 		std::vector<float> obeliskPosition = ReadPanelData<float>(epID, POSITION, 3);
@@ -1566,7 +1591,7 @@ void APWatchdog::LookingAtObelisk() {
 
 		q.RotateVector(facing);
 
-		float dotProduct = cursorDirection[0] * facing[0] + cursorDirection[1] * facing[1] + cursorDirection[2] * facing[2];
+		float dotProduct = cursorDirection.X * facing[0] + cursorDirection.Y * facing[1] + cursorDirection.Z * facing[2];
 
 		if (dotProduct < 0) candidates.insert(epID);
 
@@ -1580,8 +1605,8 @@ void APWatchdog::LookingAtObelisk() {
 		std::vector<float> epPosition = ReadPanelData<float>(epID, POSITION, 3);
 
 		std::vector<float> v = { epPosition[0] - headPosition[0], epPosition[1] - headPosition[1], epPosition[2] - headPosition[2] };
-		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
-		std::vector<float> p = { headPosition[0] + t * cursorDirection[0], headPosition[1] + t * cursorDirection[1], headPosition[2] + t * cursorDirection[2] };
+		float t = v[0] * cursorDirection.X + v[1] * cursorDirection.Y + v[2] * cursorDirection.Z;
+		std::vector<float> p = { headPosition[0] + t * cursorDirection.X, headPosition[1] + t * cursorDirection.Y, headPosition[2] + t * cursorDirection.Z };
 		
 		float distance = sqrt(pow(p[0] - epPosition[0], 2) + pow(p[1] - epPosition[1], 2) + pow(p[2] - epPosition[2], 2));
 
@@ -1594,66 +1619,61 @@ void APWatchdog::LookingAtObelisk() {
 	}
 
 	if (entityToName.count(lookingAtEP)) {
-		hudManager->setWorldMessage(entityToName[lookingAtEP]);
+		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP]);
+	}
+	else {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 	}
 
 	return;
 }
 
-void APWatchdog::LookingAtTheDog(float frameLength) {
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-	if (interactionState != InteractionState::Focusing) {
+void APWatchdog::PettingTheDog(float deltaSeconds) {
+	Memory* memory = Memory::get();
+
+	if (!LookingAtTheDog()) {
 		letGoSinceInteractModeOpen = false;
-		dogFrames = 0;
-		Memory::get()->writeCursorSize(1.0f);
-		Memory::get()->writeCursorColor({ 1.0f, 1.0f, 1.0f });
-		return;
-	}
+		dogPettingDuration = 0;
 
-	auto ray = InputWatchdog::get()->getMouseRay();
+		memory->writeCursorSize(1.0f);
+		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
 
-	std::vector<float> headPosition = ray.first;
-	std::vector<float> cursorDirection = ray.second;
-
-	std::vector<std::vector<float>> dogPositions = { {-107.954, -101.36, 4.078}, {-107.9, -101.312, 4.1},{-107.866, -101.232, 4.16},{ -107.871, -101.150, 4.22 }, { -107.86, -101.06, 4.3 }, { -107.88, -100.967, 4.397 } };
-
-	float distanceToDog = pow(headPosition[0] - dogPositions[1][0], 2) + pow(headPosition[1] - dogPositions[1][1], 2) + pow(headPosition[2] - dogPositions[1][2], 2);
-
-	if (distanceToDog > 49) {
-		return;
-	}
-
-	float smallestDistance = 10000000.0f;
-	float boundingRadius = 0.105f;
-
-	for (auto dogPosition : dogPositions) {
-		std::vector<float> v = { dogPosition[0] - headPosition[0], dogPosition[1] - headPosition[1], dogPosition[2] - headPosition[2] };
-		float t = v[0] * cursorDirection[0] + v[1] * cursorDirection[1] + v[2] * cursorDirection[2];
-		std::vector<float> p = { headPosition[0] + t * cursorDirection[0], headPosition[1] + t * cursorDirection[1], headPosition[2] + t * cursorDirection[2] };
-
-		float distance = sqrt(pow(p[0] - dogPosition[0], 2) + pow(p[1] - dogPosition[1], 2) + pow(p[2] - dogPosition[2], 2));
-
-		if (distance < smallestDistance) {
-			smallestDistance = distance;
+		if (dogBarkDuration > 0.f) {
+			dogBarkDuration -= deltaSeconds;
+			if (dogBarkDuration <= 1.f) {
+				hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+			}
 		}
-	}
+		else {
+			hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+		}
 
-	if (smallestDistance > boundingRadius) {
-		Memory::get()->writeCursorSize(1.0f);
-		Memory::get()->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+		return;
+	}
+	else if (dogBarkDuration > 0.f) {
+		dogBarkDuration -= deltaSeconds;
+		if (dogBarkDuration <= 1.f) {
+			hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+		}
+
 		return;
 	}
 
-	Memory::get()->writeCursorColor({ 1.0f, 0.5f, 1.0f });
+	memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
-	if (dogFrames >= 4.0f) {
-		hudManager->setWorldMessage("Woof Woof!");
+	if (dogPettingDuration >= 4.0f) {
+		hudManager->showInformationalMessage(InfoMessageCategory::Dog, "Woof Woof!");
 
+		Memory::get()->writeCursorSize(1.0f);
+		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+
+
+		dogPettingDuration = 0.f;
+		dogBarkDuration = 4.f;
 		sentDog = true;
 	}
-	else
-	{
-		hudManager->setWorldMessage("Petting progress: " + std::to_string((int)(dogFrames * 100 / 4.0f)) + "%");
+	else if (dogPettingDuration > 0.f) {
+		hudManager->showInformationalMessage(InfoMessageCategory::Dog, "Petting progress: " + std::to_string((int)(dogPettingDuration * 100 / 4.0f)) + "%");
 	}
 
 	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
@@ -1670,12 +1690,52 @@ void APWatchdog::LookingAtTheDog(float frameLength) {
 
 	Memory::get()->writeCursorSize(1.0f);
 
-	if (lastMousePosition != cursorDirection)
+	const Vector3& currentMouseDirection = InputWatchdog::get()->getMouseDirection();
+	if (lastMouseDirection != currentMouseDirection)
 	{
-		dogFrames += frameLength;
+		dogPettingDuration += deltaSeconds;
 	}
 
-	lastMousePosition = cursorDirection;
+	lastMouseDirection = currentMouseDirection;
+}
+
+bool APWatchdog::LookingAtTheDog() const {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) {
+		return false;
+	}
+
+	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+	const Vector3& cursorDirection = InputWatchdog::get()->getMouseDirection();
+
+	std::vector<std::vector<float>> dogPositions = { {-107.954, -101.36, 4.078}, {-107.9, -101.312, 4.1},{-107.866, -101.232, 4.16},{ -107.871, -101.150, 4.22 }, { -107.86, -101.06, 4.3 }, { -107.88, -100.967, 4.397 } };
+
+	float distanceToDog = pow(headPosition[0] - dogPositions[1][0], 2) + pow(headPosition[1] - dogPositions[1][1], 2) + pow(headPosition[2] - dogPositions[1][2], 2);
+
+	if (distanceToDog > 49) {
+		return false;
+	}
+
+	float smallestDistance = 10000000.0f;
+	float boundingRadius = 0.105f;
+
+	for (auto dogPosition : dogPositions) {
+		std::vector<float> v = { dogPosition[0] - headPosition[0], dogPosition[1] - headPosition[1], dogPosition[2] - headPosition[2] };
+		float t = v[0] * cursorDirection.X + v[1] * cursorDirection.Y + v[2] * cursorDirection.Z;
+		std::vector<float> p = { headPosition[0] + t * cursorDirection.X, headPosition[1] + t * cursorDirection.Y, headPosition[2] + t * cursorDirection.Z };
+
+		float distance = sqrt(pow(p[0] - dogPosition[0], 2) + pow(p[1] - dogPosition[1], 2) + pow(p[2] - dogPosition[2], 2));
+
+		if (distance < smallestDistance) {
+			smallestDistance = distance;
+		}
+	}
+
+	if (smallestDistance > boundingRadius) {
+		return false;
+	}
+
+	return true;
 }
 
 APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {
@@ -1707,7 +1767,7 @@ void APWatchdog::CheckDeathLink() {
 
 		if (newState == 2) {
 			SendDeathLink(mostRecentActivePanelId);
-			hudManager->queueBannerMessage("Death Sent.");
+			hudManager->queueNotification("Death Sent.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 		}
 	}
 }
@@ -1759,7 +1819,7 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		secondSentence = " Reason: " + cause;
 	}
 
-	hudManager->queueBannerMessage(firstSentence + secondSentence);
+	hudManager->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 }
 
 void APWatchdog::UpdateInfiniteChallenge() {

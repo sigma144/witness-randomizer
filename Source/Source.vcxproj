@@ -183,6 +183,7 @@
     <ClInclude Include="Archipelago\Client\json.hpp" />
     <ClInclude Include="Archipelago\Client\json\include\nlohmann\json.hpp" />
     <ClInclude Include="Archipelago\SkipSpecialCases.h" />
+    <ClInclude Include="ASMBuilder.h" />
     <ClInclude Include="ClientWindow.h" />
     <ClInclude Include="Converty.h" />
     <ClInclude Include="DataTypes.h" />
@@ -209,7 +210,9 @@
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\PanelRestore.cpp" />
+    <ClCompile Include="ASMBuilder.cpp" />
     <ClCompile Include="ClientWindow.cpp" />
+    <ClCompile Include="DataTypes.cpp" />
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="HUDManager.cpp" />
     <ClCompile Include="Input.cpp" />
