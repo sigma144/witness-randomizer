@@ -28,14 +28,16 @@ HudManager::HudManager() {
 }
 
 void HudManager::update(float deltaSeconds) {
-	updateBannerMessages(deltaSeconds);
-	updateNotifications(deltaSeconds);
-	updateInformationalMessages(deltaSeconds);
-
 	InputWatchdog* input = InputWatchdog::get();
 	InteractionState interactionState = input->getInteractionState();
-	bool isSolving = (interactionState == Focusing || interactionState == Solving);
 
+	updateInformationalMessages(deltaSeconds);
+	if (interactionState != InteractionState::Menu) {
+		updateBannerMessages(deltaSeconds);
+		updateNotifications(deltaSeconds);
+	}
+
+	bool isSolving = (interactionState == Focusing || interactionState == Solving);
 	if (isSolving && solveTweenFactor < 1.f) {
 		solveTweenFactor = std::min(solveTweenFactor + deltaSeconds * 0.8f, 1.f);
 		hudTextDirty = true;
