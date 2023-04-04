@@ -8,8 +8,8 @@
 
 #define STRING_DATA_SIZE 0x80
 
-#define NOTIFICATION_FADEIN_TIME 0.15f
-#define NOTIFICATION_FLASH_TIME 1.5f
+#define NOTIFICATION_FADEIN_TIME .2f
+#define NOTIFICATION_FLASH_TIME 1.f
 #define NOTIFICATION_HOLD_BRIGHT_TIME 8.f
 #define NOTIFICATION_DIM_TIME 5.f
 #define NOTIFICATION_HOLD_DIM_TIME 10.f
@@ -44,6 +44,10 @@ void HudManager::update(float deltaSeconds) {
 		solveTweenFactor = std::max(solveTweenFactor - deltaSeconds * 3.f, 0.f);
 		hudTextDirty = true;
 	}
+
+	colorDebug += deltaSeconds * .5f;
+	while (colorDebug > 1.f) colorDebug -= 1.f;
+	hudTextDirty = true;
 
 	if (hudTextDirty) {
 		updatePayloads();
@@ -950,7 +954,7 @@ void HudManager::overwriteSubtitleFunction() {
 
 	// Write function to memory.
 	//func.printBytes();
-	memory->WriteRelative(reinterpret_cast<const LPVOID>(func_hud_draw_subtitles), func.get(), func.size());
+	memory->WriteRelative(reinterpret_cast<const LPVOID>((uint64_t)func_hud_draw_subtitles), func.get(), func.size());
 }
 
 void HudManager::updatePayloads() {
@@ -1049,7 +1053,7 @@ HudManager::HudTextPayload HudManager::buildPayload() const {
 
 	// Show notifications. Notifications go in the top-right corner of the screen.
 	if (!activeNotifications.empty()) {
-		float brightAlpha = 0.9f - 0.2f * solveFadePercent;
+		float brightAlpha = 0.8f - 0.15f * solveFadePercent;
 		float dimAlpha = 0.5f * (1 - solveFadePercent);
 
 		// If we have more than one notification, separate the first notification from the rest so that we can smoothly
@@ -1076,8 +1080,8 @@ HudManager::HudTextPayload HudManager::buildPayload() const {
 				std::vector<std::string> expandedLines = separateLines(currentNotification.text, 60);
 				for (const std::string& lineText : expandedLines) {
 					HudTextLine lineData;
-					lineData.textColor = RgbColor(getNotificationColor(currentNotification), notificationAlpha);
-					lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(notificationAlpha));
+					lineData.textColor = RgbColor(1.f, 1.f, 1.f, notificationAlpha);
+					lineData.shadowColor = getNotificationShadowColor(currentNotification, notificationAlpha);
 					lineData.text = lineText;
 
 					otherNotificationBlock.lines.push_back(lineData);
@@ -1094,12 +1098,13 @@ HudManager::HudTextPayload HudManager::buildPayload() const {
 		firstNotificationBlock.verticalPosition = 1.f;
 
 		float notificationAlpha = getNotificationAlpha(firstNotification, brightAlpha, dimAlpha);
-		RgbColor notificationColor = getNotificationColor(firstNotification);
+		RgbColor notificationColor = RgbColor(1.f, 1.f, 1.f, notificationAlpha);
+		RgbColor shadowColor = getNotificationShadowColor(firstNotification, notificationAlpha);
 		firstNotificationLines = separateLines(firstNotification.text, 60);
 		for (const std::string& lineText : firstNotificationLines) {
 			HudTextLine lineData;
-			lineData.textColor = RgbColor(notificationColor, notificationAlpha);
-			lineData.shadowColor = RgbColor(0.f, 0.f, 0.f, shadowAlpha(notificationAlpha));
+			lineData.textColor = notificationColor;
+			lineData.shadowColor = shadowColor;
 			lineData.text = lineText;
 
 			firstNotificationBlock.lines.push_back(lineData);
@@ -1240,22 +1245,32 @@ float HudManager::getNotificationAlpha(const Notification& notification, float b
 	return 0.f;
 }
 
-RgbColor HudManager::getNotificationColor(const Notification& notification) const {
+RgbColor HudManager::getNotificationShadowColor(const Notification& notification, float alpha) const {
 	if (notification.age < NOTIFICATION_FADEIN_TIME) {
 		// The notification is brand-new and is flashing in.
-		return RgbColor(1.f, 1.f, 1.f);
+		RgbColor color = RgbColor::lerpHSV(RgbColor(0.f, 0.f, 0.f), notification.flashColor, notification.age / NOTIFICATION_FADEIN_TIME);
+		color.A = alpha;
+
+		return color;
 	}
+	else if (notification.age < (NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME)) {
+		// The notification is relatively recent and its shadow is fading out to normal color and dimness.
+		float flashPercent = 1.f - (notification.age - NOTIFICATION_FADEIN_TIME) / (NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME);
+		float fadedAlpha = shadowAlpha(alpha);
 
-	RgbColor color = notification.color;
+		RgbColor color = RgbColor::lerpHSV(RgbColor(0.f, 0.f, 0.f), notification.flashColor, flashPercent);
+		//RgbColor color = notification.flashColor;
+		color.A = (alpha - fadedAlpha) * flashPercent + fadedAlpha;
 
-	if (notification.age < (NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME)) {
-		float flashPercent = 1.f - (notification.age - NOTIFICATION_FADEIN_TIME) / NOTIFICATION_FLASH_TIME;
-		color.R = (1.f - color.R) * flashPercent + color.R;
-		color.G = (1.f - color.G) * flashPercent + color.G;
-		color.B = (1.f - color.B) * flashPercent + color.B;
+		return color;
 	}
+	else {
+		//RgbColor color = notification.flashColor;
+		//color.A = shadowAlpha(alpha);
+		//return color;
 
-	return color;
+		return RgbColor(0.f, 0.f, 0.f, shadowAlpha(alpha));
+	}
 }
 
 float HudManager::easeIn(float val)

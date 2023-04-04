@@ -922,15 +922,15 @@ void APWatchdog::HandleKeyTaps() {
 			switch (tappedButton) {
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
-				hudManager->queueNotification("Cheat: adding Slowness.", { 1.f, 0.6f, 0.5f });
+				hudManager->queueNotification("Cheat: adding Slowness.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				ApplyTemporarySlow();
 				break;
 			case InputButton::KEY_EQUALS:
-				hudManager->queueNotification("Cheat: adding Speed Boost.", { 1.f, 0.6f, 0.5f });
+				hudManager->queueNotification("Cheat: adding Speed Boost.", getColorByItemFlag(APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
 				ApplyTemporarySpeedBoost();
 				break;
 			case InputButton::KEY_0:
-				hudManager->queueNotification("Cheat: adding Puzzle Skip.", { 1.f, 0.6f, 0.5f });
+				hudManager->queueNotification("Cheat: adding Puzzle Skip.", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 				if (spentPuzzleSkips > foundPuzzleSkips) {
 					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
 					//   previous app launch. Reset to zero before adding a new one.
@@ -1237,7 +1237,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 	{
 		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
-		hudManager->queueBannerMessage(laserNames[laserNo] + " Laser Activated Remotely (Coop)");
+		hudManager->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
 }
 
@@ -1256,7 +1256,7 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
-		hudManager->queueBannerMessage("EP Activated Remotely (Coop)"); //TODO: Names
+		hudManager->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 	}
 }
 
@@ -1767,7 +1767,7 @@ void APWatchdog::CheckDeathLink() {
 
 		if (newState == 2) {
 			SendDeathLink(mostRecentActivePanelId);
-			hudManager->queueBannerMessage("Death Sent.");
+			hudManager->queueNotification("Death Sent.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 		}
 	}
 }
@@ -1819,7 +1819,7 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		secondSentence = " Reason: " + cause;
 	}
 
-	hudManager->queueBannerMessage(firstSentence + secondSentence);
+	hudManager->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 }
 
 void APWatchdog::UpdateInfiniteChallenge() {

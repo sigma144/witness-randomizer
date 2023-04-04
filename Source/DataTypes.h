@@ -17,6 +17,8 @@ struct RgbColor {
 			((int)(G * 255.5) << 8) |
 			((int)(B * 255.5));
 	}
+
+	static RgbColor lerpHSV(RgbColor a, RgbColor b, float t);
 };
 
 struct Vector2 {

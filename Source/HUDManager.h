@@ -29,7 +29,7 @@ public:
 	void queueBannerMessage(const std::string& text, RgbColor color = RgbColor(), float duration = 5.f);
 
 	// Queue a message to be shown in the notifications block, such as "Received Shapers".
-	void queueNotification(const std::string& text, RgbColor color = RgbColor());
+	void queueNotification(const std::string& text, RgbColor flashColor = RgbColor());
 
 	// Show a message in the center of the screen.
 	void showInformationalMessage(InfoMessageCategory category, const std::string& text);
@@ -70,10 +70,10 @@ private:
 	float bannerTimeRemaining = 0.f;
 
 	struct Notification {
-		Notification(std::string text, RgbColor color) : text(text), color(color) {}
+		Notification(std::string text, RgbColor flashColor) : text(text), flashColor(flashColor) {}
 
 		std::string text;
-		RgbColor color;
+		RgbColor flashColor;
 		float age = 0.f;
 	};
 
@@ -157,7 +157,7 @@ private:
 	void writePayload(const HudTextPayload& payload, uint64_t writeAddress) const;
 
 	float getNotificationAlpha(const Notification& notification, float bright, float dim) const;
-	RgbColor getNotificationColor(const Notification& notification) const;
+	RgbColor getNotificationShadowColor(const Notification& notification, float alpha) const;
 	
 	static float easeIn(float val);
 	static float easeOut(float val);
@@ -167,5 +167,7 @@ private:
 
 	uint64_t setSubtitleOffset;
 	uint32_t largeSubtitlePointerOffset;
+
+	float colorDebug = 0.f;
 
 };
