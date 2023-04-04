@@ -144,7 +144,7 @@ void HudManager::updateNotifications(float deltaSeconds) {
 
 		// Determine whether or not the notification is in a time block where it is fading in or out and, if so, mark it as dirty.
 		float relativeAge = iterator->age;
-		if (relativeAge < NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME) {
+		if (relativeAge < NOTIFICATION_FADEIN_TIME + NOTIFICATION_FLASH_TIME + NOTIFICATION_HOLD_BRIGHT_TIME) {
 			hudTextDirty = true;
 		}
 
