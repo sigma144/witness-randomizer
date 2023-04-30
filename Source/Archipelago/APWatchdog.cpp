@@ -442,7 +442,7 @@ void APWatchdog::TriggerPowerSurge() {
 				continue;
 			}
 
-			if (powerValues[0] > 0) {
+			if (powerValues[1] > 0) {
 				//using -20f as offset to create a unique recogniseable value that is also stored in the save
 				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] }, movingMemoryPanels.count(panelId));
 			}
