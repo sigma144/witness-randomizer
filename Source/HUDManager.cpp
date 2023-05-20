@@ -364,10 +364,10 @@ void HudManager::overwriteSubtitleFunction() {
 #endif
 
 	// Reserve memory for the payloads. (See updatePayloads() for more information.)
-	address_readPayloadIndex = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x1008, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	address_readPayloadIndex = (uint64_t)VirtualAllocEx(memory->_handle, NULL, 0x4008, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	address_writePayloadIndex = address_readPayloadIndex + 0x4;
 	address_hudTextPayload_1 = address_writePayloadIndex + 0x4;
-	address_hudTextPayload_2 = address_hudTextPayload_1 + 0x800;
+	address_hudTextPayload_2 = address_hudTextPayload_1 + 0x2000;
 
 	// Initialize the payloads.
 	writePayload(HudTextPayload(), address_hudTextPayload_1);
@@ -1186,7 +1186,8 @@ void HudManager::writePayload(const HudTextPayload& payload, uint64_t writeAddre
 			memory->WriteAbsolute((LPVOID)(writeAddress + HudTextLine::address_shadowColor), &arbgShadowColor, sizeof(uint32_t));
 
 			char stringBuff[STRING_DATA_SIZE];
-			strncpy_s(stringBuff, line.text.c_str(), _TRUNCATE);
+			strncpy_s(stringBuff, line.text.c_str(), STRING_DATA_SIZE);
+			stringBuff[STRING_DATA_SIZE - 1] = 0;
 			memory->WriteAbsolute((LPVOID)(writeAddress + HudTextLine::address_string), stringBuff, sizeof(stringBuff));
 
 			// Advance write pointer past the line information.
