@@ -499,6 +499,18 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
+	//find a spot to inject payload
+	executeSigScan({0x0F, 0x5B, 0xC0, 0x0F, 0x2E, 0xC1, 0x74}, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 5] == 0xE8 && data[index] == 0xE8 && data[index + 5] == 0xE8 && data[index + 5] == 0xE8 && data[index + 10] == 0xE8) {
+				this->gameLoop3CallsInARow = _baseAddress + offset + index;
+				break;
+			}
+		}
+
+		return true;
+	});
+
 	////display subtitles
 	//executeSigScan({ 0x48, 0x89, 0xB4, 0x24, 0xC8, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x4B, 0x08, 0x4C, 0x8D, 0x84, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 	//	this->displaySubtitlesFunction = _baseAddress + offset + index - 9;

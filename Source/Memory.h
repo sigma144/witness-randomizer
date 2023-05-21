@@ -308,6 +308,7 @@ public:
 	uint64_t cursorB;
 	uint64_t localisation;
 	uint64_t the_witness_string;
+	uint64_t gameLoop3CallsInARow;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;

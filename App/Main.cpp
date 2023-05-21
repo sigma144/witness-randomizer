@@ -27,6 +27,7 @@
 #include "Converty.h"
 #include "Archipelago/APRandomizer.h"
 #include <Archipelago/APGameData.h>
+#include <Archipelago/ASMPayloadManager.h>
 
 
 #define IDC_RANDOMIZE 0x401
@@ -164,6 +165,8 @@ void focusEdit(HWND hwnd) {
 void Main::randomize() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
+
+	ASMPayloadManager::create();
 
 	Memory* memory = Memory::get();
 

@@ -16,6 +16,7 @@
 #include "../DateTime.h"
 #include "../ClientWindow.h"
 #include "PanelRestore.h"
+#include "ASMPayloadManager.h"
 
 
 #define CHEAT_KEYS_ENABLED 0
@@ -733,7 +734,7 @@ void APWatchdog::UnlockDoor(int id) {
 		}
 	}
 
-	Memory::get()->OpenDoor(id);
+	ASMPayloadManager::get()->OpenDoor(id);
 }
 
 void APWatchdog::SeverDoor(int id) {
