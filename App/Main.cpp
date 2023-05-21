@@ -166,8 +166,6 @@ void Main::randomize() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
 
-	ASMPayloadManager::create();
-
 	Memory* memory = Memory::get();
 
 	bool rerandomize = false;
@@ -240,6 +238,8 @@ void Main::randomize() {
 	randomizer->seed = seed;
 	randomizer->colorblind = clientWindow->getSetting(ClientToggleSetting::ColorblindMode);
 	randomizer->doubleMode = false;
+
+	ASMPayloadManager::create();
 
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->Init();
