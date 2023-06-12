@@ -431,12 +431,17 @@ void APRandomizer::PostGeneration() {
 
 	if (precompletedLocations.size() > 0) {
 		clientWindow->setStatusMessage("Precompleting EPs...");
-		for (int eID : precompletedLocations) {
-			if (allEPs.count(eID)) {
-				memory->SolveEP(eID);
-				if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID)) {
-					memory->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
+		for (int checkID : precompletedLocations) {
+			if (allEPs.count(checkID)) {
+				memory->SolveEP(checkID);
+				if (precompletableEpToName.count(checkID) && precompletableEpToPatternPointBytes.count(checkID)) {
+					memory->MakeEPGlow(precompletableEpToName.at(checkID), precompletableEpToPatternPointBytes.at(checkID));
 				}
+			}
+			else if (actuallyEveryPanel.count(checkID)) {
+				panelLocker->PermanentlyUnlockPuzzle(checkID);
+				Special::SkipPanel(checkID, "Excluded", false);
+				memory->WritePanelData<float>(checkID, POWER, { 1.0f, 1.0f });
 			}
 		}
 	}

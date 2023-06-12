@@ -1991,7 +1991,7 @@ void Special::SkipMetapuzzle(int id, std::string text, bool kickOut) {
 }
 
 void Special::ColorPanel(int id, std::string text) {
-	if (text != "Collected" && text != "Disabled" && skip_completelyExclude.count(id)) return;
+	if (text != "Collected" && text != "Disabled" && text != "Excluded" && skip_completelyExclude.count(id)) return;
 
 	Memory* memory = Memory::get();
 	if (text == "Collected" && id != 0x28998) {
@@ -2002,7 +2002,7 @@ void Special::ColorPanel(int id, std::string text) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
 		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
 	}
-	else if (text == "Disabled" && id != 0x28998) {
+	else if ((text == "Disabled" || text == "Excluded") && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
 		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
 	}
@@ -2023,6 +2023,11 @@ void Special::ColorPanel(int id, std::string text) {
 			memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
 			memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.2f, 0.2f, 1.0f });
 		}
+		else if (text == "Excluded") {
+			memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+			memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.4f, 0.2f, 1.0f });
+			memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.4f, 0.2f, 1.0f });
+		}
 	}
 	else
 	{
@@ -2034,6 +2039,9 @@ void Special::ColorPanel(int id, std::string text) {
 		}
 		else if (text == "Disabled") {
 			memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
+		}
+		else if (text == "Excluded") {
+			memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.4f, 0.2f, 1.0f });
 		}
 		memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.5f, 0.5f, 0.5f, 1.0f });
 	}
