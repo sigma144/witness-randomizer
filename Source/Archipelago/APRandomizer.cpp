@@ -466,8 +466,8 @@ void APRandomizer::PostGeneration() {
 	if (num_dec != 1){
 		std::vector<int> decorations = memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
 
-		decorations[3] = 264;
-		decorations[12] = 264;
+		decorations[3] = 266;
+		decorations[12] = 266;
 
 		memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
 	}
