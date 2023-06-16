@@ -83,7 +83,7 @@ void Randomizer::AdjustSpeed() {
 	memory->WritePanelData<float>(0x0A076, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
 	memory->WritePanelData<float>(0x0A077, OPEN_RATE, { 0.6f }); // Bunker Elevator, 4x
 
-	memory->WritePanelData<float>(0x38ACB, OPEN_RATE, { 1.0f }); // UTM Elevator
+	memory->WritePanelData<float>(0x38ACB, OPEN_RATE, { 2.0f }); // UTM Elevator
 
 
 	memory->WritePanelData<float>(0x09DA0, OPEN_RATE, { 0.5f }); // Monastery Shutters, 2x
