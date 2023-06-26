@@ -799,6 +799,11 @@ const inline std::set<int> deathlinkExcludeList = {
 	0x00029, // UTM Invisible Dots Symmetry 3
 	0x0C373, // Patio Floor
 	0x0A079, // Bunker Elevator Panel
+	0x09E7A, // Mountain 1 Green 1
+	0x09E71, // Mountain 1 Green 2
+	0x09E72, // Mountain 1 Green 3
+	0x09E69, // Mountain 1 Green 4
+	0x09E7B, // Mountain 1 Green 5
 };
 
 const inline std::set<int> deathlinkExpertExcludeList = {

@@ -431,29 +431,33 @@ void APWatchdog::TriggerPowerSurge() {
 	else {
 		hasPowerSurge = true;
 		powerSurgeStartTime = std::chrono::system_clock::now();
-
-		for (const auto& panelId : actuallyEveryPanel) {
-			/*if (ReadPanelData<int>(panelId, SOLVED))
-				continue;*/
-
-			std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, movingMemoryPanels.count(panelId));
-
-			if (powerValues.size() == 0) {
-				hudManager->queueBannerMessage("Error reading power values on panel: " + std::to_string(panelId));
-				continue;
-			}
-
-			if (powerValues[1] > 0) {
-				//using -20f as offset to create a unique recogniseable value that is also stored in the save
-				WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] }, movingMemoryPanels.count(panelId));
-			}
-		}
 	}
 }
 
 void APWatchdog::HandlePowerSurge() {
-	if (hasPowerSurge && DateTime::since(powerSurgeStartTime).count() > 10000)
-		ResetPowerSurge();
+	if (hasPowerSurge)
+	{
+		if (DateTime::since(powerSurgeStartTime).count() > 10000)
+			ResetPowerSurge();
+		else {
+			for (const auto& panelId : actuallyEveryPanel) {
+				/*if (ReadPanelData<int>(panelId, SOLVED))
+					continue;*/
+
+				std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, movingMemoryPanels.count(panelId));
+
+				if (powerValues.size() == 0) {
+					hudManager->queueBannerMessage("Error reading power values on panel: " + std::to_string(panelId));
+					continue;
+				}
+
+				if (powerValues[1] > 0) {
+					//using -20f as offset to create a unique recogniseable value that is also stored in the save
+					WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] }, movingMemoryPanels.count(panelId));
+				}
+			}
+		}
+	}
 }
 
 void APWatchdog::ResetPowerSurge() {
