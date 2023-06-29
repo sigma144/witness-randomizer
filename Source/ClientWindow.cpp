@@ -201,6 +201,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
