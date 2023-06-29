@@ -40,7 +40,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		}
 
 		for (const auto& locationId : locations)
-			async->MarkLocationChecked(locationId, this->Collect);
+			async->MarkLocationChecked(locationId);
 	});
 
 	ap->set_slot_disconnected_handler([&]() {
@@ -291,15 +291,15 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
 		for (auto [key, value] : response) {
-			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, Collect);
-			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, Collect);
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
 		}
 	});
 
 	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
 		if (value != original_value) {
-			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, Collect);
-			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, Collect);
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
 		}
 	});
 
@@ -439,9 +439,7 @@ void APRandomizer::PostGeneration() {
 				}
 			}
 			else if (actuallyEveryPanel.count(checkID)) {
-				panelLocker->PermanentlyUnlockPuzzle(checkID);
-				Special::SkipPanel(checkID, "Excluded", false);
-				memory->WritePanelData<float>(checkID, POWER, { 1.0f, 1.0f });
+				async->SkipPanel(checkID, "Excluded", false);
 			}
 		}
 	}
@@ -512,6 +510,10 @@ void APRandomizer::PostGeneration() {
 	randomizationFinished = true;
 	memory->showMsg = false;
 
+	for (int panel : disabledPanels) {
+		async->SkipPanel(panel, "Disabled", false);
+	}
+
 	async->getHudManager()->queueBannerMessage("Randomized!");
 
 	async->start();
@@ -544,15 +546,15 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
+		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect);
 	SeverDoors();
 
 	//Mess with Town targets
@@ -571,7 +573,7 @@ void APRandomizer::GenerateHard() {
 	Memory::get()->PowerNext(0x03629, 0x36);
 
 	if (DisableNonRandomizedPuzzles)
-		panelLocker->DisableNonRandomizedPuzzles(disabledPanels, doorsActuallyInTheItemPool);
+		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
 }
 
 void APRandomizer::PreventSnipes()

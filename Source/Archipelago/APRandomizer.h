@@ -13,7 +13,8 @@ class APRandomizer {
 
 		int Seed = 0;
 		int FinalPanel = 0;
-		bool Collect = false;
+		bool SyncProgress = false;
+		std::string Collect = "Unchanged";
 
 		int PuzzleRandomization = 2;
 		bool UnlockSymbols = false;

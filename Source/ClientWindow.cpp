@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 1
+#define SAVE_VERSION 2
 
 #define CLIENT_WINDOW_WIDTH 600
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -51,6 +51,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_COLORBLIND 0x500
 #define IDC_SETTING_COLLECT 0x501
 #define IDC_SETTING_CHALLENGE 0x502
+#define IDC_SETTING_SYNCPROGRESS 0x503
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -73,8 +74,9 @@ void ClientWindow::saveSettings()
 	data["saveVersion"] = SAVE_VERSION;
 
 	data["challengeTimer"] = getSetting(ClientToggleSetting::ChallengeTimer);
-	data["collect"] = getSetting(ClientToggleSetting::Collect);
+	data["collect"] = getSetting(ClientDropdownSetting::Collect);
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
+	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 
 	InputWatchdog* input = InputWatchdog::get();
 	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
@@ -100,7 +102,10 @@ void ClientWindow::loadSettings()
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
-			setSetting(ClientToggleSetting::Collect, data.contains("collect") ? data["collect"].get<bool>() : true);
+
+			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
+
+			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
 			setSetting(ClientToggleSetting::ColorblindMode, data.contains("colorblind") ? data["colorblind"].get<bool>() : false);
 
 			// Load keybinds.
@@ -148,6 +153,17 @@ std::string ClientWindow::getSetting(ClientStringSetting setting) const {
 	return readStringFromTextBox(textBox);
 }
 
+void ClientWindow::setSetting(ClientDropdownSetting setting, std::string value) const {
+	HWND dropDown = dropdownBoxes.find(setting)->second;
+	std::wstring valueWide = Converty::Utf8ToWide(value);
+	SendMessage(dropDown, CB_SELECTSTRING, 0, (LPARAM)valueWide.c_str());
+}
+
+std::string ClientWindow::getSetting(ClientDropdownSetting setting) const {
+	HWND dropDown = dropdownBoxes.find(setting)->second;
+	return readStringFromDropdown(dropDown);
+}
+
 void ClientWindow::setSetting(ClientStringSetting setting, std::string value) const {
 	HWND textBox = stringSettingTextBoxes.find(setting)->second;
 	writeStringToTextBox(value, textBox);
@@ -184,7 +200,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(hwndApConnect, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
-		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
@@ -204,7 +220,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Enable randomization settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, true);
-		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, true);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
@@ -232,7 +248,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Disable randomization settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
-		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
@@ -455,16 +471,16 @@ void ClientWindow::addGameOptions(int& currentY) {
 
 	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING;
 
-	// !collect option. This is 2 lines tall.
-	HWND hwndOptionCollect = CreateWindow(L"BUTTON", L"\"!collect\" Support - Puzzles that are locations will be \"skipped\" if those locations are collected / co-oped.",
+	// Challenge timer option.
+	HWND hwndOptionSyncProgress = CreateWindow(L"BUTTON", L"Coop: Sync Lasers and EPs",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 2,
-		hwndRootWindow, (HMENU)IDC_SETTING_COLLECT, hAppInstance, NULL);
-	toggleSettingButtonIds[ClientToggleSetting::Collect] = IDC_SETTING_COLLECT;
-	toggleSettingCheckboxes[ClientToggleSetting::Collect] = hwndOptionCollect;
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_SYNCPROGRESS, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::SyncProgress] = IDC_SETTING_SYNCPROGRESS;
+	toggleSettingCheckboxes[ClientToggleSetting::SyncProgress] = hwndOptionSyncProgress;
 
-	currentY += STATIC_TEXT_HEIGHT * 2 + LINE_SPACING;
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
 	// Challenge timer option.
 	HWND hwndOptionChallenge = CreateWindow(L"BUTTON", L"Disable Challenge Timer - Disables the time limit on the Challenge.",
@@ -475,7 +491,29 @@ void ClientWindow::addGameOptions(int& currentY) {
 	toggleSettingButtonIds[ClientToggleSetting::ChallengeTimer] = IDC_SETTING_CHALLENGE;
 	toggleSettingCheckboxes[ClientToggleSetting::ChallengeTimer] = hwndOptionChallenge;
 
-	currentY += STATIC_TEXT_HEIGHT;
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
+    // Option for collected panels
+	HWND hwndOptionCollectText = CreateWindow(L"STATIC", L"Disabled/Collected Panels/EPs:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+		SETTING_LABEL_WIDTH * 1.25, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	HWND hwndOptionCollect = CreateWindow(L"COMBOBOX", NULL,
+		CBS_DROPDOWNLIST | WS_VISIBLE | WS_CHILD,
+		CONTROL_MARGIN + SETTING_LABEL_WIDTH * 1.25, currentY,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
+		hwndRootWindow, (HMENU)IDC_SETTING_COLLECT, hAppInstance, NULL);
+	dropdownBoxes[ClientDropdownSetting::Collect] = hwndOptionCollect;
+	dropdownIds[ClientDropdownSetting::Collect] = IDC_SETTING_COLLECT;
+
+	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Unchanged");
+	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Free Skip");
+	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip");
+	SendMessage(hwndOptionCollect, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
+
+	currentY += STATIC_TEXT_HEIGHT * 2;
 }
 
 void ClientWindow::addKeybindings(int& currentY)
@@ -591,6 +629,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			toggleCheckbox(IDC_SETTING_CHALLENGE);
 			break;
 		}
+		case IDC_SETTING_SYNCPROGRESS: {
+			toggleCheckbox(IDC_SETTING_SYNCPROGRESS);
+			break;
+		}
 		// Buttons.
 		case IDC_BUTTON_RANDOMIZE: {
 			Main::randomize();
@@ -628,6 +670,15 @@ std::string ClientWindow::readStringFromTextBox(HWND hwndTextBox) const {
 
 void ClientWindow::writeStringToTextBox(std::string string, HWND hwndTextBox) const {
 	SetWindowText(hwndTextBox, Converty::Utf8ToWide(string).c_str());
+}
+
+std::string ClientWindow::readStringFromDropdown(HWND dropdownBox) const {
+	WCHAR wideBuffer[0x100];
+
+	GetWindowText(dropdownBox, &wideBuffer[0], 100);
+	std::wstring wideString(wideBuffer);
+
+	return Converty::WideToUtf8(wideString);
 }
 
 void ClientWindow::handleKeybind(const CustomKey& customKey)

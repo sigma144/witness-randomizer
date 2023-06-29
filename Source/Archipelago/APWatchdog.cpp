@@ -22,7 +22,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -40,6 +40,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	obeliskHexToEPHexes = o;
 	entityToName = epn;
 	solveModeSpeedFactor = smsf;
+	Collect = col;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
 	if (speedTime == 0.6999999881f) { // original value
@@ -324,16 +325,52 @@ void APWatchdog::CheckSolvedPanels() {
 	FirstEverLocationCheckDone = true;
 }
 
-void APWatchdog::MarkLocationChecked(int locationId, bool collect)
+void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
+	if (reason == "Collected" && Collect == "Unchanged") return;
+
+	if (id != 0x01983 && id != 0x01987) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+
+	if (reason != "Skipped" && Collect != "Auto-Skip") {
+		Special::ColorPanel(id, reason);
+	}
+	else
+	{
+		if (reason == "Skipped") {
+			if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == COLLECTED) {
+				PuzzlesSkippedThisGame.insert(id);
+				Special::SkipPanel(id, "Collected", kickOut);
+				return;
+			}
+			if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == EXCLUDED) {
+				PuzzlesSkippedThisGame.insert(id);
+				Special::SkipPanel(id, "Excluded", kickOut);
+				return;
+			}
+			if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == DISABLED) {
+				PuzzlesSkippedThisGame.insert(id);
+				Special::SkipPanel(id, "Disabled", kickOut);
+				return;
+			}
+		}
+		Special::SkipPanel(id, reason, kickOut);
+		PuzzlesSkippedThisGame.insert(id);
+	}
+
+	if (reason == "Collected") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { COLLECTED });
+	if (reason == "Skipped") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + cost });
+	if (reason == "Disabled") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { DISABLED });
+	if (reason == "Excluded") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { EXCLUDED });
+}
+
+void APWatchdog::MarkLocationChecked(int locationId)
 {
 	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
 	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
 	if (actuallyEveryPanel.count(panelId)) {
-		if (collect && !ReadPanelData<int>(panelId, SOLVED)) {
-			__int32 skipped = ReadPanelData<__int32>(panelId, VIDEO_STATUS_COLOR);
-
-			if (skipped == COLLECTED || skipped == DISABLED || skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
+		if (!ReadPanelData<int>(panelId, SOLVED)) {
+			if (PuzzlesSkippedThisGame.count(panelId)) {
 				if(panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
 				return;
 			}
@@ -350,29 +387,24 @@ void APWatchdog::MarkLocationChecked(int locationId, bool collect)
 				else if (panelId == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
 				else if (panelId == 0x034E3) bridgePanels = { 0x034E4 };
 
-				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
-				Special::SkipPanel(panelId, "Collected", false);
-				WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED });
+				SkipPanel(panelId, "Collected", false);
 
 				for (int panel : bridgePanels) {
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
 					if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
-					Special::SkipPanel(panel, "Collected", false);
+					SkipPanel(panelId, "Collected", false);
 					WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
 				}
 			}
 			else {
-				if (panelLocker->PuzzleIsLocked(panelId)) panelLocker->PermanentlyUnlockPuzzle(panelId);
-				Special::SkipPanel(panelId, "Collected", false);
-				if (panelId != 0x01983 && panelId != 0x01983) WritePanelData<float>(panelId, POWER, { 1.0f, 1.0f });
-				if (!skip_completelyExclude.count(panelId)) WritePanelData<__int32>(panelId, VIDEO_STATUS_COLOR, { COLLECTED }); // Videos can't be skipped, so this should be safe.
+				SkipPanel(panelId, "Collected", false);
 				WritePanelData<__int32>(panelId, NEEDS_REDRAW, { 1 });
 			}
 		}
 	}
 
-	else if (allEPs.count(panelId) && collect) {
+	else if (allEPs.count(panelId) && Collect != "Unchanged") {
 		int eID = panelId;
 
 		Memory::get()->SolveEP(eID);
@@ -496,6 +528,12 @@ void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
 				// The puzzle is still skippable. Update the panel's cost in case something has changed, like a latch
 				//   being opened remotely.
 				puzzleSkipCost = CalculatePuzzleSkipCost(activePanelId, puzzleSkipInfoMessage);
+				
+				int statusColor = ReadPanelData<int>(activePanelId, VIDEO_STATUS_COLOR);
+				if (puzzleSkipCost && (statusColor == COLLECTED) || (statusColor == DISABLED) || (statusColor == EXCLUDED)) {
+					puzzleSkipCost = 0;
+					puzzleSkipInfoMessage = "Skipping this panel is free.";
+				}
 
 				// Update skip button logic.
 				InputButton skipButton = inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE);
@@ -568,16 +606,14 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 	}
 
 	// Check skippability based on panel state.
-	uint32_t statusColor = ReadPanelData<uint32_t>(puzzleId, VIDEO_STATUS_COLOR);
-	if (statusColor >= PUZZLE_SKIPPED && statusColor <= PUZZLE_SKIPPED_MAX) {
+	if (PuzzlesSkippedThisGame.count(puzzleId)) {
 		// Puzzle has already been skipped.
 		return false;
 	}
-	else if (statusColor == COLLECTED || statusColor == DISABLED) {
-		// Puzzle has been collected and is not worth skipping.
-		return false;
-	}
-	else if (ReadPanelData<int>(puzzleId, SOLVED) != 0 && skip_multisolvePuzzles.count(puzzleId) == 0) {
+
+	std::set<int> still_let_skip_states = { COLLECTED, DISABLED, EXCLUDED };
+
+	if (ReadPanelData<int>(puzzleId, SOLVED) != 0 && skip_multisolvePuzzles.count(puzzleId) == 0 && !still_let_skip_states.count(ReadPanelData<int>(puzzleId, VIDEO_STATUS_COLOR))) {
 		// Puzzle has already been solved and thus cannot be skipped.
 		return false;
 	}
@@ -638,8 +674,7 @@ int APWatchdog::CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessag
 		//   TODO: This flow here is a little confusing to read, because PuzzleIsSkippable returns true, but the cost
 		//   returned here indicates that it isn't.
 		for (int smallPuzzleId : {0x09FC1, 0x09F8E, 0x09F01, 0x09EFF}) {
-			uint32_t statusColor = ReadPanelData<uint32_t>(smallPuzzleId, VIDEO_STATUS_COLOR);
-			if (statusColor < PUZZLE_SKIPPED || statusColor > PUZZLE_SKIPPED_MAX) {
+			if (PuzzlesSkippedThisGame.count(smallPuzzleId)) {
 				specialMessage = "Skipping this panel requires skipping all the small puzzles.";
 				return -1;
 			}
@@ -664,8 +699,7 @@ void APWatchdog::SkipPuzzle() {
 	spentPuzzleSkips += puzzleSkipCost;
 	skipButtonHeldTime = 0.f;
 
-	Special::SkipPanel(activePanelId, true);
-	WritePanelData<__int32>(activePanelId, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + puzzleSkipCost }); // Videos can't be skipped, so this should be safe.
+	SkipPanel(activePanelId, "Skipped", true, puzzleSkipCost);
 }
 
 void APWatchdog::SkipPreviouslySkippedPuzzles() {
@@ -673,14 +707,14 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 		__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
 		if (skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
-			Special::SkipPanel(id);
+			SkipPanel(id, "Skipped", false, skipped - PUZZLE_SKIPPED);
 			spentPuzzleSkips += skipped - PUZZLE_SKIPPED;
 		}
 		else if (skipped == COLLECTED) {
-			Special::SkipPanel(id, "Collected", false);
+			SkipPanel(id, "Collected", false, skipped - PUZZLE_SKIPPED);
 		}
-		else if (skipped == DISABLED) {
-			//Panellocker will do it again anyway
+		else if (skipped == DISABLED || skipped == EXCLUDED) {
+			//APRandomizer.cpp will do it again anyway
 		}
 	}
 }
@@ -1229,7 +1263,7 @@ void APWatchdog::CheckLasers() {
 	}
 }
 
-void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, bool collect) {
+void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncprogress) {
 	int laserNo = laserIDsToLasers[laserID];
 
 	bool laserActiveAccordingToDataPackage = value == true;
@@ -1238,7 +1272,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
 
-	if(!laserActiveInGame & collect)
+	if(!laserActiveInGame & syncprogress)
 	{
 		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
@@ -1246,7 +1280,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 	}
 }
 
-void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool collect) {
+void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool syncprogress) {
 	int epNo = EPIDsToEPs[epID];
 
 	bool epActiveAccordingToDataPackage = value == true;
@@ -1255,13 +1289,15 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool c
 
 	if (epActiveInGame == epActiveAccordingToDataPackage) return;
 
-	if (!epActiveInGame && collect)
+	if (!epActiveInGame && (syncprogress))
 	{
 		Memory::get()->SolveEP(epNo);
 		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
-		hudManager->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
+		if (syncprogress){
+			hudManager->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
+		}
 	}
 }
 
@@ -1369,9 +1405,7 @@ void APWatchdog::CheckEPSkips() {
 	std::set<int> panelsToRemoveSilently = {};
 
 	for (int panel : panelsThatHaveToBeSkippedForEPPurposes) {
-		__int32 skipped = ReadPanelData<__int32>(panel, VIDEO_STATUS_COLOR);
-
-		if ((skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) || skipped == COLLECTED || skipped == DISABLED) {
+		if (PuzzlesSkippedThisGame.count(panel)) {
 			panelsToRemoveSilently.insert(panel);
 			continue;
 		}
@@ -1422,8 +1456,7 @@ void APWatchdog::CheckEPSkips() {
 	for (int panel : panelsToSkip) {
 		panelLocker->PermanentlyUnlockPuzzle(panel);
 		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
-		Special::SkipPanel(panel, "Skipped", false);
-		WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED }); // Cost == 0
+		SkipPanel(panel, "Skipped", false, 0);
 	}
 }
 

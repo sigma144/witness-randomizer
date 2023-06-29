@@ -185,7 +185,8 @@ void Main::randomize() {
 	std::string apPassword = clientWindow->getSetting(ClientStringSetting::ApPassword);
 
 	randomizer->seedIsRNG = false;
-	apRandomizer->Collect = clientWindow->getSetting(ClientToggleSetting::Collect);
+	apRandomizer->SyncProgress = clientWindow->getSetting(ClientToggleSetting::SyncProgress);
+	apRandomizer->Collect = clientWindow->getSetting(ClientDropdownSetting::Collect);
 	apRandomizer->solveModeSpeedFactor = 0.0f; // THIS VALUE IN THE FUTURE CAN BE USED TO MAKE SPEED BOOSTS TICK DOWN AT A SLOW RATE IN SOLVE MODE RATHER THAN STOP OR GO AT FULL SPEED
 
 	clientWindow->setStatusMessage("Connecting to Archipelago...");

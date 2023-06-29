@@ -7,7 +7,7 @@
 #include "APState.h"
 #include "../Special.h"
 
-void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels, std::set<int> exemptDoorPanels)
+void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
 {
 	Special::copyTarget(0x00021, 0x19650);
 	Special::copyTarget(0x00061, 0x09DE0);
@@ -32,19 +32,6 @@ void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> disabledPanels, std:
 			Special::setPower(id, true);
 		}
 	}
-
-	for (int id : disabledPanels) {
-		disablePuzzle(id);
-	}
-}
-
-void PanelLocker::disablePuzzle(int id) {
-	if (lockedPuzzles.count(id) == 1)
-		unlockPuzzle(lockedPuzzles[id]);
-
-	disabledPuzzles.emplace_back(id);
-
-	Special::SkipPanel(id, "Disabled", false);
 }
 
 void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) {

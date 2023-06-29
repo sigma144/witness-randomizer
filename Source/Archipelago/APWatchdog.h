@@ -17,7 +17,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
@@ -26,7 +26,7 @@ public:
 
 	virtual void action();
 
-	void MarkLocationChecked(int locationId, bool collect);
+	void MarkLocationChecked(int locationId);
 	void ApplyTemporarySpeedBoost();
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
@@ -40,6 +40,11 @@ public:
 
 	void UnlockDoor(int id);
 	void SeverDoor(int id);
+
+	void SkipPanel(int id, std::string reason, bool kickOut) {
+		SkipPanel(id, reason, kickOut, 0);
+	}
+	void SkipPanel(int id, std::string reason, bool kickOut, int cost);
 
 	void DoubleDoorTargetHack(int id);
 
@@ -83,6 +88,8 @@ private:
 	bool DeathLink = false;
 	bool EPShuffle = false;
 	int PuzzleRandomization = 0;
+
+	std::string Collect = "Unchanged";
 
 	bool FirstEverLocationCheckDone = false;
 
@@ -176,6 +183,8 @@ private:
 	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;
 	std::map<int, bool> EPStates;
+
+	std::set<int> PuzzlesSkippedThisGame = {};
 
 	int currentAudioLog = -1;
 	float currentAudioLogDuration = 0.f;
