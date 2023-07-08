@@ -357,7 +357,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 		PuzzlesSkippedThisGame.insert(id);
 	}
 
-	if (reason == "Collected") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { COLLECTED });
+	if (reason == "Collected" && !skip_completelyExclude.count(id)) WritePanelData<int>(id, VIDEO_STATUS_COLOR, { COLLECTED });
 	if (reason == "Skipped") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + cost });
 	if (reason == "Disabled") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { DISABLED });
 	if (reason == "Excluded") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { EXCLUDED });
@@ -393,7 +393,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
 					if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
-					SkipPanel(panelId, "Collected", false);
+					SkipPanel(panel, "Collected", false);
 					WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
 				}
 			}
@@ -1056,18 +1056,18 @@ void APWatchdog::RefreshDoorCollisions() {
 		if (alreadyTriedUpdatingNormally.count(collisionToUpdate)) {
 			OutputDebugStringW(L"Force-Updating...\n");
 
-			if (PanelRestore::HasPositions(collisionToUpdate)) {
+			/*if (PanelRestore::HasPositions(collisionToUpdate)) {
 				WritePanelData<int>(collisionToUpdate, MOUNT_PARENT_ID, { 0 });
 				WritePanelData<float>(collisionToUpdate, POSITION, PanelRestore::GetPositions(collisionToUpdate));
 				Memory::get()->UpdateEntityPosition(collisionToUpdate);
-			}
+			}*/
 
 			return;
 		}
 
 		try {  
 			OutputDebugStringW(L"Updating using ingame function...\n");
-			Memory::get()->UpdateEntityPosition(collisionToUpdate);
+			//Memory::get()->UpdateEntityPosition(collisionToUpdate);
 			alreadyTriedUpdatingNormally.insert(collisionToUpdate);
 			collisionsToRefresh[collisionToUpdate] = 2;
 		}
