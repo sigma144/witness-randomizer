@@ -288,6 +288,7 @@ public:
 	uint64_t boatSpeed3;
 	uint64_t boatSpeed2;
 	uint64_t boatSpeed1;
+	uint64_t boatTurnAccel;
 	uint64_t relativeBoatSpeed4Address;
 	uint64_t relativeBoatSpeed3Address;
 	uint64_t relativeBoatSpeed2Address;

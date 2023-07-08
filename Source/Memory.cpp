@@ -755,6 +755,43 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
+	//Boat turn, in Entity_Boat::update()
+	executeSigScan({ 0x41, 0x0F, 0x28, 0xC9, 0xF3, 0x0F, 0x5C, 0xCE, 0x0F, 0x28, 0xD8, 0xF3, 0x0F, 0x11, 0x9B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		int index2 = index;
+
+		//Boat max turn speed
+		for (; index < data.size(); index++) { // Find next mov instruction
+			if (data[index - 6] == 0xC7 && data[index - 5] == 0x83) {
+				float newSpeed = 3.0f; // 1.0f originally
+
+				WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + index), &newSpeed, sizeof(newSpeed));
+
+				break;
+			}
+		}
+
+		//Boat turn accell
+		for (; index2 >= 4; index2--) { // Find next mov instruction
+			if (data[index2 - 4] == 0xf3 && data[index2 - 3] == 0x0f && data[index2 - 2] == 0x59) {
+				this->boatTurnAccel = _baseAddress + index2;
+
+				executeSigScan({ 0x00, 0x00, 0x00, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) { // 0.5f originally
+					index -= 3;
+
+					WriteAbsolute(reinterpret_cast<LPVOID>(this->boatTurnAccel), &index, sizeof(index));
+
+					return true;
+				}, this->boatTurnAccel);
+
+				return true;
+			}
+		}
+
+		//There is a second stage to turning that lowers the boat turn speed back to 0.5f. Not sure if this can be changed or how
+
+		return true;
+	});
+
 	executeSigScan({ 0xF3, 0x0F, 0x59, 0xF0, 0xF3, 0x41, 0x0F, 0x58, 0xF0, 0x0F, 0x2F, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		__int64 comissStatement = _baseAddress + offset + index + 0xE;
 
