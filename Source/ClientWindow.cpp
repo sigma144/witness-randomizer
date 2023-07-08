@@ -222,6 +222,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		// Enable randomization settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, true);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
@@ -250,6 +251,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		// Disable randomization settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
