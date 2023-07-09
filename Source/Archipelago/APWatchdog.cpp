@@ -392,9 +392,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 				for (int panel : bridgePanels) {
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
-					if (panelLocker->PuzzleIsLocked(panel)) panelLocker->PermanentlyUnlockPuzzle(panel);
 					SkipPanel(panel, "Collected", false);
-					WritePanelData<__int32>(panel, VIDEO_STATUS_COLOR, { COLLECTED });
 				}
 			}
 			else {
@@ -414,6 +412,17 @@ void APWatchdog::MarkLocationChecked(int locationId)
 	}
 
 	if (panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
+
+	if (obeliskHexToEPHexes.count(panelId) && Collect != "Unchanged") {
+		for (int epHex : obeliskHexToEPHexes[panelId]) {
+			if (!ReadPanelData<int>(epHex, EP_SOLVED)) {
+				Memory::get()->SolveEP(epHex);
+				if (precompletableEpToName.count(epHex) && precompletableEpToPatternPointBytes.count(epHex) && EPShuffle) {
+					Memory::get()->MakeEPGlow(precompletableEpToName.at(epHex), precompletableEpToPatternPointBytes.at(epHex));
+				}
+			}
+		}
+	}
 }
 
 void APWatchdog::ApplyTemporarySpeedBoost() {
