@@ -683,7 +683,7 @@ int APWatchdog::CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessag
 		//   TODO: This flow here is a little confusing to read, because PuzzleIsSkippable returns true, but the cost
 		//   returned here indicates that it isn't.
 		for (int smallPuzzleId : {0x09FC1, 0x09F8E, 0x09F01, 0x09EFF}) {
-			if (PuzzlesSkippedThisGame.count(smallPuzzleId)) {
+			if (!PuzzlesSkippedThisGame.count(smallPuzzleId)) {
 				specialMessage = "Skipping this panel requires skipping all the small puzzles.";
 				return -1;
 			}
