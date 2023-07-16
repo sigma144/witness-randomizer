@@ -187,6 +187,7 @@ void Main::randomize() {
 	randomizer->seedIsRNG = false;
 	apRandomizer->SyncProgress = clientWindow->getSetting(ClientToggleSetting::SyncProgress);
 	apRandomizer->Collect = clientWindow->getSetting(ClientDropdownSetting::Collect);
+	apRandomizer->DisabledPuzzlesBehavior = clientWindow->getSetting(ClientDropdownSetting::DisabledPuzzles);
 	apRandomizer->solveModeSpeedFactor = 0.0f; // THIS VALUE IN THE FUTURE CAN BE USED TO MAKE SPEED BOOSTS TICK DOWN AT A SLOW RATE IN SOLVE MODE RATHER THAN STOP OR GO AT FULL SPEED
 
 	clientWindow->setStatusMessage("Connecting to Archipelago...");

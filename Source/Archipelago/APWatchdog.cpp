@@ -22,7 +22,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col, std::string dis) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -41,6 +41,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	entityToName = epn;
 	solveModeSpeedFactor = smsf;
 	Collect = col;
+	DisabledPuzzlesBehavior = dis;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
 	if (speedTime == 0.6999999881f) { // original value
@@ -326,13 +327,23 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if (reason == "Collected" && Collect == "Unchanged") return;
+	if (dont_touch_panel_at_all.count(id)) {
+		return;
+	}
+
+	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
+	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 
 	if (id != 0x01983 && id != 0x01987) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
 
-	if (reason != "Skipped" && Collect != "Auto-Skip") {
+	if (reason != "Skipped" && !(reason == "Disabled" && (DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve")) && !((reason == "Collected" || reason == "Excluded") && Collect == "Auto-Skip")) {
 		Special::ColorPanel(id, reason);
+	}
+	else if (reason == "Disabled" && DisabledPuzzlesBehavior == "Prevent Solve") {
+		PuzzlesSkippedThisGame.insert(id);
+		Special::SkipPanel(id, "Disabled Completely", kickOut);
+		return;
 	}
 	else
 	{
