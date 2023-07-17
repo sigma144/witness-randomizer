@@ -522,7 +522,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip");
 	SendMessage(hwndOptionCollect, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
 
-	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 1.5;
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 
 	// Option for disabled panels
 	HWND hwndOptionDisabledText = CreateWindow(L"STATIC", L"Disabled Panels:",
