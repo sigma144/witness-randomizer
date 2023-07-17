@@ -397,6 +397,11 @@ void APWatchdog::MarkLocationChecked(int locationId)
 				else if (panelId == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
 				else if (panelId == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
 				else if (panelId == 0x034E3) bridgePanels = { 0x034E4 };
+				else if (panelId == 0x03702) bridgePanels = { 0x15ADD };
+				else if (panelId == 0x03542) bridgePanels = { 0x002A6 };
+				else if (panelId == 0x03481) bridgePanels = { 0x033D4 };
+				else if (panelId == 0x0339E) bridgePanels = { 0x0CC7B };
+				else if (panelId == 0x03535) bridgePanels = { 0x00AFB };
 
 				SkipPanel(panelId, "Collected", false);
 
