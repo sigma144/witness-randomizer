@@ -746,7 +746,8 @@ void APWatchdog::AddPuzzleSkip() {
 void APWatchdog::UnlockDoor(int id) {
 	if (actuallyEveryPanel.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
-		WritePanelData<int>(id, NEEDS_REDRAW, {1});
+		state->keysReceived.insert(id);
+		panelLocker->UpdatePuzzleLock(*state, id);
 		return;
 	}
 
@@ -797,7 +798,8 @@ void APWatchdog::UnlockDoor(int id) {
 
 void APWatchdog::SeverDoor(int id) {
 	if (actuallyEveryPanel.count(id)) {
-		WritePanelData<float>(id, POWER, { 0.0f, 0.0f });
+		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+		state->keysInTheGame.insert(id);
 	}
 
 	if (severTargetsById.count(id)) {
