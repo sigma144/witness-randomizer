@@ -32,6 +32,57 @@ inline const std::map<int, std::vector<float>> skip_specialLine = {
 	{0x09DD5, pillarLine},
 };
 
+inline const std::set<int> dont_power = {
+	0x01983,
+	0x01987, // Peekaboo
+
+	0x17D8F, // Treehouse Yellow 2
+	0x17D74, // Treehouse Yellow 3
+	0x17DAC, // Treehouse Yellow 4
+	0x17D9E, // Treehouse Yellow 5
+	0x17DB9, // Treehouse Yellow 6
+	0x17D9C, // Treehouse Yellow 7
+	0x17DC2, // Treehouse Yellow 8
+	0x17DC4, // Treehouse Yellow 9
+	0x17DC7, // Treehouse First Purple 2
+	0x17CE4, // Treehouse First Purple 3
+	0x17D2D, // Treehouse First Purple 4
+	0x17D6C, // Treehouse First Purple 5
+	0x17D99, // Treehouse Second Purple 2
+	0x17DAA, // Treehouse Second Purple 3
+	0x17D97, // Treehouse Second Purple 4
+	0x17BDF, // Treehouse Second Purple 5
+	0x17D91, // Treehouse Second Purple 6
+	0x17DC6, // Treehouse Second Purple 7
+	0x17DB5, // Treehouse Left Orange 2
+	0x17DB6, // Treehouse Left Orange 3
+	0x17DC0, // Treehouse Left Orange 4
+	0x17DD7, // Treehouse Left Orange 5
+	0x17DD9, // Treehouse Left Orange 6
+	0x17DB8, // Treehouse Left Orange 7
+	0x17DDC, // Treehouse Left Orange 8
+	0x17DDE, // Treehouse Left Orange 10
+	0x17DE3, // Treehouse Left Orange 11
+	0x17DEC, // Treehouse Left Orange 12
+	0x17DAE, // Treehouse Left Orange 13
+	0x17DB0, // Treehouse Left Orange 14
+	0x17DDB, // Treehouse Left Orange 15
+	0x17DB4, // Treehouse Right Orange 2
+	0x17D8C, // Treehouse Right Orange 3
+	0x17DCD, // Treehouse Right Orange 5
+	0x17DB2, // Treehouse Right Orange 6
+	0x17DCC, // Treehouse Right Orange 7
+	0x17DCA, // Treehouse Right Orange 8
+	0x17D8E, // Treehouse Right Orange 9
+	0x17DB1, // Treehouse Right Orange 11
+	0x17DA2, // Treehouse Right Orange 12
+	0x17E4D, // Treehouse Green 2
+	0x17E4F, // Treehouse Green 3
+	0x17E5B, // Treehouse Green 5
+	0x17E5F, // Treehouse Green 6
+	0x17E61, // Treehouse Green 7
+};
+
 inline const std::set<int> skip_noLine = {
 	0x03629, // Tutorial Gate Open
 

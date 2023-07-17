@@ -334,7 +334,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
 	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 
-	if (id != 0x01983 && id != 0x01987) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+	if (!dont_power.count(id)) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
 
 	if (reason != "Skipped" && !(reason == "Disabled" && (DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve")) && !((reason == "Collected" || reason == "Excluded") && Collect == "Auto-Skip")) {
