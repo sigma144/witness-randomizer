@@ -842,6 +842,39 @@ const inline std::set<int> allEPs = {
 	, 0x33A29, 0x33A2A, 0x33B06, 0x00614
 };
 
+const inline std::set<int> swampLowContrastPanels = {
+	0x0056E,
+	0x00390,
+	0x010CA,
+	0x00983,
+	0x00984,
+	0x00986,
+	0x00985,
+	0x00987,
+	0x181A9,
+	0x00999,
+	0x0099D,
+	0x009A0,
+	0x009A1,
+	0x00007,
+	0x00008,
+	0x00009,
+	0x0000A,
+	0x00609,
+	0x18488,
+	0x181F5,
+	0x17E2B,
+};
+
+const inline std::set<int> notThatBadSwampPanels = {
+	0x00469,
+	0x00472,
+	0x00262,
+	0x00474,
+	0x00553,
+	0x0056F,
+};
+
 const inline std::map<int, std::string> precompletableEpToName = {
 	{ 0x01848, "sconce" }, //First Hallway
 	{ 0x33530, "the_wall"}, //Tutorial Cloud

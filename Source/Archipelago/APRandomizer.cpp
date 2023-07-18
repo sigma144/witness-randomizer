@@ -519,6 +519,35 @@ void APRandomizer::PostGeneration() {
 	async->start();
 }
 
+void APRandomizer::HighContrastMode() {
+	Memory* memory = Memory::get();
+
+	std::vector<float> swampRedOuter = memory->ReadPanelData<float>(0x00982, OUTER_BACKGROUND, 4);
+	std::vector<float> swampRedInner = memory->ReadPanelData<float>(0x00982, BACKGROUND_REGION_COLOR, 4);
+	std::vector<float> pathColor = memory->ReadPanelData<float>(0x00982, PATH_COLOR, 4);
+	std::vector<float> activeColor = memory->ReadPanelData<float>(0x00982, ACTIVE_COLOR, 4);
+
+	for (int id : notThatBadSwampPanels) {
+		memory->WritePanelData<float>(id, OUTER_BACKGROUND, swampRedOuter);
+		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, swampRedInner);
+		memory->WritePanelData<float>(id, PATH_COLOR, pathColor);
+		memory->WritePanelData<float>(id, ACTIVE_COLOR, activeColor);
+	}
+
+	for (int i = 0; i < 3; i++) {
+		swampRedOuter[i] *= 0.75f;
+		swampRedInner[i] *= 0.75f;
+		pathColor[i] *= 0.75f;
+	}
+
+	for (int id : swampLowContrastPanels) {
+		memory->WritePanelData<float>(id, OUTER_BACKGROUND, swampRedOuter);
+		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, swampRedInner);
+		memory->WritePanelData<float>(id, PATH_COLOR, pathColor);
+		memory->WritePanelData<float>(id, ACTIVE_COLOR, activeColor);
+	}
+}
+
 void APRandomizer::setPuzzleLocks() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();

@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 3
+#define SAVE_VERSION 4
 
 #define CLIENT_WINDOW_WIDTH 600
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -53,6 +53,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_CHALLENGE 0x502
 #define IDC_SETTING_SYNCPROGRESS 0x503
 #define IDC_SETTING_DISABLED 0x504
+#define IDC_SETTING_HIGHCONTRAST 0x505
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -79,6 +80,7 @@ void ClientWindow::saveSettings()
 	data["disabled"] = getSetting(ClientDropdownSetting::DisabledPuzzles);
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
+	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
 
 	InputWatchdog* input = InputWatchdog::get();
 	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
@@ -106,6 +108,7 @@ void ClientWindow::loadSettings()
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
+			setSetting(ClientToggleSetting::HighContrast, data.contains("highcontrast") ? data["highcontrast"].get<bool>() : false);
 
 			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
 			setSetting(ClientDropdownSetting::DisabledPuzzles, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
@@ -206,6 +209,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
@@ -228,6 +232,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, true);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
@@ -258,6 +263,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
@@ -481,6 +487,17 @@ void ClientWindow::addGameOptions(int& currentY) {
 	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING;
 
 	// Challenge timer option.
+	HWND hwndOptionHighContrast = CreateWindow(L"BUTTON", L"High Contrast Mode",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_HIGHCONTRAST, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::HighContrast] = IDC_SETTING_HIGHCONTRAST;
+	toggleSettingCheckboxes[ClientToggleSetting::HighContrast] = hwndOptionHighContrast;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
+	// Challenge timer option.
 	HWND hwndOptionSyncProgress = CreateWindow(L"BUTTON", L"Coop: Sync Lasers and EPs",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
@@ -659,6 +676,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_SETTING_SYNCPROGRESS: {
 			toggleCheckbox(IDC_SETTING_SYNCPROGRESS);
+			break;
+		}
+		case IDC_SETTING_HIGHCONTRAST: {
+			toggleCheckbox(IDC_SETTING_HIGHCONTRAST);
 			break;
 		}
 		// Buttons.

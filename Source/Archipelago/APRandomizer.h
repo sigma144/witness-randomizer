@@ -39,6 +39,8 @@ class APRandomizer {
 		void GenerateNormal();
 		void GenerateHard();
 
+		void HighContrastMode();
+
 		void SkipPuzzle();
 
 		void SeverDoors();

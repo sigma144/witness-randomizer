@@ -262,6 +262,10 @@ void Main::randomize() {
 	memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 	memory->WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
 
+	if (clientWindow->getSetting(ClientToggleSetting::HighContrast)) {
+		apRandomizer->HighContrastMode();
+	}
+
 	apRandomizer->PostGeneration();
 
 	InputWatchdog::get()->start();

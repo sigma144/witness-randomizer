@@ -10,6 +10,7 @@ enum ClientToggleSetting {
 	ColorblindMode,
 	ChallengeTimer,
 	SyncProgress,
+	HighContrast,
 };
 
 enum ClientDropdownSetting {

@@ -153,7 +153,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 		if (state.keysInTheGame.count(puzzle->id) && !state.keysReceived.count(puzzle->id)) {
 			text = "locked";
-			backgroundColor = { 0.5f, 0.5f, 0.0f, 1.0f };
+			backgroundColor = { 0.6f, 0.55f, 0.2f, 1.0f };
 			if ((puzzle->hasStones && !state.unlockedStones)
 				|| (puzzle->hasColoredStones && !state.unlockedColoredStones)
 				|| (puzzle->hasStars && !state.unlockedStars)
