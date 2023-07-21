@@ -1993,17 +1993,28 @@ void Special::ColorPanel(int id, std::string text) {
 	if (text != "Collected" && text != "Disabled" && text != "Excluded" && skip_completelyExclude.count(id)) return;
 
 	Memory* memory = Memory::get();
+
+	bool arrows = false;
+
+	std::vector<int> decorations = memory->ReadArray<int>(id, DECORATIONS, memory->ReadPanelData<int>(id, NUM_DECORATIONS));
+	for (int decoration : decorations) {
+		if ((decoration & 0x700) == Decoration::Shape::Arrow) {
+			arrows = true;
+			break;
+		}
+	}
+
 	if (text == "Collected" && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+		if(!arrows) memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
 	}
 	else if (text == "Skipped" && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+		if (!arrows) memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
 	}
 	else if ((text == "Disabled" || text == "Excluded") && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+		if (!arrows) memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
 	}
 
 	if (cutoutPanels.count(id)) {
