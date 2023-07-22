@@ -17,7 +17,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col, std::string dis);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col, std::string dis, std::set<int> disP);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
@@ -91,6 +91,7 @@ private:
 
 	std::string Collect = "Unchanged";
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
+	std::set<int> DisabledEntities;
 
 	bool FirstEverLocationCheckDone = false;
 

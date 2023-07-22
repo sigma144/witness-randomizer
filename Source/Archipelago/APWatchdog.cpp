@@ -22,7 +22,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col, std::string dis) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, std::string col, std::string dis, std::set<int> disP) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -42,6 +42,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	solveModeSpeedFactor = smsf;
 	Collect = col;
 	DisabledPuzzlesBehavior = dis;
+	DisabledEntities = disP;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
 	if (speedTime == 0.6999999881f) { // original value
@@ -749,6 +750,8 @@ void APWatchdog::AddPuzzleSkip() {
 }
 
 void APWatchdog::UnlockDoor(int id) {
+	if (DisabledEntities.count(id)) return;
+
 	if (actuallyEveryPanel.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 		state->keysReceived.insert(id);
