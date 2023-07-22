@@ -81,6 +81,10 @@ inline const std::set<int> dont_power = {
 	0x17E5B, // Treehouse Green 5
 	0x17E5F, // Treehouse Green 6
 	0x17E61, // Treehouse Green 7
+	0x17DD1, // Treehouse Left Orange 9
+	0x17CE3, // Treehouse Right Orange 4
+	0x17DB7, // Treehouse Right Orange 10
+	0x17E52, // Treehouse Green 4
 };
 
 inline const std::set<int> skip_noLine = {
