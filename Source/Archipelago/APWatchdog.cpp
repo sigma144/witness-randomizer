@@ -594,18 +594,6 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 
 	// Special case: For pressure plate puzzles, the player can't actually select the puzzle directly, so we instead
 	//   detect when they've selected the reset line and then switch to the actual panel they want to interact with.
-	if (puzzleId == 0x0A3A8) {
-		puzzleId = 0x033EA;
-	}
-	else if (puzzleId == 0x0A3B9) {
-		puzzleId = 0x01BE9;
-	}
-	else if (puzzleId == 0x0A3BB) {
-		puzzleId = 0x01CD3;
-	}
-	else if (puzzleId == 0x0A3AD) {
-		puzzleId = 0x01D3F;
-	}
 
 	// Verify that this is, indeed, a panel.
 	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), puzzleId) == actuallyEveryPanel.end()) {
@@ -1611,7 +1599,22 @@ void APWatchdog::SetStatusMessages() {
 
 int APWatchdog::GetActivePanel() {
 	try {
-		return Memory::get()->GetActivePanel();
+		int puzzle = Memory::get()->GetActivePanel();
+
+		if (puzzle == 0x0A3A8) {
+			puzzle = 0x033EA;
+		}
+		else if (puzzle == 0x0A3B9) {
+			puzzle = 0x01BE9;
+		}
+		else if (puzzle == 0x0A3BB) {
+			puzzle = 0x01CD3;
+		}
+		else if (puzzle == 0x0A3AD) {
+			puzzle = 0x01D3F;
+		}
+
+		return puzzle;
 	}
 	catch (std::exception& e) {
 		OutputDebugStringW(L"Couldn't get active panel");
