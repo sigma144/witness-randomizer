@@ -142,8 +142,6 @@ void PuzzleData::Read() {
 
 			if (dot_flags[i] & DOT_IS_BLUE || dot_flags[i] & DOT_IS_ORANGE)
 				hasColoredDots = true;
-			else if (dot_flags[i] & DOT_IS_INVISIBLE)
-				hasInvisibleDots = true;
 			else if (dot_flags[i] & DOT_SMALL || dot_flags[i] & DOT_MEDIUM || dot_flags[i] & DOT_LARGE)
 				hasSoundDots = true;
 			else

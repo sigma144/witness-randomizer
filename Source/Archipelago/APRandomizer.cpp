@@ -131,7 +131,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			state.unlockedDots = true;
 			state.unlockedErasers = true;
 			state.unlockedFullDots = true;
-			state.unlockedInvisibleDots = true;
 			state.unlockedSoundDots = true;
 			state.unlockedStars = true;
 			state.unlockedStarsWithOtherSimbol = true;

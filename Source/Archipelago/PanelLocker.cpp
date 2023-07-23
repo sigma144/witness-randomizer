@@ -44,7 +44,6 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 			case ITEM_COLORED_DOTS:					if (puzzle->hasColoredDots) puzzlesToUpdate.push_back(puzzle);					break;
 			case ITEM_FULL_DOTS:					if (puzzle->hasFullDots) puzzlesToUpdate.push_back(puzzle);						break;
 			case ITEM_SOUND_DOTS:					if (puzzle->hasSoundDots) puzzlesToUpdate.push_back(puzzle);					break;
-			case ITEM_INVISIBLE_DOTS:				if (puzzle->hasInvisibleDots) puzzlesToUpdate.push_back(puzzle);				break;
 			case ITEM_SYMMETRY:						if (puzzle->hasSymmetry) puzzlesToUpdate.push_back(puzzle);						break;
 			case ITEM_TRIANGLES:						if (puzzle->hasTriangles) puzzlesToUpdate.push_back(puzzle);					break;
 			case ITEM_ERASOR:							if (puzzle->hasErasers) puzzlesToUpdate.push_back(puzzle);						break;
@@ -98,7 +97,6 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		|| (puzzle->hasDots && !state.unlockedDots)
 		|| (puzzle->hasColoredDots && !state.unlockedColoredDots)
 		|| (puzzle->hasFullDots && !state.unlockedFullDots)
-		//|| (puzzle->hasInvisibleDots && !state.unlockedInvisibleDots) //NYI
 		|| (puzzle->hasSoundDots && !state.unlockedSoundDots)
 		|| (puzzle->hasArrows && !state.unlockedArrows)
 		|| (puzzle->hasSymmetry && !state.unlockedSymmetry)
@@ -166,7 +164,6 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 				|| (puzzle->hasDots && !state.unlockedDots)
 				|| (puzzle->hasColoredDots && !state.unlockedColoredDots)
 				|| (puzzle->hasFullDots && !state.unlockedFullDots)
-				//|| (puzzle->hasInvisibleDots && !state.unlockedInvisibleDots) //NYI
 				|| (puzzle->hasSoundDots && !state.unlockedSoundDots)
 				|| (puzzle->hasArrows && !state.unlockedArrows)
 				|| (puzzle->hasSymmetry && !state.unlockedSymmetry)
@@ -628,11 +625,6 @@ int PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 		for (int i = 0; i < 15; i++) {
 			intersectionFlags[i] |= IntersectionFlags::DOT;
 		}
-	}
-
-	else if (puzzle->hasInvisibleDots && !state.unlockedInvisibleDots) {
-		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_IS_INVISIBLE;
-		intersectionFlags[12] = IntersectionFlags::DOT;
 	}
 	else if (puzzle->hasSoundDots && !state.unlockedSoundDots) {
 		intersectionFlags[11] = IntersectionFlags::DOT | IntersectionFlags::DOT_SMALL;
