@@ -107,7 +107,6 @@ private:
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
-	std::map<int,int> collisionsToRefresh;
 	std::map<int, std::vector<float>> collisionPositions;
 	std::set<int> alreadyTriedUpdatingNormally;
 
@@ -136,8 +135,6 @@ private:
 	void DisableCollisions();
 
 	void AudioLogPlaying(float deltaSeconds);
-
-	void RefreshDoorCollisions();
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);

@@ -783,6 +783,16 @@ const inline int AllPuzzles[]{
 
 		0x0A332, // Challenge Timer
 		0x3D9A9,
+
+		0x09FAA, 0x1C2DF, 0x1831E, 0x1C260, 0x1831C, 0x1C2F3, 0x1831D, 0x1C2B1, 0x1831B, // Desert Controls
+		0x17CC4, // Quarry Elevator
+		0x28A79, // Town Maze Panel
+		0x00815, // Theater Video Input
+		0x17CBC, // Treehouse Door Timer
+		0x037FF, // Treehouse Drawbridge
+		0x34BC5, 0x34BC6, // Bunker Controls
+
+		0x17CDF, 0x17CC8, 0x17CA6, 0x09DB8, 0x17C95, 0x0A054, // Boats
 };
 
 const inline std::set<int> deathlinkExcludeList = {

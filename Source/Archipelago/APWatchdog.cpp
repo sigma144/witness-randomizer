@@ -96,7 +96,6 @@ void APWatchdog::action() {
 
 		HandlePowerSurge();
 		DisableCollisions();
-		RefreshDoorCollisions();
 		AudioLogPlaying(0.5f);
 
 		UpdateInfiniteChallenge();
@@ -782,13 +781,6 @@ void APWatchdog::UnlockDoor(int id) {
 		Memory::get()->UpdateEntityPosition(0x021D7);
 	}
 
-	if (doorCollisions.find(id) != doorCollisions.end()){
-		for (int collisionId : doorCollisions[id]) {
-			collisionsToRefresh[collisionId] = 10;
-			collisionPositions[collisionId] = ReadPanelData<float>(collisionId, POSITION, 8);
-		}
-	}
-
 	ASMPayloadManager::get()->OpenDoor(id);
 }
 
@@ -1013,104 +1005,6 @@ void APWatchdog::DisableCollisions() {
 	for (int id : disableCollisionList) {
 		Memory::get()->RemoveMesh(id);
 	}
-}
-
-void APWatchdog::RefreshDoorCollisions() {
-	if (collisionsToRefresh.size() == 0) {
-		return;
-	}
-
-	std::vector<float> playerPosition;
-
-	try{
-		playerPosition = Memory::get()->ReadPlayerPosition();
-	}
-	catch (std::exception e) {
-		return;
-	}
-
-	//std::wstringstream s;
-	//s << playerPosition[0] << ", " << playerPosition[1] << ", " << playerPosition[2] << "\n";
-	//OutputDebugStringW(s.str().c_str());
-
-	for(auto const& p : collisionsToRefresh){
-		auto collisionToUpdate = p.first;
-		auto val = p.second;
-
-		if (val == -10) return;
-
-		if (val > 0) {
-			collisionsToRefresh[collisionToUpdate] = val - 1;
-			continue;
-		}
-
-		std::vector<float> originalPosition = collisionPositions[collisionToUpdate];
-
-		if (pow(playerPosition[0] - originalPosition[0], 2) + pow(playerPosition[1] - originalPosition[1], 2) + pow(playerPosition[2] - originalPosition[2], 2) > 400) {
-			continue;
-		}
-
-		std::wstringstream s1;
-		s1 << std::hex << collisionToUpdate << " in range. Testing...\n";
-		OutputDebugStringW(s1.str().c_str());
-
-		collisionsToRefresh[collisionToUpdate] = -10;
-
-		std::vector<float> newPositions = ReadPanelData<float>(collisionToUpdate, POSITION, 8);
-
-		if (originalPosition != newPositions) {
-			OutputDebugStringW(L"All good.\n");
-			continue;
-		}
-		if (PanelRestore::HasPositions(collisionToUpdate) && newPositions == PanelRestore::GetPositions(collisionToUpdate)) {
-			OutputDebugStringW(L"All good.\n");
-			continue;
-		}
-
-		std::wstringstream s;
-		s << std::hex << collisionToUpdate << " didn't move!!! ";
-		OutputDebugStringW(s.str().c_str());
-
-		if (alreadyTriedUpdatingNormally.count(collisionToUpdate)) {
-			OutputDebugStringW(L"Force-Updating...\n");
-
-			/*if (PanelRestore::HasPositions(collisionToUpdate)) {
-				WritePanelData<int>(collisionToUpdate, MOUNT_PARENT_ID, { 0 });
-				WritePanelData<float>(collisionToUpdate, POSITION, PanelRestore::GetPositions(collisionToUpdate));
-				Memory::get()->UpdateEntityPosition(collisionToUpdate);
-			}*/
-
-			return;
-		}
-
-		try {  
-			OutputDebugStringW(L"Updating using ingame function...\n");
-			//Memory::get()->UpdateEntityPosition(collisionToUpdate);
-			alreadyTriedUpdatingNormally.insert(collisionToUpdate);
-			collisionsToRefresh[collisionToUpdate] = 2;
-		}
-		catch (const std::exception& e) { 
-			collisionsToRefresh[collisionToUpdate] = 2;
-			return;
-		}
-
-		if(!knownIrrelevantCollisions.count(collisionToUpdate)){
-			collisionsToRefresh[collisionToUpdate] = 10;
-		}
-	}
-
-	for (auto it = collisionsToRefresh.cbegin(), next_it = it; it != collisionsToRefresh.cend(); it = next_it)
-	{
-		++next_it;
-		if (collisionsToRefresh[it->first] == -10)
-		{
-			collisionsToRefresh.erase(it);
-		}
-	}
-
-	//OutputDebugStringW(L"-----\n");
-
-	//Updates a tenth of the collisions every second. Will investigate if this needs to be increased potentially.
 }
 
 void APWatchdog::AudioLogPlaying(float deltaSeconds) {
