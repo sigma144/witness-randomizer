@@ -6,6 +6,7 @@
 #include "../Memory.h"
 #include "APState.h"
 #include "../Special.h"
+#include "SkipSpecialCases.h"
 
 void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
 {
@@ -184,6 +185,24 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 			createText(id, laserText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - laserText2.size() * 0.029f, 0.515f + laserText2.size() * 0.029f, 0.38f, 0.47f);
 			createText(id, laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - laserText.size() * 0.029f, 0.5f + laserText.size() * 0.029f, 0.53f, 0.62f);
+		}
+		else if (thin_panels.count(id)) {
+			int currentIntersections = intersections.size();
+
+			std::string text = "Locked";
+			createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f + text.size() * 0.034f, 0.5f - text.size() * 0.034f, 0.455f, 0.545f);
+		
+			int newIntersections = intersections.size();
+
+			for (int i = currentIntersections; i < newIntersections; i += 2) {
+				float x = intersections[i];
+				intersections[i] = intersections[i + 1];
+				intersections[i + 1] = x;
+			}
+		}
+		else if (wide_panels.count(id)) {
+			std::string text = "Locked";
+			createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - text.size() * 0.034f, 0.5f + text.size() * 0.034f, 0.455f, 0.545f);
 		}
 		else {
 			addMissingSimbolsDisplay(intersections, intersectionFlags, connectionsA, connectionsB, id == 0x0A332);
