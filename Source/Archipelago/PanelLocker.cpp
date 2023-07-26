@@ -230,10 +230,11 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 			{
 				createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
 			}
+
+			memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
+			memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 + extraRows });
 		}
 
-		memory->WritePanelData<int>(id, GRID_SIZE_X, { width + 1 });
-		memory->WritePanelData<int>(id, GRID_SIZE_Y, { height + 1 + extraRows });
 		memory->WritePanelData<float>(id, PATTERN_SCALE, { pattern_scale / puzzle->path_width_scale });
 		memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 		memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
