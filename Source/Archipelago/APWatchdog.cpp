@@ -327,7 +327,7 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if (dont_touch_panel_at_all.count(id)) {
+	if (dont_touch_panel_at_all.count(id) or ! actuallyEveryPanel.count(id)) {
 		return;
 	}
 
