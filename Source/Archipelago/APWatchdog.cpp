@@ -791,9 +791,7 @@ void APWatchdog::SeverDoor(int id) {
 	}
 
 	// Disabled doors should behave as vanilla
-	if (DisabledEntities.count(id)) {
-		return;
-	}
+	if (DisabledEntities.count(id)) return;
 
 	if (severTargetsById.count(id)) {
 		severedDoorsList.insert(id);
