@@ -190,14 +190,16 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("precompleted_puzzles")) {
 			for (int key : slotData["precompleted_puzzles"]) {
 				precompletedLocations.insert(key);
+
+				//Back compat: Disabled EPs used to be "precompleted"
+				if (allEPs.count(key)) disabledEntities.insert(key);
 			}
 		}
 
 		if (slotData.contains("disabled_panels")) {
 			for (std::string keys : slotData["disabled_panels"]) {
 				int key = std::stoul(keys, nullptr, 16);
-				if (!actuallyEveryPanel.count(key)) continue;
-				disabledPanels.insert(key);
+				disabledEntities.insert(key);
 			}
 		}
 
@@ -428,21 +430,6 @@ void APRandomizer::PostGeneration() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();
 
-	if (precompletedLocations.size() > 0) {
-		clientWindow->setStatusMessage("Precompleting EPs...");
-		for (int checkID : precompletedLocations) {
-			if (allEPs.count(checkID)) {
-				memory->SolveEP(checkID);
-				if (precompletableEpToName.count(checkID) && precompletableEpToPatternPointBytes.count(checkID)) {
-					memory->MakeEPGlow(precompletableEpToName.at(checkID), precompletableEpToPatternPointBytes.at(checkID));
-				}
-			}
-			else if (actuallyEveryPanel.count(checkID)) {
-				async->SkipPanel(checkID, "Excluded", false);
-			}
-		}
-	}
-
 	// EP-related slowing down of certain bridges etc.
 	if (EPShuffle) {
 		clientWindow->setStatusMessage("Adjusting EP element speeds...");
@@ -509,8 +496,19 @@ void APRandomizer::PostGeneration() {
 	randomizationFinished = true;
 	memory->showMsg = false;
 
-	for (int panel : disabledPanels) {
-		async->SkipPanel(panel, "Disabled", false);
+	if (disabledEntities.size() > 0) {
+		clientWindow->setStatusMessage("Disabling Puzzles...");
+		for (int checkID : disabledEntities) {
+			if (allEPs.count(checkID)) {
+				memory->SolveEP(checkID);
+				if (precompletableEpToName.count(checkID) && precompletableEpToPatternPointBytes.count(checkID)) {
+					memory->MakeEPGlow(precompletableEpToName.at(checkID), precompletableEpToPatternPointBytes.at(checkID));
+				}
+			}
+			else if (actuallyEveryPanel.count(checkID)) {
+				async->SkipPanel(checkID, "Excluded", false);
+			}
+		}
 	}
 
 	async->getHudManager()->queueBannerMessage("Randomized!");
@@ -574,7 +572,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect, DisabledPuzzlesBehavior, disabledPanels);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect, DisabledPuzzlesBehavior, disabledEntities);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -582,7 +580,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect, DisabledPuzzlesBehavior, disabledPanels);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect, DisabledPuzzlesBehavior, disabledEntities);
 	SeverDoors();
 
 	//Mess with Town targets
