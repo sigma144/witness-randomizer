@@ -506,6 +506,15 @@ void APRandomizer::PostGeneration() {
 				}
 			}
 			else if (actuallyEveryPanel.count(checkID)) {
+				async->SkipPanel(checkID, "Disabled", false);
+			}
+		}
+	}
+
+	if (precompletedLocations.size() > 0) {
+		clientWindow->setStatusMessage("Precompleting Puzzles...");
+		for (int checkID : disabledEntities) {
+			if (actuallyEveryPanel.count(checkID)) {
 				async->SkipPanel(checkID, "Excluded", false);
 			}
 		}
