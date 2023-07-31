@@ -513,7 +513,7 @@ void APRandomizer::PostGeneration() {
 
 	if (precompletedLocations.size() > 0) {
 		clientWindow->setStatusMessage("Precompleting Puzzles...");
-		for (int checkID : disabledEntities) {
+		for (int checkID : precompletedLocations) {
 			if (actuallyEveryPanel.count(checkID)) {
 				async->SkipPanel(checkID, "Excluded", false);
 			}
