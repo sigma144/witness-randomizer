@@ -748,6 +748,7 @@ const inline int AllPuzzles[]{
 		0x0A182, // Treehouse Door 3
 		0x2700B, // Treehouse Exterior Door Control
 		0x334DB, // Shadows Outer Door Control
+		0x334DC, // Shadows Inner Door Control
 		0x00B10, // Monastery Left Door
 		0x00C92, // Monastery Right Door
 		0x09D9B, // Monastery Overhead Door Control
