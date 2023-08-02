@@ -568,7 +568,8 @@ int PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 		
 		position = (1 - (i % 2)) * 4 + ((int) i / 2);
 
-		int intersectionIndex = (i < 4) ? 5 + i : i - 4;
+		int intersectionIndex = position;
+		if (position > 3) intersectionIndex++;
 
 		float x = intersections[intersectionIndex * 2];
 		float y = intersections[intersectionIndex * 2 + 1];
@@ -598,7 +599,8 @@ int PanelLocker::addPuzzleSimbols(const APState& state, PuzzleData* puzzle,
 
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);
 
-		int intersectionIndex = (i < 4) ? 5 + i : i - 4;
+		int intersectionIndex = position;
+		if (position > 3) intersectionIndex++;
 
 		float x = intersections[intersectionIndex * 2];
 		float y = intersections[intersectionIndex * 2 + 1];
