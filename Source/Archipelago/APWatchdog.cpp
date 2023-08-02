@@ -327,7 +327,7 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if (dont_touch_panel_at_all.count(id) or ! actuallyEveryPanel.count(id)) {
+	if (dont_touch_panel_at_all.count(id) or ! allPanels.count(id)) {
 		return;
 	}
 
@@ -379,7 +379,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
 	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
-	if (actuallyEveryPanel.count(panelId)) {
+	if (allPanels.count(panelId)) {
 		if (!ReadPanelData<int>(panelId, SOLVED)) {
 			if (PuzzlesSkippedThisGame.count(panelId)) {
 				if(panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
@@ -497,7 +497,7 @@ void APWatchdog::HandlePowerSurge() {
 		if (DateTime::since(powerSurgeStartTime).count() > 10000)
 			ResetPowerSurge();
 		else {
-			for (const auto& panelId : actuallyEveryPanel) {
+			for (const auto& panelId : allPanels) {
 				/*if (ReadPanelData<int>(panelId, SOLVED))
 					continue;*/
 
@@ -520,7 +520,7 @@ void APWatchdog::HandlePowerSurge() {
 void APWatchdog::ResetPowerSurge() {
 	hasPowerSurge = false;
 
-	for (const auto& panelId : actuallyEveryPanel) {
+	for (const auto& panelId : allPanels) {
 		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
 
 		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
@@ -595,7 +595,7 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 	//   detect when they've selected the reset line and then switch to the actual panel they want to interact with.
 
 	// Verify that this is, indeed, a panel.
-	if (std::find(actuallyEveryPanel.begin(), actuallyEveryPanel.end(), puzzleId) == actuallyEveryPanel.end()) {
+	if (std::find(allPanels.begin(), allPanels.end(), puzzleId) == allPanels.end()) {
 		return false;
 	}
 
@@ -716,7 +716,7 @@ void APWatchdog::SkipPuzzle() {
 }
 
 void APWatchdog::SkipPreviouslySkippedPuzzles() {
-	for (int id : actuallyEveryPanel) {
+	for (int id : allPanels) {
 		__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
 
 		if (skipped >= PUZZLE_SKIPPED && skipped <= PUZZLE_SKIPPED_MAX) {
@@ -739,7 +739,7 @@ void APWatchdog::AddPuzzleSkip() {
 void APWatchdog::UnlockDoor(int id) {
 	if (DisabledEntities.count(id)) return;
 
-	if (actuallyEveryPanel.count(id)) {
+	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 		state->keysReceived.insert(id);
 		panelLocker->UpdatePuzzleLock(*state, id);
@@ -785,7 +785,7 @@ void APWatchdog::UnlockDoor(int id) {
 }
 
 void APWatchdog::SeverDoor(int id) {
-	if (actuallyEveryPanel.count(id)) {
+	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 		state->keysInTheGame.insert(id);
 	}
@@ -1291,7 +1291,7 @@ bool APWatchdog::CheckPanelHasBeenSolved(int panelId) {
 }
 
 void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
-	if (!actuallyEveryPanel.count(id)) return;
+	if (!allPanels.count(id)) return;
 
 	Color backgroundColor;
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT)
@@ -1724,7 +1724,7 @@ void APWatchdog::CheckDeathLink() {
 		if (ReadPanelData<int>(panelId, FLASH_MODE) == 2) panelIdToConsider = panelId;
 	}
 
-	if (panelIdToConsider == -1 || !actuallyEveryPanel.count(panelIdToConsider)) return;
+	if (panelIdToConsider == -1 || !allPanels.count(panelIdToConsider)) return;
 	if (deathlinkExcludeList.count(panelIdToConsider)) return;
 	if (PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(panelIdToConsider)) return;
 
