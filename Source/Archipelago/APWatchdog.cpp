@@ -1235,12 +1235,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
 
-	// bonsai panel dots requirement
-	if (bonsaiCollisionCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09d9b)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"Needs Dots.");
-	}
-	else if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
+	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Stone Pillar needs Triangles.");
 	}
