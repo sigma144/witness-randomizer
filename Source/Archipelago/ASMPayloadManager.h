@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <string>
 
 class Memory;
 
@@ -21,9 +22,15 @@ private:
 	static ASMPayloadManager* _singleton;
 
 	void ExecuteASM(char* asmBuff, int buffersize);
+	void CallVoidFunction(uint64_t functionAddress, int id);
 public:
 	static void create();
 	static ASMPayloadManager* get();
 
 	void OpenDoor(int id);
+	void CloseDoor(int id);
+	void UpdateEntityPosition(int id);
+	void SendBunkerElevatorToFloor(int floor, bool force);
+	void ToggleFloodgate(std::string name, bool connect);
+	void BridgeToggle(int associatedPanel, bool disconnect);
 };

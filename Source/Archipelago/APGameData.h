@@ -33,6 +33,9 @@
 #define CABLE_COLOR_G 0x15C
 #define CABLE_COLOR_B 0x160
 
+#define DOOR_OPEN_T 0x1D0
+#define DOOR_OPEN_T_TARGET 0x1D4
+
 #define DOOR_OPEN 0x1E4
 #define DOOR_OPEN_RATE 0xE0
 

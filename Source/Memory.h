@@ -211,10 +211,6 @@ public:
 
 	void PowerNext(int source, int target);
 
-	void UpdateEntityPosition(int id) {
-		CallVoidFunction(id, updateEntityPositionFunction); // Entity::has_moved_in_a_non_position_way - Still works even if it HAS moved in a non position way, for some reason :P
-	}
-
 	void ActivateLaser(int id) {
 		CallVoidFunction(id, activateLaserFunction);
 	}
@@ -276,7 +272,11 @@ public:
 
 	uint64_t powerNextFunction;
 	uint64_t initPanelFunction;
+	uint64_t bridgeToggleFunction;
 	uint64_t openDoorFunction;
+	uint64_t closeDoorFunction;
+	uint64_t moveBunkerElevatorFunction;
+	uint64_t floodgateToggleFunction;
 	uint64_t updateEntityPositionFunction;
 	uint64_t activateLaserFunction;
 	uint64_t hudTimePointer;

@@ -759,7 +759,7 @@ void APWatchdog::UnlockDoor(int id) {
 		WritePanelData<float>(0x17CAA, POSITION, { 37.194f, -41.883f, 16.645f });
 		WritePanelData<float>(0x17CAA, SCALE, { 1.15f });
 
-		Memory::get()->UpdateEntityPosition(0x17CAA);
+		ASMPayloadManager::get()->UpdateEntityPosition(0x17CAA);
 	}
 
 	if (ReadPanelData<int>(id, DOOR_OPEN)) {
@@ -772,13 +772,13 @@ void APWatchdog::UnlockDoor(int id) {
 	if (id == 0x0C310) {
 		WritePanelData<float>(0x02886, POSITION + 8, { 12.8f });
 
-		Memory::get()->UpdateEntityPosition(0x02886);
+		ASMPayloadManager::get()->UpdateEntityPosition(0x02886);
 	}
 
 	if (id == 0x2D73F) {
 		WritePanelData<float>(0x021D7, POSITION + 8, { 10.0f });
 
-		Memory::get()->UpdateEntityPosition(0x021D7);
+		ASMPayloadManager::get()->UpdateEntityPosition(0x021D7);
 	}
 
 	ASMPayloadManager::get()->OpenDoor(id);
@@ -818,7 +818,7 @@ void APWatchdog::SeverDoor(int id) {
 			if (conn.id == 0x28A0D) {
 				WritePanelData<float>(conn.id, POSITION, { -31.0f, 7.1f });
 
-				Memory::get()->UpdateEntityPosition(conn.id);
+				ASMPayloadManager::get()->UpdateEntityPosition(conn.id);
 			}
 
 			if (conn.id == 0x17CAB) {
@@ -829,7 +829,7 @@ void APWatchdog::SeverDoor(int id) {
 			if (conn.id == 0x01D8D) {
 				WritePanelData<float>(conn.id, POSITION, { -57.8f, 157.2f, 3.45f });
 
-				Memory::get()->UpdateEntityPosition(conn.id);
+				ASMPayloadManager::get()->UpdateEntityPosition(conn.id);
 			}
 
 			if (conn.target_no == ENTITY_NAME) {
@@ -1234,6 +1234,47 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
+
+	if (true){ // Change to true to get "things come to you" behavior, to be replaced with a setting
+		if (quarryElevatorUpper.containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 1.0f) {
+			ASMPayloadManager::get()->BridgeToggle(0x17CC4, false);
+		}
+
+		if (quarryElevatorLower.containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 0.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 0.0f) {
+			ASMPayloadManager::get()->BridgeToggle(0x17CC4, true);
+		}
+
+		if (bunkerElevatorCube.containsPoint(playerPosition)) {
+			std::vector<int> allBunkerElevatorDoors = { 0x0A069, 0x0A06A, 0x0A06B, 0x0A06C, 0x0A070, 0x0A071, 0x0A072, 0x0A073, 0x0A074, 0x0A075, 0x0A076, 0x0A077 };
+
+			bool problem = false;
+
+			for (int id : allBunkerElevatorDoors) {
+				if (ReadPanelData<float>(id, DOOR_OPEN_T) != ReadPanelData<float>(id, DOOR_OPEN_T_TARGET)) {
+					problem = true; // elevator is currently moving
+					break;
+				}
+			}
+
+			if (ReadPanelData<float>(0x0A076, DOOR_OPEN_T) == 0.0f && ReadPanelData<float>(0x0A075, DOOR_OPEN_T) == 1.0f) problem = true; // Already in the correct spot
+
+			if(!problem) ASMPayloadManager::get()->SendBunkerElevatorToFloor(5, true);
+		}
+
+		if (swampLongBridgeNear.containsPoint(playerPosition) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T == 1.0f)) {
+			if (ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) == 1.0f) {
+				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", false);
+				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", true);
+			}
+		}
+
+		if (swampLongBridgeFar.containsPoint(playerPosition) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T == 1.0f)) {
+			if (ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) == 1.0f) {
+				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", true);
+				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", false);
+			}
+		}
+	}
 
 	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,

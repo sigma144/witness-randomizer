@@ -11,6 +11,7 @@
 #include "PanelLocker.h"
 #include "../DateTime.h"
 #include "PanelRestore.h"
+#include "ASMPayloadManager.h"
 
 APRandomizer::APRandomizer() {
 	panelLocker = new PanelLocker();

@@ -106,7 +106,7 @@ void ASMPayloadManager::setupPayload() {
 	return;
 }
 
-void ASMPayloadManager::OpenDoor(int id) {
+void ASMPayloadManager::CallVoidFunction(uint64_t functionAddress, int id) {
 	Memory* memory = Memory::get();
 
 	uint64_t offset = reinterpret_cast<uintptr_t>(memory->ComputeOffset({ memory->GLOBALS, 0x18, id * 8, 0 }));
@@ -127,14 +127,154 @@ void ASMPayloadManager::OpenDoor(int id) {
 	buffer[9] = (offset >> 40) & 0xff;
 	buffer[10] = (offset >> 48) & 0xff;
 	buffer[11] = (offset >> 56) & 0xff;
-	buffer[20] = memory->openDoorFunction & 0xff;
-	buffer[21] = (memory->openDoorFunction >> 8) & 0xff;
-	buffer[22] = (memory->openDoorFunction >> 16) & 0xff;
-	buffer[23] = (memory->openDoorFunction >> 24) & 0xff;
-	buffer[24] = (memory->openDoorFunction >> 32) & 0xff;
-	buffer[25] = (memory->openDoorFunction >> 40) & 0xff;
-	buffer[26] = (memory->openDoorFunction >> 48) & 0xff;
-	buffer[27] = (memory->openDoorFunction >> 56) & 0xff;
+	buffer[20] = functionAddress & 0xff;
+	buffer[21] = (functionAddress >> 8) & 0xff;
+	buffer[22] = (functionAddress >> 16) & 0xff;
+	buffer[23] = (functionAddress >> 24) & 0xff;
+	buffer[24] = (functionAddress >> 32) & 0xff;
+	buffer[25] = (functionAddress >> 40) & 0xff;
+	buffer[26] = (functionAddress >> 48) & 0xff;
+	buffer[27] = (functionAddress >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
+}
+
+void ASMPayloadManager::OpenDoor(int id) {
+	Memory* memory = Memory::get();
+	
+	CallVoidFunction(memory->openDoorFunction, id);
+}
+
+void ASMPayloadManager::CloseDoor(int id) {
+	Memory* memory = Memory::get();
+
+	CallVoidFunction(memory->closeDoorFunction, id);
+}
+
+void ASMPayloadManager::UpdateEntityPosition(int id) {
+	Memory* memory = Memory::get();
+
+	CallVoidFunction(memory->updateEntityPositionFunction, id);
+}
+
+void ASMPayloadManager::BridgeToggle(int associatedPanel, bool extend) {
+	Memory* memory = Memory::get();
+
+	uint64_t offset = reinterpret_cast<uintptr_t>(memory->ComputeOffset({ memory->GLOBALS, 0x18, associatedPanel * 8, 0 }));
+	uint64_t functionAddress = memory->bridgeToggleFunction;
+
+	char buffer[] =
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\xB2\x00" //mov dl, extend
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00"
+		"\x59" // pop rcx
+		"\x59"; // pop rcx
+
+	buffer[4] = offset & 0xff; //address of door
+	buffer[5] = (offset >> 8) & 0xff;
+	buffer[6] = (offset >> 16) & 0xff;
+	buffer[7] = (offset >> 24) & 0xff;
+	buffer[8] = (offset >> 32) & 0xff;
+	buffer[9] = (offset >> 40) & 0xff;
+	buffer[10] = (offset >> 48) & 0xff;
+	buffer[11] = (offset >> 56) & 0xff;
+	buffer[13] = extend & 0xff;
+	buffer[22] = functionAddress & 0xff;
+	buffer[23] = (functionAddress >> 8) & 0xff;
+	buffer[24] = (functionAddress >> 16) & 0xff;
+	buffer[25] = (functionAddress >> 24) & 0xff;
+	buffer[26] = (functionAddress >> 32) & 0xff;
+	buffer[27] = (functionAddress >> 40) & 0xff;
+	buffer[28] = (functionAddress >> 48) & 0xff;
+	buffer[29] = (functionAddress >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
+}
+
+void ASMPayloadManager::SendBunkerElevatorToFloor(int floor, bool force) {
+	Memory* memory = Memory::get();
+
+	int id = 0x0A079;
+	uint64_t offset = reinterpret_cast<uintptr_t>(memory->ComputeOffset({ memory->GLOBALS, 0x18, id * 8, 0 }));
+	uint64_t functionAddress = memory->moveBunkerElevatorFunction;
+
+	char buffer[] =
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\xBA\x00\x00\x00\x00" //mov edx floornumber
+		"\x49\xB8\x00\x00\x00\x00\x00\x00\x00\x00" // mov r8, force
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00"
+		"\x59" // pop rcx
+		"\x59"; // pop rcx
+
+	buffer[4] = offset & 0xff; //address of door
+	buffer[5] = (offset >> 8) & 0xff;
+	buffer[6] = (offset >> 16) & 0xff;
+	buffer[7] = (offset >> 24) & 0xff;
+	buffer[8] = (offset >> 32) & 0xff;
+	buffer[9] = (offset >> 40) & 0xff;
+	buffer[10] = (offset >> 48) & 0xff;
+	buffer[11] = (offset >> 56) & 0xff;
+	buffer[13] = floor & 0xff; // floor no
+	buffer[19] = force & 0xff; // force
+	buffer[35] = functionAddress & 0xff;
+	buffer[36] = (functionAddress >> 8) & 0xff;
+	buffer[37] = (functionAddress >> 16) & 0xff;
+	buffer[38] = (functionAddress >> 24) & 0xff;
+	buffer[39] = (functionAddress >> 32) & 0xff;
+	buffer[40] = (functionAddress >> 40) & 0xff;
+	buffer[41] = (functionAddress >> 48) & 0xff;
+	buffer[42] = (functionAddress >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
+}
+
+void ASMPayloadManager::ToggleFloodgate(std::string name, bool disconnect) {
+	Memory* memory = Memory::get();
+
+	char namebuffer[128];
+
+	memset(namebuffer, 0, sizeof(namebuffer));
+
+	strcpy_s(namebuffer, name.c_str());
+
+	auto nameAlloc = VirtualAllocEx(Memory::get()->getHandle(), NULL, sizeof(namebuffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+	WriteProcessMemory(Memory::get()->getHandle(), nameAlloc, namebuffer, sizeof(namebuffer), NULL);
+
+	uint64_t nameAllocPointer = reinterpret_cast<uint64_t>(nameAlloc); nameAllocPointer;
+
+	uint64_t functionAddress = memory->floodgateToggleFunction;
+
+	char buffer[] =
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\xB2\x00" //mov dl, connect
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00"
+		"\x59" // pop rcx
+		"\x59"; // pop rcx
+
+	buffer[4] = nameAllocPointer & 0xff; //address of door
+	buffer[5] = (nameAllocPointer >> 8) & 0xff;
+	buffer[6] = (nameAllocPointer >> 16) & 0xff;
+	buffer[7] = (nameAllocPointer >> 24) & 0xff;
+	buffer[8] = (nameAllocPointer >> 32) & 0xff;
+	buffer[9] = (nameAllocPointer >> 40) & 0xff;
+	buffer[10] = (nameAllocPointer >> 48) & 0xff;
+	buffer[11] = (nameAllocPointer >> 56) & 0xff;
+	buffer[13] = disconnect & 0xff;
+	buffer[22] = functionAddress & 0xff;
+	buffer[23] = (functionAddress >> 8) & 0xff;
+	buffer[24] = (functionAddress >> 16) & 0xff;
+	buffer[25] = (functionAddress >> 24) & 0xff;
+	buffer[26] = (functionAddress >> 32) & 0xff;
+	buffer[27] = (functionAddress >> 40) & 0xff;
+	buffer[28] = (functionAddress >> 48) & 0xff;
+	buffer[29] = (functionAddress >> 56) & 0xff;
 
 	ExecuteASM(buffer, sizeof(buffer));
 }

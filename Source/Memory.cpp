@@ -482,12 +482,39 @@ void Memory::findImportantFunctionAddresses(){
 
 	//open door
 	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (;; index--) {
+			if (data[index] == 0x40 && data[index + 1] == 0x53) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
+				this->closeDoorFunction = _baseAddress + offset + index;
+				break;
+			}
+		}
+		
 		for (; index < data.size(); index++) {
-			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
+			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // The open door function comes after.
 				this->openDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
 		}
+
+		return true;
+	});
+
+	//extend bridge
+	executeSigScan({ 0x48, 0x89, 0x4C, 0x24, 0x08, 0x53, 0x55, 0x56, 0x57, 0x41, 0x54, 0x41, 0x56, 0x41, 0x57, 0x48 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->bridgeToggleFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
+	executeSigScan({ 0x40, 0x56, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x44, 0x0F, 0xB6, 0xF2 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->floodgateToggleFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
+	//bunker elevator
+	executeSigScan({ 0x48, 0x8B, 0xC4, 0x44, 0x88, 0x40, 0x18, 0x53, 0x55, 0x56, 0x57 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->moveBunkerElevatorFunction = _baseAddress + offset + index;
 
 		return true;
 	});
