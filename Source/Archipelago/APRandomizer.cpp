@@ -124,6 +124,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
 		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
 		DeathLink = slotData.contains("death_link") ? slotData["death_link"] == true : false;
+		ElevatorsComeToYou = slotData.contains("elevators_come_to_you") ? slotData["elevators_come_to_you"] == true : false;
 
 		if (!UnlockSymbols) {
 			state.unlockedArrows = true;
@@ -582,7 +583,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect, DisabledPuzzlesBehavior, disabledEntities);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, Collect, DisabledPuzzlesBehavior, disabledEntities);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -590,7 +591,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, Collect, DisabledPuzzlesBehavior, disabledEntities);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, Collect, DisabledPuzzlesBehavior, disabledEntities);
 	SeverDoors();
 
 	//Mess with Town targets
