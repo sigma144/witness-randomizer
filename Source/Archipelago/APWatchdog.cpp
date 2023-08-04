@@ -1261,14 +1261,14 @@ void APWatchdog::CheckImportantCollisionCubes() {
 			if(!problem) ASMPayloadManager::get()->SendBunkerElevatorToFloor(5, true);
 		}
 
-		if (swampLongBridgeNear.containsPoint(playerPosition) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T == 1.0f)) {
+		if (swampLongBridgeNear.containsPoint(playerPosition) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == 1.0f) {
 			if (ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) == 1.0f) {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", false);
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", true);
 			}
 		}
 
-		if (swampLongBridgeFar.containsPoint(playerPosition) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T == 1.0f)) {
+		if (swampLongBridgeFar.containsPoint(playerPosition) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == 1.0f) {
 			if (ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) == 1.0f) {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", true);
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", false);
