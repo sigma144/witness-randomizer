@@ -1275,6 +1275,10 @@ void APWatchdog::CheckImportantCollisionCubes() {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", false);
 			}
 		}
+
+		if (townRedRoof.containsPoint(playerPosition) && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) == ReadPanelData<float>(0x2897C, DOOR_OPEN_T_TARGET)) {
+			ASMPayloadManager::get()->OpenDoor(0x2897C);
+		}
 	}
 
 	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
