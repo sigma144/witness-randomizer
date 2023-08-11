@@ -127,6 +127,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -174,16 +175,19 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Main.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
     <ResourceCompile Include="Version.rc" />
   </ItemGroup>
   <ItemGroup>
@@ -193,6 +197,12 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="changes.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\..\..\Music\Useful.wav" />
+    <Media Include="..\..\Cubase Projects\jingle\Mixdown\Junk.wav" />
+    <Media Include="..\..\Cubase Projects\jingle\Mixdown\Progression.wav" />
+    <Media Include="..\..\Cubase Projects\jingle\Mixdown\Trap.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

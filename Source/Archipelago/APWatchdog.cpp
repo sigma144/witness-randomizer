@@ -1,3 +1,8 @@
+#include "windows.h"
+#include "mmsystem.h"
+
+#include "../../App/resource.h"
+
 #include "APWatchdog.h"
 
 #include "../DataTypes.h"
@@ -1342,14 +1347,22 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 	if (!actuallyEveryPanel.count(id)) return;
 
 	Color backgroundColor;
-	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT)
+	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT){
+		PlaySound(MAKEINTRESOURCE(IDR_WAVE3), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
-	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+		PlaySound(MAKEINTRESOURCE(IDR_WAVE1), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
-	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP)
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP){
+		PlaySound(MAKEINTRESOURCE(IDR_WAVE4), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
-	else
+	}
+	else {
+		PlaySound(MAKEINTRESOURCE(IDR_WAVE2), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
+	}
 
 	if (id == 0x28998 || id == 0x28A69 || id == 0x17CAA || id == 0x00037 || id == 0x09FF8 || id == 0x09DAF || id == 0x0A01F || id == 0x17E67) {
 		WritePanelData<Color>(id, SUCCESS_COLOR_A, { backgroundColor });
