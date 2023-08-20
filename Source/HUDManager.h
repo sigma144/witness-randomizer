@@ -15,7 +15,8 @@ enum class InfoMessageCategory : int {
 	MissingSymbol = 1,
 	ApHint = 2,
 	Dog = 3,
-	COUNT = 4
+	COUNT = 4,
+	Settings = 5,
 };
 
 class HudManager {

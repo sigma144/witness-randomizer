@@ -211,6 +211,8 @@ private:
 	bool sentDog = false;
 	bool letGoSinceInteractModeOpen = false;
 
+	bool tenSecondsPassed = false;
+
 	CollisionCube townRedRoof = CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
 	CollisionCube swampLongBridgeFar = CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
 	CollisionCube swampLongBridgeNear = CollisionCube(200.75f, 14.5f, 0.5f, 207.7f, 18.15f, 2.85f);

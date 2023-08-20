@@ -104,6 +104,8 @@ void APWatchdog::action() {
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
 			CheckEPs();
+
+			tenSecondsPassed = true;
 			storageCheckCounter = 20;
 		}
 		else
@@ -1279,6 +1281,13 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		if (townRedRoof.containsPoint(playerPosition) && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) == ReadPanelData<float>(0x2897C, DOOR_OPEN_T_TARGET)) {
 			ASMPayloadManager::get()->OpenDoor(0x2897C);
 		}
+	}
+
+
+	if (!tenSecondsPassed) {
+		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
+			"Collect Setting: " + Collect + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
+		return;
 	}
 
 	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
