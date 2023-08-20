@@ -76,6 +76,8 @@ void APWatchdog::action() {
 	float frameDuration = std::chrono::duration<float>(currentFrameTime - lastFrameTime).count();
 	lastFrameTime = currentFrameTime;
 
+	timePassedSinceRandomisation += frameDuration;
+
 	HandleInteractionState();
 	HandleMovementSpeed(frameDuration);
 	
@@ -105,7 +107,6 @@ void APWatchdog::action() {
 			CheckLasers();
 			CheckEPs();
 
-			tenSecondsPassed = true;
 			storageCheckCounter = 20;
 		}
 		else
@@ -1284,7 +1285,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 
-	if (!tenSecondsPassed) {
+	if (timePassedSinceRandomisation <= 10.0f) {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
 			"Collect Setting: " + Collect + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;

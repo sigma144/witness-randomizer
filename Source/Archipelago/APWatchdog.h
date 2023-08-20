@@ -80,6 +80,7 @@ private:
 
 	std::chrono::system_clock::time_point lastFrameTime;
 	float halfSecondCountdown = 0.f;
+	float timePassedSinceRandomisation = 0.0f;
 
 	int halfSecondCounter = 0;
 
@@ -210,8 +211,6 @@ private:
 	float dogBarkDuration = 0.f;
 	bool sentDog = false;
 	bool letGoSinceInteractModeOpen = false;
-
-	bool tenSecondsPassed = false;
 
 	CollisionCube townRedRoof = CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
 	CollisionCube swampLongBridgeFar = CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
