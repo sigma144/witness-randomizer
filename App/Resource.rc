@@ -50,13 +50,31 @@ END
 // WAVE
 //
 
-IDR_WAVE1               WAVE                    "F:\\Music\\Useful.wav"
+IDR_WAVE1               WAVE                    "F:\\Music\\Witness\\EP Filler.wav"
 
-IDR_WAVE2               WAVE                    "F:\\Dokumente\\Cubase Projects\\jingle\\Mixdown\\Junk.wav"
+IDR_WAVE2               WAVE                    "F:\\Music\\Witness\\EP Progression.wav"
 
-IDR_WAVE3               WAVE                    "F:\\Dokumente\\Cubase Projects\\jingle\\Mixdown\\Progression.wav"
+IDR_WAVE3               WAVE                    "F:\\Music\\Witness\\EP Trap.wav"
 
-IDR_WAVE4               WAVE                    "F:\\Dokumente\\Cubase Projects\\jingle\\Mixdown\\Trap.wav"
+IDR_WAVE4               WAVE                    "F:\\Music\\Witness\\EP Useful.wav"
+
+IDR_WAVE5               WAVE                    "F:\\Music\\Witness\\Panel Filler 1.wav"
+
+IDR_WAVE6               WAVE                    "F:\\Music\\Witness\\Panel Filler 2.wav"
+
+IDR_WAVE7               WAVE                    "F:\\Music\\Witness\\Panel Progression 1.wav"
+
+IDR_WAVE8               WAVE                    "F:\\Music\\Witness\\Panel Progression 2.wav"
+
+IDR_WAVE9               WAVE                    "F:\\Music\\Witness\\Panel Progression 3.wav"
+
+IDR_WAVE10              WAVE                    "F:\\Music\\Witness\\Panel Trap 1.wav"
+
+IDR_WAVE11              WAVE                    "F:\\Music\\Witness\\Panel Trap 2.wav"
+
+IDR_WAVE12              WAVE                    "F:\\Music\\Witness\\Panel Useful 1.wav"
+
+IDR_WAVE13              WAVE                    "F:\\Music\\Witness\\Panel Useful 2.wav"
 
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////

@@ -44,6 +44,7 @@ public:
 	void DoubleDoorTargetHack(int id);
 
 	void SetItemRewardColor(const int& id, const int& itemFlags);
+	void PlayJingle(const int& id, const int& itemFlags);
 
 	bool CheckPanelHasBeenSolved(int panelId);
 

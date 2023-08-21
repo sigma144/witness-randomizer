@@ -199,10 +199,19 @@
     <Text Include="changes.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Media Include="..\..\..\Music\Useful.wav" />
-    <Media Include="..\..\Cubase Projects\jingle\Mixdown\Junk.wav" />
-    <Media Include="..\..\Cubase Projects\jingle\Mixdown\Progression.wav" />
-    <Media Include="..\..\Cubase Projects\jingle\Mixdown\Trap.wav" />
+    <Media Include="..\..\..\Music\Witness\EP Filler.wav" />
+    <Media Include="..\..\..\Music\Witness\EP Progression.wav" />
+    <Media Include="..\..\..\Music\Witness\EP Trap.wav" />
+    <Media Include="..\..\..\Music\Witness\EP Useful.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Filler 1.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Filler 2.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Progression 1.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Progression 2.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Progression 3.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Trap 1.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Trap 2.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Useful 1.wav" />
+    <Media Include="..\..\..\Music\Witness\Panel Useful 2.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

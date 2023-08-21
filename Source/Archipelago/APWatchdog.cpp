@@ -21,6 +21,7 @@
 #include "../DateTime.h"
 #include "../ClientWindow.h"
 #include "PanelRestore.h"
+#include "APAudioPlayer.h"
 
 
 #define CHEAT_KEYS_ENABLED 0
@@ -1348,19 +1349,15 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 
 	Color backgroundColor;
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT){
-		PlaySound(MAKEINTRESOURCE(IDR_WAVE3), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
-		PlaySound(MAKEINTRESOURCE(IDR_WAVE1), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP){
-		PlaySound(MAKEINTRESOURCE(IDR_WAVE4), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.98f, 0.502f, 0.447f, 1.0f };
 	}
 	else {
-		PlaySound(MAKEINTRESOURCE(IDR_WAVE2), NULL, SND_RESOURCE | SND_ASYNC);
 		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
 	}
 
@@ -1372,6 +1369,24 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 		WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
 	}
 	WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
+void APWatchdog::PlayJingle(const int& id, const int& itemFlags) {
+	bool isEP = allEPs.count(id);
+
+	Color backgroundColor;
+	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPProgression : APJingle::PanelProgression, APJingleBehavior::PlayImmediate);
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPUseful : APJingle::PanelUseful, APJingleBehavior::PlayImmediate);
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPTrap : APJingle::PanelTrap, APJingleBehavior::PlayImmediate);
+	}
+	else {
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPFiller : APJingle::PanelFiller, APJingleBehavior::PlayImmediate);
+	}
 }
 
 void APWatchdog::CheckEPSkips() {
