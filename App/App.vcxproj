@@ -199,19 +199,23 @@
     <Text Include="changes.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Media Include="..\..\..\Music\Witness\EP Filler.wav" />
-    <Media Include="..\..\..\Music\Witness\EP Progression.wav" />
-    <Media Include="..\..\..\Music\Witness\EP Trap.wav" />
-    <Media Include="..\..\..\Music\Witness\EP Useful.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Filler 1.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Filler 2.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Progression 1.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Progression 2.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Progression 3.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Trap 1.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Trap 2.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Useful 1.wav" />
-    <Media Include="..\..\..\Music\Witness\Panel Useful 2.wav" />
+    <Media Include="..\Music\EP Filler.wav" />
+    <Media Include="..\Music\EP Progression.wav" />
+    <Media Include="..\Music\EP Trap.wav" />
+    <Media Include="..\Music\EP Useful.wav" />
+    <Media Include="..\Music\Panel Filler 1.wav" />
+    <Media Include="..\Music\Panel Filler 2.wav" />
+    <Media Include="..\Music\Panel Filler Epic.wav" />
+    <Media Include="..\Music\Panel Progression 1.wav" />
+    <Media Include="..\Music\Panel Progression 2.wav" />
+    <Media Include="..\Music\Panel Progression 3.wav" />
+    <Media Include="..\Music\Panel Progression Epic.wav" />
+    <Media Include="..\Music\Panel Trap 1.wav" />
+    <Media Include="..\Music\Panel Trap 2.wav" />
+    <Media Include="..\Music\Panel Trap Epic.wav" />
+    <Media Include="..\Music\Panel Useful 1.wav" />
+    <Media Include="..\Music\Panel Useful 2.wav" />
+    <Media Include="..\Music\Panel Useful Epic.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
