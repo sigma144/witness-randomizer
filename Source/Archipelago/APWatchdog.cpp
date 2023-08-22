@@ -1374,18 +1374,40 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 void APWatchdog::PlayJingle(const int& id, const int& itemFlags) {
 	bool isEP = allEPs.count(id);
 
+	bool epicVersion = hardPanels.count(id);
+
+	if (id == 0x0360D || id == 0x03616 || id == 0x03608 || id == 0x17CA4 || id == 0x032F5 || id == 0x09DE0 || id == 0x03613) { // Symmetry, Jungle, Desert, Monastery, Town, Bunker, Treehouse Laser Panel
+		epicVersion = true;
+	}
+	else if (id == 0x03612) { // Quarry Laser Panel: Make sure it wasn't skipped with neither Boathouse nor Stoneworks done
+		int skip = ReadPanelData<int>(id, VIDEO_STATUS_COLOR);
+
+		epicVersion = !(skip >= PUZZLE_SKIPPED + 2 && skip <= PUZZLE_SKIPPED_MAX) || !severedDoorsList.count(id);
+	}
+	else if (id == 0x19650) { // Shadows Laser Panel: In door shuffle, this is trivial
+		epicVersion = !severedDoorsList.count(0x19665) || !severedDoorsList.count(0x194B2) || !severedDoorsList.count(id);
+	}
+	else if (id == 0x0360E || id == 0x03317) { // Keep Panels: Make sure they weren't skipped in a doors mode
+		int skip = ReadPanelData<int>(id, VIDEO_STATUS_COLOR);
+
+		epicVersion = !(skip >= PUZZLE_SKIPPED + 2 && skip <= PUZZLE_SKIPPED_MAX) || !severedDoorsList.count(0x01BEC) || !severedDoorsList.count(id);
+	}
+	else if (id == 0x03615) { // Swamp Laser Panel: Make sure it wasn't acquired through the shortcut in a doors mode
+		epicVersion = !(severedDoorsList.count(0x2D880) && ReadPanelData<int>(0x2D880, DOOR_OPEN)) || !severedDoorsList.count(id);
+	}
+
 	Color backgroundColor;
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPProgression : APJingle::PanelProgression, APJingleBehavior::Queue, hardPanels.count(id));
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPProgression : APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPUseful : APJingle::PanelUseful, APJingleBehavior::Queue, hardPanels.count(id));
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPUseful : APJingle::PanelUseful, APJingleBehavior::Queue, epicVersion);
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPTrap : APJingle::PanelTrap, APJingleBehavior::Queue, hardPanels.count(id));
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPTrap : APJingle::PanelTrap, APJingleBehavior::Queue, epicVersion);
 	}
 	else {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPFiller : APJingle::PanelFiller, APJingleBehavior::Queue, hardPanels.count(id));
+		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPFiller : APJingle::PanelFiller, APJingleBehavior::Queue, epicVersion);
 	}
 }
 
