@@ -1285,11 +1285,13 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 
-	if (timePassedSinceRandomisation <= 10.0f) {
+	if (timePassedSinceRandomisation <= 6.0f) {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
 			"Collect Setting: " + Collect + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;
 	}
+
+	hudManager->clearInformationalMessage(InfoMessageCategory::Settings);
 
 	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
