@@ -48,7 +48,7 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion) {
 	
 	int versionToPlay = 0;
 
-	if (lastJinglePlayed == jingle && (now - lastJinglePlayedTime) < std::chrono::seconds(30) && !epicVersion) {
+	if (lastJinglePlayed == jingle && (now - lastJinglePlayedTime) < std::chrono::seconds(60) && !epicVersion) {
 		lastJinglePlayedVersion++;
 		versionToPlay = lastJinglePlayedVersion;
 	}

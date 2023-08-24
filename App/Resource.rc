@@ -84,6 +84,18 @@ IDR_WAVE16              WAVE                    "..\\Music\\Panel Useful 2.wav"
 
 IDR_WAVE17              WAVE                    "..\\Music\\Panel Useful Epic.wav"
 
+IDR_WAVE18              WAVE                    "..\\Music\\EP Filler 2.wav"
+
+IDR_WAVE19              WAVE                    "..\\Music\\EP Progression 2.wav"
+
+IDR_WAVE20              WAVE                    "..\\Music\\EP Trap 2.wav"
+
+IDR_WAVE21              WAVE                    "..\\Music\\EP Useful 2.wav"
+
+IDR_WAVE22              WAVE                    "..\\Music\\Panel Filler 3.wav"
+
+IDR_WAVE23              WAVE                    "..\\Music\\Panel Filler 4.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
