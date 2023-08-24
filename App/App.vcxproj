@@ -199,12 +199,18 @@
     <Text Include="changes.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Media Include="..\Music\EP Filler 2.wav" />
     <Media Include="..\Music\EP Filler.wav" />
+    <Media Include="..\Music\EP Progression 2.wav" />
     <Media Include="..\Music\EP Progression.wav" />
+    <Media Include="..\Music\EP Trap 2.wav" />
     <Media Include="..\Music\EP Trap.wav" />
+    <Media Include="..\Music\EP Useful 2.wav" />
     <Media Include="..\Music\EP Useful.wav" />
     <Media Include="..\Music\Panel Filler 1.wav" />
     <Media Include="..\Music\Panel Filler 2.wav" />
+    <Media Include="..\Music\Panel Filler 3.wav" />
+    <Media Include="..\Music\Panel Filler 4.wav" />
     <Media Include="..\Music\Panel Filler Epic.wav" />
     <Media Include="..\Music\Panel Progression 1.wav" />
     <Media Include="..\Music\Panel Progression 2.wav" />
