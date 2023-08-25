@@ -7,6 +7,7 @@
 enum class CustomKey;
 
 enum ClientToggleSetting {
+	Jingles,
 	ColorblindMode,
 	Collect,
 	ChallengeTimer

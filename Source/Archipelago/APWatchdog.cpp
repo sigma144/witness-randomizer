@@ -1371,7 +1371,9 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 	WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
-void APWatchdog::PlayJingle(const int& id, const int& itemFlags) {
+void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
+	if (!ClientWindow::get()->getSetting(ClientToggleSetting::Jingles)) return;
+
 	bool isEP = allEPs.count(id);
 
 	bool epicVersion = hardPanels.count(id);
@@ -1408,6 +1410,23 @@ void APWatchdog::PlayJingle(const int& id, const int& itemFlags) {
 	}
 	else {
 		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPFiller : APJingle::PanelFiller, APJingleBehavior::Queue, epicVersion);
+	}
+}
+
+void APWatchdog::PlayReceivedJingle(const int& itemFlags) {
+	if (!ClientWindow::get()->getSetting(ClientToggleSetting::Jingles)) return;
+
+	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+		APAudioPlayer::get()->PlayAudio(APJingle::IncomingProgression, APJingleBehavior::DontQueue);
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+		APAudioPlayer::get()->PlayAudio(APJingle::IncomingUseful, APJingleBehavior::DontQueue);
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+		APAudioPlayer::get()->PlayAudio(APJingle::IncomingTrap, APJingleBehavior::DontQueue);
+	}
+	else {
+		APAudioPlayer::get()->PlayAudio(APJingle::IncomingFiller, APJingleBehavior::DontQueue);
 	}
 }
 

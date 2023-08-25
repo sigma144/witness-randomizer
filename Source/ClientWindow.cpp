@@ -51,6 +51,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_COLORBLIND 0x500
 #define IDC_SETTING_COLLECT 0x501
 #define IDC_SETTING_CHALLENGE 0x502
+#define IDC_SETTING_JINGLES 0x510
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -75,6 +76,7 @@ void ClientWindow::saveSettings()
 	data["challengeTimer"] = getSetting(ClientToggleSetting::ChallengeTimer);
 	data["collect"] = getSetting(ClientToggleSetting::Collect);
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
+	data["jingles"] = getSetting(ClientToggleSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
 	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
@@ -100,6 +102,7 @@ void ClientWindow::loadSettings()
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
+			setSetting(ClientToggleSetting::Jingles, data.contains("jingles") ? data["jingles"].get<bool>() : false);
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 			setSetting(ClientToggleSetting::Collect, data.contains("collect") ? data["collect"].get<bool>() : true);
 			setSetting(ClientToggleSetting::ColorblindMode, data.contains("colorblind") ? data["colorblind"].get<bool>() : false);
@@ -117,6 +120,7 @@ void ClientWindow::loadSettings()
 
 	if (!loadedSettings) {
 		// Set defaults.
+		setSetting(ClientToggleSetting::Jingles, false);
 		setSetting(ClientToggleSetting::ChallengeTimer, false);
 		setSetting(ClientToggleSetting::Collect, true);
 		setSetting(ClientToggleSetting::ColorblindMode, false);
@@ -202,6 +206,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Jingles)->second, false);
 
 		for (auto keybindButton : customKeybindButtons) {
 			EnableWindow(keybindButton.second, false);
@@ -218,11 +223,15 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(hwndApConnect, true);
 
 		// Enable randomization settings.
+
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Collect)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
+
+		// Enable "any time" settings.
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Jingles)->second, true);
 
 		// Disable keybinds until connected.
 		for (auto keybindButton : customKeybindButtons) {
@@ -251,6 +260,9 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
+
+		// Enable "any time" settings.
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Jingles)->second, true);
 
 		// Enable keybinds.
 		for (auto keybindButton : customKeybindButtons) {
@@ -459,6 +471,17 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 }
 
 void ClientWindow::addGameOptions(int& currentY) {
+	// Musical jingles option.
+	HWND hwndOptionMusic = CreateWindow(L"BUTTON", L"Jingles - Add musical sound effects for completing location checks.",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_JINGLES, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::Jingles] = IDC_SETTING_JINGLES;
+	toggleSettingCheckboxes[ClientToggleSetting::Jingles] = hwndOptionMusic;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
 	// Colorblind option. This is 3 lines tall.
 	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
@@ -604,6 +627,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_SETTING_CHALLENGE: {
 			toggleCheckbox(IDC_SETTING_CHALLENGE);
+			break;
+		}
+		case IDC_SETTING_JINGLES: {
+			toggleCheckbox(IDC_SETTING_JINGLES);
 			break;
 		}
 		// Buttons.

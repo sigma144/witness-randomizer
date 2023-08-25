@@ -34,12 +34,16 @@ APAudioPlayer* APAudioPlayer::get() {
 }
 
 void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, bool epicVersion) {
-	if (queue == APJingleBehavior::PlayImmediate || queue == APJingleBehavior::DontQueue && !QueuedAudio.size()) {
+	if (queue == APJingleBehavior::PlayImmediate) {
 		PlayAppropriateJingle(jingle, epicVersion);
 	}
 
 	if (queue == APJingleBehavior::Queue){
 		QueuedAudio.push({ jingle, epicVersion });
+	}
+
+	if (queue == APJingleBehavior::DontQueue) {
+		if (!QueuedAudio.size()) QueuedAudio.push({ jingle, epicVersion });
 	}
 }
 
@@ -71,5 +75,5 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion) {
 		resource = jingleEpicVersions[jingle];
 	}
 
-	PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE | SND_ASYNC);
+	PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE);
 }

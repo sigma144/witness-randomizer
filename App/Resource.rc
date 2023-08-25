@@ -96,6 +96,14 @@ IDR_WAVE22              WAVE                    "..\\Music\\Panel Filler 3.wav"
 
 IDR_WAVE23              WAVE                    "..\\Music\\Panel Filler 4.wav"
 
+IDR_WAVE24              WAVE                    "..\\Music\\Incoming Filler.wav"
+
+IDR_WAVE25              WAVE                    "..\\Music\\Incoming Progression.wav"
+
+IDR_WAVE26              WAVE                    "..\\Music\\Incoming Trap.wav"
+
+IDR_WAVE27              WAVE                    "..\\Music\\Incoming Useful.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 

@@ -16,6 +16,11 @@ enum APJingle
 	PanelUseful,
 	PanelFiller,
 	PanelTrap,
+
+	IncomingProgression,
+	IncomingUseful,
+	IncomingFiller,
+	IncomingTrap,
 };
 
 enum APJingleBehavior
@@ -65,6 +70,11 @@ private:
 		{EPProgression, {IDR_WAVE2, IDR_WAVE19}},
 		{EPTrap, {IDR_WAVE3, IDR_WAVE20}},
 		{EPUseful, {IDR_WAVE4, IDR_WAVE21}},
+
+		{IncomingFiller, {IDR_WAVE24}},
+		{IncomingProgression, {IDR_WAVE25}},
+		{IncomingTrap, {IDR_WAVE26}},
+		{IncomingUseful, {IDR_WAVE27}},
 	};
 
 	std::map<APJingle, int> jingleEpicVersions = {
@@ -77,6 +87,11 @@ private:
 		{EPProgression, IDR_WAVE2},
 		{EPTrap, IDR_WAVE3},
 		{EPUseful, IDR_WAVE4},
+
+		{IncomingFiller, IDR_WAVE24},
+		{IncomingProgression, IDR_WAVE25},
+		{IncomingTrap, IDR_WAVE26},
+		{IncomingUseful, IDR_WAVE27},
 	};
 public:
 
