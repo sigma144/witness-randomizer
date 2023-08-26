@@ -1808,10 +1808,12 @@ void PuzzleList::GenerateTownH()
 	//Modify switch to remove green
 	generator->initPanel(0x334D8);
 	generator->set(7, 5, Decoration::Triangle3 | Decoration::Color::Orange);
+	generator->set(9, 5, Decoration::Stone | Decoration::Color::Red);
+	generator->set(1, 5, Decoration::Stone | Decoration::Color::Blue);
+	generator->set(5, 1, Decoration::Stone | Decoration::Color::Green);
 	generator->setFlagOnce(Generate::Config::DecorationsOnly);
+	generator->setFlagOnce(Generate::Config::WriteColors);
 	generator->write(0x334D8);
-	specialCase->generateRGBStonePuzzleH(0x03C0C);
-	specialCase->generateRGBDotPuzzleH(0x03C08);
 	//Orange Crate
 	generator->setGridSize(5, 5);
 	generator->setFlagOnce(Generate::Config::EnableFlash);
