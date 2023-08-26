@@ -1814,6 +1814,8 @@ void PuzzleList::GenerateTownH()
 	generator->setFlagOnce(Generate::Config::DecorationsOnly);
 	generator->setFlagOnce(Generate::Config::WriteColors);
 	generator->write(0x334D8);
+	specialCase->generateRGBStonePuzzleH(0x03C0C);
+	specialCase->generateRGBDotPuzzleH(0x03C08);
 	//Orange Crate
 	generator->setGridSize(5, 5);
 	generator->setFlagOnce(Generate::Config::EnableFlash);
