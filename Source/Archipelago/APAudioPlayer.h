@@ -63,7 +63,7 @@ private:
 	std::map<APJingle, std::vector<int>> jingleVersions = {
 		{PanelFiller, {IDR_WAVE5, IDR_WAVE6, IDR_WAVE22, IDR_WAVE23}},
 		{PanelUseful, {IDR_WAVE15, IDR_WAVE16}},
-		{PanelProgression, {IDR_WAVE8, IDR_WAVE9, IDR_WAVE10}},
+		{PanelProgression, {IDR_WAVE8, IDR_WAVE9, IDR_WAVE10, IDR_WAVE28, IDR_WAVE29}},
 		{PanelTrap, {IDR_WAVE12, IDR_WAVE13}},
 
 		{EPFiller, {IDR_WAVE1, IDR_WAVE18}},

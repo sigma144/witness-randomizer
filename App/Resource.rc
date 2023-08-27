@@ -104,6 +104,10 @@ IDR_WAVE26              WAVE                    "..\\Music\\Incoming Trap.wav"
 
 IDR_WAVE27              WAVE                    "..\\Music\\Incoming Useful.wav"
 
+IDR_WAVE28              WAVE                    "..\\Music\\Panel Progression 4.wav"
+
+IDR_WAVE29              WAVE                    "..\\Music\\Panel Progression 5.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
