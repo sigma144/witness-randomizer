@@ -228,6 +228,7 @@
     <Media Include="..\Music\Panel Useful 1.wav" />
     <Media Include="..\Music\Panel Useful 2.wav" />
     <Media Include="..\Music\Panel Useful Epic.wav" />
+    <Media Include="..\Music\Victory.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

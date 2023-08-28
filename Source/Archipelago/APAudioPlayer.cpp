@@ -16,7 +16,7 @@ void APAudioPlayer::action() {
 
 	std::pair<APJingle, bool> nextAudio = QueuedAudio.front();
 
-	PlayAppropriateJingle(nextAudio.first, nextAudio.second);
+	PlayAppropriateJingle(nextAudio.first, nextAudio.second, false);
 
 	QueuedAudio.pop();
 }
@@ -35,7 +35,7 @@ APAudioPlayer* APAudioPlayer::get() {
 
 void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, bool epicVersion) {
 	if (queue == APJingleBehavior::PlayImmediate) {
-		PlayAppropriateJingle(jingle, epicVersion);
+		PlayAppropriateJingle(jingle, epicVersion, true);
 	}
 
 	if (queue == APJingleBehavior::Queue){
@@ -47,7 +47,7 @@ void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, bool epic
 	}
 }
 
-void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion) {
+void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async) {
 	auto now = std::chrono::system_clock::now();
 	
 	int versionToPlay = 0;
@@ -75,5 +75,6 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion) {
 		resource = jingleEpicVersions[jingle];
 	}
 
-	PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE);
+	if (async) PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE | SND_ASYNC);
+	else PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE);
 }

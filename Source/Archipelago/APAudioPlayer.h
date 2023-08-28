@@ -21,6 +21,8 @@ enum APJingle
 	IncomingUseful,
 	IncomingFiller,
 	IncomingTrap,
+
+	Victory,
 };
 
 enum APJingleBehavior
@@ -58,7 +60,7 @@ private:
 	std::chrono::system_clock::time_point lastJinglePlayedTime;
 	int lastJinglePlayedVersion;
 
-	void PlayAppropriateJingle(APJingle jingle, bool epicVersion);
+	void PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async);
 
 	std::map<APJingle, std::vector<int>> jingleVersions = {
 		{PanelFiller, {IDR_WAVE5, IDR_WAVE6, IDR_WAVE22, IDR_WAVE23}},
@@ -75,6 +77,8 @@ private:
 		{IncomingProgression, {IDR_WAVE25}},
 		{IncomingTrap, {IDR_WAVE26}},
 		{IncomingUseful, {IDR_WAVE27}},
+
+		{Victory, {IDR_WAVE30}},
 	};
 
 	std::map<APJingle, int> jingleEpicVersions = {
@@ -92,6 +96,8 @@ private:
 		{IncomingProgression, IDR_WAVE25},
 		{IncomingTrap, IDR_WAVE26},
 		{IncomingUseful, IDR_WAVE27},
+
+		{Victory, IDR_WAVE30},
 	};
 public:
 

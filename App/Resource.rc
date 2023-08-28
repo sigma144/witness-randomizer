@@ -108,6 +108,8 @@ IDR_WAVE28              WAVE                    "..\\Music\\Panel Progression 4.
 
 IDR_WAVE29              WAVE                    "..\\Music\\Panel Progression 5.wav"
 
+IDR_WAVE30              WAVE                    "..\\Music\\Victory.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 

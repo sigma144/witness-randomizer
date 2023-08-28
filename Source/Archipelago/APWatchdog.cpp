@@ -144,6 +144,8 @@ void APWatchdog::CheckSolvedPanels() {
 
 	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelDataIntentionallyUnsafe<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
+		hudManager->queueBannerMessage("Victory!");
+		APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
 	if (finalPanel == 0x09F7F && !isCompleted)
@@ -152,6 +154,8 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (power > 0.0f) {
 			isCompleted = true;
+			hudManager->queueBannerMessage("Victory!");
+			APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
@@ -161,6 +165,8 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (power > 0.0f) {
 			isCompleted = true;
+			hudManager->queueBannerMessage("Victory!");
+			APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
@@ -1243,7 +1249,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
 
-	if(!laserActiveInGame & collect)
+	if(!laserActiveInGame && collect)
 	{
 		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
