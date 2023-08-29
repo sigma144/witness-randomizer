@@ -186,7 +186,7 @@ void Main::randomize() {
 
 	randomizer->seedIsRNG = false;
 	apRandomizer->SyncProgress = clientWindow->getSetting(ClientToggleSetting::SyncProgress);
-	apRandomizer->Collect = clientWindow->getSetting(ClientDropdownSetting::Collect);
+	apRandomizer->CollectedPuzzlesBehavior = clientWindow->getSetting(ClientDropdownSetting::Collect);
 	apRandomizer->DisabledPuzzlesBehavior = clientWindow->getSetting(ClientDropdownSetting::DisabledPuzzles);
 	apRandomizer->solveModeSpeedFactor = 0.0f; // THIS VALUE IN THE FUTURE CAN BE USED TO MAKE SPEED BOOSTS TICK DOWN AT A SLOW RATE IN SOLVE MODE RATHER THAN STOP OR GO AT FULL SPEED
 
@@ -426,6 +426,7 @@ void Main::loadCredentials() {
 //}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+
 {
 	LoadLibrary(L"Msftedit.dll");
 

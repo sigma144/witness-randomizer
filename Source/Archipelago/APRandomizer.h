@@ -14,7 +14,7 @@ class APRandomizer {
 		int Seed = 0;
 		int FinalPanel = 0;
 		bool SyncProgress = false;
-		std::string Collect = "Unchanged";
+		std::string CollectedPuzzlesBehavior = "Unchanged";
 		std::string DisabledPuzzlesBehavior = "Prevent Solve";
 
 		int PuzzleRandomization = 2;
