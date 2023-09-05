@@ -51,7 +51,10 @@ class APRandomizer {
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
 		std::set<int> doorsActuallyInTheItemPool;
-		std::map<int, std::vector<int>> progressiveItems;
+		std::map<int, std::vector<int>> progressiveItems = {
+			{ 158200, {158000, 158002}},
+			{ 158260, {158060, 158061}},
+		};
 		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> disabledPanels;

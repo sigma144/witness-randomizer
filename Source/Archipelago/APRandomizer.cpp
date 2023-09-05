@@ -151,7 +151,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				int itemId = std::stoul(key, nullptr, 10);
 				std::vector<int> v = val;
 
-				progressiveItems.insert({ itemId, v });
+				progressiveItems[itemId] = v;
 			}
 		}
 
