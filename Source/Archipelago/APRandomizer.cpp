@@ -608,10 +608,7 @@ void APRandomizer::GenerateHard() {
 	
 	Special::setTargetAndDeactivate(0x03C0C, 0x03C08);
 
-	if (doorsActuallyInTheItemPool.count(0x28A0D)) {
-		Special::setPower(0x28A0D, false);
-	}
-	else
+	if (!doorsActuallyInTheItemPool.count(0x28A0D))
 	{
 		Special::setTargetAndDeactivate(0x28998, 0x28A0D);
 	}
