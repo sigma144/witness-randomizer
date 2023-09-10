@@ -56,10 +56,12 @@ private:
 
 	std::queue<std::pair<APJingle,bool>> QueuedAudio = {};
 
-	APJingle lastJinglePlayed;
-	std::chrono::system_clock::time_point lastJinglePlayedTime;
-	int lastJinglePlayedVersion;
+	std::chrono::system_clock::time_point lastPanelJinglePlayedTime;
+	std::chrono::system_clock::time_point lastEPJinglePlayedTime;
+	int panelChain;
+	int epChain;
 
+	void PlayJingle(int resource, bool async);
 	void PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async);
 
 	std::map<APJingle, std::vector<int>> jingleVersions = {
@@ -99,6 +101,21 @@ private:
 
 		{Victory, IDR_WAVE30},
 	};
+
+	std::set<APJingle> epJingles = {
+		EPFiller,
+		EPProgression,
+		EPTrap,
+		EPUseful
+	};
+
+	std::set<APJingle> panelJingles = {
+		PanelFiller,
+		PanelUseful,
+		PanelProgression,
+		PanelTrap
+	};
+
 public:
 
 	static void create();
