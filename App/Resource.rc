@@ -110,6 +110,12 @@ IDR_WAVE29              WAVE                    "..\\Music\\Panel Progression 5.
 
 IDR_WAVE30              WAVE                    "..\\Music\\Victory.wav"
 
+IDR_WAVE31              WAVE                    "..\\Music\\Panel Trap 3.wav"
+
+IDR_WAVE32              WAVE                    "..\\Music\\Panel Useful 3.wav"
+
+IDR_WAVE33              WAVE                    "..\\Music\\Panel Useful 4.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
