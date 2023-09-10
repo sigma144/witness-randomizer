@@ -224,9 +224,12 @@
     <Media Include="..\Music\Panel Progression Epic.wav" />
     <Media Include="..\Music\Panel Trap 1.wav" />
     <Media Include="..\Music\Panel Trap 2.wav" />
+    <Media Include="..\Music\Panel Trap 3.wav" />
     <Media Include="..\Music\Panel Trap Epic.wav" />
     <Media Include="..\Music\Panel Useful 1.wav" />
     <Media Include="..\Music\Panel Useful 2.wav" />
+    <Media Include="..\Music\Panel Useful 3.wav" />
+    <Media Include="..\Music\Panel Useful 4.wav" />
     <Media Include="..\Music\Panel Useful Epic.wav" />
     <Media Include="..\Music\Victory.wav" />
   </ItemGroup>

@@ -66,10 +66,12 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 
 	if (panelJingles.count(jingle)) {
 		versionToPlay = panelChain;
+		lastPanelJinglePlayedTime = now;
 		panelChain++;
 	}
 	else if (epJingles.count(jingle)) {
 		versionToPlay = epChain;
+		lastEPJinglePlayedTime = now;
 		epChain++;
 	}
 
