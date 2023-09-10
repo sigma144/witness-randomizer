@@ -2067,7 +2067,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	Memory* memory = Memory::get();
 
-	if (skip_completelyExclude.count(id)) {
+	if (skip_completelyExclude.count(id)|| fairly_thin_panels.count(id)) {
 		if (text == "Disabled Completely") {
 			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f };
 			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
@@ -2085,10 +2085,11 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 			memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
 			memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
 			memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+			return;
 		}
-		
-		return;
 	}
+
+	if (skip_completelyExclude.count(id)) return;
 
 	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
 

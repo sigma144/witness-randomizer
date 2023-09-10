@@ -267,6 +267,13 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 			{
 				std::string text = "Locked";
 				createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - text.size() * 0.037f, 0.5f + text.size() * 0.037f, 0.455f, 0.545f);
+
+				std::vector<int> decorations(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+				std::vector<int> decorationsFlags(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+
+				memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+				memory->WriteArray<int>(id, DECORATIONS, decorations);
+				memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
 			}
 		}
 		else {
