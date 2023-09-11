@@ -13,7 +13,9 @@ class APRandomizer {
 
 		int Seed = 0;
 		int FinalPanel = 0;
-		bool Collect = false;
+		bool SyncProgress = false;
+		std::string CollectedPuzzlesBehavior = "Unchanged";
+		std::string DisabledPuzzlesBehavior = "Prevent Solve";
 
 		int PuzzleRandomization = 2;
 		bool UnlockSymbols = false;
@@ -23,6 +25,7 @@ class APRandomizer {
 		int MountainLasers = 7;
 		int ChallengeLasers = 11;
 		bool DeathLink;
+		bool ElevatorsComeToYou = false;
 
 		int mostRecentItemId = -1;
 
@@ -36,6 +39,8 @@ class APRandomizer {
 
 		void GenerateNormal();
 		void GenerateHard();
+
+		void HighContrastMode();
 
 		void SkipPuzzle();
 
@@ -57,7 +62,7 @@ class APRandomizer {
 		};
 		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
 		std::map<int, int> panelIdToLocationIdReverse;
-		std::set<int> disabledPanels;
+		std::set<int> disabledEntities;
 
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
 		std::set<int> precompletedLocations;

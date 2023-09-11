@@ -1,27 +1,31 @@
 #pragma once
 
+#include <set>
+
 class APState
 {
-	public: 
-		bool unlockedStones = false;
-		bool unlockedColoredStones = false;
-		bool unlockedStars = false;
-		bool unlockedStarsWithOtherSimbol = false;
-		bool unlockedTetris = false;
-		bool unlockedTetrisRotated = false;
-		bool unlockedTetrisNegative = false;
-		bool unlockedErasers = false;
-		bool unlockedTriangles = false;
-		bool unlockedDots = false;
-		bool unlockedColoredDots = false;
-		bool unlockedSoundDots = false;
-		bool unlockedInvisibleDots = false;
-		bool unlockedArrows = false;
-		bool unlockedSymmetry = false;
-		bool unlockedFullDots = false;
-		int activeLasers = 0;
-		int requiredChallengeLasers = 11;
-		int requiredMountainLasers = 7;
+public:
+	bool unlockedStones = false;
+	bool unlockedColoredStones = false;
+	bool unlockedStars = false;
+	bool unlockedStarsWithOtherSimbol = false;
+	bool unlockedTetris = false;
+	bool unlockedTetrisRotated = false;
+	bool unlockedTetrisNegative = false;
+	bool unlockedErasers = false;
+	bool unlockedTriangles = false;
+	bool unlockedDots = false;
+	bool unlockedColoredDots = false;
+	bool unlockedSoundDots = false;
+	bool unlockedArrows = false;
+	bool unlockedSymmetry = false;
+	bool unlockedFullDots = false;
+	int activeLasers = 0;
+	int requiredChallengeLasers = 11;
+	int requiredMountainLasers = 7;
+
+	std::set<int> keysReceived = {};
+	std::set<int> keysInTheGame = {};
 };
 
 //Puzzle Symbols
@@ -30,7 +34,6 @@ const int ITEM_DOTS = ITEM_OFFSET + 0;
 const int ITEM_COLORED_DOTS = ITEM_DOTS + 1;
 const int ITEM_FULL_DOTS = ITEM_DOTS + 2;
 const int ITEM_SOUND_DOTS = ITEM_DOTS + 5;
-const int ITEM_INVISIBLE_DOTS = ITEM_DOTS + 6;
 const int ITEM_SYMMETRY = ITEM_OFFSET + 10;
 const int ITEM_TRIANGLES = ITEM_OFFSET + 20;
 const int ITEM_ERASOR = ITEM_OFFSET + 30;

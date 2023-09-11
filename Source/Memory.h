@@ -211,10 +211,6 @@ public:
 
 	void PowerNext(int source, int target);
 
-	void UpdateEntityPosition(int id) {
-		CallVoidFunction(id, updateEntityPositionFunction); // Entity::has_moved_in_a_non_position_way - Still works even if it HAS moved in a non position way, for some reason :P
-	}
-
 	void ActivateLaser(int id) {
 		CallVoidFunction(id, activateLaserFunction);
 	}
@@ -276,7 +272,11 @@ public:
 
 	uint64_t powerNextFunction;
 	uint64_t initPanelFunction;
+	uint64_t bridgeToggleFunction;
 	uint64_t openDoorFunction;
+	uint64_t closeDoorFunction;
+	uint64_t moveBunkerElevatorFunction;
+	uint64_t floodgateToggleFunction;
 	uint64_t updateEntityPositionFunction;
 	uint64_t activateLaserFunction;
 	uint64_t hudTimePointer;
@@ -288,6 +288,7 @@ public:
 	uint64_t boatSpeed3;
 	uint64_t boatSpeed2;
 	uint64_t boatSpeed1;
+	uint64_t boatTurnAccel;
 	uint64_t relativeBoatSpeed4Address;
 	uint64_t relativeBoatSpeed3Address;
 	uint64_t relativeBoatSpeed2Address;
@@ -308,6 +309,7 @@ public:
 	uint64_t cursorB;
 	uint64_t localisation;
 	uint64_t the_witness_string;
+	uint64_t gameLoop3CallsInARow;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;

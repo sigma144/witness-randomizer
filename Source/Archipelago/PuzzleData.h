@@ -25,7 +25,6 @@ struct PuzzleData
 		bool hasTriangles = false;
 		bool hasDots = false;
 		bool hasColoredDots = false;
-		bool hasInvisibleDots = false;
 		bool hasSoundDots = false;
 		bool hasArrows = false;
 		bool hasSymmetry = false;

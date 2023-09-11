@@ -17,7 +17,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
@@ -26,7 +26,7 @@ public:
 
 	virtual void action();
 
-	void MarkLocationChecked(int locationId, bool collect);
+	void MarkLocationChecked(int locationId);
 	void ApplyTemporarySpeedBoost();
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
@@ -40,6 +40,11 @@ public:
 
 	void UnlockDoor(int id);
 	void SeverDoor(int id);
+
+	void SkipPanel(int id, std::string reason, bool kickOut) {
+		SkipPanel(id, reason, kickOut, 0);
+	}
+	void SkipPanel(int id, std::string reason, bool kickOut, int cost);
 
 	void DoubleDoorTargetHack(int id);
 
@@ -75,14 +80,20 @@ private:
 
 	std::chrono::system_clock::time_point lastFrameTime;
 	float halfSecondCountdown = 0.f;
+	float timePassedSinceRandomisation = 0.0f;
 
 	int halfSecondCounter = 0;
 
 	std::shared_ptr<HudManager> hudManager;
 
 	bool DeathLink = false;
+	bool ElevatorsComeToYou = false;
 	bool EPShuffle = false;
 	int PuzzleRandomization = 0;
+
+	std::string Collect = "Unchanged";
+	std::string DisabledPuzzlesBehavior = "Prevent Solve";
+	std::set<int> DisabledEntities;
 
 	bool FirstEverLocationCheckDone = false;
 
@@ -98,7 +109,6 @@ private:
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
-	std::map<int,int> collisionsToRefresh;
 	std::map<int, std::vector<float>> collisionPositions;
 	std::set<int> alreadyTriedUpdatingNormally;
 
@@ -127,8 +137,6 @@ private:
 	void DisableCollisions();
 
 	void AudioLogPlaying(float deltaSeconds);
-
-	void RefreshDoorCollisions();
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
@@ -177,6 +185,8 @@ private:
 	std::list<std::string> EPIDs;
 	std::map<int, bool> EPStates;
 
+	std::set<int> PuzzlesSkippedThisGame = {};
+
 	int currentAudioLog = -1;
 	float currentAudioLogDuration = 0.f;
 
@@ -202,7 +212,12 @@ private:
 	bool sentDog = false;
 	bool letGoSinceInteractModeOpen = false;
 
-	CollisionCube bonsaiCollisionCube = CollisionCube(18, -31.6f, 14, 21, -29, 17);
+	CollisionCube townRedRoof = CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
+	CollisionCube swampLongBridgeFar = CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
+	CollisionCube swampLongBridgeNear = CollisionCube(200.75f, 14.5f, 0.5f, 207.7f, 18.15f, 2.85f);
+	CollisionCube bunkerElevatorCube = CollisionCube(161.9f, -86.2f, 28.0f, 158.1f, -91.0f, 29.2f);
+	CollisionCube quarryElevatorUpper = CollisionCube(-61.1f, 175.6f, 11.5f, -66.3f, 171.8f, 14.2f);
+	CollisionCube quarryElevatorLower = CollisionCube(-69.0f, 165.7f, 2.1f, -54.7f, 174.8f, 4.5f);
 	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
 	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5f);
 	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
