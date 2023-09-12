@@ -43,9 +43,25 @@ void PuzzleData::Read() {
 		return;
 	}
 
+	std::vector<float> decorationColors = {};
+
+	if (decorationsColorsPointer) {
+		decorationColors = memory->ReadArray<float>(id, DECORATION_COLORS, 4 * numberOfDecorations);
+	}
+
 	for (int i = 0; i < numberOfDecorations; i++) {
 		if ((decorations[i] & 0x700) == Decoration::Shape::Stone) {
-			if (memory->ReadPanelData<int>(id, PUSH_SYMBOL_COLORS) == 1) { // Quarry type: Symbol_A through Symbol_E are relevant
+			if (decorationsColorsPointer) {
+				std::vector<float> color = { decorationColors[4 * i], decorationColors[4 * i + 1], decorationColors[4 * i + 2], decorationColors[4 * i + 3] };
+
+				if (color[0] == color[1] && color[1] == color[2]) {
+					hasStones = true;
+				}
+				else {
+					hasColoredStones = true;
+				}
+			}
+			else if (memory->ReadPanelData<int>(id, PUSH_SYMBOL_COLORS) == 1) { // Quarry type: Symbol_A through Symbol_E are relevant
 				std::vector<float> color;
 				switch (decorations[i] & 0x00F) {
 				case 1:
@@ -142,8 +158,6 @@ void PuzzleData::Read() {
 
 			if (dot_flags[i] & DOT_IS_BLUE || dot_flags[i] & DOT_IS_ORANGE)
 				hasColoredDots = true;
-			else if (dot_flags[i] & DOT_IS_INVISIBLE)
-				hasInvisibleDots = true;
 			else if (dot_flags[i] & DOT_SMALL || dot_flags[i] & DOT_MEDIUM || dot_flags[i] & DOT_LARGE)
 				hasSoundDots = true;
 			else

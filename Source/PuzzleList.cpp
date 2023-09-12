@@ -399,6 +399,14 @@ void PuzzleList::GenerateSwampN()
 	generator->generate(0x17C0D, Decoration::Poly, 3);
 	generator->place_gaps(12);
 	generator->write(0x17C0E);
+	
+	//bruh
+	Memory* memory = Memory::get();
+	int regions = memory->ReadPanelData<int>(0x17C0D, NUM_COLORED_REGIONS);
+	
+	memory->WriteArray<int>(0x17C0E, COLORED_REGIONS, memory->ReadArray<int>(0x17C0D, COLORED_REGIONS, regions*4));
+	memory->WritePanelData<int>(0x17C0E, NUM_COLORED_REGIONS, { regions });
+
 	//Disconnected Shapes
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::DisconnectShapes);
@@ -1460,6 +1468,14 @@ void PuzzleList::GenerateSwampH()
 	generator->generate(0x17C0D, Decoration::Poly | Decoration::Can_Rotate, 3);
 	generator->place_gaps(6);
 	generator->write(0x17C0E);
+
+	//bruh
+	Memory* memory = Memory::get();
+	int regions = memory->ReadPanelData<int>(0x17C0D, NUM_COLORED_REGIONS);
+
+	memory->WriteArray<int>(0x17C0E, COLORED_REGIONS, memory->ReadArray<int>(0x17C0D, COLORED_REGIONS, regions * 4));
+	memory->WritePanelData<int>(0x17C0E, NUM_COLORED_REGIONS, { regions });
+
 	//Disconnected Shapes
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::DisconnectShapes);
@@ -1808,7 +1824,11 @@ void PuzzleList::GenerateTownH()
 	//Modify switch to remove green
 	generator->initPanel(0x334D8);
 	generator->set(7, 5, Decoration::Triangle3 | Decoration::Color::Orange);
+	generator->set(9, 5, Decoration::Stone | Decoration::Color::Red);
+	generator->set(1, 5, Decoration::Stone | Decoration::Color::Blue);
+	generator->set(5, 1, Decoration::Stone | Decoration::Color::Green);
 	generator->setFlagOnce(Generate::Config::DecorationsOnly);
+	generator->setFlagOnce(Generate::Config::WriteColors);
 	generator->write(0x334D8);
 	specialCase->generateRGBStonePuzzleH(0x03C0C);
 	specialCase->generateRGBDotPuzzleH(0x03C08);

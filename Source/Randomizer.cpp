@@ -60,8 +60,8 @@ void Randomizer::AdjustSpeed() {
 	memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Mill Elevator, 4x
 	memory->WritePanelData<float>(0x0061A, OPEN_RATE, { 0.1f }); // Swamp Sliding Bridge, 4x
 	memory->WritePanelData<float>(0x09EEC, OPEN_RATE, { 0.1f }); // Mountain 2 Elevator, 4x
-	memory->WritePanelData<float>(0x17E74, OPEN_RATE, { 0.03f }); // Swamp Flood gate (inner), 2x //Keeping these slower for now to help with EP's
-	memory->WritePanelData<float>(0x1802C, OPEN_RATE, { 0.03f }); // Swamp Flood gate (outer), 2x
+	memory->WritePanelData<float>(0x17E74, OPEN_RATE, { 0.06f }); // Swamp Flood gate (inner), 4x
+	memory->WritePanelData<float>(0x1802C, OPEN_RATE, { 0.06f }); // Swamp Flood gate (outer), 4x
 	memory->WritePanelData<float>(0x005A2, OPEN_RATE, { 0.04f }); // Swamp Rotating Bridge, 4x
 	memory->WritePanelData<float>(0x17C6A, OPEN_RATE, { 0.25f }); // Ramp Angle, 5x
 	memory->WritePanelData<float>(0x17F02, OPEN_RATE, { 0.15f }); // Ramp Position, 4x

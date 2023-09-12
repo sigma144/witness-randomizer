@@ -482,8 +482,15 @@ void Memory::findImportantFunctionAddresses(){
 
 	//open door
 	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (;; index--) {
+			if (data[index] == 0x40 && data[index + 1] == 0x53) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
+				this->closeDoorFunction = _baseAddress + offset + index;
+				break;
+			}
+		}
+		
 		for (; index < data.size(); index++) {
-			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
+			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // The open door function comes after.
 				this->openDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
@@ -492,9 +499,41 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
+	//extend bridge
+	executeSigScan({ 0x48, 0x89, 0x4C, 0x24, 0x08, 0x53, 0x55, 0x56, 0x57, 0x41, 0x54, 0x41, 0x56, 0x41, 0x57, 0x48 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->bridgeToggleFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
+	executeSigScan({ 0x40, 0x56, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x44, 0x0F, 0xB6, 0xF2 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->floodgateToggleFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
+	//bunker elevator
+	executeSigScan({ 0x48, 0x8B, 0xC4, 0x44, 0x88, 0x40, 0x18, 0x53, 0x55, 0x56, 0x57 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->moveBunkerElevatorFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
 	//init panel
 	executeSigScan({ 0x48, 0x89, 0x74, 0x24, 0x48, 0xFF, 0xC9, 0x8D, 0x70, 0xFF, 0x48, 0x89, 0x7C }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->initPanelFunction = _baseAddress + offset + index - 0x32;
+
+		return true;
+	});
+
+	//find a spot to inject payload
+	executeSigScan({0x0F, 0x5B, 0xC0, 0x0F, 0x2E, 0xC1, 0x74}, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 5] == 0xE8 && data[index] == 0xE8 && data[index + 5] == 0xE8 && data[index + 5] == 0xE8 && data[index + 10] == 0xE8) {
+				this->gameLoop3CallsInARow = _baseAddress + offset + index;
+				break;
+			}
+		}
 
 		return true;
 	});
@@ -739,6 +778,43 @@ void Memory::findImportantFunctionAddresses(){
 				break;
 			}
 		}
+
+		return true;
+	});
+
+	//Boat turn, in Entity_Boat::update()
+	executeSigScan({ 0x41, 0x0F, 0x28, 0xC9, 0xF3, 0x0F, 0x5C, 0xCE, 0x0F, 0x28, 0xD8, 0xF3, 0x0F, 0x11, 0x9B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		int index2 = index;
+
+		//Boat max turn speed
+		for (; index < data.size(); index++) { // Find next mov instruction
+			if (data[index - 6] == 0xC7 && data[index - 5] == 0x83) {
+				float newSpeed = 3.0f; // 1.0f originally
+
+				WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + index), &newSpeed, sizeof(newSpeed));
+
+				break;
+			}
+		}
+
+		//Boat turn accell
+		for (; index2 >= 4; index2--) { // Find next mov instruction
+			if (data[index2 - 4] == 0xf3 && data[index2 - 3] == 0x0f && data[index2 - 2] == 0x59) {
+				this->boatTurnAccel = _baseAddress + index2;
+
+				executeSigScan({ 0x00, 0x00, 0x00, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) { // 0.5f originally
+					index -= 3;
+
+					WriteAbsolute(reinterpret_cast<LPVOID>(this->boatTurnAccel), &index, sizeof(index));
+
+					return true;
+				}, this->boatTurnAccel);
+
+				return true;
+			}
+		}
+
+		//There is a second stage to turning that lowers the boat turn speed back to 0.5f. Not sure if this can be changed or how
 
 		return true;
 	});

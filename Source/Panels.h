@@ -1044,7 +1044,7 @@ inline std::vector<int> nothingPanels = {
 	0x09EEB, // Mountain 2 Elevator
 };
 
-inline std::set<int> actuallyEveryPanel = {
+inline std::set<int> allPanels = {
     0x00064,
 0x00182,
 0x00293,

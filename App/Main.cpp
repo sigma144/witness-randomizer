@@ -27,6 +27,7 @@
 #include "Converty.h"
 #include "Archipelago/APRandomizer.h"
 #include <Archipelago/APGameData.h>
+#include <Archipelago/ASMPayloadManager.h>
 
 
 #define IDC_RANDOMIZE 0x401
@@ -184,7 +185,9 @@ void Main::randomize() {
 	std::string apPassword = clientWindow->getSetting(ClientStringSetting::ApPassword);
 
 	randomizer->seedIsRNG = false;
-	apRandomizer->Collect = clientWindow->getSetting(ClientToggleSetting::Collect);
+	apRandomizer->SyncProgress = clientWindow->getSetting(ClientToggleSetting::SyncProgress);
+	apRandomizer->CollectedPuzzlesBehavior = clientWindow->getSetting(ClientDropdownSetting::Collect);
+	apRandomizer->DisabledPuzzlesBehavior = clientWindow->getSetting(ClientDropdownSetting::DisabledPuzzles);
 	apRandomizer->solveModeSpeedFactor = 0.0f; // THIS VALUE IN THE FUTURE CAN BE USED TO MAKE SPEED BOOSTS TICK DOWN AT A SLOW RATE IN SOLVE MODE RATHER THAN STOP OR GO AT FULL SPEED
 
 	clientWindow->setStatusMessage("Connecting to Archipelago...");
@@ -238,6 +241,8 @@ void Main::randomize() {
 	randomizer->colorblind = clientWindow->getSetting(ClientToggleSetting::ColorblindMode);
 	randomizer->doubleMode = false;
 
+	ASMPayloadManager::create();
+
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->Init();
 
@@ -256,6 +261,10 @@ void Main::randomize() {
 
 	memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
 	memory->WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
+
+	if (clientWindow->getSetting(ClientToggleSetting::HighContrast)) {
+		apRandomizer->HighContrastMode();
+	}
 
 	apRandomizer->PostGeneration();
 
@@ -417,6 +426,7 @@ void Main::loadCredentials() {
 //}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+
 {
 	LoadLibrary(L"Msftedit.dll");
 

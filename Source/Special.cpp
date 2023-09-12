@@ -1727,7 +1727,6 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 
 		memory->PowerGauge(0x1553, 0x1549, 2);
 		memory->PowerGauge(0x1553, 0x368A, 1);
-		//TODO: Probably also do this for Symmetry Island upper
 	}
 	else if (id == 0x1C349) { // Symmetry island upper latches
 		if (!memory->ReadPanelData<int>(0x28AE8, 0x1E4))
@@ -1994,17 +1993,28 @@ void Special::ColorPanel(int id, std::string text) {
 	if (text != "Collected" && text != "Disabled" && text != "Excluded" && skip_completelyExclude.count(id)) return;
 
 	Memory* memory = Memory::get();
+
+	bool arrows = false;
+
+	std::vector<int> decorations = memory->ReadArray<int>(id, DECORATIONS, memory->ReadPanelData<int>(id, NUM_DECORATIONS));
+	for (int decoration : decorations) {
+		if ((decoration & 0x700) == Decoration::Shape::Arrow) {
+			arrows = true;
+			break;
+		}
+	}
+
 	if (text == "Collected" && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.07f, 0.07f, 0.07f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
+		if(!arrows) memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.07f, 0.07f, 0.07f, 1.0f });
 	}
 	else if (text == "Skipped" && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.18f, 0.07f, 0.18f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
+		if (!arrows) memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.18f, 0.07f, 0.18f, 1.0f });
 	}
 	else if ((text == "Disabled" || text == "Excluded") && id != 0x28998) {
 		memory->WritePanelData<float>(id, OUTER_BACKGROUND, { 0.9f, 0.9f, 0.9f, 1.0f });
-		memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
+		if (!arrows) memory->WritePanelData<float>(id, BACKGROUND_REGION_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
 	}
 
 	if (cutoutPanels.count(id)) {
@@ -2053,11 +2063,33 @@ void Special::ColorPanel(int id, std::string text) {
 
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 {
-	ColorPanel(id, text);
-
-	if (skip_completelyExclude.count(id)) return;
+	ColorPanel(id, text == "Disabled Completely" ? "Disabled" : text);
 
 	Memory* memory = Memory::get();
+
+	if (skip_completelyExclude.count(id)|| fairly_thin_panels.count(id)) {
+		if (text == "Disabled Completely") {
+			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f };
+			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+			std::vector<int> connectionsA = { 2, 4 };
+			std::vector<int> connectionsB = { 3, 5 };
+
+			float path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+			memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
+			memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+			memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+			memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+			memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+			memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+			return;
+		}
+	}
+
+	if (skip_completelyExclude.count(id)) return;
 
 	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
 
@@ -2079,8 +2111,66 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	float width = 1.0f;
 
+	if (text == "Disabled Completely") {
+		if (false) { // Make this true for an Easter Egg :)
+			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f,
+				0.25f, 0.9f, 0.25f, 0.6f,
+				0.65f, 0.9f, 0.65f, 0.6f,     0.85f, 0.8f, 0.85f, 0.6f,
+				0.15f, 0.4f, 0.15f, 0.1f,    0.35f, 0.4f, 0.35f, 0.1f,
+				0.65f, 0.4f, 0.65f, 0.1f,    0.7f, 0.2f, 0.95f, 0.2f,
 
-	if (!skip_noLine.count(id)) {
+				0.0f, 0.5f, 1.0f, 0.5f,     0.5f, 0.0f, 0.5f, 1.0f,
+
+			};
+			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+			std::vector<int> connectionsA = { 2, 4, 6, 8, 10, 12, 14, 16, 18 };
+			std::vector<int> connectionsB = { 3, 5, 7, 9, 11, 13, 15, 17, 19 };
+
+			int currentIntersections = intersections.size();
+
+			float path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+			memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
+			memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+			memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+			memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+			memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+			memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+		}
+		else {
+
+			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f };
+			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+			std::vector<int> connectionsA;
+			std::vector<int> connectionsB;
+
+			int currentIntersections = intersections.size();
+
+			createText(id, "disabled", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.35f, 0.65f);
+
+			int newIntersections = intersections.size();
+
+			for (int i = 0; i < (newIntersections - currentIntersections) / 2; i++)
+				intersectionFlags.emplace_back(0);
+
+			float path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+			memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
+			memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+			memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+			memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+			memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+			memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+		}
+	}
+
+	else if (!skip_noLine.count(id)) {
 		std::vector<float> intersections;
 		std::vector<int> connectionsA;
 		std::vector<int> connectionsB;
