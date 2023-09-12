@@ -86,4 +86,6 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 	if (versionToPlay > jingleVersions[jingle].size() - 1) versionToPlay = jingleVersions[jingle].size() - 1;
 
 	int resource = jingleVersions[jingle][versionToPlay];
+
+	PlayJingle(resource, async);
 }
