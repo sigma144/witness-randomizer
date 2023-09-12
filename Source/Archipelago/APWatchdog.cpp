@@ -331,15 +331,18 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if (dont_touch_panel_at_all.count(id) or ! allPanels.count(id)) {
+	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
+	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
+	
+	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+
+	if (dont_touch_panel_at_all.count(id) or !allPanels.count(id)) {
 		return;
 	}
 
-	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
-	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
-
 	if (!dont_power.count(id)) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
-	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+
+
 
 	if (reason != "Skipped" && !(reason == "Disabled" && (DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve")) && !((reason == "Collected" || reason == "Excluded") && Collect == "Auto-Skip")) {
 		Special::ColorPanel(id, reason);
@@ -750,6 +753,11 @@ void APWatchdog::UnlockDoor(int id) {
 		return;
 	}
 
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
+		state->keysReceived.insert(id);
+		panelLocker->UpdatePuzzleLock(*state, id);
+	}
+
 	if (allLasers.count(id)) {
 		Memory::get()->ActivateLaser(id);
 		return;
@@ -789,9 +797,14 @@ void APWatchdog::UnlockDoor(int id) {
 }
 
 void APWatchdog::SeverDoor(int id) {
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
+		state->keysInTheGame.insert(id);
+	}
+
+	if (allEPs.count(id)) return; // EPs don't need any "severing"
+
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
-		state->keysInTheGame.insert(id);
 	}
 
 	// Disabled doors should behave as vanilla
@@ -1512,6 +1525,19 @@ void APWatchdog::SetStatusMessages() {
 		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
 
 		if (activePanelId != -1) {
+			if (EPStartpointsToEndpoints.count(activePanelId)) {
+				int realEP = 0;
+
+				for(auto [ep, startPoint] : EPtoStartPoint){
+					if (startPoint == activePanelId) realEP = ep;
+				}
+
+				if (realEP && panelLocker->PuzzleIsLocked(realEP)) {
+					hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive its corresponding Obelisk Key.");
+					return;
+				}
+			}
+
 			// If we have a special skip message for the current puzzle, show it above the skip count.
 			if (puzzleSkipInfoMessage.size() > 0) {
 				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;

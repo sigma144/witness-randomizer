@@ -516,7 +516,7 @@ void APRandomizer::PostGeneration() {
 					memory->MakeEPGlow(precompletableEpToName.at(checkID), precompletableEpToPatternPointBytes.at(checkID));
 				}
 			}
-			else if (allPanels.count(checkID)) {
+			if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), checkID)) {
 				async->SkipPanel(checkID, "Disabled", false);
 			}
 		}
@@ -569,7 +569,7 @@ void APRandomizer::setPuzzleLocks() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();
 
-	const int puzzleCount = sizeof(LockablePuzzles) / sizeof(LockablePuzzles[0]);
+	const int puzzleCount = LockablePuzzles.size();
 	for (int i = 0; i < puzzleCount; i++)	{
 		clientWindow->setStatusMessage("Locking puzzles: " + std::to_string(i) + "/" + std::to_string(puzzleCount));
 		if (!memory->ReadPanelData<int>(LockablePuzzles[i], SOLVED));
@@ -582,8 +582,10 @@ void APRandomizer::Init() {
 
 	mostRecentItemId = memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
 
-	for (int panel : LockablePuzzles) {
-		memory->InitPanel(panel);
+	for (int panel : LockablePuzzles) { // Not every panel should be initted, panels in LockablePuzzles is currently a good metric
+		if (allPanels.count(panel)){
+			memory->InitPanel(panel);
+		}
 	}
 
 	PanelRestore::RestoreOriginalPanelData();

@@ -34,3 +34,7 @@ std::vector<float> PanelRestore::GetPositions(int id) {
 bool PanelRestore::HasPositions(int id) {
 	return correctPosition.count(id);
 }
+
+std::vector<float> PanelRestore::GetEPColors(int startPointId) {
+	return EpStartingPointToColors[startPointId];
+}

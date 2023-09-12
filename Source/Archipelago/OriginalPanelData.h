@@ -3338,7 +3338,7 @@ inline std::map<int, std::vector<float>> correctPosition = {
 	{ 0x3da78, {211.751f,-48.7518f,-0.0634696f,1.0f,-2.04199e-09f,-5.46283e-10f,-0.725303f,-0.686829f,} },
 };
 
-const inline std::map<int,std::vector<float>> EpStartingPointToColors = {
+inline std::map<int,std::vector<float>> EpStartingPointToColors = {
 	{ 0x35d , { 1.0f, 1.0f, 1.0f, 1.0f, 0.662465f, 0.356908f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, }},
 	{ 0x17d90 , { 1.0f, 0.692574f, 0.0f, 1.0f, 1.0f, 0.202999f, 0.0f, 1.0f, 1.0f, 0.769099f, 0.42818f, 1.0f, 1.0f, 0.65469f, 0.0f, 1.0f, }},
 	{ 0x245 , { 0.878845f, 0.866777f, 1.0f, 1.0f, 0.214364f, 0.429749f, 1.0f, 1.0f, 0.244518f, 1.0f, 0.596073f, 1.0f, 0.930473f, 0.888706f, 1.0f, 1.0f, }},
