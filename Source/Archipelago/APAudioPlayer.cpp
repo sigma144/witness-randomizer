@@ -56,10 +56,10 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 	auto now = std::chrono::system_clock::now();
 	
 	if ((now - lastPanelJinglePlayedTime) > std::chrono::seconds(60)) {
-		panelChain = 0;
+		panelChain = -1;
 	}
 	if ((now - lastEPJinglePlayedTime) > std::chrono::seconds(60)) {
-		epChain = 0;
+		epChain = -1;
 	}
 
 	int versionToPlay = 0;
@@ -83,6 +83,7 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 		return;
 	}
 
+	if (versionToPlay < 0) versionToPlay = 0;
 	if (versionToPlay > jingleVersions[jingle].size() - 1) versionToPlay = jingleVersions[jingle].size() - 1;
 
 	int resource = jingleVersions[jingle][versionToPlay];
