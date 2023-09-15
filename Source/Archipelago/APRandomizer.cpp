@@ -206,6 +206,12 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		if (slotData.contains("disabled_entities")) {
+			for (int key : slotData["disabled_entities"]) {
+				disabledEntities.insert(key);
+			}
+		}
+
 		if (slotData.contains("item_id_to_door_hexes")) {
 			for (auto& [key, val] : slotData["item_id_to_door_hexes"].items()) {
 				int itemId = std::stoul(key, nullptr, 10);
