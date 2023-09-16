@@ -57,22 +57,32 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 	
 	if ((now - lastPanelJinglePlayedTime) > std::chrono::seconds(60)) {
 		panelChain = -1;
+		lastPanelJinglePlayed = APJingle::None;
 	}
 	if ((now - lastEPJinglePlayedTime) > std::chrono::seconds(60)) {
 		epChain = -1;
+		lastEPJinglePlayed = APJingle::None;
 	}
 
 	int versionToPlay = 0;
 
 	if (panelJingles.count(jingle)) {
-		versionToPlay = panelChain;
-		lastPanelJinglePlayedTime = now;
 		panelChain++;
+		if (lastPanelJinglePlayed == jingle && !epicVersion) panelChain++; // If the same jingle just played, advance the counter another time so the same jingle doesn't play twice.
+		
+		lastPanelJinglePlayed = epicVersion ? APJingle::None : jingle;
+
+		versionToPlay = panelChain / 2;
+		lastPanelJinglePlayedTime = now;
 	}
 	else if (epJingles.count(jingle)) {
-		versionToPlay = epChain;
-		lastEPJinglePlayedTime = now;
 		epChain++;
+		if (lastEPJinglePlayed == jingle && !epicVersion) epChain++;
+
+		lastEPJinglePlayed = epicVersion ? APJingle::None : jingle;
+
+		versionToPlay = epChain / 2;
+		lastEPJinglePlayedTime = now;
 	}
 
 	if (epicVersion) {

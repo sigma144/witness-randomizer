@@ -7,6 +7,8 @@
 
 enum APJingle
 {
+	None,
+
 	EPProgression,
 	EPUseful,
 	EPFiller,
@@ -58,6 +60,8 @@ private:
 
 	std::chrono::system_clock::time_point lastPanelJinglePlayedTime;
 	std::chrono::system_clock::time_point lastEPJinglePlayedTime;
+	APJingle lastPanelJinglePlayed;
+	APJingle lastEPJinglePlayed;
 	int panelChain;
 	int epChain;
 
