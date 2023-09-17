@@ -10,6 +10,7 @@ struct LockablePuzzle;
 
 class PanelLocker {
 	public:
+		void UpdatePPEPPuzzleLocks(const APState& state);
 		void DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels);
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);

@@ -55,6 +55,7 @@ class APRandomizer {
 	private:
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
+		std::map<int, int> doorToItemId;
 		std::set<int> doorsActuallyInTheItemPool;
 		std::map<int, std::vector<int>> progressiveItems = {
 			{ 158200, {158000, 158002}},

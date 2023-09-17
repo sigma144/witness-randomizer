@@ -211,6 +211,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				std::set<int> v = val;
 
 				itemIdToDoorSet.insert({ itemId, v });
+				
+				for (int door : v) {
+					doorToItemId.insert({ door, itemId });
+				}
 			}
 		}
 
@@ -594,7 +598,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, doorToItemId);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -602,7 +606,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, doorToItemId);
 	SeverDoors();
 
 	//Mess with Town targets

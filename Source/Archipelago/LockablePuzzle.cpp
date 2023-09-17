@@ -925,6 +925,7 @@ void LockableEP::UpdateLock(APState state)
 	// Color the trail red
 	std::vector<float> colors = { 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, };
 	memory->WritePanelData<float>(startPointID, EP_TRAIL_COLORS, colors);
+	memory->WritePanelData<float>(startPointID, EP_PARTICLE_SIZE_SCALE, 2.0f);
 }
 
 void LockableEP::Restore(){
@@ -940,6 +941,8 @@ void LockableEP::Restore(){
 	// Restore Trail Color
 	std::vector<float> colors = PanelRestore::GetEPColors(startPointID);
 	memory->WritePanelData<float>(startPointID, EP_TRAIL_COLORS, colors);
+
+	memory->WritePanelData<float>(startPointID, EP_PARTICLE_SIZE_SCALE, PanelRestore::GetEPParticleSize(startPointID));
 }
 
 void LockableObelisk::Read()

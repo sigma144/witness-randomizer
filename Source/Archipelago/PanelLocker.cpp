@@ -10,6 +10,15 @@
 #include "../Special.h"
 #include "SkipSpecialCases.h"
 
+void PanelLocker::UpdatePPEPPuzzleLocks(const APState& state)
+{
+	for (int ppEpID : { 0x1AE8 , 0x01C0D , 0x01DC7 , 0x01E12 , 0x01E52 }) {
+		if (lockedPuzzles.count(ppEpID)) {
+			lockedPuzzles[ppEpID]->UpdateLock(state);
+		}
+	}
+}
+
 void PanelLocker::DisableNonRandomizedPuzzles(std::set<int> exemptDoorPanels)
 {
 	Special::copyTarget(0x00021, 0x19650);
@@ -122,6 +131,14 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 			lockedPuzzles.insert({ id, puzzle });
 
 		puzzle->UpdateLock(state);
+
+		if (EPtoStartPoint.count(puzzle->id)) {
+			for (int conjoinedPuzzle : startPointToEPs.find(EPtoStartPoint.find(puzzle->id)->second)->second) {
+				if (lockedPuzzles.count(conjoinedPuzzle)) {
+					puzzle->UpdateLock(state);
+				}
+			}
+		}
 	}
 	else if (isLocked) {
 		//puzzle is locked but should nolonger be locked

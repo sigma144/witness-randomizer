@@ -38,3 +38,7 @@ bool PanelRestore::HasPositions(int id) {
 std::vector<float> PanelRestore::GetEPColors(int startPointId) {
 	return EpStartingPointToColors[startPointId];
 }
+
+float PanelRestore::GetEPParticleSize(int startPointId) {
+	return epStartPointScales[startPointId];
+}

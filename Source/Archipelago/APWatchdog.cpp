@@ -22,7 +22,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -44,6 +44,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	DisabledPuzzlesBehavior = dis;
 	DisabledEntities = disP;
 	ElevatorsComeToYou = elev;
+	doorToItemId = dToI;
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
 	if (speedTime == 0.6999999881f) { // original value
@@ -102,6 +103,8 @@ void APWatchdog::action() {
 		AudioLogPlaying(0.5f);
 
 		UpdateInfiniteChallenge();
+
+		panelLocker->UpdatePPEPPuzzleLocks(*state);
 
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
@@ -1532,8 +1535,13 @@ void APWatchdog::SetStatusMessages() {
 					if (startPoint == activePanelId) realEP = ep;
 				}
 
-				if (realEP && panelLocker->PuzzleIsLocked(realEP)) {
-					hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive its corresponding Obelisk Key.");
+				if (realEP && panelLocker->PuzzleIsLocked(realEP) && interactionState == InteractionState::Solving) {
+					std::string name = "(Unknown Key)";
+
+					if (doorToItemId.count(realEP)) {
+						name = ap->get_item_name(doorToItemId[realEP]);
+					}
+					hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
 					return;
 				}
 			}

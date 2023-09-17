@@ -6,4 +6,5 @@ public:
 	static std::vector<float> GetPositions(int id);
 	static bool HasPositions(int id);
 	static std::vector<float> GetEPColors(int startPointId);
+	static float GetEPParticleSize(int startPointId);
 };
