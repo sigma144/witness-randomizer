@@ -337,7 +337,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
 	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 	
-	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id, *state);
 
 	if (dont_touch_panel_at_all.count(id) or !allPanels.count(id)) {
 		return;
@@ -432,6 +432,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 		int eID = panelId;
 
 		Memory::get()->SolveEP(eID);
+		panelLocker->PermanentlyUnlockPuzzle(eID, *state);
 		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
 		}
@@ -1438,7 +1439,7 @@ void APWatchdog::CheckEPSkips() {
 	}
 
 	for (int panel : panelsToSkip) {
-		panelLocker->PermanentlyUnlockPuzzle(panel);
+		panelLocker->PermanentlyUnlockPuzzle(panel, *state);
 		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
 		SkipPanel(panel, "Skipped", false, 0);
 	}
@@ -1531,16 +1532,21 @@ void APWatchdog::SetStatusMessages() {
 			if (EPStartpointsToEndpoints.count(activePanelId)) {
 				int realEP = 0;
 
+				bool hasLockedEPs = false;
+
+				std::string name = "(Unknown Key)";
+
 				for(auto [ep, startPoint] : EPtoStartPoint){
-					if (startPoint == activePanelId) realEP = ep;
+					if (startPoint == activePanelId && ep && panelLocker->PuzzleIsLocked(ep)) {
+						hasLockedEPs = true;
+						if (doorToItemId.count(ep)) {
+							name = ap->get_item_name(doorToItemId[ep]);
+						}
+					}
 				}
 
-				if (realEP && panelLocker->PuzzleIsLocked(realEP) && interactionState == InteractionState::Solving) {
-					std::string name = "(Unknown Key)";
+				if (hasLockedEPs && interactionState == InteractionState::Solving) {
 
-					if (doorToItemId.count(realEP)) {
-						name = ap->get_item_name(doorToItemId[realEP]);
-					}
 					hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
 					return;
 				}

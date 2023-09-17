@@ -15,12 +15,12 @@ class PanelLocker {
 		void UpdatePuzzleLock(const APState& state, const int& id);
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		bool PuzzleIsLocked(int id);
-		void PermanentlyUnlockPuzzle(int id);
+		void PermanentlyUnlockPuzzle(int id, const APState& state);
 
 	private:
 		std::vector<int> disabledPuzzles;
 		std::map<int, LockablePuzzle*> lockedPuzzles;
 
-		void unlockPuzzle(LockablePuzzle* puzzle);
+		void unlockPuzzle(LockablePuzzle* puzzle, const APState& state);
 };
 

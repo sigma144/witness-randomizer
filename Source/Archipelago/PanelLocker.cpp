@@ -10,9 +10,8 @@
 #include "../Special.h"
 #include "SkipSpecialCases.h"
 
-void PanelLocker::UpdatePPEPPuzzleLocks(const APState& state)
-{
-	for (int ppEpID : { 0x1AE8 , 0x01C0D , 0x01DC7 , 0x01E12 , 0x01E52 }) {
+void PanelLocker::UpdatePPEPPuzzleLocks(const APState& state) {
+	for (int ppEpID : { 0x033BE , 0x033BF , 0x033DD , 0x033E5 , 0x018B6 }) {
 		if (lockedPuzzles.count(ppEpID)) {
 			lockedPuzzles[ppEpID]->UpdateLock(state);
 		}
@@ -131,18 +130,10 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 			lockedPuzzles.insert({ id, puzzle });
 
 		puzzle->UpdateLock(state);
-
-		if (EPtoStartPoint.count(puzzle->id)) {
-			for (int conjoinedPuzzle : startPointToEPs.find(EPtoStartPoint.find(puzzle->id)->second)->second) {
-				if (lockedPuzzles.count(conjoinedPuzzle)) {
-					puzzle->UpdateLock(state);
-				}
-			}
-		}
 	}
 	else if (isLocked) {
 		//puzzle is locked but should nolonger be locked
-		unlockPuzzle(puzzle);
+		unlockPuzzle(puzzle, state);
 	}
 	else {
 		//puzzle isnt locked and should not be locked
@@ -150,19 +141,28 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	}
 }
 
-void PanelLocker::PermanentlyUnlockPuzzle(int id) {
+void PanelLocker::PermanentlyUnlockPuzzle(int id, const APState& state) {
 	if (lockedPuzzles.count(id) == 1) {
 		LockablePuzzle* puzzle = lockedPuzzles[id];
-		unlockPuzzle(puzzle);
+		unlockPuzzle(puzzle, state);
 	}
 	else {
 		
 	}
 }
 
-void PanelLocker::unlockPuzzle(LockablePuzzle* puzzle) {
+void PanelLocker::unlockPuzzle(LockablePuzzle* puzzle, const APState& state) {
 	puzzle->Restore();
 	lockedPuzzles.erase(puzzle->id);
+
+	if (EPtoStartPoint.count(puzzle->id)) {
+		for (int conjoinedPuzzle : startPointToEPs.find(EPtoStartPoint.find(puzzle->id)->second)->second) {
+			if (lockedPuzzles.count(conjoinedPuzzle)) {
+				puzzle->UpdateLock(state);
+			}
+		}
+	}
+
 	//delete puzzle;
 }
 
