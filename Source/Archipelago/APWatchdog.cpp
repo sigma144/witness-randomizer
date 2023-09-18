@@ -1529,7 +1529,21 @@ void APWatchdog::SetStatusMessages() {
 		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
 
 		if (activePanelId != -1) {
-			if (EPStartpointsToEndpoints.count(activePanelId)) {
+			int solvingPressurePlateStartPoint = 0;
+			int solvingPressurePlateAssociatedEPID = 0;
+
+			// Weird PP allocation stuff
+			for (int ppEP : {0x1AE8, 0x01C0D, 0x01DC7, 0x01E12, 0x01E52}) {
+				int ppStartPointID = Memory::get()->ReadPanelData<int>(ppEP, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
+
+
+				if (ppStartPointID > 0 && activePanelId == ppStartPointID) {
+					solvingPressurePlateStartPoint = ppStartPointID;
+					solvingPressurePlateAssociatedEPID = startPointToEPs.find(ppEP)->second[0];
+				}
+			}
+
+			if (solvingPressurePlateStartPoint || EPStartpointsToEndpoints.count(activePanelId)) {
 				int realEP = 0;
 
 				bool hasLockedEPs = false;
@@ -1537,7 +1551,7 @@ void APWatchdog::SetStatusMessages() {
 				std::string name = "(Unknown Key)";
 
 				for(auto [ep, startPoint] : EPtoStartPoint){
-					if (startPoint == activePanelId && ep && panelLocker->PuzzleIsLocked(ep)) {
+					if ((solvingPressurePlateStartPoint == activePanelId && ep == solvingPressurePlateAssociatedEPID || startPoint == activePanelId) && ep && panelLocker->PuzzleIsLocked(ep)) {
 						hasLockedEPs = true;
 						if (doorToItemId.count(ep)) {
 							name = ap->get_item_name(doorToItemId[ep]);
