@@ -7,6 +7,7 @@
 #include "SkipSpecialCases.h"
 #include "../Special.h"
 #include "PanelRestore.h"
+#include "ASMPayloadManager.h"
 
 void LockablePuzzle::Read() {}
 void LockablePuzzle::UpdateLock(APState state) {}
@@ -957,12 +958,26 @@ void LockableEP::Restore(){
 
 void LockableObelisk::Read()
 {
+	// nothing to do here
+	return;
 }
 
 void LockableObelisk::UpdateLock(APState state)
 {	
+	if (!state.keysInTheGame.count(id) || state.keysReceived.count(id)) return;
+
+	auto memory = Memory::get();
+
+	memory->WritePanelData<float>(id, SCALE, { 2.0f });
+	memory->WritePanelData<float>(id, ORIENTATION, { 0.0f, 0.0f, 0.7f, 0.2f });
+	ASMPayloadManager::get()->UpdateEntityPosition(id);
 }
 
 void LockableObelisk::Restore()
 {
+	auto memory = Memory::get();
+
+	memory->WritePanelData<float>(id, SCALE, { 1.0f });
+	memory->WritePanelData<float>(id, ORIENTATION, PanelRestore::GetObeliskOrientation(id));
+	ASMPayloadManager::get()->UpdateEntityPosition(id);
 }

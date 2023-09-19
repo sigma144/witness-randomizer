@@ -42,3 +42,7 @@ std::vector<float> PanelRestore::GetEPColors(int startPointId) {
 float PanelRestore::GetEPParticleSize(int startPointId) {
 	return epStartPointScales[startPointId];
 }
+
+std::vector<float> PanelRestore::GetObeliskOrientation(int id) {
+	return obeliskRotationData[id];
+}
