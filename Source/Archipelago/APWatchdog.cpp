@@ -760,6 +760,7 @@ void APWatchdog::UnlockDoor(int id) {
 	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
 		state->keysReceived.insert(id);
 		panelLocker->UpdatePuzzleLock(*state, id);
+		return;
 	}
 
 	if (allLasers.count(id)) {
