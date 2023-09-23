@@ -387,7 +387,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	if (reason == "Collected" && !skip_completelyExclude.count(id)) WritePanelData<int>(id, VIDEO_STATUS_COLOR, { COLLECTED });
 	if (reason == "Skipped") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + cost });
 	if (reason == "Disabled") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { DISABLED });
-	if (reason == "Excluded") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { EXCLUDED });
+	if (reason == "Excluded" && !skip_completelyExclude.count(id)) WritePanelData<int>(id, VIDEO_STATUS_COLOR, { EXCLUDED });
 }
 
 void APWatchdog::MarkLocationChecked(int locationId)
