@@ -118,6 +118,8 @@ inline const std::set<int> cutoutPanels = {
 };
 
 inline const std::set<int> dont_touch_panel_at_all = {
+	0x00064, 0x00182, // Entry Panels
+
 	0x0088E, 0x00BAF, 0x00BF3, 0x00C09, 0x00CDB, 0x0051F, 0x00524, 0x00CD4, 0x00CB9, 0x00CA1, 0x00C80, 0x00C68, 0x00C59, 0x00C22, 0x034F4, 0x034EC, 0x1C31A, 0x1C319,
 
 	0x01983, 0x01987,
@@ -150,7 +152,6 @@ inline const std::set<int> skip_completelyExclude = {
 	0x09F98, // Town Laser Redirect
 	0x0A079, // Bunker Elevator
 	0x00609, 0x17E2B, 0x18488, // Swamp Bridge Controls
-	0x17C04, 0x17E07, // Swamp Maze Controls
 	0x037FF, // Treehouse Bridge to Keep
 	0x09F7F, // Mountaintop Box Open
 	0x335AB, 0x335AC, 0x3369D, // Elevators in Caves 
@@ -208,7 +209,6 @@ inline const std::set<int> skip_multisolvePuzzles = {
 
 	// Swamp
 	0x00609, 0x17E2B, 0x18488, // Swamp Bridge Controls
-	0x17C04, 0x17E07, // Swamp Maze Controls
 	0x181F5, // Swamp Rotating Bridge
 
 	// Theater
