@@ -204,16 +204,16 @@ void Main::randomize() {
 	randomizer->AdjustSpeed(); //Makes certain moving objects move faster
 
 	//If the save was previously randomized, check that seed and difficulty match with the save file
-	int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+	int lastSeed = memory->ReadPanelData<int>(0x00064, VIDEO_STATUS_COLOR + 8);
 	if (lastSeed > 0 && !rerandomize && !DEBUG) {
 		if (seed != lastSeed) {
 			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?") == false) {
 				return;
 			}
 
-			memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
+			memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 8, { 0.0f });
 		}
-		lastPuzzleRandomisation = memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12);
+		lastPuzzleRandomisation = memory->ReadPanelData<int>(0x00182, VIDEO_STATUS_COLOR + 8);
 	}
 
 	//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
@@ -225,7 +225,7 @@ void Main::randomize() {
 	}
 
 	if (lastSeed == 0) {
-		memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 12, { 0.0f });
+		memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 8, { 0.0f });
 	}
 
 	// Store AP credentials to in-game data.
@@ -259,8 +259,8 @@ void Main::randomize() {
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
 		apRandomizer->GenerateNormal();
 
-	memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-	memory->WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, puzzleRando);
+	memory->WritePanelData(0x00064, VIDEO_STATUS_COLOR + 8, seed);
+	memory->WritePanelData(0x00182, VIDEO_STATUS_COLOR + 8, puzzleRando);
 
 	if (clientWindow->getSetting(ClientToggleSetting::HighContrast)) {
 		apRandomizer->HighContrastMode();
