@@ -205,7 +205,7 @@ void Main::randomize() {
 
 	//If the save was previously randomized, check that seed and difficulty match with the save file
 	int lastSeed = memory->ReadPanelData<int>(0x00064, VIDEO_STATUS_COLOR + 8);
-	if (lastSeed > 0 && !rerandomize && !DEBUG) {
+	if (lastSeed != 1041865114 && !rerandomize && !DEBUG) {
 		if (seed != lastSeed) {
 			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?") == false) {
 				return;
