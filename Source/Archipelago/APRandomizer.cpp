@@ -589,6 +589,10 @@ void APRandomizer::Init() {
 	Memory* memory = Memory::get();
 
 	mostRecentItemId = memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
+	if (mostRecentItemId == 1065353216) { // Default value. Hopefully noone launches their game after the ~1 billionth item was sent, exactly.
+		mostRecentItemId = -1;
+		memory->WritePanelData<int>(0x64, VIDEO_STATUS_COLOR + 12, { -1 });
+	}
 
 	for (int panel : LockablePuzzles) {
 		memory->InitPanel(panel);
