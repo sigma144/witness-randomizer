@@ -82,6 +82,9 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{0x0A24B, {{0x0A249, PANEL, TARGET }}}, // Desert Door to Water Levels Room
 	{0x0C316, {{0x18076, PANEL, TARGET }}}, // Desert Door to Elevator Room
 
+	{0x012FB, {{0x012FB, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, MOUNT_PARENT_ID, }, {0x34F1E, PANEL, MOUNT_PARENT_ID, }}}, // Desert Laser
+	{0x01317, {{0x012FB, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, MOUNT_PARENT_ID, }, {0x34F1E, PANEL, MOUNT_PARENT_ID, }}}, // Desert Elevator
+
 	{0x09D6F, {{0x09E57, PANEL, TARGET }, /*{0x09E57, PANEL, MOUNT_PARENT_ID }*/ }}, // Quarry Door to Quarry 1
 	{0x17C07, {{0x17C09, PANEL, TARGET }, /*{0x17C09, PANEL, MOUNT_PARENT_ID }*/ }}, // Quarry Door to Quarry 2
 

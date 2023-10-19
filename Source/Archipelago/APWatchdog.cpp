@@ -839,6 +839,21 @@ void APWatchdog::SeverDoor(int id) {
 				ASMPayloadManager::get()->UpdateEntityPosition(conn.id);
 			}
 
+			if (conn.id == 0x012FB) {
+				WritePanelData<float>(0x012FB, POSITION, { -124.4, 90.37, 13 });
+				ASMPayloadManager::get()->UpdateEntityPosition(0x012FB);
+			}
+
+			if (conn.id == 0x34BD2) {
+				WritePanelData<float>(0x34BD2, POSITION, { -124.399971, 90.37002563, 13 });
+				ASMPayloadManager::get()->UpdateEntityPosition(0x34BD2);
+			}
+
+			if (conn.id == 0x34F1E) {
+				WritePanelData<float>(0x34F1E, POSITION, { -124.3999557, 90.37004852, 13 });
+				ASMPayloadManager::get()->UpdateEntityPosition(0x34F1E);
+			}
+
 			if (conn.target_no == ENTITY_NAME) {
 				std::stringstream stream;
 				stream << std::hex << conn.id;
@@ -850,6 +865,7 @@ void APWatchdog::SeverDoor(int id) {
 			}
 			WritePanelData<int>(conn.id, conn.target_no, { 0 });
 		}
+
 		return;
 	}
 	else
@@ -1196,7 +1212,6 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if(!laserActiveInGame & syncprogress)
 	{
-		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
 		hudManager->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
