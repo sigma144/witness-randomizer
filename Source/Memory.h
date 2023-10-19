@@ -247,6 +247,7 @@ public:
 
 	void MakeEPGlow(std::string name, std::vector<byte> patternPointBytes);
 
+	void StopDesertLaserPropagation();
 	void SetInfiniteChallenge(bool enable);
 
 	void RemoveMesh(int id);

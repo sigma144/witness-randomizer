@@ -193,6 +193,24 @@ void Memory::findPlayerPosition() {
 	});
 }
 
+void Memory::StopDesertLaserPropagation() {
+	executeSigScan({ 0x8B, 0x40, 0x2C, 0xF2, 0x0F, 0x10, 0x43, 0x24, 0x89, 0x44 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (;; index--) {
+			if (data[index - 3] == 0x48 && data[index - 2] == 0x8B && data[index - 1] == 0xC8 && data[index - 0] == 0xE8) {
+				char asmBuff[] = "\x90\x90\x90\x90\x90";
+				
+				LPVOID addressPointer = reinterpret_cast<LPVOID>(_baseAddress + offset + index);
+
+				WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+
+				return true;
+			}
+		}
+
+		return false;
+	});
+}
+
 void Memory::SetInfiniteChallenge(bool enable) {
 	if (_bytesLengthChallenge == 0) { //first time, find the music file in memory
 		char buffer[128];
@@ -889,7 +907,7 @@ void Memory::findMovementSpeed() {
 			}
 		}
 		return (found == 2);
-		});
+	});
 }
 
 void Memory::findActivePanel() {
