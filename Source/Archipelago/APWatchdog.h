@@ -77,6 +77,7 @@ private:
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	int finalPanel;
 	bool isCompleted = false;
+	bool desertLaserHasBeenUpWhileConnected = false;
 
 	std::chrono::system_clock::time_point lastFrameTime;
 	float halfSecondCountdown = 0.f;

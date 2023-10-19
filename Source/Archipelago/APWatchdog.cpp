@@ -813,6 +813,10 @@ void APWatchdog::SeverDoor(int id) {
 			return;
 		}
 
+		if (id == 0x012FB) {
+			Memory::get()->StopDesertLaserPropagation();
+		}
+
 		std::vector<Connection> conns = severTargetsById[id];
 
 		for (auto& conn : conns) {
@@ -863,7 +867,8 @@ void APWatchdog::SeverDoor(int id) {
 				WriteArray<char>(conn.id, ENTITY_NAME, v);
 				continue;
 			}
-			WritePanelData<int>(conn.id, conn.target_no, { 0 });
+			if (conn.target_no == LIGHTMAP_TABLE) WritePanelData<INT64>(conn.id, conn.target_no, { 0 });
+			else WritePanelData<int>(conn.id, conn.target_no, { 0 });
 		}
 
 		return;
@@ -1256,6 +1261,26 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
+
+	
+	if (severedDoorsList.count(0x012FB)) {
+		if (ReadPanelData<int>(0x012FB, LASER_TARGET)) {
+			if (ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) > 1.0f) WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.0f });
+		}
+
+		else if (ReadPanelData<float>(0x01317, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) == 1.0f) WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.001f });
+
+		else if (!desertLaserHasBeenUpWhileConnected && ReadPanelData<float>(0x01317, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) > 1.0f) {
+			WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.0f });
+			WritePanelData<float>(0x01317, DOOR_OPEN_T, { 0.99f });
+		}
+		else if (ReadPanelData<float>(0x01317, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) == 1.0f) {
+			WritePanelData<INT64>(0x27877, LIGHTMAP_TABLE, { 0 });
+			WritePanelData<INT64>(0x01317, LIGHTMAP_TABLE, { 0 });
+			WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.001f });
+			desertLaserHasBeenUpWhileConnected = true;
+		}
+	}
 
 	if (ElevatorsComeToYou){
 		if (quarryElevatorUpper.containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 1.0f) {
