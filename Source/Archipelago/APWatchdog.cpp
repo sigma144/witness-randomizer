@@ -1263,7 +1263,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
 
 	
-	if (severedDoorsList.count(0x012FB)) {
+	if (severedDoorsList.count(0x012FB) || severedDoorsList.count(0x01317)) {
 		if (ReadPanelData<int>(0x012FB, LASER_TARGET)) {
 			if (ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) > 1.0f) WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.0f });
 		}
