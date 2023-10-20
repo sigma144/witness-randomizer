@@ -816,14 +816,18 @@ void APWatchdog::SeverDoor(int id) {
 		if (id == 0x012FB || id == 0x01317) {
 			Memory::get()->StopDesertLaserPropagation();
 
+			// If the Desert Elevator has already been severed and we're trying to sever the Laser, the Panel should do nothing.
 			if (id == 0x012FB && severedDoorsList.count(0x01317)) {
 				WritePanelData<int>(0x03608, TARGET, { 0 });
 			}
 
 			else if (id == 0x01317) {
+				// If the Laser has been severed and we're trying to sever the Elevator, the Panel should do nothing.
 				if (severedDoorsList.count(0x012FB)) {
 					WritePanelData<int>(0x03608, TARGET, { 0 });
 				}
+				// HOWEVER, if the Laser has NOT been severed and we're severing the Elevator, the Laser Panel should now directly activate the laser.
+				// If the Laser is going to be severed too, that is taken care of by the above if condition.
 				else
 				{
 					WritePanelData<int>(0x03608, TARGET, { 0x012FB + 1 });
