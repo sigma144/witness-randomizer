@@ -813,8 +813,22 @@ void APWatchdog::SeverDoor(int id) {
 			return;
 		}
 
-		if (id == 0x012FB) {
+		if (id == 0x012FB || id == 0x01317) {
 			Memory::get()->StopDesertLaserPropagation();
+
+			if (id == 0x012FB && severedDoorsList.count(0x01317)) {
+				WritePanelData<int>(0x03608, TARGET, { 0 });
+			}
+
+			else if (id == 0x01317) {
+				if (severedDoorsList.count(0x012FB)) {
+					WritePanelData<int>(0x03608, TARGET, { 0 });
+				}
+				else
+				{
+					WritePanelData<int>(0x03608, TARGET, { 0x012FB + 1 });
+				}
+			}
 		}
 
 		std::vector<Connection> conns = severTargetsById[id];
