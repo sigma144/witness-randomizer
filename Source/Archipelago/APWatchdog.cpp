@@ -792,13 +792,13 @@ void APWatchdog::UnlockDoor(int id) {
 }
 
 void APWatchdog::SeverDoor(int id) {
+	// Disabled doors should behave as vanilla
+	if (DisabledEntities.count(id)) return;
+	
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 		state->keysInTheGame.insert(id);
 	}
-
-	// Disabled doors should behave as vanilla
-	if (DisabledEntities.count(id)) return;
 
 	if (severTargetsById.count(id)) {
 		severedDoorsList.insert(id);
