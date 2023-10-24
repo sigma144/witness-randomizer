@@ -60,58 +60,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
-<<<<<<< HEAD
-		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, {mostRecentItemId});
-		
-		for (const auto& item : items) {
-			int realitem = item.item;
-			int advancement = item.flags;
-
-			if (progressiveItems.count(realitem)) {
-				if (progressiveItems[realitem].size() == 0) {
-					continue;
-				}
-
-				realitem = progressiveItems[realitem][0];
-				progressiveItems[item.item].erase(progressiveItems[item.item].begin());
-			}
-
-			bool unlockLater = false;
-
-			if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE) {
-				unlockItem(realitem);
-				panelLocker->UpdatePuzzleLocks(state, realitem);
-			}
-			else {
-				unlockLater = true;
-			}
-
-			if (itemIdToDoorSet.count(realitem)) {
-				for (int doorHex : itemIdToDoorSet[realitem]) {
-					async->UnlockDoor(doorHex);
-				}
-			}
-
-			if (mostRecentItemId >= item.index + 1) continue;
-
-			if (unlockLater) {
-				unlockItem(realitem);
-			}
-
-			mostRecentItemId = item.index + 1;
-
-			Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, {mostRecentItemId});
-
-			while (async->processingItemMessages) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			}
-
-			async->QueueReceivedItem({ item.item, advancement, realitem });
-			if (item.player != ap->get_player_number()) async->PlayReceivedJingle(item.flags);
-=======
 		for (auto item : items) {
 			async->QueueItem(item);
->>>>>>> master
 		}
 	});
 
