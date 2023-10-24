@@ -12,10 +12,8 @@
 #include "../Panels.h"
 #include "../Quaternion.h"
 #include "../Special.h"
-#include "Client/apclientpp/apclient.hpp"
 #include "PanelLocker.h"
 #include "SkipSpecialCases.h"
-
 #include <thread>
 #include "../Randomizer.h"
 #include "../DateTime.h"
@@ -28,7 +26,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -50,6 +48,14 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	DisabledPuzzlesBehavior = dis;
 	DisabledEntities = disP;
 	ElevatorsComeToYou = elev;
+	progressiveItems = pI;
+	itemIdToDoorSet = iTD;
+
+	mostRecentItemId = Memory::get()->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
+	if (mostRecentItemId == 1065353216) { // Default value. Hopefully noone launches their game after the ~1 billionth item was sent, exactly.
+		mostRecentItemId = -1;
+		Memory::get()->WritePanelData<int>(0x64, VIDEO_STATUS_COLOR + 12, { -1 });
+	}
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
 	if (speedTime == 0.6999999881f) { // original value
@@ -83,6 +89,8 @@ void APWatchdog::action() {
 	lastFrameTime = currentFrameTime;
 
 	timePassedSinceRandomisation += frameDuration;
+
+	HandleReceivedItems();
 
 	HandleInteractionState();
 	HandleMovementSpeed(frameDuration);
@@ -1570,8 +1578,6 @@ void APWatchdog::QueueItemMessages() {
 		return;
 	}
 
-	processingItemMessages = true;
-
 	std::map<std::string, int> itemCounts;
 	std::map<std::string, RgbColor> itemColors;
 	std::vector<std::string> receivedItems;
@@ -1616,8 +1622,6 @@ void APWatchdog::QueueItemMessages() {
 
 		hudManager->queueNotification("Received " + name + count + ".", itemColors[name]);
 	}
-
-	processingItemMessages = false;
 }
 
 void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
@@ -1995,5 +1999,87 @@ void APWatchdog::UpdateInfiniteChallenge() {
 		}
 
 		infiniteChallenge = isChecked;
+	}
+}
+
+void APWatchdog::QueueItem(APClient::NetworkItem i) {
+	queuedReceivedItems.push(i);
+}
+
+void APWatchdog::HandleReceivedItems() {
+	Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
+
+	while (!queuedReceivedItems.empty()) {
+		auto item = queuedReceivedItems.front();
+		queuedReceivedItems.pop();
+		int realitem = item.item;
+		int advancement = item.flags;
+
+		if (progressiveItems.count(realitem)) {
+			if (progressiveItems[realitem].size() == 0) {
+				continue;
+			}
+
+			realitem = progressiveItems[realitem][0];
+			progressiveItems[item.item].erase(progressiveItems[item.item].begin());
+		}
+
+		bool unlockLater = false;
+
+		if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE) {
+			unlockItem(realitem);
+			panelLocker->UpdatePuzzleLocks(*state, realitem);
+		}
+		else {
+			unlockLater = true;
+		}
+
+		if (itemIdToDoorSet.count(realitem)) {
+			for (int doorHex : itemIdToDoorSet[realitem]) {
+				UnlockDoor(doorHex);
+			}
+		}
+
+		if (mostRecentItemId >= item.index + 1) continue;
+
+		if (unlockLater) {
+			unlockItem(realitem);
+		}
+
+		mostRecentItemId = item.index + 1;
+
+		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
+
+		QueueReceivedItem({ item.item, advancement, realitem });
+		if (item.player != ap->get_player_number()) PlayReceivedJingle(item.flags);
+	}
+}
+
+void APWatchdog::unlockItem(int item) {
+	switch (item) {
+	case ITEM_DOTS:									state->unlockedDots = true;							break;
+	case ITEM_COLORED_DOTS:							state->unlockedColoredDots = true;				break;
+	case ITEM_FULL_DOTS:									state->unlockedFullDots = true;							break;
+	case ITEM_SOUND_DOTS:							state->unlockedSoundDots = true;					break;
+	case ITEM_SYMMETRY:								state->unlockedSymmetry = true;					break;
+	case ITEM_TRIANGLES:								state->unlockedTriangles = true;					break;
+	case ITEM_ERASOR:									state->unlockedErasers = true;						break;
+	case ITEM_TETRIS:									state->unlockedTetris = true;						break;
+	case ITEM_TETRIS_ROTATED:						state->unlockedTetrisRotated = true;				break;
+	case ITEM_TETRIS_NEGATIVE:						state->unlockedTetrisNegative = true;			break;
+	case ITEM_STARS:									state->unlockedStars = true;						break;
+	case ITEM_STARS_WITH_OTHER_SYMBOL:			state->unlockedStarsWithOtherSimbol = true;	break;
+	case ITEM_B_W_SQUARES:							state->unlockedStones = true;						break;
+	case ITEM_COLORED_SQUARES:						state->unlockedColoredStones = true;				break;
+	case ITEM_SQUARES: state->unlockedStones = state->unlockedColoredStones = true;				break;
+	case ITEM_ARROWS: state->unlockedArrows = true; break;
+
+		//Powerups
+	case ITEM_TEMP_SPEED_BOOST:					ApplyTemporarySpeedBoost();				break;
+	case ITEM_PUZZLE_SKIP:							AddPuzzleSkip(); break;
+
+		//Traps
+	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
+	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
 }

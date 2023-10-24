@@ -5,11 +5,12 @@
 #include "APGameData.h"
 #include "APState.h"
 #include "nlohmann/json.hpp"
+#include "Client/apclientpp/apclient.hpp"
 
 #include <chrono>
 #include <map>
+#include <queue>
 
-class APClient;
 class Generate;
 class HudManager;
 class PanelLocker;
@@ -17,7 +18,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI);
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
@@ -33,6 +34,9 @@ public:
 	void ResetPowerSurge();
 
 	void StartRebindingKey(enum class CustomKey key);
+
+	void QueueItem(APClient::NetworkItem);
+	void HandleReceivedItems();
 
 	void AddPuzzleSkip();
 	void SkipPuzzle();
@@ -61,8 +65,6 @@ public:
 
 	void ProcessDeathLink(double time, std::string cause, std::string source);
 
-
-	bool processingItemMessages = false;
 	bool newItemsJustIn = false;
 
 	void QueueReceivedItem(std::vector<__int64> item);
@@ -81,11 +83,18 @@ private:
 	bool isCompleted = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
 
+	std::queue<APClient::NetworkItem> queuedReceivedItems = {};
+
 	std::chrono::system_clock::time_point lastFrameTime;
 	float halfSecondCountdown = 0.f;
 	float timePassedSinceRandomisation = 0.0f;
 
 	int halfSecondCounter = 0;
+
+	int mostRecentItemId = -1;
+
+	std::map<int, std::set<int>> itemIdToDoorSet;
+	std::map<int, std::vector<int>> progressiveItems;
 
 	std::shared_ptr<HudManager> hudManager;
 
@@ -179,6 +188,8 @@ private:
 	void WriteMovementSpeed(float currentSpeed);
 
 	void UpdateInfiniteChallenge();
+
+	void unlockItem(int item);
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
