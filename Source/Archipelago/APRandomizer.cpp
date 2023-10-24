@@ -60,52 +60,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
-		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, {mostRecentItemId});
-		
-		for (const auto& item : items) {
-			int realitem = item.item;
-			int advancement = item.flags;
-
-			if (progressiveItems.count(realitem)) {
-				if (progressiveItems[realitem].size() == 0) {
-					continue;
-				}
-
-				realitem = progressiveItems[realitem][0];
-				progressiveItems[item.item].erase(progressiveItems[item.item].begin());
-			}
-
-			bool unlockLater = false;
-
-			if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE) {
-				unlockItem(realitem);
-				panelLocker->UpdatePuzzleLocks(state, realitem);
-			}
-			else {
-				unlockLater = true;
-			}
-
-			if (itemIdToDoorSet.count(realitem)) {
-				for (int doorHex : itemIdToDoorSet[realitem]) {
-					async->UnlockDoor(doorHex);
-				}
-			}
-
-			if (mostRecentItemId >= item.index + 1) continue;
-
-			if (unlockLater) {
-				unlockItem(realitem);
-			}
-
-			mostRecentItemId = item.index + 1;
-
-			Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, {mostRecentItemId});
-
-			while (async->processingItemMessages) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			}
-
-			async->QueueReceivedItem({ item.item, advancement, realitem });
+		for (auto item : items) {
+			async->QueueItem(item);
 		}
 	});
 
@@ -386,35 +342,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	return connected;
 }
 
-void APRandomizer::unlockItem(int item) {
-	switch (item) {
-		case ITEM_DOTS:									state.unlockedDots = true;							break;
-		case ITEM_COLORED_DOTS:							state.unlockedColoredDots = true;				break;
-		case ITEM_FULL_DOTS:									state.unlockedFullDots = true;							break;
-		case ITEM_SOUND_DOTS:							state.unlockedSoundDots = true;					break;
-		case ITEM_SYMMETRY:								state.unlockedSymmetry = true;					break;
-		case ITEM_TRIANGLES:								state.unlockedTriangles = true;					break;
-		case ITEM_ERASOR:									state.unlockedErasers = true;						break;
-		case ITEM_TETRIS:									state.unlockedTetris = true;						break;
-		case ITEM_TETRIS_ROTATED:						state.unlockedTetrisRotated = true;				break;
-		case ITEM_TETRIS_NEGATIVE:						state.unlockedTetrisNegative = true;			break;
-		case ITEM_STARS:									state.unlockedStars = true;						break;
-		case ITEM_STARS_WITH_OTHER_SYMBOL:			state.unlockedStarsWithOtherSimbol = true;	break;
-		case ITEM_B_W_SQUARES:							state.unlockedStones = true;						break;
-		case ITEM_COLORED_SQUARES:						state.unlockedColoredStones = true;				break;
-		case ITEM_SQUARES: state.unlockedStones = state.unlockedColoredStones = true;				break;
-		case ITEM_ARROWS: state.unlockedArrows = true; break;
-
-		//Powerups
-		case ITEM_TEMP_SPEED_BOOST:					async->ApplyTemporarySpeedBoost();				break;
-		case ITEM_PUZZLE_SKIP:							async->AddPuzzleSkip(); break;
-
-		//Traps
-		case ITEM_POWER_SURGE:							async->TriggerPowerSurge();						break;
-		case ITEM_TEMP_SPEED_REDUCTION:				async->ApplyTemporarySlow();						break;
-	}
-}
-
 std::string APRandomizer::buildUri(std::string& server)
 {
 	std::string uri = server;
@@ -579,12 +506,6 @@ void APRandomizer::setPuzzleLocks() {
 void APRandomizer::Init() {
 	Memory* memory = Memory::get();
 
-	mostRecentItemId = memory->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
-	if (mostRecentItemId == 1065353216) { // Default value. Hopefully noone launches their game after the ~1 billionth item was sent, exactly.
-		mostRecentItemId = -1;
-		memory->WritePanelData<int>(0x64, VIDEO_STATUS_COLOR + 12, { -1 });
-	}
-
 	for (int panel : LockablePuzzles) {
 		memory->InitPanel(panel);
 	}
@@ -595,7 +516,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -603,7 +524,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems);
 	SeverDoors();
 
 	//Mess with Town targets
