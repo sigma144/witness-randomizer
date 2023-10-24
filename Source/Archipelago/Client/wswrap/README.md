@@ -69,4 +69,9 @@ Send data as binary frame on the websocket.
 
 #### v1.01
 
-`send`/`send_*` will now return bool. If `WSWRAP_SEND_EXCEPTIONS` is defined, they will throw exceptions as before.
+* `send`/`send_*` will now return bool. If `WSWRAP_SEND_EXCEPTIONS` is defined, they will throw exceptions as before.
+
+#### v1.02
+
+* Automatically send pings on desktop (not JS) if the server doesn't.
+* error handler callback now optionally has a `const std::string&` argument for a readable error message
