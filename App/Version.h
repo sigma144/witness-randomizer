@@ -5,7 +5,7 @@
 
 #define MAJOR 4
 #define MINOR 0
-#define PATCH 0
+#define PATCH 1
 
 #define VERSION_STR     TO_STRING(MAJOR) "." TO_STRING(MINOR) "." TO_STRING(PATCH)
 #define VERSION			MAJOR, MINOR, PATCH
