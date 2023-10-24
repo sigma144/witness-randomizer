@@ -57,21 +57,38 @@ namespace wswrap {
         typedef std::function<void(void)> onopen_handler;
         typedef std::function<void(void)> onclose_handler;
         typedef std::function<void(void)> onerror_handler;
+        typedef std::function<void(const std::string&)> onerror_ex_handler;
         typedef std::function<void(const std::string&)> onmessage_handler;
 
         WS(const std::string& uri_string, onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage,
            onerror_handler herror=nullptr, const std::string& cert_store="")
+                : WS(uri_string, hopen, hclose, hmessage, [herror](const std::string&){herror();}, cert_store)
         {
-            auto uri = websocketpp::uri(uri_string);
+        }
+
+        WS(const std::string& uri_string, onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage,
+           onerror_ex_handler herror=nullptr, const std::string& cert_store="")
+                : _hopen(hopen), _hclose(hclose), _hmessage(hmessage), _herror(herror)
+        {
             _service = new SERVICE();
+            auto uri = websocketpp::uri(uri_string);
             _secure = uri.get_secure();
             bool is_localhost = uri.get_host() == "localhost" || uri.get_host() == "127.0.0.1" || uri.get_host() == "::1";
 
-            if (_secure) {
-                if (!init_wss(hopen, hclose, hmessage, herror, !is_localhost, cert_store)) return;
-            }
-            else {
-                if (!init_ws(hopen, hclose, hmessage, herror)) return;
+            bool is_init;
+            if (_secure)
+                is_init = init_wss(!is_localhost, cert_store);
+            else
+                is_init = init_ws();
+
+            if (!is_init) {
+                #ifdef __cpp_exceptions
+                throw std::runtime_error("WS init failed");
+                #else
+                _connect_error = true;
+                if (_connect_error_message.empty()) _connect_error_message = "WS init failed";
+                #endif
+                return;
             }
 
             connect(uri_string);
@@ -149,6 +166,13 @@ namespace wswrap {
 
         bool poll()
         {
+            #ifndef __cpp_exceptions
+            if (_connect_error) {
+                if (_herror) _herror(_connect_error_message);
+                if (_hclose) _hclose();
+                return false;
+            }
+            #endif
             _polling = true;
             auto res = _service->poll();
             _polling = false;
@@ -157,6 +181,13 @@ namespace wswrap {
 
         size_t run()
         {
+            #ifndef __cpp_exceptions
+            if (_connect_error) {
+                if (_herror) _herror(_connect_error_message);
+                if (_hclose) _hclose();
+                return 0;
+            }
+            #endif
             _polling = true;
             auto res = _service->run();
             _polling = false;
@@ -170,7 +201,7 @@ namespace wswrap {
 
     private:
         template<class T>
-        T* init(onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage, onerror_handler herror)
+        T* init()
         {
             T* impl = new T();
             auto& client = impl->first;
@@ -178,55 +209,72 @@ namespace wswrap {
             client.set_access_channels(websocketpp::log::alevel::none | websocketpp::log::alevel::app);
             client.clear_error_channels(websocketpp::log::elevel::all);
             client.set_error_channels(websocketpp::log::elevel::warn|websocketpp::log::elevel::rerror|websocketpp::log::elevel::fatal);
+            client.set_pong_timeout(10000);
             client.init_asio(_service);
 
             typedef typename T::Client::message_ptr message_ptr;
-            client.set_message_handler([this,hmessage] (websocketpp::connection_hdl hdl, message_ptr msg) {
+            client.set_message_handler([this] (websocketpp::connection_hdl hdl, message_ptr msg) {
                 T* impl = (T*)_impl;
-                if (impl->second && hmessage) hmessage(msg->get_payload());
+                if (impl->second && _hmessage) _hmessage(msg->get_payload());
             });
-            client.set_open_handler([this,hopen] (websocketpp::connection_hdl hdl) {
+            client.set_open_handler([this] (websocketpp::connection_hdl hdl) {
                 T* impl = (T*)_impl;
-                if (impl->second && hopen) hopen();
+                if (impl->second && _hopen) _hopen();
+                _ping_timer.reset(new asio::high_resolution_timer(*_service));
+                _ping_timer->expires_from_now(std::chrono::milliseconds(_ping_interval));
+                _ping_timer->async_wait([=](const asio::error_code& ec) { on_ping_expired<T>(ec); });                
             });
-            client.set_close_handler([this,hclose] (websocketpp::connection_hdl hdl) {
+            client.set_close_handler([this] (websocketpp::connection_hdl hdl) {
                 T* impl = (T*)_impl;
                 if (impl->second) {
                     impl->second = nullptr;
-                    if (hclose) hclose();
+                    if (_hclose) _hclose();
                 }
+                if (_ping_timer)
+                    _ping_timer.reset(nullptr);
             });
-            client.set_fail_handler([this,herror,hclose] (websocketpp::connection_hdl hdl) {
+            client.set_fail_handler([this] (websocketpp::connection_hdl hdl) {
                 T* impl = (T*)_impl;
                 if (impl->second) {
+                    auto ec = impl->first.get_con_from_hdl(hdl)->get_ec();
                     impl->second = nullptr;
-                    if (herror) herror();
-                    if (hclose) hclose();
+                    if (_herror) _herror(ec.message());
+                    if (_hclose) _hclose();
+                }
+                if (_ping_timer)
+                    _ping_timer.reset(nullptr);
+            });
+            client.set_ping_handler([this] (websocketpp::connection_hdl hdl, const std::string&) {
+                // reset ping timer - no need to ping the server if the server pings us
+                if (_ping_timer)
+                    _ping_timer->expires_from_now(std::chrono::milliseconds(_ping_interval));
+                return true;
+            });
+            client.set_pong_timeout_handler([this] (websocketpp::connection_hdl hdl, const std::string&) {
+                T* impl = (T*)_impl;
+                if (impl->second) {
+                    impl->second->close(websocketpp::close::status::internal_endpoint_error, "ping timeout");
                 }
             });
 
             return impl;
         }
 
-        bool init_ws(onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage, onerror_handler herror)
+        bool init_ws()
         {
-            auto* impl = init<WS_IMPL>(hopen, hclose, hmessage, herror);
+            auto* impl = init<WS_IMPL>();
             _impl = impl;
             if (!impl) return false;
-            auto& client = impl->first;
-            auto& conn = impl->second;
             return true;
         }
 
-        bool init_wss(onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage, onerror_handler herror,
-                      bool validate_cert, const std::string& cert_store)
+        bool init_wss(bool validate_cert, const std::string& cert_store)
         {
             #ifdef WSWRAP_WITH_SSL
-            auto* impl = init<WSS_IMPL>(hopen, hclose, hmessage, herror);
+            auto* impl = init<WSS_IMPL>();
             _impl = impl;
             if (!impl) return false;
             auto& client = impl->first;
-            auto& conn = impl->second;
 
             std::string store_path = cert_store; // make a copy for capture
             client.set_tls_init_handler([this, validate_cert, store_path] (std::weak_ptr<void>) -> SSLContextPtr {
@@ -285,6 +333,7 @@ namespace wswrap {
             throw std::runtime_error("Requested SSL but not built in");
             #else
             warn("Requested SSL but not built in!\n");
+            _connect_error_message = "Requested SSL but not built in!";
             #endif
             return false;
             #endif
@@ -302,17 +351,19 @@ namespace wswrap {
                 #ifdef __cpp_exceptions
                 throw std::system_error(ec);
                 #else
-                // TODO: run close and error handler?
-                return false;
+                _connect_error = true;
+                _connect_error_message = ec.message();
                 #endif
+                return false;
             }
             if (!client.connect(conn)) {
                 #ifdef __cpp_exceptions
                 throw std::runtime_error("Connect failed");
                 #else
-                // TODO: run close and error handler?
-                return false;
+                _connect_error = true;
+                _connect_error_message = "Connect failed";
                 #endif
+                return false;
             }
             return true;
         }
@@ -423,6 +474,24 @@ namespace wswrap {
         }
 #endif
 
+        template<class T>
+        void on_ping_expired(const asio::error_code& ec)
+        {
+            if (_ping_timer) {
+                if (!ec) { // not cancelled
+                    asio::error_code ping_ec;
+                    T* impl = (T*)_impl;
+                    impl->first.ping(impl->second, "", ping_ec);
+                    if (ping_ec) {
+                        if (_herror) _herror(ec.message());
+                        impl->second->close(websocketpp::close::status::internal_endpoint_error, "send failed");
+                    }
+                }
+                _ping_timer->expires_from_now(std::chrono::milliseconds(_ping_interval));
+                _ping_timer->async_wait([=](const asio::error_code& ec) { on_ping_expired<T>(ec); });
+            }
+        }
+
         void warn(const char* fmt, ...)
         {
             va_list args;
@@ -435,6 +504,16 @@ namespace wswrap {
         SERVICE *_service;
         bool _secure;
         bool _polling = false;
+        std::unique_ptr<asio::high_resolution_timer> _ping_timer;
+        int _ping_interval = 25000;
+        onopen_handler _hopen;
+        onclose_handler _hclose;
+        onmessage_handler _hmessage;
+        onerror_ex_handler _herror;
+#ifndef __cpp_exceptions
+        bool _connect_error = false;
+        std::string _connect_error_message;
+#endif
     };
 
 }; // namespace wsrap

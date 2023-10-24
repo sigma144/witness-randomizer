@@ -24,7 +24,14 @@ namespace wswrap {
         typedef std::function<void(void)> onopen_handler;
         typedef std::function<void(void)> onclose_handler;
         typedef std::function<void(void)> onerror_handler;
+        typedef std::function<void(const std::string&)> onerror_ex_handler;
         typedef std::function<void(const std::string&)> onmessage_handler;
+
+        WS(const std::string& uri_string, onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage,
+           onerror_ex_handler herror=nullptr, const std::string& = "")
+                : WS(uri_string, hopen, hclose, hmessage, [herror](){herror("Unknown");})
+        {
+        }
 
         WS(const std::string& uri, onopen_handler hopen, onclose_handler hclose, onmessage_handler hmessage, onerror_handler herror=nullptr, const std::string& = "")
         {

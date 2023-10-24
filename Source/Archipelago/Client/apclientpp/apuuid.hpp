@@ -73,7 +73,7 @@ static std::string ap_get_uuid(const std::string& uuidFile)
             fclose(f);
             #ifdef __EMSCRIPTEN__
             EM_ASM(
-                FS.syncfs(function (err) {});
+                FS.syncfs(function (err) {}); // cppcheck-suppress unknownMacro
             );
             #endif
         }

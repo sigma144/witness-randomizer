@@ -23,9 +23,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	if (ap) ap->reset();
 	ap = new APClient("uuid", "The Witness", uri);
 
-	try {	ap->set_data_package_from_file(DATAPACKAGE_CACHE);	}
-	catch (std::exception) { /* ignore */ }
-
 	bool connected = false;
 	bool hasConnectionResult = false;
 
@@ -370,10 +367,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				if(!receiving) async->getHudManager()->queueNotification("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 		}
-	});
-
-	ap->set_data_package_changed_handler([&](const nlohmann::json& data) {
-		ap->save_data_package(DATAPACKAGE_CACHE);
 	});
 
 	(new APServerPoller(ap))->start();
