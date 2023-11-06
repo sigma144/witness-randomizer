@@ -813,14 +813,14 @@ void APWatchdog::UnlockDoor(int id) {
 }
 
 void APWatchdog::SeverDoor(int id) {
-	if (allEPs.count(id)) return; // EPs don't need any "severing"
-
 	// Disabled doors should behave as vanilla
 	if (DisabledEntities.count(id)) return;
 	
 	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
 		state->keysInTheGame.insert(id);
 	}
+
+	if (allEPs.count(id)) return; // EPs don't need any "severing"
 
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
