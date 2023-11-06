@@ -46,8 +46,6 @@ class APRandomizer {
 
 		void SeverDoors();
 
-		void unlockItem(int item);
-
 		bool InfiniteChallenge(bool enable);
 
 		void Init();

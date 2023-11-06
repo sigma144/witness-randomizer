@@ -46,6 +46,7 @@
 #define PRESSURE_PLATE_TARGET 0x170
 
 #define ENTITY_NAME 0x58
+#define LIGHTMAP_TABLE 0x68
 
 #define AUDIO_LOG_IS_PLAYING 0xE4
 #define AUDIO_LOG_LILYPAD_SIZE 0x128
@@ -266,7 +267,6 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 
 	// Lasers
 	{ 0x00509, {{0x0360D, PANEL, TARGET }} }, // Symmetry
-	{ 0x012FB, {{0x03608, PANEL, TARGET }} }, // Desert
 	{ 0x01539, {{0x03612, PANEL, TARGET }} }, // Quarry
 	{ 0x181B3, {{0x19650, PANEL, TARGET }} }, // Shadows
 	{ 0x014BB, {{0x0360E, PANEL, TARGET },{0x03317, PANEL, TARGET }} }, // Keep
@@ -276,6 +276,10 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{ 0x0C2B2, {{0x09DE0, PANEL, TARGET }} }, // Bunker
 	{ 0x00BF6, {{0x03615, PANEL, TARGET }} }, // Swamp
 	{ 0x028A4, {{0x03613, PANEL, TARGET }} }, // Treehouse
+
+	// Desert Laser
+	{ 0x012FB, {{0x012FB, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, MOUNT_PARENT_ID, }, {0x34F1E, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, LIGHTMAP_TABLE, }, {0x34F1E, PANEL, LIGHTMAP_TABLE, }} }, // Desert Laser
+	{ 0x01317, {{0x012FB, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, MOUNT_PARENT_ID, }, {0x34F1E, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, LIGHTMAP_TABLE, }, {0x34F1E, PANEL, LIGHTMAP_TABLE, }} }, // Desert Elevator
 };
 
 inline std::map<int, std::vector<int>> doorCollisions = {

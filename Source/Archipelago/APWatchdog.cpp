@@ -7,10 +7,8 @@
 #include "../Panels.h"
 #include "../Quaternion.h"
 #include "../Special.h"
-#include "Client/apclientpp/apclient.hpp"
 #include "PanelLocker.h"
 #include "SkipSpecialCases.h"
-
 #include <thread>
 #include "../Randomizer.h"
 #include "../DateTime.h"
@@ -22,7 +20,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -45,6 +43,14 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	DisabledEntities = disP;
 	ElevatorsComeToYou = elev;
 	doorToItemId = dToI;
+	progressiveItems = pI;
+	itemIdToDoorSet = iTD;
+
+	mostRecentItemId = Memory::get()->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
+	if (mostRecentItemId == 1065353216) { // Default value. Hopefully noone launches their game after the ~1 billionth item was sent, exactly.
+		mostRecentItemId = -1;
+		Memory::get()->WritePanelData<int>(0x64, VIDEO_STATUS_COLOR + 12, { -1 });
+	}
 
 	speedTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR);
 	if (speedTime == 0.6999999881f) { // original value
@@ -78,6 +84,8 @@ void APWatchdog::action() {
 	lastFrameTime = currentFrameTime;
 
 	timePassedSinceRandomisation += frameDuration;
+
+	HandleReceivedItems();
 
 	HandleInteractionState();
 	HandleMovementSpeed(frameDuration);
@@ -805,18 +813,18 @@ void APWatchdog::UnlockDoor(int id) {
 }
 
 void APWatchdog::SeverDoor(int id) {
+	if (allEPs.count(id)) return; // EPs don't need any "severing"
+
+	// Disabled doors should behave as vanilla
+	if (DisabledEntities.count(id)) return;
+	
 	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
 		state->keysInTheGame.insert(id);
 	}
 
-	if (allEPs.count(id)) return; // EPs don't need any "severing"
-
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 	}
-
-	// Disabled doors should behave as vanilla
-	if (DisabledEntities.count(id)) return;
 
 	if (severTargetsById.count(id)) {
 		severedDoorsList.insert(id);
@@ -829,6 +837,28 @@ void APWatchdog::SeverDoor(int id) {
 		if (id == 0x01D3F) {
 			WritePanelData<int>(0x01D3F, TARGET, { 0x03317 + 1 });
 			return;
+		}
+
+		if (id == 0x012FB || id == 0x01317) {
+			Memory::get()->StopDesertLaserPropagation();
+
+			// If the Desert Elevator has already been severed and we're trying to sever the Laser, the Panel should do nothing.
+			if (id == 0x012FB && severedDoorsList.count(0x01317)) {
+				WritePanelData<int>(0x03608, TARGET, { 0 });
+			}
+
+			else if (id == 0x01317) {
+				// If the Laser has been severed and we're trying to sever the Elevator, the Panel should do nothing.
+				if (severedDoorsList.count(0x012FB)) {
+					WritePanelData<int>(0x03608, TARGET, { 0 });
+				}
+				// HOWEVER, if the Laser has NOT been severed and we're severing the Elevator, the Laser Panel should now directly activate the laser.
+				// If the Laser is going to be severed too, that is taken care of by the above if condition.
+				else
+				{
+					WritePanelData<int>(0x03608, TARGET, { 0x012FB + 1 });
+				}
+			}
 		}
 
 		std::vector<Connection> conns = severTargetsById[id];
@@ -857,6 +887,21 @@ void APWatchdog::SeverDoor(int id) {
 				ASMPayloadManager::get()->UpdateEntityPosition(conn.id);
 			}
 
+			if (conn.id == 0x012FB) {
+				WritePanelData<float>(0x012FB, POSITION, { -124.4, 90.37, 13 });
+				ASMPayloadManager::get()->UpdateEntityPosition(0x012FB);
+			}
+
+			if (conn.id == 0x34BD2) {
+				WritePanelData<float>(0x34BD2, POSITION, { -124.399971, 90.37002563, 13 });
+				ASMPayloadManager::get()->UpdateEntityPosition(0x34BD2);
+			}
+
+			if (conn.id == 0x34F1E) {
+				WritePanelData<float>(0x34F1E, POSITION, { -124.3999557, 90.37004852, 13 });
+				ASMPayloadManager::get()->UpdateEntityPosition(0x34F1E);
+			}
+
 			if (conn.target_no == ENTITY_NAME) {
 				std::stringstream stream;
 				stream << std::hex << conn.id;
@@ -866,8 +911,10 @@ void APWatchdog::SeverDoor(int id) {
 				WriteArray<char>(conn.id, ENTITY_NAME, v);
 				continue;
 			}
-			WritePanelData<int>(conn.id, conn.target_no, { 0 });
+			if (conn.target_no == LIGHTMAP_TABLE) WritePanelData<INT64>(conn.id, conn.target_no, { 0 });
+			else WritePanelData<int>(conn.id, conn.target_no, { 0 });
 		}
+
 		return;
 	}
 	else
@@ -1214,7 +1261,6 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if(!laserActiveInGame & syncprogress)
 	{
-		if (laserNo == 0x012FB) Memory::get()->OpenDoor(0x01317);
 		Memory::get()->ActivateLaser(laserNo);
 		hudManager->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
@@ -1259,6 +1305,26 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
+
+	
+	if (severedDoorsList.count(0x012FB) || severedDoorsList.count(0x01317)) {
+		if (ReadPanelData<int>(0x012FB, LASER_TARGET)) {
+			if (ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) > 1.0f) WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.0f });
+		}
+
+		else if (ReadPanelData<float>(0x01317, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) == 1.0f) WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.001f });
+
+		else if (!desertLaserHasBeenUpWhileConnected && ReadPanelData<float>(0x01317, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) > 1.0f) {
+			WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.0f });
+			WritePanelData<float>(0x01317, DOOR_OPEN_T, { 0.99f });
+		}
+		else if (ReadPanelData<float>(0x01317, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x01317, DOOR_OPEN_T_TARGET) == 1.0f) {
+			WritePanelData<INT64>(0x27877, LIGHTMAP_TABLE, { 0 });
+			WritePanelData<INT64>(0x01317, LIGHTMAP_TABLE, { 0 });
+			WritePanelData<float>(0x01317, DOOR_OPEN_T_TARGET, { 1.001f });
+			desertLaserHasBeenUpWhileConnected = true;
+		}
+	}
 
 	if (ElevatorsComeToYou){
 		if (quarryElevatorUpper.containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 1.0f) {
@@ -1455,8 +1521,6 @@ void APWatchdog::QueueItemMessages() {
 		return;
 	}
 
-	processingItemMessages = true;
-
 	std::map<std::string, int> itemCounts;
 	std::map<std::string, RgbColor> itemColors;
 	std::vector<std::string> receivedItems;
@@ -1501,8 +1565,6 @@ void APWatchdog::QueueItemMessages() {
 
 		hudManager->queueNotification("Received " + name + count + ".", itemColors[name]);
 	}
-
-	processingItemMessages = false;
 }
 
 void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
@@ -1917,5 +1979,86 @@ void APWatchdog::UpdateInfiniteChallenge() {
 		}
 
 		infiniteChallenge = isChecked;
+	}
+}
+
+void APWatchdog::QueueItem(APClient::NetworkItem i) {
+	queuedReceivedItems.push(i);
+}
+
+void APWatchdog::HandleReceivedItems() {
+	Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
+
+	while (!queuedReceivedItems.empty()) {
+		auto item = queuedReceivedItems.front();
+		queuedReceivedItems.pop();
+		int realitem = item.item;
+		int advancement = item.flags;
+
+		if (progressiveItems.count(realitem)) {
+			if (progressiveItems[realitem].size() == 0) {
+				continue;
+			}
+
+			realitem = progressiveItems[realitem][0];
+			progressiveItems[item.item].erase(progressiveItems[item.item].begin());
+		}
+
+		bool unlockLater = false;
+
+		if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE) {
+			unlockItem(realitem);
+			panelLocker->UpdatePuzzleLocks(*state, realitem);
+		}
+		else {
+			unlockLater = true;
+		}
+
+		if (itemIdToDoorSet.count(realitem)) {
+			for (int doorHex : itemIdToDoorSet[realitem]) {
+				UnlockDoor(doorHex);
+			}
+		}
+
+		if (mostRecentItemId >= item.index + 1) continue;
+
+		if (unlockLater) {
+			unlockItem(realitem);
+		}
+
+		mostRecentItemId = item.index + 1;
+
+		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
+
+		QueueReceivedItem({ item.item, advancement, realitem });
+	}
+}
+
+void APWatchdog::unlockItem(int item) {
+	switch (item) {
+	case ITEM_DOTS:									state->unlockedDots = true;							break;
+	case ITEM_COLORED_DOTS:							state->unlockedColoredDots = true;				break;
+	case ITEM_FULL_DOTS:									state->unlockedFullDots = true;							break;
+	case ITEM_SOUND_DOTS:							state->unlockedSoundDots = true;					break;
+	case ITEM_SYMMETRY:								state->unlockedSymmetry = true;					break;
+	case ITEM_TRIANGLES:								state->unlockedTriangles = true;					break;
+	case ITEM_ERASOR:									state->unlockedErasers = true;						break;
+	case ITEM_TETRIS:									state->unlockedTetris = true;						break;
+	case ITEM_TETRIS_ROTATED:						state->unlockedTetrisRotated = true;				break;
+	case ITEM_TETRIS_NEGATIVE:						state->unlockedTetrisNegative = true;			break;
+	case ITEM_STARS:									state->unlockedStars = true;						break;
+	case ITEM_STARS_WITH_OTHER_SYMBOL:			state->unlockedStarsWithOtherSimbol = true;	break;
+	case ITEM_B_W_SQUARES:							state->unlockedStones = true;						break;
+	case ITEM_COLORED_SQUARES:						state->unlockedColoredStones = true;				break;
+	case ITEM_SQUARES: state->unlockedStones = state->unlockedColoredStones = true;				break;
+	case ITEM_ARROWS: state->unlockedArrows = true; break;
+
+		//Powerups
+	case ITEM_TEMP_SPEED_BOOST:					ApplyTemporarySpeedBoost();				break;
+	case ITEM_PUZZLE_SKIP:							AddPuzzleSkip(); break;
+
+		//Traps
+	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
+	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
 }
