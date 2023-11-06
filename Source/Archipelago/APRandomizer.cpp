@@ -440,15 +440,7 @@ void APRandomizer::PostGeneration() {
 	if (disabledEntities.size() > 0) {
 		clientWindow->setStatusMessage("Disabling Puzzles...");
 		for (int checkID : disabledEntities) {
-			if (allEPs.count(checkID)) {
-				memory->SolveEP(checkID);
-				if (precompletableEpToName.count(checkID) && precompletableEpToPatternPointBytes.count(checkID)) {
-					memory->MakeEPGlow(precompletableEpToName.at(checkID), precompletableEpToPatternPointBytes.at(checkID));
-				}
-			}
-			if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), checkID)) {
-				async->SkipPanel(checkID, "Disabled", false);
-			}
+			async->DisablePuzzle(checkID);
 		}
 	}
 

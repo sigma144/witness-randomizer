@@ -78,9 +78,6 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 }
 
 void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
-	if (find(disabledPuzzles.begin(), disabledPuzzles.end(), id) != disabledPuzzles.end())
-		return;
-
 	Memory* memory = Memory::get();
 
 	bool isLocked;
@@ -123,7 +120,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		|| (puzzle->hasSymmetry && !state.unlockedSymmetry)
 		|| (puzzle->needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers)
 		|| (puzzle->needsMountainLasers && state.activeLasers < state.requiredMountainLasers)
-		|| (state.keysInTheGame.count(puzzle->id) && !state.keysReceived.count(puzzle->id)))
+		|| (state.keysInTheGame.count(puzzle->id) && !state.keysReceived.count(puzzle->id))
+		|| disabledPuzzles.count(id) && allEPs.count(id))
 	{
 		//puzzle should be locked
 		if (!isLocked)
@@ -142,6 +140,8 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 }
 
 void PanelLocker::PermanentlyUnlockPuzzle(int id, const APState& state) {
+	if (disabledPuzzles.count(id) && allEPs.count(id)) return;
+
 	if (lockedPuzzles.count(id) == 1) {
 		LockablePuzzle* puzzle = lockedPuzzles[id];
 		unlockPuzzle(puzzle, state);
@@ -168,4 +168,22 @@ void PanelLocker::unlockPuzzle(LockablePuzzle* puzzle, const APState& state) {
 
 bool PanelLocker::PuzzleIsLocked(int id) {
 	return lockedPuzzles.count(id) != 0;
+}
+
+void PanelLocker::DisablePuzzle(int id) {
+	disabledPuzzles.insert(id);
+
+	if (allEPs.count(id)) {
+		if (!lockedPuzzles.count(id)) {
+			auto puzzle = new LockableEP(id);
+			lockedPuzzles[id] = puzzle;
+		}
+		bool allDisabledForStartpoint = true;
+
+		for (int associatedEP : startPointToEPs.find(EPtoStartPoint.find(id)->second)->second) {
+			allDisabledForStartpoint = allDisabledForStartpoint && disabledPuzzles.count(associatedEP);
+		}
+
+		((LockableEP*)lockedPuzzles[id])->DisableEP(allDisabledForStartpoint);
+	}
 }

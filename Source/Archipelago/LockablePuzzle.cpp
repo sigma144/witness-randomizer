@@ -893,23 +893,26 @@ void LockableEP::Read(){
 
 void LockableEP::UpdateLock(APState state)
 {
-	auto memory = Memory::get();
-
 	if (!state.keysInTheGame.count(id) || state.keysReceived.count(id)) return;
+
+	LockEP(false, true);
+}
+
+void LockableEP::LockEP(bool disabled, bool recolor) {
+	auto memory = Memory::get();
 
 	int startPointID = EPtoStartPoint.find(id)->second;
 
 	// Disable Endpoints
-	std::vector<int> endPoints = EPStartpointsToEndpoints.find(startPointID)->second;
+	int endPoint = EPtoEndPoint.find(id)->second;
 
 	if (startPointID == 0x1AE8 || startPointID == 0x01C0D || startPointID == 0x01DC7 || startPointID == 0x01E12 || startPointID == 0x01E52) { // Pressure Plate 
-		std::vector<int> actualEndPoints = {};
-		for (int endPointPlate : endPoints) {
-			int realEndPoint = memory->ReadPanelData<int>(endPointPlate, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
-			if (realEndPoint != -1) actualEndPoints.emplace_back(realEndPoint);
-		}
-		endPoints = actualEndPoints;
+		endPoint = memory->ReadPanelData<int>(endPoint, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
 	}
+
+	if (endPoint != -1) memory->WritePanelData<int>(endPoint, EP_PATTERN_POINT_IS_ENDPOINT, { 0 });
+
+	if (!recolor) return;
 
 	// Recolor stuff
 	if (startPointID == 0x1AE8 || startPointID == 0x01C0D || startPointID == 0x01DC7 || startPointID == 0x01E12 || startPointID == 0x01E52) { // Pressure Plate 
@@ -917,14 +920,14 @@ void LockableEP::UpdateLock(APState state)
 		if (startPointID == -1) return;
 	}
 
-	// Color the trail red
-	std::vector<float> colors = { 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, };
+	// Color the trail red / yellow
+	
+	std::vector<float> colors = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, };
+	if (disabled) colors = { 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, };
+	
+
 	memory->WritePanelData<float>(startPointID, EP_TRAIL_COLORS, colors);
 	memory->WritePanelData<float>(startPointID, EP_PARTICLE_SIZE_SCALE, 2.0f);
-
-	for (int endPoint : endPoints) {
-		memory->WritePanelData<int>(endPoint, EP_PATTERN_POINT_IS_ENDPOINT, { 0 });
-	}
 }
 
 void LockableEP::Restore(){
@@ -932,13 +935,12 @@ void LockableEP::Restore(){
 
 	// Reenable Endpoints
 	int startPointID = EPtoStartPoint.find(id)->second;
-	std::vector<int> endPoints = EPStartpointsToEndpoints.find(startPointID)->second;
-	for (int endPoint : endPoints) {
-		if (endPoint == 0x018f4 || endPoint == 0x018DA || endPoint == 0x17DF || endPoint == 0x18E7 || endPoint == 0x1786) { // Pressure Plate 
-			endPoint = memory->ReadPanelData<int>(endPoint, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
-			if (startPointID == -1) continue;
-		}
-
+	int endPoint = EPtoEndPoint.find(id)->second;
+	if (endPoint == 0x018f4 || endPoint == 0x018DA || endPoint == 0x17DF || endPoint == 0x18E7 || endPoint == 0x1786) { // Pressure Plate 
+		endPoint = memory->ReadPanelData<int>(endPoint, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
+		if (endPoint != -1)	memory->WritePanelData<int>(endPoint, EP_PATTERN_POINT_IS_ENDPOINT, { 1 });
+	}
+	else {
 		memory->WritePanelData<int>(endPoint, EP_PATTERN_POINT_IS_ENDPOINT, { 1 });
 	}
 
@@ -954,6 +956,11 @@ void LockableEP::Restore(){
 	memory->WritePanelData<float>(startPointID, EP_TRAIL_COLORS, colors);
 
 	memory->WritePanelData<float>(startPointID, EP_PARTICLE_SIZE_SCALE, particleSize);
+}
+
+void LockableEP::DisableEP(bool recolor)
+{
+	LockEP(true, recolor);
 }
 
 void LockableObelisk::Read()

@@ -3,7 +3,7 @@
 #include <map>
 #include <set>
 #include <string>
-#include <vector>
+#include <set>
 
 class APState;
 struct LockablePuzzle;
@@ -16,9 +16,10 @@ class PanelLocker {
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		bool PuzzleIsLocked(int id);
 		void PermanentlyUnlockPuzzle(int id, const APState& state);
+		void DisablePuzzle(int id);
 
 	private:
-		std::vector<int> disabledPuzzles;
+		std::set<int> disabledPuzzles;
 		std::map<int, LockablePuzzle*> lockedPuzzles;
 
 		void unlockPuzzle(LockablePuzzle* puzzle, const APState& state);

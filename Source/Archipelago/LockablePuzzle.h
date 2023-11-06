@@ -75,6 +75,8 @@ struct LockableEP : LockablePuzzle {
 	void Read();
 	void UpdateLock(APState state);
 	void Restore();
+	void DisableEP(bool recolor);
+	void LockEP(bool disable, bool recolor);
 };
 
 struct LockableObelisk : LockablePuzzle {

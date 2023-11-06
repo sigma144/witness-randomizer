@@ -439,7 +439,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 		}
 	}
 
-	else if (allEPs.count(panelId) && Collect != "Unchanged") {
+	else if (allEPs.count(panelId) && Collect == "Unchanged") {
 		int eID = panelId;
 
 		Memory::get()->SolveEP(eID);
@@ -1609,32 +1609,51 @@ void APWatchdog::SetStatusMessages() {
 				}
 			}
 
-			if (solvingPressurePlateStartPoint || EPStartpointsToEndpoints.count(activePanelId)) {
-				int realEP = 0;
+			// If we have a special skip message for the current puzzle, show it above the skip count.
+			if (puzzleSkipInfoMessage.size() > 0) {
+				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
+			}
+
+			if (solvingPressurePlateStartPoint || startPointToEPs.count(activePanelId)) {
+				bool allDisabled = true;
+				bool someDisabled = false;
 
 				bool hasLockedEPs = false;
 
 				std::string name = "(Unknown Key)";
 
 				for(auto [ep, startPoint] : EPtoStartPoint){
-					if ((solvingPressurePlateStartPoint == activePanelId && ep == solvingPressurePlateAssociatedEPID || startPoint == activePanelId) && ep && panelLocker->PuzzleIsLocked(ep)) {
-						hasLockedEPs = true;
-						if (doorToItemId.count(ep)) {
-							name = ap->get_item_name(doorToItemId[ep]);
+					if ((solvingPressurePlateStartPoint == activePanelId && ep == solvingPressurePlateAssociatedEPID || startPoint == activePanelId) && ep) {
+						bool disabled = find(DisabledEntities.begin(), DisabledEntities.end(), ep) != DisabledEntities.end();
+
+						allDisabled = allDisabled && disabled;
+						someDisabled = someDisabled || disabled;
+
+						if(panelLocker->PuzzleIsLocked(ep)){
+							hasLockedEPs = hasLockedEPs || !disabled;
+							if (doorToItemId.count(ep)) {
+								name = ap->get_item_name(doorToItemId[ep]);
+							}
 						}
 					}
 				}
 
-				if (hasLockedEPs && interactionState == InteractionState::Solving) {
-
-					hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
-					return;
+				if (interactionState == InteractionState::Solving) {
+					if (allDisabled) {
+						if (DisabledPuzzlesBehavior == "Prevent Solve") {
+							hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP is disabled.");
+						}
+						else {
+							skipMessage = "This EP is disabled.\n" + skipMessage;
+						}
+					}
+					else if (hasLockedEPs) {
+						hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
+					}
+					else if (someDisabled) {
+						skipMessage = "Some EPs for this start point are disabled.\n" + skipMessage;
+					}
 				}
-			}
-
-			// If we have a special skip message for the current puzzle, show it above the skip count.
-			if (puzzleSkipInfoMessage.size() > 0) {
-				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
 			}
 
 			if (CanUsePuzzleSkip()) {
@@ -2060,5 +2079,22 @@ void APWatchdog::unlockItem(int item) {
 		//Traps
 	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
 	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
+	}
+}
+
+void APWatchdog::DisablePuzzle(int id) {
+	auto memory = Memory::get();
+
+	if (allEPs.count(id)) {
+		memory->SolveEP(id);
+		if ((DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve") && precompletableEpToName.count(id) && precompletableEpToPatternPointBytes.count(id)) {
+			memory->MakeEPGlow(precompletableEpToName.at(id), precompletableEpToPatternPointBytes.at(id));
+		}
+		if (DisabledPuzzlesBehavior == "Prevent Solve") {
+			panelLocker->DisablePuzzle(id);
+		}
+	}
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
+		SkipPanel(id, "Disabled", false);
 	}
 }

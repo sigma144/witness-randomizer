@@ -50,6 +50,8 @@ public:
 	}
 	void SkipPanel(int id, std::string reason, bool kickOut, int cost);
 
+	void DisablePuzzle(int id);
+
 	void DoubleDoorTargetHack(int id);
 
 	void SetItemRewardColor(const int& id, const int& itemFlags);
