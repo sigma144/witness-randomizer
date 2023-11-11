@@ -2094,7 +2094,7 @@ void APWatchdog::DisablePuzzle(int id) {
 			panelLocker->DisablePuzzle(id);
 		}
 	}
-	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id) || allPanels.count(id)) {
 		SkipPanel(id, "Disabled", false);
 	}
 }
