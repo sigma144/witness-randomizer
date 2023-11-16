@@ -116,6 +116,14 @@ IDR_WAVE32              WAVE                    "..\\Music\\Panel Useful 3.wav"
 
 IDR_WAVE33              WAVE                    "..\\Music\\Panel Useful 4.wav"
 
+IDR_WAVE34              WAVE                    "..\\Music\\Dog Trap.wav"
+
+IDR_WAVE35              WAVE                    "..\\Music\\Dog Filler.wav"
+
+IDR_WAVE36              WAVE                    "..\\Music\\Dog Progression.wav"
+
+IDR_WAVE37              WAVE                    "..\\Music\\Dog Useful.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 

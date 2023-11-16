@@ -35,12 +35,16 @@
 #define IDR_WAVE31                      191
 #define IDR_WAVE32                      192
 #define IDR_WAVE33                      193
+#define IDR_WAVE34                      194
+#define IDR_WAVE35                      195
+#define IDR_WAVE36                      196
+#define IDR_WAVE37                      197
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        194
+#define _APS_NEXT_RESOURCE_VALUE        198
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101

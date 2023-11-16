@@ -24,6 +24,11 @@ enum APJingle
 	IncomingFiller,
 	IncomingTrap,
 
+	DogProgression,
+	DogUseful,
+	DogFiller,
+	DogTrap,
+
 	Victory,
 };
 
@@ -84,6 +89,11 @@ private:
 		{IncomingTrap, {IDR_WAVE26}},
 		{IncomingUseful, {IDR_WAVE27}},
 
+		{DogFiller, {IDR_WAVE35}},
+		{DogProgression, {IDR_WAVE36}},
+		{DogTrap, {IDR_WAVE34}},
+		{DogUseful, {IDR_WAVE37}},
+
 		{Victory, {IDR_WAVE30}},
 	};
 
@@ -103,6 +113,11 @@ private:
 		{IncomingTrap, IDR_WAVE26},
 		{IncomingUseful, IDR_WAVE27},
 
+		{DogFiller, {IDR_WAVE35}},
+		{DogProgression, {IDR_WAVE36}},
+		{DogTrap, {IDR_WAVE34}},
+		{DogUseful, {IDR_WAVE37}},
+
 		{Victory, IDR_WAVE30},
 	};
 
@@ -118,6 +133,13 @@ private:
 		PanelUseful,
 		PanelProgression,
 		PanelTrap
+	};
+
+	std::set<APJingle> dogJingles = {
+		DogFiller,
+		DogUseful,
+		DogProgression,
+		DogTrap
 	};
 
 public:

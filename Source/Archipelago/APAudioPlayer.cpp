@@ -66,7 +66,7 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 
 	int versionToPlay = 0;
 
-	if (panelJingles.count(jingle)) {
+	if (panelJingles.count(jingle) || dogJingles.count(jingle)) {
 		panelChain++;
 		if (lastPanelJinglePlayed == jingle && !epicVersion) panelChain++; // If the same jingle just played, advance the counter another time so the same jingle doesn't play twice.
 		

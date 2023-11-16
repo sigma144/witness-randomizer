@@ -1478,7 +1478,22 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		epicVersion = !(severedDoorsList.count(0x2D880) && ReadPanelData<int>(0x2D880, DOOR_OPEN)) || !severedDoorsList.count(id);
 	}
 
-	Color backgroundColor;
+	if (id == 0xFFF80) {
+		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+			APAudioPlayer::get()->PlayAudio(APJingle::DogProgression, APJingleBehavior::Queue, false);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::DogUseful, APJingleBehavior::Queue, false);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+			APAudioPlayer::get()->PlayAudio(APJingle::DogTrap, APJingleBehavior::Queue, false);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::DogFiller, APJingleBehavior::Queue, false);
+		}
+		return;
+	}
+
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPProgression : APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
 	}

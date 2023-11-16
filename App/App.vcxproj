@@ -199,6 +199,10 @@
     <Text Include="changes.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Media Include="..\Music\Dog Filler.wav" />
+    <Media Include="..\Music\Dog Progression.wav" />
+    <Media Include="..\Music\Dog Trap.wav" />
+    <Media Include="..\Music\Dog Useful.wav" />
     <Media Include="..\Music\EP Filler 2.wav" />
     <Media Include="..\Music\EP Filler.wav" />
     <Media Include="..\Music\EP Progression 2.wav" />
