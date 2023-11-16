@@ -172,6 +172,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Archipelago\APAudioPlayer.h" />
     <ClInclude Include="Archipelago\APState.h" />
     <ClInclude Include="Archipelago\APRandomizer.h" />
     <ClInclude Include="Archipelago\APGameData.h" />
@@ -207,6 +208,7 @@
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Archipelago\APAudioPlayer.cpp" />
     <ClCompile Include="Archipelago\APGameData.cpp" />
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
