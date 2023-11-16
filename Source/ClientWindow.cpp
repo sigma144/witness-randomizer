@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 4
+#define SAVE_VERSION 5
 
 #define CLIENT_WINDOW_WIDTH 600
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -82,7 +82,7 @@ void ClientWindow::saveSettings()
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
-	data["jingles"] = getSetting(ClientToggleSetting::Jingles);
+	data["jingles"] = getSetting(ClientDropdownSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
 	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
@@ -108,7 +108,7 @@ void ClientWindow::loadSettings()
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
-			setSetting(ClientToggleSetting::Jingles, data.contains("jingles") ? data["jingles"].get<bool>() : false);
+			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Off");
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
@@ -131,7 +131,7 @@ void ClientWindow::loadSettings()
 
 	if (!loadedSettings) {
 		// Set defaults.
-		setSetting(ClientToggleSetting::Jingles, false);
+		setSetting(ClientDropdownSetting::Jingles, "Off");
 		setSetting(ClientToggleSetting::ChallengeTimer, false);
 
 		setSetting(ClientToggleSetting::SyncProgress, false);
@@ -236,7 +236,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
-		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Jingles)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, false);
 
 		for (auto keybindButton : customKeybindButtons) {
 			EnableWindow(keybindButton.second, false);
@@ -264,7 +264,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
 		// Enable "any time" settings.
-		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Jingles)->second, true);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
 
 		// Disable keybinds until connected.
 		for (auto keybindButton : customKeybindButtons) {
@@ -298,7 +298,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
 
 		// Enable "any time" settings.
-		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Jingles)->second, true);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
 
 		// Enable keybinds.
 		for (auto keybindButton : customKeybindButtons) {
@@ -507,17 +507,6 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 }
 
 void ClientWindow::addGameOptions(int& currentY) {
-	// Musical jingles option.
-	HWND hwndOptionMusic = CreateWindow(L"BUTTON", L"Jingles - Add musical sound effects for completing location checks.",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
-		CONTROL_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
-		hwndRootWindow, (HMENU)IDC_SETTING_JINGLES, hAppInstance, NULL);
-	toggleSettingButtonIds[ClientToggleSetting::Jingles] = IDC_SETTING_JINGLES;
-	toggleSettingCheckboxes[ClientToggleSetting::Jingles] = hwndOptionMusic;
-
-	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
-
 	// Colorblind option. This is 3 lines tall.
 	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
@@ -606,6 +595,28 @@ void ClientWindow::addGameOptions(int& currentY) {
 	SendMessage(hwndOptionDisabled, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
 
 	currentY += STATIC_TEXT_HEIGHT * 2;
+
+	// Option for jingles panels
+	HWND hwndOptionJinglesText = CreateWindow(L"STATIC", L"Jingles:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+		SETTING_LABEL_WIDTH * 1.25, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	HWND hwndOptionJingles = CreateWindow(L"COMBOBOX", NULL,
+		CBS_DROPDOWNLIST | WS_VISIBLE | WS_CHILD,
+		CONTROL_MARGIN + SETTING_LABEL_WIDTH * 1.25, currentY,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
+		hwndRootWindow, (HMENU)IDC_SETTING_JINGLES, hAppInstance, NULL);
+	dropdownBoxes[ClientDropdownSetting::Jingles] = hwndOptionJingles;
+	dropdownIds[ClientDropdownSetting::Jingles] = IDC_SETTING_COLLECT;
+
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Off");
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated");
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Full");
+	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Off");
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 }
 
 void ClientWindow::addKeybindings(int& currentY)

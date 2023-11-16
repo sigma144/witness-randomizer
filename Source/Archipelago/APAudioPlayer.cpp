@@ -54,6 +54,13 @@ void APAudioPlayer::PlayJingle(int resource, bool async) {
 
 void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async) {
 	auto now = std::chrono::system_clock::now();
+
+	if (understatedJingles.count(jingle)) {
+		int resource = jingleVersions[jingle][0];
+
+		PlayJingle(resource, async);
+		return;
+	}
 	
 	if ((now - lastPanelJinglePlayedTime) > std::chrono::seconds(60)) {
 		panelChain = -1;

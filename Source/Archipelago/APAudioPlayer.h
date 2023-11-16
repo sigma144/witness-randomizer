@@ -29,6 +29,11 @@ enum APJingle
 	DogFiller,
 	DogTrap,
 
+	UnderstatedFiller,
+	UnderstatedProgression,
+	UnderstatedTrap,
+	UnderstatedUseful,
+
 	Victory,
 };
 
@@ -84,6 +89,11 @@ private:
 		{EPTrap, {IDR_WAVE3, IDR_WAVE20}},
 		{EPUseful, {IDR_WAVE4, IDR_WAVE21}},
 
+		{UnderstatedFiller, {IDR_WAVE1}},
+		{UnderstatedProgression, {IDR_WAVE2}},
+		{UnderstatedTrap, {IDR_WAVE3}},
+		{UnderstatedUseful, {IDR_WAVE4}},
+
 		{IncomingFiller, {IDR_WAVE24}},
 		{IncomingProgression, {IDR_WAVE25}},
 		{IncomingTrap, {IDR_WAVE26}},
@@ -113,6 +123,11 @@ private:
 		{IncomingTrap, IDR_WAVE26},
 		{IncomingUseful, IDR_WAVE27},
 
+		{UnderstatedFiller, {IDR_WAVE1}},
+		{UnderstatedProgression, {IDR_WAVE2}},
+		{UnderstatedTrap, {IDR_WAVE3}},
+		{UnderstatedUseful, {IDR_WAVE4}},
+
 		{DogFiller, {IDR_WAVE35}},
 		{DogProgression, {IDR_WAVE36}},
 		{DogTrap, {IDR_WAVE34}},
@@ -140,6 +155,13 @@ private:
 		DogUseful,
 		DogProgression,
 		DogTrap
+	};
+
+	std::set<APJingle> understatedJingles = {
+		UnderstatedFiller,
+		UnderstatedProgression,
+		UnderstatedTrap,
+		UnderstatedUseful
 	};
 
 public:

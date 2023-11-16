@@ -1452,7 +1452,7 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 }
 
 void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
-	if (!ClientWindow::get()->getSetting(ClientToggleSetting::Jingles)) return;
+	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Off") return;
 
 	bool isEP = allEPs.count(id);
 
@@ -1478,6 +1478,38 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		epicVersion = !(severedDoorsList.count(0x2D880) && ReadPanelData<int>(0x2D880, DOOR_OPEN)) || !severedDoorsList.count(id);
 	}
 
+	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Understated") {
+		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedProgression, APJingleBehavior::Queue, epicVersion);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedUseful, APJingleBehavior::Queue, epicVersion);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedTrap, APJingleBehavior::Queue, epicVersion);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedFiller, APJingleBehavior::Queue, epicVersion);
+		}
+		return;
+	}
+
+	if (isEP){
+		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EPProgression, APJingleBehavior::Queue, epicVersion);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EPUseful, APJingleBehavior::Queue, epicVersion);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EPTrap, APJingleBehavior::Queue, epicVersion);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::EPFiller, APJingleBehavior::Queue, epicVersion);
+		}
+		return;
+	}
+
 	if (id == 0xFFF80) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 			APAudioPlayer::get()->PlayAudio(APJingle::DogProgression, APJingleBehavior::Queue, false);
@@ -1495,21 +1527,21 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 	}
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPProgression : APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
+		APAudioPlayer::get()->PlayAudio(APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPUseful : APJingle::PanelUseful, APJingleBehavior::Queue, epicVersion);
+		APAudioPlayer::get()->PlayAudio(APJingle::PanelUseful, APJingleBehavior::Queue, epicVersion);
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPTrap : APJingle::PanelTrap, APJingleBehavior::Queue, epicVersion);
+		APAudioPlayer::get()->PlayAudio(APJingle::PanelTrap, APJingleBehavior::Queue, epicVersion);
 	}
 	else {
-		APAudioPlayer::get()->PlayAudio(isEP ? APJingle::EPFiller : APJingle::PanelFiller, APJingleBehavior::Queue, epicVersion);
+		APAudioPlayer::get()->PlayAudio(APJingle::PanelFiller, APJingleBehavior::Queue, epicVersion);
 	}
 }
 
 void APWatchdog::PlayReceivedJingle(const int& itemFlags) {
-	if (!ClientWindow::get()->getSetting(ClientToggleSetting::Jingles)) return;
+	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Off") return;
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 		APAudioPlayer::get()->PlayAudio(APJingle::IncomingProgression, APJingleBehavior::DontQueue);
