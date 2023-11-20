@@ -381,18 +381,6 @@ void APRandomizer::PostGeneration() {
 		memory->WritePanelData<float>(0x1802C, OPEN_RATE, { 0.03f }); // Swamp Flood gate (outer), 2x
 	}
 
-	// Bunker door colors
-	clientWindow->setStatusMessage("Setting additional colors...");
-	int num_dec = memory->ReadPanelData<int>(0x17C2E, NUM_DECORATIONS);
-	if (num_dec != 1){
-		std::vector<int> decorations = memory->ReadArray<int>(0x17C2E, DECORATIONS, num_dec);
-
-		decorations[3] = 266;
-		decorations[12] = 266;
-
-		memory->WriteArray<int>(0x17C2E, DECORATIONS, decorations);
-	}
-
 	// In Vanilla, Caves Invis Symmetry 3 turns on a power cable on Symmetry Island. This is never relevant in vanilla, but doors modes make it a legitimate issue.
 	memory->WritePanelData<int>(0x00029, TARGET, { 0 }); 
 
@@ -546,7 +534,9 @@ void APRandomizer::GenerateHard() {
 void APRandomizer::PreventSnipes()
 {
 	// Distance-gate shadows laser to prevent sniping through the bars
-	Memory::get()->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, {2.7});
+	if (doorsActuallyInTheItemPool.count(0x19665) && doorsActuallyInTheItemPool.count(0x194B2)) {
+		Memory::get()->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { 2.7 });
+	}
 }
 
 void APRandomizer::SkipPuzzle() {

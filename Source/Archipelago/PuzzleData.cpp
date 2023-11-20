@@ -195,6 +195,9 @@ void PuzzleData::Read() {
 	else if (id == 0x09FDC || id == 0x09FF7 || id == 0x09F82 || id == 0x09FF8 || id == 0x09D9F || id == 0x0A01B || id == 0x0A01F || id == 0x17E67 || id == 0x0A079) { // Bunker Panels don't pick up their white squares
 		hasStones = true;
 	}
+	else if (id == 0x09F7D || id == 0x09DA1 || id == 0x09DA2 || id == 0x09DAF || id == 0x0A010 || id == 0x17E63) {
+		hasStones = false;
+	}
 }
 
 void PuzzleData::Restore() {
