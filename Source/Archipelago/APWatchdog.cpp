@@ -796,6 +796,11 @@ void APWatchdog::UnlockDoor(int id) {
 		ASMPayloadManager::get()->UpdateEntityPosition(0x021D7);
 	}
 
+	// Un-distance-gate Shadows Laser Panel
+	if (id == 0x19665 || id == 0x194B2) {
+		Memory::get()->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { -1 });
+	}
+
 	ASMPayloadManager::get()->OpenDoor(id);
 }
 
