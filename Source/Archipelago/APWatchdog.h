@@ -53,6 +53,8 @@ public:
 	void DoubleDoorTargetHack(int id);
 
 	void SetItemRewardColor(const int& id, const int& itemFlags);
+	void PlaySentJingle(const int& id, const int& itemFlags);
+	void PlayReceivedJingle(const int& itemFlags);
 
 	bool CheckPanelHasBeenSolved(int panelId);
 

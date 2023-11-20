@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 4
+#define SAVE_VERSION 5
 
 #define CLIENT_WINDOW_WIDTH 600
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -54,6 +54,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_SYNCPROGRESS 0x503
 #define IDC_SETTING_DISABLED 0x504
 #define IDC_SETTING_HIGHCONTRAST 0x505
+#define IDC_SETTING_JINGLES 0x510
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -81,6 +82,7 @@ void ClientWindow::saveSettings()
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
+	data["jingles"] = getSetting(ClientDropdownSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
 	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
@@ -106,6 +108,7 @@ void ClientWindow::loadSettings()
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
+			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Off");
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
@@ -128,6 +131,7 @@ void ClientWindow::loadSettings()
 
 	if (!loadedSettings) {
 		// Set defaults.
+		setSetting(ClientDropdownSetting::Jingles, "Off");
 		setSetting(ClientToggleSetting::ChallengeTimer, false);
 
 		setSetting(ClientToggleSetting::SyncProgress, false);
@@ -232,6 +236,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, false);
 
 		for (auto keybindButton : customKeybindButtons) {
 			EnableWindow(keybindButton.second, false);
@@ -248,6 +253,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(hwndApConnect, true);
 
 		// Enable randomization settings.
+
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, true);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, true);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, true);
@@ -256,6 +262,9 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
+
+		// Enable "any time" settings.
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
 
 		// Disable keybinds until connected.
 		for (auto keybindButton : customKeybindButtons) {
@@ -287,6 +296,9 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
+
+		// Enable "any time" settings.
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
 
 		// Enable keybinds.
 		for (auto keybindButton : customKeybindButtons) {
@@ -583,6 +595,28 @@ void ClientWindow::addGameOptions(int& currentY) {
 	SendMessage(hwndOptionDisabled, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
 
 	currentY += STATIC_TEXT_HEIGHT * 2;
+
+	// Option for jingles panels
+	HWND hwndOptionJinglesText = CreateWindow(L"STATIC", L"Jingles:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+		SETTING_LABEL_WIDTH * 1.25, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	HWND hwndOptionJingles = CreateWindow(L"COMBOBOX", NULL,
+		CBS_DROPDOWNLIST | WS_VISIBLE | WS_CHILD,
+		CONTROL_MARGIN + SETTING_LABEL_WIDTH * 1.25, currentY,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
+		hwndRootWindow, (HMENU)IDC_SETTING_JINGLES, hAppInstance, NULL);
+	dropdownBoxes[ClientDropdownSetting::Jingles] = hwndOptionJingles;
+	dropdownIds[ClientDropdownSetting::Jingles] = IDC_SETTING_COLLECT;
+
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Off");
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated");
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Full");
+	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Off");
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 }
 
 void ClientWindow::addKeybindings(int& currentY)
@@ -700,6 +734,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_SETTING_HIGHCONTRAST: {
 			toggleCheckbox(IDC_SETTING_HIGHCONTRAST);
+			break;
+		}
+		case IDC_SETTING_JINGLES: {
+			toggleCheckbox(IDC_SETTING_JINGLES);
 			break;
 		}
 		// Buttons.
