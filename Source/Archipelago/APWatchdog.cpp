@@ -1998,12 +1998,12 @@ void APWatchdog::SendDeathLink(int panelId)
 
 	deathLinkTimestamps.insert(nowDouble);
 
-	auto data = nlohmann::json{ 
+	auto data = nlohmann::json{
 		{"time", nowDouble},
-		{"cause", "Failed " + entityName + "."},
+		{"cause", ap->get_player_alias(ap->get_player_number()) + " failed " + entityName + "."},
 		{"source", ap->get_player_alias(ap->get_player_number())}
-	} ;
-	ap->Bounce(data, {}, {}, {"DeathLink"});
+	};
+	ap->Bounce(data, {}, {}, { "DeathLink" });
 }
 
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
@@ -2021,15 +2021,15 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		deathLinkTimestamps.erase(a);
 		return;
 	}
-	
+
 	std::string firstSentence = "Received Death.";
 	std::string secondSentence = "";
 
-	if (source != "") {
-		firstSentence = "Received Death from " + source + ".";
-	}
 	if (cause != "") {
 		secondSentence = " Reason: " + cause;
+	}
+	else if (source != "") {
+		firstSentence = "Received Death from " + source + ".";
 	}
 
 	hudManager->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
