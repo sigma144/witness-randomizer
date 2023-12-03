@@ -86,7 +86,7 @@ void PuzzleData::Read() {
 					color = { 0.0f, 1.0f, 1.0f };
 				}
 
-				if(color[0] == color[1] && color[1] == color[2]){
+				if (color[0] == color[1] && color[1] == color[2] || (color[0] < 0.035 && color[1] < 0.05 && color[2] < 0.065)) { // vanilla left pillar 2 lol
 					hasStones = true;
 				}
 				else {
@@ -144,18 +144,10 @@ void PuzzleData::Read() {
 		hasSymmetry = true;
 
 	int dotAmount = 0;
-	int pointsToConsider = numberOfDots;
+	int pointsToConsider = 0;
 
 	for (int i = 0; i < numberOfDots; i++)	{
-		if (dot_flags[i] & GAP || dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT || dot_flags[i] & NO_POINT) {
-			pointsToConsider -= 1;
-		}
-
 		if (dot_flags[i] & DOT) {
-			if (!(dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT || dot_flags[i] & NO_POINT)) {
-				dotAmount++;
-			}
-
 			if (dot_flags[i] & DOT_IS_BLUE || dot_flags[i] & DOT_IS_ORANGE)
 				hasColoredDots = true;
 			else if (dot_flags[i] & DOT_SMALL || dot_flags[i] & DOT_MEDIUM || dot_flags[i] & DOT_LARGE)
@@ -163,9 +155,22 @@ void PuzzleData::Read() {
 			else
 				hasDots = true;
 		}
+
+		if (dot_flags[i] & GAP || dot_flags[i] & STARTPOINT || dot_flags[i] & ENDPOINT || dot_flags[i] & NO_POINT) {
+			continue;
+		}
+		if ((dot_flags[i] & ROW) && !(dot_flags[i] & COLUMN) || (dot_flags[i] & COLUMN) && !(dot_flags[i] & ROW)) {
+			continue;
+		}
+
+		pointsToConsider++;
+
+		if (dot_flags[i] & DOT) {
+			dotAmount++;
+		}
 	}
 
-	if ((float) dotAmount / (float) pointsToConsider >= 0.9) {
+	if (pointsToConsider && ((float) dotAmount / (float) pointsToConsider >= 0.9)) {
 		hasFullDots = true;
 	}
 
