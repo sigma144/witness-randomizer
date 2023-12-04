@@ -2179,10 +2179,5 @@ void APWatchdog::CheckFinalRoom() {
 
 	Memory::get()->ReadAbsolute(reinterpret_cast<LPCVOID>(soundStreamPointer + 0x70), &finalRoomMusicTimer, sizeof(double));
 
-	std::wstringstream s;
-	s << finalRoomMusicTimer;
-	s << "\n";
-	OutputDebugStringW(s.str().c_str());
-
 	return;
 }
