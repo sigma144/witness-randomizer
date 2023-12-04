@@ -384,6 +384,36 @@ void Memory::findImportantFunctionAddresses(){
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
 
+	executeSigScan({ 0xF3, 0x41, 0x0F, 0x58, 0xF0, 0x41, 0x0F, 0x2E, 0xF0, 0x0F, 0x84, 0x9A }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0x4C && data[index - 2] == 0x8D && data[index - 1] == 0x05) {
+				uint64_t ptypeIssuedSoundRelativePointer = _baseAddress + offset + index;
+				int ptypeIssuedSoundRelative;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(ptypeIssuedSoundRelativePointer), &ptypeIssuedSoundRelative, sizeof(int));
+				ptypeIssuedSound = ptypeIssuedSoundRelativePointer + ptypeIssuedSoundRelative + 4;
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0x49 && data[index - 2] == 0x8B && data[index - 1] == 0xD0) {
+				uint64_t getPortablesOfTypeRelativePointer = _baseAddress + offset + index + 14;
+				int getPortablesOfTypeRelative;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(getPortablesOfTypeRelativePointer), &getPortablesOfTypeRelative, sizeof(int));
+				getPortablesOfType = getPortablesOfTypeRelativePointer + getPortablesOfTypeRelative + 4;
+				break;
+			}
+		}
+
+		return true;
+	});
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x56, 0x48, 0x63 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->getEntityByName = _baseAddress + offset + index;
+		
+		return true;
+	});
+
 	executeSigScan({ 0x45, 0x0F, 0x28, 0xC8, 0xF3, 0x44 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		cursorSize = _baseAddress + offset + index;
 
@@ -610,6 +640,12 @@ void Memory::findImportantFunctionAddresses(){
 	//	return true;
 	//});
 
+	//Get Sound Stream for Entity Issued Sound
+	executeSigScan({ 0x4C, 0x63, 0x51, 0x08, 0x45, 0x8B, 0xD8, 0x33, 0xC0, 0x0F }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->getSoundStreamFunction = _baseAddress + offset + index;
+
+		return true;
+	});
 
 	//Update Entity Position
 	executeSigScan({ 0x44, 0x0F, 0xB6, 0xCA, 0x4C, 0x8D, 0x41, 0x34 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
@@ -1055,6 +1091,88 @@ void* Memory::ComputeOffset(std::vector<int> offsets, bool forceRecalculatePoint
 		cumulativeAddress = _computedAddresses[cumulativeAddress];
 	}
 	return reinterpret_cast<void*>(cumulativeAddress + final_offset);
+}
+
+uint64_t Memory::getSoundStream(uint64_t issuedSoundPointer) {
+	char resultsBuffer[16];
+
+	auto resultsPointer = VirtualAllocEx(_handle, NULL, sizeof(resultsBuffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	auto resultsAddress = reinterpret_cast<uint64_t>(resultsPointer);
+
+	WriteProcessMemory(_handle, resultsPointer, resultsBuffer, sizeof(resultsBuffer), NULL);
+
+	uint64_t entityManager;
+	ReadAbsolute(reinterpret_cast<LPCVOID>(_baseAddress + GLOBALS), &entityManager, sizeof(uint64_t));
+
+	int managerId;
+	ReadAbsolute(reinterpret_cast<LPCVOID>(entityManager + 0x1A0), &managerId, sizeof(int));
+
+	int portableIdOfIssuedSound;
+	ReadAbsolute(reinterpret_cast<LPCVOID>(issuedSoundPointer + 0x10), &portableIdOfIssuedSound, sizeof(int));
+
+	uint64_t soundPlayer;
+	ReadAbsolute(reinterpret_cast<LPCVOID>(_baseAddress + GLOBALS + 0x478), &soundPlayer, sizeof(uint64_t)); // THIS WOULDN'T WORK IN OLD VERSION! Probably a better way to do this.
+
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax functionaddress
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx soundplayer
+		"\x41\xB8\x00\x00\x00\x00" //mov r8d entity_manager_id
+		"\xBA\x00\x00\x00\x00" //mov edx portableId
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx result alloc
+		"\x48\x89\x02" // mov [rdx], rax
+		"\xC3"; //ret
+
+	buffer[2] = getSoundStreamFunction & 0xff;
+	buffer[3] = (getSoundStreamFunction >> 8) & 0xff;
+	buffer[4] = (getSoundStreamFunction >> 16) & 0xff;
+	buffer[5] = (getSoundStreamFunction >> 24) & 0xff;
+	buffer[6] = (getSoundStreamFunction >> 32) & 0xff;
+	buffer[7] = (getSoundStreamFunction >> 40) & 0xff;
+	buffer[8] = (getSoundStreamFunction >> 48) & 0xff;
+	buffer[9] = (getSoundStreamFunction >> 56) & 0xff;
+
+	buffer[12] = soundPlayer & 0xff;
+	buffer[13] = (soundPlayer >> 8) & 0xff;
+	buffer[14] = (soundPlayer >> 16) & 0xff;
+	buffer[15] = (soundPlayer >> 24) & 0xff;
+	buffer[16] = (soundPlayer >> 32) & 0xff;
+	buffer[17] = (soundPlayer >> 40) & 0xff;
+	buffer[18] = (soundPlayer >> 48) & 0xff;
+	buffer[19] = (soundPlayer >> 56) & 0xff;
+
+	buffer[22] = managerId & 0xff;
+	buffer[23] = (managerId >> 8) & 0xff;
+	buffer[24] = (managerId >> 16) & 0xff;
+	buffer[25] = (managerId >> 24) & 0xff;
+
+	buffer[27] = portableIdOfIssuedSound & 0xff;
+	buffer[28] = (portableIdOfIssuedSound >> 8) & 0xff;
+	buffer[29] = (portableIdOfIssuedSound >> 16) & 0xff;
+	buffer[30] = (portableIdOfIssuedSound >> 24) & 0xff;
+
+	buffer[43] = resultsAddress & 0xff;
+	buffer[44] = (resultsAddress >> 8) & 0xff;
+	buffer[45] = (resultsAddress >> 16) & 0xff;
+	buffer[46] = (resultsAddress >> 24) & 0xff;
+	buffer[47] = (resultsAddress >> 32) & 0xff;
+	buffer[48] = (resultsAddress >> 40) & 0xff;
+	buffer[49] = (resultsAddress >> 48) & 0xff;
+	buffer[50] = (resultsAddress >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	auto thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+
+	uint64_t result;
+	ReadAbsolute(resultsPointer, &result, sizeof(uint64_t));
+
+	return result;
 }
 
 void Memory::PowerNext(int source, int target) {

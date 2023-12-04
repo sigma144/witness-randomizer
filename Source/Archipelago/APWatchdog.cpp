@@ -107,6 +107,8 @@ void APWatchdog::action() {
 
 		QueueItemMessages();
 
+		CheckFinalRoom();
+
 		CheckSolvedPanels();
 
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
@@ -2134,4 +2136,37 @@ void APWatchdog::unlockItem(int item) {
 	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
 	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
+}
+
+void APWatchdog::CheckFinalRoom() {
+	uint64_t entity_pointer = ASMPayloadManager::get()->FindSoundByName("amb_ending_water");
+
+	if (entity_pointer == 0) {
+		finalRoomMusicTimer = -1;
+		return;
+	}
+
+	float volumeScale;
+	Memory::get()->ReadAbsolute(reinterpret_cast<LPCVOID>(entity_pointer + 0xd8), &volumeScale, sizeof(float));
+	
+	if (volumeScale < 0.8) {
+		finalRoomMusicTimer = -1;
+		return;
+	}
+
+	uint64_t soundStreamPointer = Memory::get()->getSoundStream(entity_pointer);
+
+	if (soundStreamPointer == 0) {
+		finalRoomMusicTimer = -1;
+		return;
+	}
+
+	Memory::get()->ReadAbsolute(reinterpret_cast<LPCVOID>(soundStreamPointer + 0x70), &finalRoomMusicTimer, sizeof(double));
+
+	std::wstringstream s;
+	s << finalRoomMusicTimer;
+	s << "\n";
+	OutputDebugStringW(s.str().c_str());
+
+	return;
 }

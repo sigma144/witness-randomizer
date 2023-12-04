@@ -157,6 +157,195 @@ void ASMPayloadManager::UpdateEntityPosition(int id) {
 	CallVoidFunction(memory->updateEntityPositionFunction, id);
 }
 
+uint64_t ASMPayloadManager::FindSoundByName(std::string name) {
+	Memory* memory = Memory::get();
+
+	char resultsBuffer[16];
+
+	auto resultsPointer = VirtualAllocEx(memory->getHandle(), NULL, sizeof(resultsBuffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	auto resultsAddress = reinterpret_cast<uint64_t>(resultsPointer);
+
+	WriteProcessMemory(memory->getHandle(), resultsPointer, resultsBuffer, sizeof(resultsBuffer), NULL);
+
+	uint64_t entityManager;
+
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(memory->getBaseAddress() + memory->GLOBALS), &entityManager, sizeof(uint64_t));
+
+	char buffer[] =
+		"\x51" // push rcx
+		"\x51" // push rdx
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx ptype
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx Entity_Manager
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00" //call to faraway function address
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx result alloc
+		"\x48\x89\x02" // mov [rdx], rax
+		"\x59"  // pop rdx
+		"\x59"; // pop rcx
+
+	buffer[4] = memory->ptypeIssuedSound & 0xff; //address of door
+	buffer[5] = (memory->ptypeIssuedSound >> 8) & 0xff;
+	buffer[6] = (memory->ptypeIssuedSound >> 16) & 0xff;
+	buffer[7] = (memory->ptypeIssuedSound >> 24) & 0xff;
+	buffer[8] = (memory->ptypeIssuedSound >> 32) & 0xff;
+	buffer[9] = (memory->ptypeIssuedSound >> 40) & 0xff;
+	buffer[10] = (memory->ptypeIssuedSound >> 48) & 0xff;
+	buffer[11] = (memory->ptypeIssuedSound >> 56) & 0xff;
+	buffer[14] = entityManager & 0xff;
+	buffer[15] = (entityManager >> 8) & 0xff;
+	buffer[16] = (entityManager >> 16) & 0xff;
+	buffer[17] = (entityManager >> 24) & 0xff;
+	buffer[18] = (entityManager >> 32) & 0xff;
+	buffer[19] = (entityManager >> 40) & 0xff;
+	buffer[20] = (entityManager >> 48) & 0xff;
+	buffer[21] = (entityManager >> 56) & 0xff;
+	buffer[30] = memory->getPortablesOfType & 0xff;
+	buffer[31] = (memory->getPortablesOfType >> 8) & 0xff;
+	buffer[32] = (memory->getPortablesOfType >> 16) & 0xff;
+	buffer[33] = (memory->getPortablesOfType >> 24) & 0xff;
+	buffer[34] = (memory->getPortablesOfType >> 32) & 0xff;
+	buffer[35] = (memory->getPortablesOfType >> 40) & 0xff;
+	buffer[36] = (memory->getPortablesOfType >> 48) & 0xff;
+	buffer[37] = (memory->getPortablesOfType >> 56) & 0xff;
+	buffer[40] = resultsAddress & 0xff;
+	buffer[41] = (resultsAddress >> 8) & 0xff;
+	buffer[42] = (resultsAddress >> 16) & 0xff;
+	buffer[43] = (resultsAddress >> 24) & 0xff;
+	buffer[44] = (resultsAddress >> 32) & 0xff;
+	buffer[45] = (resultsAddress >> 40) & 0xff;
+	buffer[46] = (resultsAddress >> 48) & 0xff;
+	buffer[47] = (resultsAddress >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
+
+	while (true) {
+		uint64_t blockedState = 1;
+		memory->ReadAbsolute(reinterpret_cast<LPVOID>(payloadBlocked), &blockedState, 8);
+		if (blockedState == 0) break;
+	}
+
+	uint64_t soundEntityAutoArrayPointer;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(resultsAddress), &soundEntityAutoArrayPointer, sizeof(uint64_t));
+
+	int items;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(soundEntityAutoArrayPointer), &items, sizeof(int));
+
+	uint64_t soundEntityArrayPointer;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(soundEntityAutoArrayPointer + 8), &soundEntityArrayPointer, sizeof(uint64_t));
+
+	std::vector<uint64_t> data = std::vector<uint64_t>(items);
+
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(soundEntityArrayPointer), &data[0], sizeof(uint64_t) * items);
+
+	std::vector<char> nameVector(name.begin(), name.end());
+
+	for (uint64_t entityPointer : data) {
+		uint64_t nameArray;
+		memory->ReadAbsolute(reinterpret_cast<LPCVOID>(entityPointer + 0xC0), &nameArray, sizeof(uint64_t));
+
+		if (!nameArray) {
+			continue;
+		}
+
+		std::vector<char> entityName = std::vector<char>(name.length());
+		memory->ReadAbsolute(reinterpret_cast<LPCVOID>(nameArray), &entityName[0], name.length());
+
+		if (entityName == nameVector) {
+			return entityPointer;
+		}
+	}
+
+	return 0;
+}
+
+int ASMPayloadManager::FindEntityByName(std::string name) {
+	Memory* memory = Memory::get();
+
+	char namebuffer[128];
+
+	memset(namebuffer, 0, sizeof(namebuffer));
+
+	strcpy_s(namebuffer, name.c_str());
+
+	auto resultsPointer = VirtualAllocEx(memory->getHandle(), NULL, sizeof(namebuffer), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	auto resultsAddress = reinterpret_cast<uint64_t>(resultsPointer);
+	auto namePointer = reinterpret_cast<LPVOID>(resultsAddress + 8);
+
+	WriteProcessMemory(memory->getHandle(), namePointer, namebuffer, sizeof(namebuffer), NULL);
+
+
+	uint64_t entityManager;
+
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(memory->getBaseAddress() + memory->GLOBALS), &entityManager, sizeof(uint64_t));
+
+	uint64_t nameAddress = reinterpret_cast<uint64_t>(namePointer);
+
+	char buffer[] =
+		"\x51" // push rcx, pointer needs some space for this function
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rdx
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx name alloc
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx Entity_Manager
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00" //call to faraway function address
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx result alloc
+		"\x44\x89\x0A" // mov [rdx], r9d
+		"\x59"  // pop rdx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"; // pop rcx
+
+	buffer[8] = nameAddress & 0xff; //address of door
+	buffer[9] = (nameAddress >> 8) & 0xff;
+	buffer[10] = (nameAddress >> 16) & 0xff;
+	buffer[11] = (nameAddress >> 24) & 0xff;
+	buffer[12] = (nameAddress >> 32) & 0xff;
+	buffer[13] = (nameAddress >> 40) & 0xff;
+	buffer[14] = (nameAddress >> 48) & 0xff;
+	buffer[15] = (nameAddress >> 56) & 0xff;
+	buffer[18] = entityManager & 0xff;
+	buffer[19] = (entityManager >> 8) & 0xff;
+	buffer[20] = (entityManager >> 16) & 0xff;
+	buffer[21] = (entityManager >> 24) & 0xff;
+	buffer[22] = (entityManager >> 32) & 0xff;
+	buffer[23] = (entityManager >> 40) & 0xff;
+	buffer[24] = (entityManager >> 48) & 0xff;
+	buffer[25] = (entityManager >> 56) & 0xff;
+	buffer[34] = memory->getEntityByName & 0xff;
+	buffer[35] = (memory->getEntityByName >> 8) & 0xff;
+	buffer[36] = (memory->getEntityByName >> 16) & 0xff;
+	buffer[37] = (memory->getEntityByName >> 24) & 0xff;
+	buffer[38] = (memory->getEntityByName >> 32) & 0xff;
+	buffer[39] = (memory->getEntityByName >> 40) & 0xff;
+	buffer[40] = (memory->getEntityByName >> 48) & 0xff;
+	buffer[41] = (memory->getEntityByName >> 56) & 0xff;
+	buffer[44] = resultsAddress & 0xff;
+	buffer[45] = (resultsAddress >> 8) & 0xff;
+	buffer[46] = (resultsAddress >> 16) & 0xff;
+	buffer[47] = (resultsAddress >> 24) & 0xff;
+	buffer[48] = (resultsAddress >> 32) & 0xff;
+	buffer[49] = (resultsAddress >> 40) & 0xff;
+	buffer[50] = (resultsAddress >> 48) & 0xff;
+	buffer[51] = (resultsAddress >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
+
+	while (true) {
+		uint64_t blockedState = 1;
+		memory->ReadAbsolute(reinterpret_cast<LPVOID>(payloadBlocked), &blockedState, 8);
+		if (blockedState == 0) break;
+	}
+
+	int entityHex;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(resultsAddress), &entityHex, sizeof(int));
+	entityHex -= 1;
+
+	return entityHex;
+}
+
 void ASMPayloadManager::BridgeToggle(int associatedPanel, bool extend) {
 	Memory* memory = Memory::get();
 

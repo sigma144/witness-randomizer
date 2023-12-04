@@ -191,6 +191,8 @@ private:
 
 	void unlockItem(int item);
 
+	void CheckFinalRoom();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
@@ -225,6 +227,8 @@ private:
 	float dogBarkDuration = 0.f;
 	bool sentDog = false;
 	bool letGoSinceInteractModeOpen = false;
+
+	double finalRoomMusicTimer = -1;
 
 	CollisionCube townRedRoof = CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
 	CollisionCube swampLongBridgeFar = CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);

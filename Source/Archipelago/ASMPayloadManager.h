@@ -30,6 +30,8 @@ public:
 	void OpenDoor(int id);
 	void CloseDoor(int id);
 	void UpdateEntityPosition(int id);
+	uint64_t FindSoundByName(std::string name);
+	int FindEntityByName(std::string name);
 	void SendBunkerElevatorToFloor(int floor, bool force);
 	void ToggleFloodgate(std::string name, bool connect);
 	void BridgeToggle(int associatedPanel, bool disconnect);

@@ -209,6 +209,8 @@ public:
 
 	void PowerGauge(int id, int sourceId, int slot);
 
+	uint64_t getSoundStream(uint64_t issuedSoundPointer);
+
 	void PowerNext(int source, int target);
 
 	void ActivateLaser(int id) {
@@ -311,6 +313,10 @@ public:
 	uint64_t localisation;
 	uint64_t the_witness_string;
 	uint64_t gameLoop3CallsInARow;
+	uint64_t getEntityByName;
+	uint64_t getPortablesOfType;
+	uint64_t ptypeIssuedSound;
+	uint64_t getSoundStreamFunction;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
