@@ -199,6 +199,18 @@
     <Text Include="changes.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Media Include="..\..\..\Music\Pillars Filler Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Filler EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Filler Emaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Progression Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Progression EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Progression Emaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Trap Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Trap EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Trap Emaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Useful Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Useful EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Useful Emaj.wav" />
     <Media Include="..\Music\Dog Filler.wav" />
     <Media Include="..\Music\Dog Progression.wav" />
     <Media Include="..\Music\Dog Trap.wav" />
@@ -235,7 +247,22 @@
     <Media Include="..\Music\Panel Useful 3.wav" />
     <Media Include="..\Music\Panel Useful 4.wav" />
     <Media Include="..\Music\Panel Useful Epic.wav" />
+    <Media Include="..\Music\Pillars Filler Bmaj.wav" />
+    <Media Include="..\Music\Pillars Filler EbMin.wav" />
+    <Media Include="..\Music\Pillars Filler Emaj.wav" />
+    <Media Include="..\Music\Pillars Progression Bmaj.wav" />
+    <Media Include="..\Music\Pillars Progression EbMin.wav" />
+    <Media Include="..\Music\Pillars Progression Emaj.wav" />
+    <Media Include="..\Music\Pillars Trap Bmaj.wav" />
+    <Media Include="..\Music\Pillars Trap EbMin.wav" />
+    <Media Include="..\Music\Pillars Trap Emaj.wav" />
+    <Media Include="..\Music\Pillars Useful Bmaj.wav" />
+    <Media Include="..\Music\Pillars Useful EbMin.wav" />
+    <Media Include="..\Music\Pillars Useful Emaj.wav" />
     <Media Include="..\Music\Victory.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wave38.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

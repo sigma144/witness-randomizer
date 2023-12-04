@@ -107,3 +107,17 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 
 	PlayJingle(resource, async);
 }
+
+void APAudioPlayer::PlayFinalRoomJingle(std::string type, APJingleBehavior queue, double finalRoomMusicTimer) {
+	auto now = std::chrono::system_clock::now();
+
+	std::string key = "E";
+	if (finalRoomMusicTimer > 900000) key = "Ebm";
+	if (finalRoomMusicTimer > 1800000) key = "E";
+	if (finalRoomMusicTimer > 2800000) key = "B";
+	if (finalRoomMusicTimer > 4200000) key = "E";
+
+	int resource = pillarJingles.find(key)->second.find(type)->second;
+
+	PlayJingle(resource, SND_RESOURCE | SND_ASYNC);
+}

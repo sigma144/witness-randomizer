@@ -57,6 +57,27 @@ inline const std::set<int> hardPanels = {
 	0x33961, 0x339BB, // Final Room Pillars
 };
 
+inline const std::map<std::string, std::map<std::string, int>> pillarJingles = {
+	{"E", {
+		{"progression", IDR_WAVE43},
+		{"useful", IDR_WAVE49},
+		{"trap", IDR_WAVE46},
+		{"filler", IDR_WAVE40}
+	}},
+	{"Ebm", {
+		{"progression", IDR_WAVE42},
+		{"useful", IDR_WAVE48},
+		{"trap", IDR_WAVE45},
+		{"filler", IDR_WAVE39}
+	}},
+	{"B", {
+		{"progression", IDR_WAVE41},
+		{"useful", IDR_WAVE47},
+		{"trap", IDR_WAVE44},
+		{"filler", IDR_WAVE38}
+	}},
+};
+
 class APAudioPlayer : public Watchdog
 {
 private:
@@ -172,4 +193,5 @@ public:
 	void PlayAudio(APJingle jingle, APJingleBehavior queue) {
 		PlayAudio(jingle, queue, false);
 	}
+	void PlayFinalRoomJingle(std::string type, APJingleBehavior queue, double finalRoomMusicTimer);
 };

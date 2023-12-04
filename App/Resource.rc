@@ -124,6 +124,30 @@ IDR_WAVE36              WAVE                    "..\\Music\\Dog Progression.wav"
 
 IDR_WAVE37              WAVE                    "..\\Music\\Dog Useful.wav"
 
+IDR_WAVE38              WAVE                    "..\\Music\\Pillars Filler Bmaj.wav"
+
+IDR_WAVE39              WAVE                    "..\\Music\\Pillars Filler EbMin.wav"
+
+IDR_WAVE40              WAVE                    "..\\Music\\Pillars Filler Emaj.wav"
+
+IDR_WAVE41              WAVE                    "..\\Music\\Pillars Progression Bmaj.wav"
+
+IDR_WAVE42              WAVE                    "..\\Music\\Pillars Progression EbMin.wav"
+
+IDR_WAVE43              WAVE                    "..\\Music\\Pillars Progression Emaj.wav"
+
+IDR_WAVE44              WAVE                    "..\\Music\\Pillars Trap Bmaj.wav"
+
+IDR_WAVE45              WAVE                    "..\\Music\\Pillars Trap EbMin.wav"
+
+IDR_WAVE46              WAVE                    "..\\Music\\Pillars Trap Emaj.wav"
+
+IDR_WAVE47              WAVE                    "..\\Music\\Pillars Useful Bmaj.wav"
+
+IDR_WAVE48              WAVE                    "..\\Music\\Pillars Useful EbMin.wav"
+
+IDR_WAVE49              WAVE                    "..\\Music\\Pillars Useful Emaj.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 

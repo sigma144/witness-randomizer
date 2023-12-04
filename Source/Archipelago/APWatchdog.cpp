@@ -1533,6 +1533,22 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		return;
 	}
 
+	if (finalRoomMusicTimer != -1) {
+		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+			APAudioPlayer::get()->PlayFinalRoomJingle("progression", APJingleBehavior::Queue, finalRoomMusicTimer);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayFinalRoomJingle("useful", APJingleBehavior::Queue, finalRoomMusicTimer);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+			APAudioPlayer::get()->PlayFinalRoomJingle("trap", APJingleBehavior::Queue, finalRoomMusicTimer);
+		}
+		else {
+			APAudioPlayer::get()->PlayFinalRoomJingle("filler", APJingleBehavior::Queue, finalRoomMusicTimer);
+		}
+		return;
+	}
+
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 		APAudioPlayer::get()->PlayAudio(APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
 	}
