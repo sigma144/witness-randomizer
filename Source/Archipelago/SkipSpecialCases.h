@@ -262,7 +262,7 @@ inline const std::set<int> wide_panels = {
 };
 
 // Canonized "panel sets" that get collected out together.
-// The key is the panel that is a check.
+// The key is the final panel in the panel set, that is a check.
 // The value is all the panels in the corresponding "panel set", IN ORDER (this is very important!!!)
 inline const std::map<int, std::vector<int>> collectTogether = {
 	{ 0x17DC4, { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, }}, // Yellow Bridge
