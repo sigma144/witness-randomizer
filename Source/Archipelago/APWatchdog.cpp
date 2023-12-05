@@ -415,26 +415,12 @@ void APWatchdog::MarkLocationChecked(int locationId)
 				return;
 			}
 
-			if (panelId == 0x17DC4 || panelId == 0x17D6C || panelId == 0x17DA2 || panelId == 0x17DC6 || panelId == 0x17DDB || panelId == 0x17E61 || panelId == 0x014D1 || panelId == 0x09FD2 || panelId == 0x034E3) {
-				std::vector<int> bridgePanels;
-				if (panelId == 0x17DC4) bridgePanels = { 0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, };
-				else if (panelId == 0x17D6C) bridgePanels = { 0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, };
-				else if (panelId == 0x17DC6) bridgePanels = { 0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, };
-				else if (panelId == 0x17DDB) bridgePanels = { 0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DD1, 0x17DDC, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, };
-				else if (panelId == 0x17DA2) bridgePanels = { 0x17D88, 0x17DB4, 0x17D8C, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB1, 0x17CE3, 0x17DB7 };
-				else if (panelId == 0x17E61) bridgePanels = { 0x17E3C, 0x17E4D, 0x17E4F, 0x17E5B, 0x17E5F, 0x17E52 };
-				else if (panelId == 0x014D1) bridgePanels = { 0x00001, 0x014D2, 0x014D4 };
-				else if (panelId == 0x09FD2) bridgePanels = { 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1 };
-				else if (panelId == 0x034E3) bridgePanels = { 0x034E4 };
-				else if (panelId == 0x03702) bridgePanels = { 0x15ADD };
-				else if (panelId == 0x03542) bridgePanels = { 0x002A6 };
-				else if (panelId == 0x03481) bridgePanels = { 0x033D4 };
-				else if (panelId == 0x0339E) bridgePanels = { 0x0CC7B };
-				else if (panelId == 0x03535) bridgePanels = { 0x00AFB };
+			if (collectTogether.find(panelId) != collectTogether.end()) {
+				std::vector<int> otherPanels = collectTogether.find(panelId)->second;
 
 				SkipPanel(panelId, "Collected", false);
 
-				for (int panel : bridgePanels) {
+				for (int panel : otherPanels) {
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
 					SkipPanel(panel, "Collected", false);
