@@ -203,7 +203,8 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	{ 0x000B0 , {{0x0343A, PANEL, TARGET}} }, // Symmetry Island Lower (Panel)
 	{ 0x1C349, {}}, // Symmetry Island Upper (Panel)
 
-	{ 0x0C339 , {{0x09F94, PANEL, TARGET}} }, // Desert Pond Room (Panel)
+	{ 0x0C339 , {{0x09F94, PANEL, TARGET}} }, // Desert Light Room Entry (Panel)
+	{ 0x0A249 , {{0x18313, PANEL, TARGET}} }, // Desert Flood Room Entry (Panel)
 	{ 0x1C2DF , {} }, // Desert Flood Room Controls
 	{ 0x1831E , {} }, // Desert Flood Room Controls
 	{ 0x1C260 , {} }, // Desert Flood Room Controls
