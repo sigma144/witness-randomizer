@@ -1,0 +1,3 @@
+[submodule "Source/Archipelago/Client/apclientpp"]
+	path = Source/Archipelago/Client/apclientpp
+	url = https://github.com/black-sliver/apclientpp
