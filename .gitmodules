@@ -1,0 +1,6 @@
+[submodule "Source/Archipelago/Client/apclientpp"]
+	path = Source/Archipelago/Client/apclientpp
+	url = https://github.com/black-sliver/apclientpp
+[submodule "Source/Archipelago/Client/wswrap"]
+	path = Source/Archipelago/Client/wswrap
+	url = https://github.com/black-sliver/wswrap
