@@ -425,7 +425,6 @@ void APWatchdog::MarkLocationChecked(int locationId)
 					int panel = *it;
 
 					if (panelIdToLocationId.count(panel)) break;
-					if (state->keysInTheGame.count(panel)) break;
 
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
