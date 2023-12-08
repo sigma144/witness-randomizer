@@ -420,7 +420,13 @@ void APWatchdog::MarkLocationChecked(int locationId)
 
 				SkipPanel(panelId, "Collected", false);
 
-				for (int panel : otherPanels) {
+				for (auto it = otherPanels.rbegin(); it != otherPanels.rend(); ++it)
+				{
+					int panel = *it;
+
+					if (panelIdToLocationId.count(panel)) break;
+					if (state->keysInTheGame.count(panel)) break;
+
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
 					SkipPanel(panel, "Collected", false);
