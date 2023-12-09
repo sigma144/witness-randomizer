@@ -407,13 +407,13 @@ void APRandomizer::PostGeneration() {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", MountainLasers, ChallengeLasers);
 	}
 
-	async->SkipPreviouslySkippedPuzzles();
-
 	for (int panel : desertPanels) {
 		memory->UpdatePanelJunctions(panel);
 	}
 	
 	setPuzzleLocks();
+
+	async->SkipPreviouslySkippedPuzzles();
 
 	async->ResetPowerSurge();
 

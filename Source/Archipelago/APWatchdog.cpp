@@ -33,6 +33,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 
 	for (auto [key, value] : panelIdToLocationId) {
 		locationIdToPanelId_READ_ONLY[value] = key;
+		panelsThatAreLocations.insert(key);
 	}
 
 	DeathLink = dl;
@@ -50,6 +51,8 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	ElevatorsComeToYou = elev;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
+
+	panelLocker->Collect = Collect;
 
 	mostRecentItemId = Memory::get()->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
 	if (mostRecentItemId == 1065353216) { // Default value. Hopefully noone launches their game after the ~1 billionth item was sent, exactly.
@@ -360,11 +363,17 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
 	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 
-	if (!dont_power.count(id)) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
-	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+	bool dontunlock = reason == "Collected" && Collect == "Free Skip";
+
+	if (!dontunlock){
+		if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+		if (!dont_power.count(id)) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+	}
 
 	if (reason != "Skipped" && !(reason == "Disabled" && (DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve")) && !((reason == "Collected" || reason == "Excluded") && Collect == "Auto-Skip")) {
-		Special::ColorPanel(id, reason);
+		if (!panelLocker->PuzzleIsLocked(id)) {
+			Special::ColorPanel(id, reason);
+		}
 	}
 	else if (reason == "Disabled" && DisabledPuzzlesBehavior == "Prevent Solve") {
 		PuzzlesSkippedThisGame.insert(id);
@@ -373,25 +382,27 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	}
 	else
 	{
-		if (reason == "Skipped") {
-			if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == COLLECTED) {
-				PuzzlesSkippedThisGame.insert(id);
-				Special::SkipPanel(id, "Collected", kickOut);
-				return;
+		if (!panelLocker->PuzzleIsLocked(id)) {
+			if (reason == "Skipped") {
+				if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == COLLECTED) {
+					PuzzlesSkippedThisGame.insert(id);
+					Special::SkipPanel(id, "Collected", kickOut);
+					return;
+				}
+				if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == EXCLUDED) {
+					PuzzlesSkippedThisGame.insert(id);
+					Special::SkipPanel(id, "Excluded", kickOut);
+					return;
+				}
+				if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == DISABLED) {
+					PuzzlesSkippedThisGame.insert(id);
+					Special::SkipPanel(id, "Disabled", kickOut);
+					return;
+				}
 			}
-			if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == EXCLUDED) {
-				PuzzlesSkippedThisGame.insert(id);
-				Special::SkipPanel(id, "Excluded", kickOut);
-				return;
-			}
-			if (ReadPanelData<int>(id, VIDEO_STATUS_COLOR) == DISABLED) {
-				PuzzlesSkippedThisGame.insert(id);
-				Special::SkipPanel(id, "Disabled", kickOut);
-				return;
-			}
+			Special::SkipPanel(id, reason, kickOut);
+			PuzzlesSkippedThisGame.insert(id);
 		}
-		Special::SkipPanel(id, reason, kickOut);
-		PuzzlesSkippedThisGame.insert(id);
 	}
 
 	if (reason == "Skipped") WritePanelData<int>(id, VIDEO_STATUS_COLOR, { PUZZLE_SKIPPED + cost });
@@ -424,7 +435,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 				{
 					int panel = *it;
 
-					if (panelIdToLocationId.count(panel)) break;
+					if (panelsThatAreLocations.count(panel)) break;
 
 					if (ReadPanelData<int>(panel, SOLVED)) continue;
 
@@ -563,6 +574,22 @@ void APWatchdog::StartRebindingKey(CustomKey key)
 }
 
 void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
+	std::vector<int> recentlyUnlockedPuzzles = panelLocker->getAndFlushRecentlyUnlockedPuzzles();
+	for (int id : recentlyUnlockedPuzzles) {
+		if (!PuzzlesSkippedThisGame.count(id)) {
+			__int32 skipped = ReadPanelData<__int32>(id, VIDEO_STATUS_COLOR);
+			if (skipped == COLLECTED) {
+				SkipPanel(id, "Collected", false);
+			}
+			else if (skipped == DISABLED) {
+				SkipPanel(id, "Disabled", false);
+			}
+			else if (skipped == EXCLUDED) {
+				SkipPanel(id, "Excluded", false);
+			}
+		}
+	}
+
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {

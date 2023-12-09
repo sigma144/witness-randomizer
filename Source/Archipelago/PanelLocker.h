@@ -15,10 +15,14 @@ class PanelLocker {
 		void UpdatePuzzleLocks(const APState& state, const int& itemIndex);
 		bool PuzzleIsLocked(int id);
 		void PermanentlyUnlockPuzzle(int id);
+		std::vector<int> getAndFlushRecentlyUnlockedPuzzles();
+
+		std::string Collect = "Unchanged";
 
 	private:
 		std::vector<int> disabledPuzzles;
 		std::map<int, PuzzleData*> lockedPuzzles;
+		std::vector<int> recentlyUnlockedPuzzles;
 
 		void addMissingSimbolsDisplay(std::vector<float>& newIntersections, std::vector<int>& newIntersectionFlags, std::vector<int>& newConnectionsA, std::vector<int>& newConnectionsB, int id);
 		void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, float left, float right, float top, float bottom);

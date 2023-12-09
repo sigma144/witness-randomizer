@@ -373,8 +373,17 @@ void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {
 		puzzle->Restore();
 		memory->UpdatePanelJunctions(puzzle->id);
 	}
+
+	recentlyUnlockedPuzzles.push_back(puzzle->id);
 	lockedPuzzles.erase(puzzle->id);
 	//delete puzzle;
+}
+
+std::vector<int> PanelLocker::getAndFlushRecentlyUnlockedPuzzles()
+{
+	auto returnValue = recentlyUnlockedPuzzles;
+	recentlyUnlockedPuzzles = {};
+	return returnValue;
 }
 
 void PanelLocker::addMissingSimbolsDisplay(std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, int id) {
