@@ -52,7 +52,14 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
 
-	panelLocker->Collect = Collect;
+	if (Collect == "Free Skip + Unlock") {
+		Collect = "Free Skip";
+		CollectUnlock = true;
+	}
+	if (Collect == "Auto-Skip + Unlock") {
+		Collect = "Auto-Skip";
+		CollectUnlock = true;
+	}
 
 	mostRecentItemId = Memory::get()->ReadPanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12);
 	if (mostRecentItemId == 1065353216) { // Default value. Hopefully noone launches their game after the ~1 billionth item was sent, exactly.
@@ -356,16 +363,33 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if (dont_touch_panel_at_all.count(id) or ! allPanels.count(id)) {
+	if (dont_touch_panel_at_all.count(id) || !allPanels.count(id) || PuzzlesSkippedThisGame.count(id)) {
 		return;
+	}
+
+	if (reason == "Collected" || reason == "Excluded") { // Should this be for "disabled" too?
+		if (collectTogether.find(id) != collectTogether.end()) {
+			std::vector<int> otherPanels = collectTogether.find(id)->second;
+
+			for (auto it = otherPanels.rbegin(); it != otherPanels.rend(); ++it)
+			{
+				int panel = *it;
+
+				if (panel == id) continue; // Let's not make infinite recursion by accident
+				if (panelsThatAreLocations.count(panel)) break;
+				// Add panel hunt panels to this later
+
+				if (ReadPanelData<int>(panel, SOLVED)) continue;
+
+				SkipPanel(panel, reason, false);
+			}
+		}
 	}
 
 	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
 	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 
-	bool dontunlock = reason == "Collected" && Collect == "Free Skip";
-
-	if (!dontunlock){
+	if (reason != "Collected" && reason != "Excluded" || CollectUnlock) {
 		if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
 		if (!dont_power.count(id)) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 	}
@@ -426,26 +450,7 @@ void APWatchdog::MarkLocationChecked(int locationId)
 				return;
 			}
 
-			if (collectTogether.find(panelId) != collectTogether.end()) {
-				std::vector<int> otherPanels = collectTogether.find(panelId)->second;
-
-				SkipPanel(panelId, "Collected", false);
-
-				for (auto it = otherPanels.rbegin(); it != otherPanels.rend(); ++it)
-				{
-					int panel = *it;
-
-					if (panelsThatAreLocations.count(panel)) break;
-
-					if (ReadPanelData<int>(panel, SOLVED)) continue;
-
-					SkipPanel(panel, "Collected", false);
-				}
-			}
-			else {
-				SkipPanel(panelId, "Collected", false);
-				WritePanelData<__int32>(panelId, NEEDS_REDRAW, { 1 });
-			}
+			SkipPanel(panelId, "Collected", false);
 		}
 	}
 

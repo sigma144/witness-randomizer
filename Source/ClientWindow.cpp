@@ -561,14 +561,16 @@ void ClientWindow::addGameOptions(int& currentY) {
 	HWND hwndOptionCollect = CreateWindow(L"COMBOBOX", NULL,
 		CBS_DROPDOWNLIST | WS_VISIBLE | WS_CHILD,
 		CONTROL_MARGIN + SETTING_LABEL_WIDTH * 1.25, currentY,
-		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 8,
 		hwndRootWindow, (HMENU)IDC_SETTING_COLLECT, hAppInstance, NULL);
 	dropdownBoxes[ClientDropdownSetting::Collect] = hwndOptionCollect;
 	dropdownIds[ClientDropdownSetting::Collect] = IDC_SETTING_COLLECT;
 
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Unchanged");
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Free Skip");
+	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Free Skip + Unlock");
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip");
+	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip + Unlock");
 	SendMessage(hwndOptionCollect, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;

@@ -17,8 +17,6 @@ class PanelLocker {
 		void PermanentlyUnlockPuzzle(int id);
 		std::vector<int> getAndFlushRecentlyUnlockedPuzzles();
 
-		std::string Collect = "Unchanged";
-
 	private:
 		std::vector<int> disabledPuzzles;
 		std::map<int, PuzzleData*> lockedPuzzles;
