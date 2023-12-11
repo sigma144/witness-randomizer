@@ -172,7 +172,7 @@ void APWatchdog::CheckSolvedPanels() {
 	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelDataIntentionallyUnsafe<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
 		hudManager->queueBannerMessage("Victory!");
-		APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+		if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
 	if (finalPanel == 0x09F7F && !isCompleted)
@@ -182,7 +182,7 @@ void APWatchdog::CheckSolvedPanels() {
 		if (power > 0.0f) {
 			isCompleted = true;
 			hudManager->queueBannerMessage("Victory!");
-			APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+			if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
@@ -193,7 +193,7 @@ void APWatchdog::CheckSolvedPanels() {
 		if (power > 0.0f) {
 			isCompleted = true;
 			hudManager->queueBannerMessage("Victory!");
-			APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+			if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
