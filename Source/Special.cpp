@@ -1856,6 +1856,23 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 		return;
 	}
+
+	if (skip_dontRandomize.count(id)) {
+		std::vector<int> ids = { id };
+		if (id == 0x00CB9 || id == 0x00CA1 || id == 0x00C80) {
+			ids = { 0x00CB9, 0x00CA1, 0x00C80 };
+		}
+
+		if (id == 0x00C68 || id == 0x00C59 || id == 0x00C22) {
+			ids = { 0x00C68, 0x00C59, 0x00C22 };
+		}
+
+		for (int id : ids) {
+			memory->WritePanelData<int>(id, RANDOMIZE_ON_POWER_ON, { 0 });
+			DrawSimplePanel(id, text, kickOut);
+		}
+		return;
+	}
 }
 
 void Special::SetVanillaMetapuzzleShapes() {
