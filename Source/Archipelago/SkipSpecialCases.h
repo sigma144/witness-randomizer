@@ -131,6 +131,11 @@ inline const std::set<int> dont_touch_panel_at_all = {
 	0x00CDB, 0x0051F, 0x00524, 0x00CD4, // Challenge reallocating
 };
 
+// Unskippable panels it would be nice to be able to skip
+inline const std::set<int> apology_panels = {
+	0x00CDB, 0x0051F, 0x00524, 0x00CD4, // Challenge reallocating
+};
+
 inline const std::set<int> skip_completelyExclude = {
 	0x0c373, // Patio Floor (EP)
 

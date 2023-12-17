@@ -629,6 +629,10 @@ void APWatchdog::UpdatePuzzleSkip(float deltaSeconds) {
 				// The puzzle is not in a skippable state.
 				puzzleSkipInfoMessage = "";
 				puzzleSkipCost = -1;
+
+				if (apology_panels.count(activePanelId)) {
+					puzzleSkipInfoMessage = "This puzzle can't be skipped for technical reasons. (Sorry!)";
+				}
 			}
 		}
 	}
