@@ -68,8 +68,7 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 }
 
 void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
-	if (find(disabledPuzzles.begin(), disabledPuzzles.end(), id) != disabledPuzzles.end())
-		return;
+	if (neverLockAgain.count(id)) return;
 
 	Memory* memory = Memory::get();
 
@@ -343,9 +342,7 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id) {
 		PuzzleData* puzzle = lockedPuzzles[id];
 		unlockPuzzle(puzzle);
 	}
-	else {
-		
-	}
+	neverLockAgain.insert(id);
 }
 
 void PanelLocker::unlockPuzzle(PuzzleData* puzzle) {

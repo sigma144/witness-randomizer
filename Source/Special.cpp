@@ -1765,7 +1765,9 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		memory->PowerGauge(0x003C4, 0x51, 1);
 	}
 
-	memory->UpdatePanelJunctions(id);
+	if (memory->ReadPanelData<int>(id, DOT_POSITIONS) != 0) {
+		memory->UpdatePanelJunctions(id);
+	}
 
 	// Special Skipping Animations Done
 

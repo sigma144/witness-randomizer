@@ -18,9 +18,9 @@ class PanelLocker {
 		std::vector<int> getAndFlushRecentlyUnlockedPuzzles();
 
 	private:
-		std::vector<int> disabledPuzzles;
 		std::map<int, PuzzleData*> lockedPuzzles;
 		std::vector<int> recentlyUnlockedPuzzles;
+		std::set<int> neverLockAgain;
 
 		void addMissingSimbolsDisplay(std::vector<float>& newIntersections, std::vector<int>& newIntersectionFlags, std::vector<int>& newConnectionsA, std::vector<int>& newConnectionsB, int id);
 		void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& connectionsA, std::vector<int>& connectionsB, float left, float right, float top, float bottom);
