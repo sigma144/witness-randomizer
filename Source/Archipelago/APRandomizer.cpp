@@ -393,6 +393,10 @@ void APRandomizer::PostGeneration() {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
+	if (MountainLasers > 7) {
+		memory->WritePanelData<float>(0x09f7f, POSITION, { 153.95224, -53.066, 68.343, 0.97, -0.2462272793, 0.01424658205, -0.980078876, 0.06994858384 });
+		ASMPayloadManager::get()->UpdateEntityPosition(0x09f7f);
+	}
 
 	if (FinalPanel == 0x09F7F) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
