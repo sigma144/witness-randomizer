@@ -2086,7 +2086,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	Memory* memory = Memory::get();
 
-	if (skip_completelyExclude.count(id)|| fairly_thin_panels.count(id)) {
+	if (skip_completelyExclude.count(id)|| fairly_thin_panels.count(id) || very_thin_panels.count(id)) {
 		if (text == "Disabled Completely") {
 			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f };
 			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
