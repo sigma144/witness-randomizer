@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 5
+#define SAVE_VERSION 6
 
 #define CLIENT_WINDOW_WIDTH 600
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
