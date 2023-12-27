@@ -229,7 +229,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 				}
 			}
 		}
-		else if (very_thin_panels.count(id)) {
+		else if (very_thin_panels.count(id) && id != 0x0A332) {
 			float yOffset = 0.0f;
 
 			if (id == 0x34BC5) yOffset = 0.25f;
