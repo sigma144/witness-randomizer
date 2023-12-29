@@ -56,6 +56,7 @@ class APRandomizer {
 		std::set<int> doorsActuallyInTheItemPool;
 		std::map<int, std::vector<int>> progressiveItems = {
 			{ 158200, {158000, 158002}},
+			{ 158210, {158010, 158001}},
 			{ 158260, {158060, 158061}},
 		};
 		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
