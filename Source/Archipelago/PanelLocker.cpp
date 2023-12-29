@@ -239,8 +239,13 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 
 			std::string text = "Locked";
 
-			createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f + text.size() * 0.037f, 0.5f - text.size() * 0.037f, 0.455f + yOffset, 0.545f + yOffset);
-		
+			if (id == 0x09F86){
+				createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - text.size() * 0.037f, 0.5f + text.size() * 0.037f, 0.545f + yOffset, 0.455f + yOffset);
+			}
+			else {
+				createText(id, text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f + text.size() * 0.037f, 0.5f - text.size() * 0.037f, 0.455f + yOffset, 0.545f + yOffset);
+			}
+
 			int newIntersections = intersections.size();
 
 			for (int i = currentIntersections; i < newIntersections; i += 2) {
