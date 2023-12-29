@@ -428,6 +428,19 @@ void ClientWindow::addVersionDisplay(int& currentY) {
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT;
+
+	if (AP_VERSION_STR_BACKCOMPAT != "") {
+		currentY += LINE_SPACING;
+
+		// AP version name. Left-justified.
+		CreateWindow(L"STATIC", L"Backwards Compatible with: " AP_VERSION_STR_BACKCOMPAT,
+			WS_VISIBLE | WS_CHILD | SS_LEFT,
+			STATIC_TEXT_MARGIN, currentY,
+			halfWidth, STATIC_TEXT_HEIGHT,
+			hwndRootWindow, NULL, hAppInstance, NULL);
+
+		currentY += STATIC_TEXT_HEIGHT;
+	}
 }
 
 void ClientWindow::addArchipelagoCredentials(int& currentY) {
