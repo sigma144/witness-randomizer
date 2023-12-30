@@ -179,17 +179,11 @@ public:
 		WritePanelData<T>(panel, offset, data, false);
 	}
 
-	void WriteMovementSpeed(float speed) {
-		std::lock_guard<std::recursive_mutex> lock(mtx);
-		if (speed == 0) return;
-		float sprintSpeed = this->ReadData<float>({ RUNSPEED }, 1)[0];
-		if (sprintSpeed == 0.0f) return; // sanity check, to avoid an accidental div0
-		float multiplier = speed / sprintSpeed;
-		if (multiplier == 1.0f) return;
-		this->WriteData<float>({ RUNSPEED }, { speed });
-		this->WriteData<float>({ ACCELERATION }, { this->ReadData<float>({ACCELERATION}, 1)[0] * multiplier });
-		this->WriteData<float>({ DECELERATION }, { this->ReadData<float>({DECELERATION}, 1)[0] * multiplier });
-	}
+	void WriteMovementSpeed(float speed);
+
+	void EnableMovement(bool enable);
+
+	void ExitSolveMode();
 
 	std::vector<float> ReadPlayerPosition() {
 		return this->ReadData<float>({ CAMERAPOSITION }, 3);
@@ -296,6 +290,9 @@ public:
 	uint64_t relativeBoatSpeed3Address;
 	uint64_t relativeBoatSpeed2Address;
 	uint64_t relativeBoatSpeed1Address;
+	uint64_t baseMovementSpeedAddress;
+	int normalSpeedRelativeAddress;
+	int zeroSpeedRelativeAddress;
 	uint64_t _recordPlayerUpdate;
 	uint64_t _getSoundFunction;
 	uint64_t _bytesLengthChallenge;
@@ -317,10 +314,16 @@ public:
 	uint64_t getPortablesOfType;
 	uint64_t ptypeIssuedSound;
 	uint64_t getSoundStreamFunction;
+	uint64_t exitSolveModeFunction;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
 	int DECELERATION;
+
+	float DEFAULTACCEL;
+	float DEFAULTDECEL;
+	float DEFAULTSPRINTSPEED;
+
 	bool showMsg;
 	int globalsTests[3] = {
 		0x62D0A0, //Steam and Epic Games

@@ -35,6 +35,7 @@ enum APJingle
 	UnderstatedUseful,
 
 	Victory,
+	DeathLink,
 };
 
 enum APJingleBehavior
@@ -126,6 +127,8 @@ private:
 		{DogUseful, {IDR_WAVE37}},
 
 		{Victory, {IDR_WAVE30}},
+
+		{DeathLink, {IDR_WAVE51}}
 	};
 
 	std::map<APJingle, int> jingleEpicVersions = {
@@ -154,7 +157,7 @@ private:
 		{DogTrap, {IDR_WAVE34}},
 		{DogUseful, {IDR_WAVE37}},
 
-		{Victory, IDR_WAVE30},
+		{Victory, {IDR_WAVE30}},
 	};
 
 	std::set<APJingle> epJingles = {

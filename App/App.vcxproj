@@ -211,6 +211,7 @@
     <Media Include="..\..\..\Music\Pillars Useful Bmaj.wav" />
     <Media Include="..\..\..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\..\..\Music\Pillars Useful Emaj.wav" />
+    <Media Include="..\Music\Bonk Sound Effect.wav" />
     <Media Include="..\Music\Dog Filler.wav" />
     <Media Include="..\Music\Dog Progression.wav" />
     <Media Include="..\Music\Dog Trap.wav" />
@@ -260,9 +261,6 @@
     <Media Include="..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\Music\Pillars Useful Emaj.wav" />
     <Media Include="..\Music\Victory.wav" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="wave38.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

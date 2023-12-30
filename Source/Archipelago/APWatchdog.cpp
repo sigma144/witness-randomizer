@@ -124,6 +124,7 @@ void APWatchdog::action() {
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
 		HandlePowerSurge();
+		HandleDeathLink();
 		DisableCollisions();
 		AudioLogPlaying(0.5f);
 
@@ -492,22 +493,22 @@ void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
 		float factor = 1;
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-		if (interactionState != InteractionState::Walking) factor = solveModeSpeedFactor;
+		if (interactionState != InteractionState::Walking || hasDeathLink) factor = solveModeSpeedFactor;
 
 		speedTime = std::max(std::abs(speedTime) - deltaSeconds * factor, 0.f) * (std::signbit(speedTime) ? -1 : 1);
 
 		if (speedTime > 0) {
-			WriteMovementSpeed(2.0f * baseSpeed);
+			WriteMovementSpeed(2.0f);
 		}
 		else if (speedTime < 0) {
-			WriteMovementSpeed(0.6f * baseSpeed);
+			WriteMovementSpeed(0.6f);
 		}
 		else {
-			WriteMovementSpeed(baseSpeed);
+			WriteMovementSpeed(1.0f);
 		}
 	}
 	else {
-		WriteMovementSpeed(baseSpeed);
+		WriteMovementSpeed(1.0f);
 	}
 
 	if (speedTime == 0.6999999881) { // avoid original value
@@ -568,6 +569,40 @@ void APWatchdog::ResetPowerSurge() {
 			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 });
 		}
 	}
+}
+
+void APWatchdog::TriggerDeathLink() {
+	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
+
+	if (hasDeathLink) {
+		deathLinkStartTime = std::chrono::system_clock::now();
+	}
+	else {
+		hasDeathLink = true;
+		deathLinkStartTime = std::chrono::system_clock::now();
+	}
+}
+
+void APWatchdog::HandleDeathLink() {
+	if (hasDeathLink)
+	{
+		if (DateTime::since(deathLinkStartTime).count() > DEATHLINK_DURATION * 1000)
+			ResetDeathLink();
+		else {
+			Memory::get()->EnableMovement(false);
+
+			InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+			if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
+				Memory::get()->ExitSolveMode();
+			}
+		}
+	}
+}
+
+void APWatchdog::ResetDeathLink() {
+	hasDeathLink = false;
+
+	Memory::get()->EnableMovement(true);
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)
@@ -1731,16 +1766,30 @@ void APWatchdog::SetStatusMessages() {
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Walking) {
-		int speedTimeInt = (int)std::ceil(std::abs(speedTime));
+		if (hasDeathLink){
+			int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(deathLinkStartTime).count() / 1000;
 
-		if (speedTime > 0) {
-			hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+			if (secondsRemainingDeathLink <= 0) {
+				hudManager->clearWalkStatusMessage();
+			}
+			else {
+				hudManager->setWalkStatusMessage("Death Link active for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
+			}
 		}
-		else if (speedTime < 0) {
-			hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
-		}
+
 		else {
-			hudManager->clearWalkStatusMessage();
+
+			int speedTimeInt = (int)std::ceil(std::abs(speedTime));
+
+			if (speedTime > 0) {
+				hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+			}
+			else if (speedTime < 0) {
+				hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+			}
+			else {
+				hudManager->clearWalkStatusMessage();
+			}
 		}
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
@@ -2052,7 +2101,7 @@ void APWatchdog::SendDeathLink(int panelId)
 }
 
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
-	TriggerPowerSurge();
+	TriggerDeathLink();
 
 	double a = -1;
 

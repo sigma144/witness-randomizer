@@ -384,6 +384,34 @@ void Memory::findImportantFunctionAddresses(){
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
 
+	// Exit solve mode is a pain to find. We'll find enter_solve_mode, which is easier to find, and then find the start of the next function.
+	executeSigScan({ 0x66, 0x0F, 0x5A, 0xC0, 0xF3, 0x0F, 0x5C, 0x05 }, [this](__int64 offset, int index, const std::vector<byte>& data) { // This will be inside Enter Solve Mode
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x48 && data[index + 1] == 0x83 && data[index + 2] == 0xC4) { // This will be the end of Enter Solve Mode
+				for (; index < data.size(); index++) {
+					if (data[index] == 0x0F && data[index + 1] == 0x2F && data[index + 2] == 0xC1 && data[index + 3] == 0x76 && data[index + 4] == 0x03) { // This will be inside Exit Solve Mode
+						for (; index > 0; index--) {
+							if (data[index] == 0x48 && data[index + 1] == 0x83 && data[index + 2] == 0xEC) { // This will be the start of Exit Solve Mode, except ...
+								for (; index > 0; index--) { // ... the start of Exit Solve Mode has an extra instruction depending on version
+									if (data[index] == 0xCC || data[index] == 0xC3) { // So we go backwards until CC (int) or CE (ret)
+										this->exitSolveModeFunction = _baseAddress + offset + index + 1;
+
+										return true;
+									}
+								}
+
+								return false;
+							}
+						}
+						return false;
+					}
+				}
+			}
+		}
+
+		return false;
+	});
+
 	executeSigScan({ 0xF3, 0x41, 0x0F, 0x58, 0xF0, 0x41, 0x0F, 0x2E, 0xF0, 0x0F, 0x84, 0x9A }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 3] == 0x4C && data[index - 2] == 0x8D && data[index - 1] == 0x05) {
@@ -924,6 +952,36 @@ void Memory::findImportantFunctionAddresses(){
 void Memory::findMovementSpeed() {
 	executeSigScan({ 0xF3, 0x0F, 0x59, 0xFD, 0xF3, 0x0F, 0x5C, 0xC8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		int found = 0;
+
+		int back_index = index;
+		for (; back_index < data.size(); back_index--) {
+			if (data[back_index + 4] == 0x44 && data[back_index + 5] == 0x0F && data[back_index + 6] == 0x28 && data[back_index + 7] == 0xF8) {
+				for (; back_index < data.size(); back_index--) {
+					if (data[back_index - 4] == 0xF3 && data[back_index - 3] == 0x0F && data[back_index - 2] == 0x10) {
+						found++;
+
+						this->baseMovementSpeedAddress = _baseAddress + offset + back_index;
+
+						uint64_t normalSpeedAddressAbsolute = _baseAddress + ReadStaticInt(offset, back_index, data);
+
+						ReadProcessMemory(_handle, reinterpret_cast<LPCVOID>(this->baseMovementSpeedAddress), &this->normalSpeedRelativeAddress, sizeof(this->normalSpeedRelativeAddress), NULL); // Read the current address of the constant loaded into xmm0 relative to the instruction
+
+						this->zeroSpeedRelativeAddress = this->normalSpeedRelativeAddress;
+
+						executeSigScan({ 0x00, 0x00, 0x00, 0x00 }, [this](__int64 offset, int index, const std::vector<byte>& data) { // Find a 0x00000000 (0.0f) near the memory location of the original constant.
+							this->zeroSpeedRelativeAddress += index;
+
+							return true;
+						}, normalSpeedAddressAbsolute); // Start this Sigscan for a new constant at the location of the original constant to find one "nearby"
+
+
+						break;
+					}
+				}
+				break;
+			}
+		}
+
 		// This doesn't have a consistent offset from the scan, so search until we find "jmp +08"
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0xEB && data[index - 1] == 0x08) {
@@ -942,7 +1000,12 @@ void Memory::findMovementSpeed() {
 				break;
 			}
 		}
-		return (found == 2);
+
+		this->DEFAULTSPRINTSPEED = this->ReadData<float>({ RUNSPEED }, 1)[0];
+		DEFAULTACCEL = this->ReadData<float>({ ACCELERATION }, 1)[0];
+		DEFAULTDECEL = this->ReadData<float>({ DECELERATION }, 1)[0];
+
+		return (found == 3);
 	});
 }
 
@@ -1297,6 +1360,52 @@ void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
 	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
 
 	WaitForSingleObject(thread, INFINITE);
+}
+
+void Memory::EnableMovement(bool enable) {
+	if (enable) {
+		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(baseMovementSpeedAddress), &normalSpeedRelativeAddress, sizeof(normalSpeedRelativeAddress), NULL);
+		this->WriteData<float>({ ACCELERATION }, { DEFAULTACCEL * 10.0f });
+		this->WriteData<float>({ DECELERATION }, { DEFAULTDECEL * 10.0f });
+	}
+	else {
+		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(baseMovementSpeedAddress), &zeroSpeedRelativeAddress, sizeof(zeroSpeedRelativeAddress), NULL);
+		this->WriteData<float>({ ACCELERATION }, { DEFAULTACCEL * 1.0f });
+		this->WriteData<float>({ DECELERATION }, { DEFAULTDECEL * 1.0f });
+	}
+}
+
+void Memory::ExitSolveMode() {
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer[2] = this->exitSolveModeFunction & 0xff; //address of laser activation function
+	buffer[3] = (this->exitSolveModeFunction >> 8) & 0xff;
+	buffer[4] = (this->exitSolveModeFunction >> 16) & 0xff;
+	buffer[5] = (this->exitSolveModeFunction >> 24) & 0xff;
+	buffer[6] = (this->exitSolveModeFunction >> 32) & 0xff;
+	buffer[7] = (this->exitSolveModeFunction >> 40) & 0xff;
+	buffer[8] = (this->exitSolveModeFunction >> 48) & 0xff;
+	buffer[9] = (this->exitSolveModeFunction >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+}
+
+void Memory::WriteMovementSpeed(float speed) {
+	std::lock_guard<std::recursive_mutex> lock(mtx);
+	this->WriteData<float>({ RUNSPEED }, { DEFAULTSPRINTSPEED * speed });
+	this->WriteData<float>({ ACCELERATION }, { DEFAULTACCEL * speed });
+	this->WriteData<float>({ DECELERATION }, { DEFAULTDECEL * speed });
 }
 
 void Memory::DisplayHudMessage(std::string message, std::array<float, 3> rgbColor) {

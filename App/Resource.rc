@@ -148,6 +148,8 @@ IDR_WAVE48              WAVE                    "..\\Music\\Pillars Useful EbMin
 
 IDR_WAVE49              WAVE                    "..\\Music\\Pillars Useful Emaj.wav"
 
+IDR_WAVE51              WAVE                    "..\\Music\\Bonk Sound Effect.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 

@@ -20,6 +20,8 @@ class APWatchdog : public Watchdog {
 public:
 	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI);
 
+	int DEATHLINK_DURATION = 15;
+
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
 
@@ -32,6 +34,9 @@ public:
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
+
+	void TriggerDeathLink();
+	void ResetDeathLink();
 
 	void StartRebindingKey(enum class CustomKey key);
 
@@ -112,11 +117,11 @@ private:
 	bool FirstEverLocationCheckDone = false;
 
 	bool hasPowerSurge = false;
+	bool hasDeathLink = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
+	std::chrono::system_clock::time_point deathLinkStartTime;
 
 	std::set<double> deathLinkTimestamps;
-
-	const float baseSpeed = 2.0f;
 
 	bool laserRequirementMet = false;
 
@@ -155,6 +160,7 @@ private:
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
+	void HandleDeathLink();
 
 	void LookingAtObelisk();
 
