@@ -18,7 +18,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -35,7 +35,7 @@ public:
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
 
-	void TriggerDeathLink();
+	void TriggerBonk();
 	void ResetDeathLink();
 
 	void StartRebindingKey(enum class CustomKey key);
@@ -104,7 +104,9 @@ private:
 
 	std::shared_ptr<HudManager> hudManager;
 
-	bool DeathLink = false;
+	int DeathLinkAmnesty = 0;
+	int DeathLinkCount = 0;
+
 	bool ElevatorsComeToYou = false;
 	bool EPShuffle = false;
 	int PuzzleRandomization = 0;

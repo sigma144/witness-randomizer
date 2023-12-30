@@ -26,7 +26,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool dl, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -36,7 +36,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		panelsThatAreLocations.insert(key);
 	}
 
-	DeathLink = dl;
+	DeathLinkAmnesty = dlA;
 	finalPanel = lastPanel;
 	panelLocker = p;
 	audioLogMessages = a;
@@ -573,7 +573,7 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-void APWatchdog::TriggerDeathLink() {
+void APWatchdog::TriggerBonk() {
 	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
 
 	if (hasDeathLink) {
@@ -1788,7 +1788,7 @@ void APWatchdog::SetStatusMessages() {
 				hudManager->clearWalkStatusMessage();
 			}
 			else {
-				hudManager->setWalkStatusMessage("Death Link active for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
+				hudManager->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
 			}
 		}
 
@@ -1816,6 +1816,24 @@ void APWatchdog::SetStatusMessages() {
 			// If we have a special skip message for the current puzzle, show it above the skip count.
 			if (puzzleSkipInfoMessage.size() > 0) {
 				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
+			}
+
+			if (DeathLinkAmnesty != -1) {
+				if (activePanelId != -1 && allPanels.count(activePanelId)) {
+					if (deathlinkExcludeList.count(activePanelId) || PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(activePanelId)) {
+						skipMessage = "This panel is excluded from DeathLink.\n" + skipMessage;
+					}
+					else {
+						if (DeathLinkAmnesty != 0) {
+							if (DeathLinkCount == DeathLinkAmnesty) {
+								skipMessage = "The next panel fail will cause a DeathLink.\n" + skipMessage;
+							}
+							else {
+								skipMessage = "Remaining DeathLink Amnesty: " + std::to_string(DeathLinkAmnesty - DeathLinkCount) + ".\n" + skipMessage;
+							}
+						}
+					}
+				}
 			}
 
 			if (CanUsePuzzleSkip()) {
@@ -2070,7 +2088,7 @@ void APServerPoller::action() {
 
 
 void APWatchdog::CheckDeathLink() {
-	if (!DeathLink) return;
+	if (DeathLinkAmnesty == -1) return;
 
 	int panelIdToConsider = mostRecentActivePanelId;
 
@@ -2088,8 +2106,21 @@ void APWatchdog::CheckDeathLink() {
 		mostRecentPanelState = newState;
 
 		if (newState == 2) {
-			SendDeathLink(mostRecentActivePanelId);
-			hudManager->queueNotification("Death Sent.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+			DeathLinkCount++;
+			if (DeathLinkCount > DeathLinkAmnesty) {
+				SendDeathLink(mostRecentActivePanelId);
+				hudManager->queueNotification("Death Sent.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+				DeathLinkCount = 0;
+			}
+			else {
+				int remain_amnesty = DeathLinkAmnesty - DeathLinkCount;
+				if (remain_amnesty == 0) {
+					hudManager->queueNotification("Panel failed. The next panel fail will cause a DeathLink.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+				}
+				else {
+					hudManager->queueNotification("Panel failed. Remaining DeathLink Amnesty:" + std::to_string(remain_amnesty) + ".", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+				}
+			}
 		}
 	}
 }
@@ -2116,7 +2147,7 @@ void APWatchdog::SendDeathLink(int panelId)
 }
 
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
-	TriggerDeathLink();
+	TriggerBonk();
 
 	double a = -1;
 
@@ -2187,7 +2218,7 @@ void APWatchdog::HandleReceivedItems() {
 
 		bool unlockLater = false;
 
-		if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE) {
+		if (item.item != ITEM_TEMP_SPEED_BOOST && item.item != ITEM_TEMP_SPEED_REDUCTION && item.item != ITEM_POWER_SURGE && item.item != ITEM_BONK_TRAP) {
 			unlockItem(realitem);
 			panelLocker->UpdatePuzzleLocks(*state, realitem);
 		}
@@ -2212,7 +2243,7 @@ void APWatchdog::HandleReceivedItems() {
 		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
 
 		QueueReceivedItem({ item.item, advancement, realitem });
-		if (item.player != ap->get_player_number()) PlayReceivedJingle(item.flags);
+		if (item.item != ITEM_BONK_TRAP && item.player != ap->get_player_number()) PlayReceivedJingle(item.flags);
 	}
 }
 
@@ -2241,6 +2272,7 @@ void APWatchdog::unlockItem(int item) {
 
 		//Traps
 	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
+	case ITEM_BONK_TRAP:							TriggerBonk();						  break;
 	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
 }
