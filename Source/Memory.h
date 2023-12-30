@@ -183,6 +183,12 @@ public:
 
 	void EnableMovement(bool enable);
 
+	void EnableVision(bool enable);
+
+	std::pair<float, float> MoveVisionTowards(float target, float delta);
+
+	void EnableSolveMode(bool enable);
+
 	void ExitSolveMode();
 
 	std::vector<float> ReadPlayerPosition() {
@@ -314,7 +320,10 @@ public:
 	uint64_t getPortablesOfType;
 	uint64_t ptypeIssuedSound;
 	uint64_t getSoundStreamFunction;
+	uint64_t enterSolveModeFunction;
 	uint64_t exitSolveModeFunction;
+	uint64_t setUserBrightnessFunction;
+	uint64_t deviceDisplay;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;

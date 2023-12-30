@@ -111,6 +111,8 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
+	HandleVision(frameDuration);
+
 	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -579,6 +581,8 @@ void APWatchdog::TriggerDeathLink() {
 	}
 	else {
 		hasDeathLink = true;
+		Memory::get()->EnableMovement(false);
+		Memory::get()->EnableSolveMode(false);
 		deathLinkStartTime = std::chrono::system_clock::now();
 	}
 }
@@ -586,16 +590,26 @@ void APWatchdog::TriggerDeathLink() {
 void APWatchdog::HandleDeathLink() {
 	if (hasDeathLink)
 	{
-		if (DateTime::since(deathLinkStartTime).count() > DEATHLINK_DURATION * 1000)
-			ResetDeathLink();
-		else {
-			Memory::get()->EnableMovement(false);
+		if (DateTime::since(deathLinkStartTime).count() > DEATHLINK_DURATION * 1000) ResetDeathLink();
+	}
+}
 
-			InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-			if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
-				Memory::get()->ExitSolveMode();
-			}
+void APWatchdog::HandleVision(float deltaSeconds) {
+	Memory *memory = Memory::get();
+	
+	if (hasDeathLink) {
+		memory->EnableVision(false);
+		memory->MoveVisionTowards(0.0f, 1.0f);
+
+		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
+			Memory::get()->ExitSolveMode();
 		}
+	}
+	else {
+		
+		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, deltaSeconds);
+		if (previousAndNewBrightness.second == 1.0f) memory->EnableVision(true);
 	}
 }
 
@@ -603,6 +617,7 @@ void APWatchdog::ResetDeathLink() {
 	hasDeathLink = false;
 
 	Memory::get()->EnableMovement(true);
+	Memory::get()->EnableSolveMode(true);
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)

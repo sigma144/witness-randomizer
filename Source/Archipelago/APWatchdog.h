@@ -161,6 +161,7 @@ private:
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
 	void HandleDeathLink();
+	void HandleVision(float deltaSeconds);
 
 	void LookingAtObelisk();
 

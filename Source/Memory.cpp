@@ -384,8 +384,41 @@ void Memory::findImportantFunctionAddresses(){
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
 
+	executeSigScan({ 0x0F, 0x29, 0x74, 0x24, 0x20, 0x0F, 0x28, 0xF0, 0x48, 0x8B, 0x01, 0xF3, 0x0F }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (;; index--) {
+			if ((data[index] == 0x48 || data[index] == 0xC3) && data[index + 1] == 0x83 && data[index + 2] == 0xEC) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
+				this->setUserBrightnessFunction = _baseAddress + offset + index;
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 3] == 0x48 && data[index - 2] == 0x8B && data[index - 1] == 0x05) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->deviceDisplay = addressOfRelativePointer + relativePointer + 4;
+
+				return true;
+			}
+		}
+
+		return false;
+	});
+
 	// Exit solve mode is a pain to find. We'll find enter_solve_mode, which is easier to find, and then find the start of the next function.
+	// We also need to do some work to capture both the old and the new versions' versions of this function
 	executeSigScan({ 0x66, 0x0F, 0x5A, 0xC0, 0xF3, 0x0F, 0x5C, 0x05 }, [this](__int64 offset, int index, const std::vector<byte>& data) { // This will be inside Enter Solve Mode
+		int backIndex = index;
+
+		for (;; backIndex--) {
+			if ((data[backIndex - 1] == 0xCC || data[backIndex - 1] == 0xC3) && (data[backIndex] == 0x48 || data[backIndex] == 0xC3) && data[backIndex + 1] == 0x89 && (data[backIndex + 2] == 0x6C || data[backIndex + 2] == 0x74 && data[backIndex + 3] == 0x24 && data[backIndex + 4] == 0x10)) {
+				this->enterSolveModeFunction = _baseAddress + backIndex + offset;
+				break;
+			}
+		}
+
 		for (; index < data.size(); index++) {
 			if (data[index] == 0x48 && data[index + 1] == 0x83 && data[index + 2] == 0xC4) { // This will be the end of Enter Solve Mode
 				for (; index < data.size(); index++) {
@@ -1372,6 +1405,65 @@ void Memory::EnableMovement(bool enable) {
 		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(baseMovementSpeedAddress), &zeroSpeedRelativeAddress, sizeof(zeroSpeedRelativeAddress), NULL);
 		this->WriteData<float>({ ACCELERATION }, { DEFAULTACCEL * 1.0f });
 		this->WriteData<float>({ DECELERATION }, { DEFAULTDECEL * 1.0f });
+	}
+}
+
+void Memory::EnableVision(bool enable) {
+	LPVOID addressPointer = reinterpret_cast<LPVOID>(this->setUserBrightnessFunction);
+
+	char currentByte = 0x00;
+	char disabledByte = 0xC3;
+	char enabledByte = 0x48;
+	ReadProcessMemory(_handle, addressPointer, &currentByte, sizeof(currentByte), NULL);
+
+	if (enable && currentByte == disabledByte) {
+		WriteProcessMemory(_handle, addressPointer, &enabledByte, sizeof(enabledByte), NULL);
+	}
+	else if (!enable && currentByte == enabledByte) {
+		WriteProcessMemory(_handle, addressPointer, &disabledByte, sizeof(disabledByte), NULL);
+	}
+}
+
+std::pair<float, float> Memory::MoveVisionTowards(float target, float deltaAbs) {
+	uint64_t deviceDisplayActual;
+	ReadProcessMemory(_handle, reinterpret_cast<LPVOID>(this->deviceDisplay), &deviceDisplayActual, sizeof(uint64_t), NULL);
+
+	float brightnessBefore;
+	float brightness;
+
+	ReadProcessMemory(_handle, reinterpret_cast<LPVOID>(deviceDisplayActual + 0x2C), &brightnessBefore, sizeof(float), NULL);
+	brightness = brightnessBefore;
+
+	if (brightness == target) return { brightnessBefore, brightness };
+
+	if (brightness < target) {
+		brightness += deltaAbs;
+		if (brightness > target) brightness = target;
+	}
+
+	if (brightness > target) {
+		brightness -= deltaAbs;
+		if (brightness < target) brightness = target;
+	}
+
+	WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(deviceDisplayActual + 0x2C), &brightness, sizeof(float), NULL);
+
+	return { brightnessBefore, brightness };
+}
+
+void Memory::EnableSolveMode(bool enable) {
+	LPVOID addressPointer = reinterpret_cast<LPVOID>(this->enterSolveModeFunction);
+
+	char currentByte = 0x00;
+	char disabledByte = 0xC3;
+	char enabledByte = 0x48;
+	ReadProcessMemory(_handle, addressPointer, &currentByte, sizeof(currentByte), NULL);
+
+	if (enable && currentByte == disabledByte) {
+		WriteProcessMemory(_handle, addressPointer, &enabledByte, sizeof(enabledByte), NULL);
+	}
+	else if (!enable && currentByte == enabledByte) {
+		WriteProcessMemory(_handle, addressPointer, &disabledByte, sizeof(disabledByte), NULL);
 	}
 }
 
