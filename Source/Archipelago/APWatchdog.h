@@ -63,6 +63,7 @@ public:
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
+	void SetValueFromServer(std::string key, nlohmann::json value);
 	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool collect);
 	void HandleEPResponse(std::string epID, nlohmann::json value, bool collect);
 

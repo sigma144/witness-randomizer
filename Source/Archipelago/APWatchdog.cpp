@@ -1328,6 +1328,15 @@ void APWatchdog::CheckLasers() {
 	}
 }
 
+void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
+	if (key.find("WitnessDeathLink") != std::string::npos) {
+		if (DeathLinkCount != value) {
+			DeathLinkCount = value;
+			hudManager->queueNotification("Updated Death Link Amnesty from Server. Remaining: " + std::to_string(DeathLinkAmnesty - DeathLinkCount) + ".");
+		}
+	}
+}
+
 void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncprogress) {
 	int laserNo = laserIDsToLasers[laserID];
 
@@ -2118,9 +2127,10 @@ void APWatchdog::CheckDeathLink() {
 					hudManager->queueNotification("Panel failed. The next panel fail will cause a DeathLink.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				}
 				else {
-					hudManager->queueNotification("Panel failed. Remaining DeathLink Amnesty:" + std::to_string(remain_amnesty) + ".", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+					hudManager->queueNotification("Panel failed. Remaining DeathLink Amnesty: " + std::to_string(remain_amnesty) + ".", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				}
 			}
+			ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, false, { {"replace", DeathLinkCount} });
 		}
 	}
 }

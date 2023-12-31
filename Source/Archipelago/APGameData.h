@@ -279,6 +279,13 @@ inline std::map<int, std::vector<Connection>> severTargetsById = {
 	// Desert Laser
 	{ 0x012FB, {{0x012FB, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, MOUNT_PARENT_ID, }, {0x34F1E, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, LIGHTMAP_TABLE, }, {0x34F1E, PANEL, LIGHTMAP_TABLE, }} }, // Desert Laser
 	{ 0x01317, {{0x012FB, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, MOUNT_PARENT_ID, }, {0x34F1E, PANEL, MOUNT_PARENT_ID, }, {0x34BD2, PANEL, LIGHTMAP_TABLE, }, {0x34F1E, PANEL, LIGHTMAP_TABLE, }} }, // Desert Elevator
+	
+	// Quarry Elevator
+	{ 0x17CC4, {{0x03689, CABLE, CABLE_TARGET_1}}},
+
+	// Desert Final Hexagonal Control
+	{ 0x0A015, {{0x17C31, PANEL, TARGET}}},
+
 };
 
 inline std::map<int, std::vector<int>> doorCollisions = {

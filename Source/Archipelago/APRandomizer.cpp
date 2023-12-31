@@ -262,6 +262,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	});
 
 	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
+		if (key.find("WitnessDeathLink") != std::string::npos) {
+			async->SetValueFromServer(key, value);
+			return;
+		}
+
 		if (value != original_value) {
 			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
 			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
@@ -367,6 +372,9 @@ void APRandomizer::PostGeneration() {
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-Collect", NULL, false, {{"replace", CollectedPuzzlesBehavior}});
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-Disabled", NULL, false, {{"replace", DisabledPuzzlesBehavior} });
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-SyncProgress", NULL, false, { {"replace", SyncProgress} });
+
+	ap->SetNotify({ "WitnessDeathLink" + std::to_string(ap->get_player_number()) });
+	ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, true, { {"default", 0} });
 
 	// EP-related slowing down of certain bridges etc.
 	if (EPShuffle) {
