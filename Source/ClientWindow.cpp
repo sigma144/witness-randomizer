@@ -584,7 +584,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Free Skip + Unlock");
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip");
 	SendMessage(hwndOptionCollect, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip + Unlock");
-	SendMessage(hwndOptionCollect, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
+	SendMessage(hwndOptionCollect, CB_SELECTSTRING, 0, (LPARAM)L"Auto-Skip");
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 
@@ -629,7 +629,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Off");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Full");
-	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Off");
+	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Understated");
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 }
