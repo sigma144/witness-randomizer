@@ -1459,10 +1459,14 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 
-	if (timePassedSinceRandomisation <= 6.0f) {
+	if (timePassedSinceRandomisation <= 4.0f) {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
 			"Collect Setting: " + Collect + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;
+	}
+	else if (timePassedSinceRandomisation <= 8.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
+		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
+			"Change Volume of Jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app.");
 	}
 
 	hudManager->clearInformationalMessage(InfoMessageCategory::Settings);
