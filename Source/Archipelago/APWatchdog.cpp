@@ -1466,7 +1466,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 	else if (timePassedSinceRandomisation <= 8.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
-			"Change Volume of Jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app.");
+			"Change Volume of jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app after the first jingle is played.");
 	}
 
 	hudManager->clearInformationalMessage(InfoMessageCategory::Settings);
@@ -2176,14 +2176,14 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		return;
 	}
 
-	std::string firstSentence = "Received Death.";
+	std::string firstSentence = "Received death.";
 	std::string secondSentence = "";
 
 	if (cause != "") {
 		secondSentence = " Reason: " + cause;
 	}
 	else if (source != "") {
-		firstSentence = "Received Death from " + source + ".";
+		firstSentence = "Received death from " + source + ".";
 	}
 
 	hudManager->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
