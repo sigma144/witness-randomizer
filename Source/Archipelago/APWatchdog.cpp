@@ -1468,7 +1468,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 			"Collect Setting: " + CollectText + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;
 	}
-	else if (timePassedSinceRandomisation <= 8.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
+	else if (timePassedSinceRandomisation <= 10.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
 			"Change Volume of jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app after the first jingle is played.");
 		return;
