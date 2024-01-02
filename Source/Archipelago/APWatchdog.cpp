@@ -45,6 +45,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	obeliskHexToEPHexes = o;
 	entityToName = epn;
 	solveModeSpeedFactor = smsf;
+	CollectText = col;
 	Collect = col;
 	DisabledPuzzlesBehavior = dis;
 	DisabledEntities = disP;
@@ -1461,12 +1462,13 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	if (timePassedSinceRandomisation <= 4.0f) {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
-			"Collect Setting: " + Collect + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
+			"Collect Setting: " + CollectText + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;
 	}
 	else if (timePassedSinceRandomisation <= 8.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
 			"Change Volume of jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app after the first jingle is played.");
+		return;
 	}
 
 	hudManager->clearInformationalMessage(InfoMessageCategory::Settings);

@@ -113,6 +113,7 @@ private:
 	int PuzzleRandomization = 0;
 
 	std::string Collect = "Unchanged";
+	std::string CollectText = "Unchanged";
 	bool CollectUnlock = false;
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
 	std::set<int> DisabledEntities;
