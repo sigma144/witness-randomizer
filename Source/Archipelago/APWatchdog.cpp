@@ -833,7 +833,10 @@ void APWatchdog::SkipPreviouslySkippedPuzzles() {
 		else if (skipped == COLLECTED) {
 			SkipPanel(id, "Collected", false, skipped - PUZZLE_SKIPPED);
 		}
-		else if (skipped == DISABLED || skipped == EXCLUDED) {
+		else if (skipped == EXCLUDED) {
+			SkipPanel(id, "Excluded", false, skipped - PUZZLE_SKIPPED);
+		}
+		else if (skipped == DISABLED) {
 			//APRandomizer.cpp will do it again anyway
 		}
 	}
