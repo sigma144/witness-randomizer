@@ -722,6 +722,7 @@ const inline int LockablePuzzles[]{
 		0x034E3, // Town Soundproof Room
 		0x334D8, 0x03C0C, 0x03C08, // Town 3-color Room
 		0x0A0C8, // Town Orange
+		0x09F98, // Town Redirect
 		0x17F89, 0x0A168, 0x33AB2, //Windmill Puzzles
 		0x033D4, 0x0CC7B, 0x002A6, 0x00AFB, 0x15ADD, // Vaults
 		0x17C34, // Mountain
