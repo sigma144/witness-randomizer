@@ -326,7 +326,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			else
 			{
 				async->SetItemRewardColor(findResult->first, item.flags);
-				async->PlaySentJingle(findResult->first, item.flags);
+				if (!(item.item == ITEM_BONK_TRAP && receiving)) async->PlaySentJingle(findResult->first, item.flags);
 				if(!receiving) async->getHudManager()->queueNotification("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 		}
