@@ -770,6 +770,11 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			handleKeybind(key);
 			break;
 		}
+		case IDC_BUTTON_KEYBIND + static_cast<int>(CustomKey::SLEEP) : {
+			CustomKey key = static_cast<CustomKey>(LOWORD(wParam) - IDC_BUTTON_KEYBIND);
+			handleKeybind(key);
+			break;
+		}
 		default:
 			return DefDlgProc(hwnd, message, wParam, lParam);
 		}

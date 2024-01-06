@@ -182,6 +182,7 @@ public:
 	void WriteMovementSpeed(float speed);
 
 	void EnableMovement(bool enable);
+	void FloatWithoutMovement(bool enable);
 
 	void EnableVision(bool enable);
 
@@ -194,6 +195,8 @@ public:
 	std::vector<float> ReadPlayerPosition() {
 		return this->ReadData<float>({ CAMERAPOSITION }, 3);
 	}
+
+	void WritePlayerPosition(std::vector<float> playerPosition);
 
 	void OpenDoor(int id) {
 		CallVoidFunction(id, openDoorFunction);
@@ -328,6 +331,10 @@ public:
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
 	int DECELERATION;
+	int NOCLIPENABLED;
+	int CAMERAANG;
+	int CAMERAPOS;
+	int NOCLIPSPEED;
 
 	float DEFAULTACCEL;
 	float DEFAULTDECEL;

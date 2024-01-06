@@ -42,14 +42,14 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	});
 
 	ap->set_slot_disconnected_handler([&]() {
-		async->getHudManager()->queueBannerMessage("Randomiser has been disconnected.");
+		HudManager::get()->queueBannerMessage("Randomiser has been disconnected.");
 		std::string message = "The randomizer seems to have unexpectedly disconnected. Please reload both the game and the randomizer.";
 
 		MessageBoxA(GetActiveWindow(), message.c_str(), NULL, MB_OK);
 	});
 
 	ap->set_socket_disconnected_handler([&]() {
-		async->getHudManager()->queueBannerMessage("Randomiser has been disconnected.");
+		HudManager::get()->queueBannerMessage("Randomiser has been disconnected.");
 		std::string message = "The randomizer seems to have unexpectedly disconnected. Please reload both the game and the randomizer.";
 
 		MessageBoxA(GetActiveWindow(), message.c_str(), NULL, MB_OK);
@@ -312,7 +312,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			std::string isFor = "";
 			if (!receiving) isFor = " for " + player;
 
-			if(!found) async->getHudManager()->queueNotification("Hint: " + itemName + isFor + " is on " + locationName + ".");
+			if(!found) HudManager::get()->queueNotification("Hint: " + itemName + isFor + " is on " + locationName + ".");
 		}
 		else {
 			int location = item.location;
@@ -321,13 +321,13 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			int panelId = panelIdToLocationIdReverse[location];
 
 			if (panelIdToLocationIdReverse.count(location) && async->CheckPanelHasBeenSolved(panelId)) {
-				async->getHudManager()->queueNotification("(Collect) Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
+				HudManager::get()->queueNotification("(Collect) Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 			else
 			{
 				async->SetItemRewardColor(findResult->first, item.flags);
 				if (!(item.item == ITEM_BONK_TRAP && receiving)) async->PlaySentJingle(findResult->first, item.flags);
-				if(!receiving) async->getHudManager()->queueNotification("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
+				if(!receiving) HudManager::get()->queueNotification("Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 		}
 	});
@@ -461,7 +461,7 @@ void APRandomizer::PostGeneration() {
 		}
 	}
 
-	async->getHudManager()->queueBannerMessage("Randomized!");
+	HudManager::get()->queueBannerMessage("Randomized!");
 
 	async->start();
 }

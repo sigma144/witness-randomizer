@@ -22,6 +22,17 @@
 // Verifies that sigscans are working by comparing them against hardcoded values in the Steam build.
 #define DEBUG_SIGSCAN 0
 
+HudManager* HudManager::_singleton = nullptr;
+
+void HudManager::create() {
+	if (_singleton == nullptr) {
+		_singleton = new HudManager();
+	}
+}
+
+HudManager* HudManager::get() {
+	return _singleton;
+}
 
 HudManager::HudManager() {
 	overwriteSubtitleFunction();

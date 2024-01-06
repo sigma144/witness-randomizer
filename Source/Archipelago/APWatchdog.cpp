@@ -91,7 +91,6 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	}
 
 	lastFrameTime = std::chrono::system_clock::now();
-	hudManager = std::make_shared<HudManager>();
 }
 
 void APWatchdog::action() {
@@ -104,6 +103,9 @@ void APWatchdog::action() {
 	HandleReceivedItems();
 
 	HandleInteractionState();
+
+	HandleEncumberment(frameDuration);
+	HandleWarp(frameDuration);
 	HandleMovementSpeed(frameDuration);
 	
 	HandleKeyTaps();
@@ -111,8 +113,6 @@ void APWatchdog::action() {
 	UpdatePuzzleSkip(frameDuration);
 
 	CheckDeathLink();
-
-	HandleVision(frameDuration);
 
 	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
@@ -150,7 +150,7 @@ void APWatchdog::action() {
 	PettingTheDog(frameDuration);
 
 	SetStatusMessages();
-	hudManager->update(frameDuration);
+	HudManager::get()->update(frameDuration);
 }
 
 void APWatchdog::HandleInteractionState() {
@@ -175,7 +175,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelDataIntentionallyUnsafe<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
-		hudManager->queueBannerMessage("Victory!");
+		HudManager::get()->queueBannerMessage("Victory!");
 		if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
@@ -185,7 +185,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (power > 0.0f) {
 			isCompleted = true;
-			hudManager->queueBannerMessage("Victory!");
+			HudManager::get()->queueBannerMessage("Victory!");
 			if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
@@ -196,7 +196,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (power > 0.0f) {
 			isCompleted = true;
-			hudManager->queueBannerMessage("Victory!");
+			HudManager::get()->queueBannerMessage("Victory!");
 			if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
@@ -267,7 +267,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 			if (EPSet.empty())
 			{
-				if(FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId) + " Completed!");
+				if(FirstEverLocationCheckDone) HudManager::get()->queueBannerMessage(ap->get_location_name(locationId) + " Completed!");
 
 				solvedLocations.push_back(locationId);
 
@@ -279,7 +279,7 @@ void APWatchdog::CheckSolvedPanels() {
 					int total = obeliskHexToAmountOfEPs[panelId];
 					int done = total - EPSet.size();
 
-					if (FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+					if (FirstEverLocationCheckDone) HudManager::get()->queueBannerMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
 				}
 				it++;
 			}
@@ -496,11 +496,14 @@ void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
 		float factor = 1;
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-		if (interactionState != InteractionState::Walking || hasDeathLink) factor = solveModeSpeedFactor;
+		if (interactionState != InteractionState::Walking || IsEncumbered()) factor = solveModeSpeedFactor;
 
 		speedTime = std::max(std::abs(speedTime) - deltaSeconds * factor, 0.f) * (std::signbit(speedTime) ? -1 : 1);
 
-		if (speedTime > 0) {
+		if (IsEncumbered()) {
+			WriteMovementSpeed(10.0f);
+		}
+		else if (speedTime > 0) {
 			WriteMovementSpeed(2.0f);
 		}
 		else if (speedTime < 0) {
@@ -511,7 +514,12 @@ void APWatchdog::HandleMovementSpeed(float deltaSeconds) {
 		}
 	}
 	else {
-		WriteMovementSpeed(1.0f);
+		if (IsEncumbered()) {
+			WriteMovementSpeed(10.0f);
+		}
+		else {
+			WriteMovementSpeed(1.0f);
+		}
 	}
 
 	if (speedTime == 0.6999999881) { // avoid original value
@@ -544,7 +552,7 @@ void APWatchdog::HandlePowerSurge() {
 				std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, movingMemoryPanels.count(panelId));
 
 				if (powerValues.size() == 0) {
-					hudManager->queueBannerMessage("Error reading power values on panel: " + std::to_string(panelId));
+					HudManager::get()->queueBannerMessage("Error reading power values on panel: " + std::to_string(panelId));
 					continue;
 				}
 
@@ -577,30 +585,36 @@ void APWatchdog::ResetPowerSurge() {
 void APWatchdog::TriggerBonk() {
 	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
 
-	if (hasDeathLink) {
-		deathLinkStartTime = std::chrono::system_clock::now();
+	if (isKnockedOut) {
+		knockOutStartTime = std::chrono::system_clock::now();
 	}
 	else {
-		hasDeathLink = true;
-		Memory::get()->EnableMovement(false);
-		Memory::get()->EnableSolveMode(false);
-		deathLinkStartTime = std::chrono::system_clock::now();
+		isKnockedOut = true;
+		knockOutStartTime = std::chrono::system_clock::now();
 	}
 }
 
 void APWatchdog::HandleDeathLink() {
-	if (hasDeathLink)
+	if (isKnockedOut)
 	{
-		if (DateTime::since(deathLinkStartTime).count() > DEATHLINK_DURATION * 1000) ResetDeathLink();
+		if (DateTime::since(knockOutStartTime).count() > DEATHLINK_DURATION * 1000) ResetDeathLink();
 	}
 }
 
-void APWatchdog::HandleVision(float deltaSeconds) {
+bool APWatchdog::IsEncumbered() {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+
+	return isKnockedOut || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping;
+}
+
+void APWatchdog::HandleEncumberment(float deltaSeconds) {
 	Memory *memory = Memory::get();
-	
-	if (hasDeathLink) {
+
+	if (IsEncumbered()) {
 		memory->EnableVision(false);
-		memory->MoveVisionTowards(0.0f, 1.0f);
+		Memory::get()->EnableMovement(false);
+		Memory::get()->EnableSolveMode(false);
+		memory->MoveVisionTowards(0.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
@@ -608,17 +622,37 @@ void APWatchdog::HandleVision(float deltaSeconds) {
 		}
 	}
 	else {
-		
-		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, deltaSeconds);
+		Memory::get()->EnableMovement(true);
+		Memory::get()->EnableSolveMode(true);
+		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, isKnockedOut ? deltaSeconds : deltaSeconds * 2);
 		if (previousAndNewBrightness.second == 1.0f) memory->EnableVision(true);
 	}
 }
 
-void APWatchdog::ResetDeathLink() {
-	hasDeathLink = false;
+void APWatchdog::HandleWarp(float deltaSeconds){
+	Memory *memory = Memory::get();
+	InputWatchdog* inputWatchdog = InputWatchdog::get();
+	if (inputWatchdog->getInteractionState() == InteractionState::Warping) {
+		inputWatchdog->updateWarpTimer(deltaSeconds);
+		memory->FloatWithoutMovement(true);
 
-	Memory::get()->EnableMovement(true);
-	Memory::get()->EnableSolveMode(true);
+		float warpTime = inputWatchdog->getWarpTime();
+
+		if (warpTime <= WARPTIME - 0.5f) {
+			memory->WritePlayerPosition({ -53.132, -46.210, 4.154 });
+		}
+
+		if (warpTime == 0.0f) {
+			memory->FloatWithoutMovement(false); // Test whether this is enough. I don't want to disable no-clip from the Trainer
+			inputWatchdog->endWarp();
+		}
+	}
+	else {
+	}
+}
+
+void APWatchdog::ResetDeathLink() {
+	isKnockedOut = false;
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)
@@ -1110,33 +1144,44 @@ void APWatchdog::HandleKeyTaps() {
 			else if (!inputWatchdog->isValidForCustomKeybind(tappedButton)) {
 				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
 				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
-				hudManager->queueBannerMessage("Can't bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
+				HudManager::get()->queueBannerMessage("Can't bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
 			}
 			else if (inputWatchdog->trySetCustomKeybind(tappedButton)) {
 
 				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
 				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
-				hudManager->queueBannerMessage("Bound [" + keyName + "] to " + bindName + ".", { 1.f, 1.f, 1.f }, 2.f);
+				HudManager::get()->queueBannerMessage("Bound [" + keyName + "] to " + bindName + ".", { 1.f, 1.f, 1.f }, 2.f);
 			}
 			else {
 				std::string keyName = inputWatchdog->getNameForInputButton(tappedButton);
 				std::string bindName = inputWatchdog->getNameForCustomKey(bindingKey);
-				hudManager->queueBannerMessage("Failed to bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
+				HudManager::get()->queueBannerMessage("Failed to bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
 			}
 		}
 		else {
+			if (interactionState == InteractionState::Sleeping) {
+				if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) {
+					TryWarp();
+					return;
+				}
+			}
+			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SLEEP)) {
+				ToggleSleep();
+				return;
+			}
+
 			switch (tappedButton) {
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
-				hudManager->queueNotification("Cheat: adding Slowness.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+				HudManager::get()->queueNotification("Cheat: adding Slowness.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				ApplyTemporarySlow();
 				break;
 			case InputButton::KEY_EQUALS:
-				hudManager->queueNotification("Cheat: adding Speed Boost.", getColorByItemFlag(APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
+				HudManager::get()->queueNotification("Cheat: adding Speed Boost.", getColorByItemFlag(APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
 				ApplyTemporarySpeedBoost();
 				break;
 			case InputButton::KEY_0:
-				hudManager->queueNotification("Cheat: adding Puzzle Skip.", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+				HudManager::get()->queueNotification("Cheat: adding Puzzle Skip.", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 				if (spentPuzzleSkips > foundPuzzleSkips) {
 					// We've spent more skips than we've found, almost certainly because we cheated ourselves some in a
 					//   previous app launch. Reset to zero before adding a new one.
@@ -1149,9 +1194,9 @@ void APWatchdog::HandleKeyTaps() {
 				for (int spamCount = 0; spamCount < 100; spamCount++) {
 					std::stringstream spamString;
 					spamString << "spam message " << spamCount + 1 << "/100";
-					hudManager->queueNotification(spamString.str());
+					HudManager::get()->queueNotification(spamString.str());
 				}
-				hudManager->queueNotification("sorry (not sorry)");
+				HudManager::get()->queueNotification("sorry (not sorry)");
 #endif
 			};
 		}
@@ -1175,7 +1220,7 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 			currentAudioLog = logId;
 
 			std::string message = audioLogMessages[logId].first;
-			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
+			HudManager::get()->showInformationalMessage(InfoMessageCategory::ApHint, message);
 			currentAudioLogDuration = 8.f;
 
 			APClient::DataStorageOperation operation;
@@ -1212,11 +1257,11 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		// We don't have an audio log playing. Run out the timer on the hint display.
 		currentAudioLogDuration -= deltaSeconds;
 		if (currentAudioLogDuration <= 0.f) {
-			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+			HudManager::get()->clearInformationalMessage(InfoMessageCategory::ApHint);
 		}
 	}
 	else {
-		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 }
 
@@ -1336,7 +1381,7 @@ void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 	if (key.find("WitnessDeathLink") != std::string::npos) {
 		if (DeathLinkCount != value) {
 			DeathLinkCount = value;
-			hudManager->queueNotification("Updated Death Link Amnesty from Server. Remaining: " + std::to_string(DeathLinkAmnesty - DeathLinkCount) + ".");
+			HudManager::get()->queueNotification("Updated Death Link Amnesty from Server. Remaining: " + std::to_string(DeathLinkAmnesty - DeathLinkCount) + ".");
 		}
 	}
 }
@@ -1353,7 +1398,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 	if(!laserActiveInGame & syncprogress)
 	{
 		Memory::get()->ActivateLaser(laserNo);
-		hudManager->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+		HudManager::get()->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
 }
 
@@ -1373,7 +1418,7 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool s
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
 		if (syncprogress){
-			hudManager->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
+			HudManager::get()->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 		}
 	}
 }
@@ -1381,8 +1426,8 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool s
 void APWatchdog::InfiniteChallenge(bool enable) {
 	Memory::get()->SetInfiniteChallenge(enable);
 
-	if (enable) hudManager->queueBannerMessage("Challenge Timer disabled.");
-	if (!enable) hudManager->queueBannerMessage("Challenge Timer reenabled.");
+	if (enable) HudManager::get()->queueBannerMessage("Challenge Timer disabled.");
+	if (!enable) HudManager::get()->queueBannerMessage("Challenge Timer reenabled.");
 }
 
 void APWatchdog::CheckImportantCollisionCubes() {
@@ -1464,61 +1509,61 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 
 	if (timePassedSinceRandomisation <= 4.0f) {
-		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::Settings,
 			"Collect Setting: " + CollectText + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;
 	}
 	else if (timePassedSinceRandomisation <= 10.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
-		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::Settings,
 			"Change Volume of jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app after the first jingle is played.");
 		return;
 	}
 
-	hudManager->clearInformationalMessage(InfoMessageCategory::Settings);
+	HudManager::get()->clearInformationalMessage(InfoMessageCategory::Settings);
 
 	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Stone Pillar needs Triangles.");
 	}
 	else if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Dots, Black/White Squares.");
 	}
 	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Most Bunker panels need Black/White Squares and Colored Squares.");
 	}
 	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		if (PuzzleRandomization == SIGMA_EXPERT) HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Eraser, Triangles,\n"
 			"Stars, Stars + Same Colored Symbol.");
-		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		else HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Shapers and Eraser.");
 	}
 	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		if (PuzzleRandomization == SIGMA_EXPERT) HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Symmetry and Triangles.");
-		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		else HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Symmetry and Dots.");
 	}
 	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
 		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 				"Left Panel needs Stars and Shapers.\n"
 				"Right Panel needs Dots and Colored Squares.");
 		}
 		else
 		{
-			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 				"Left Panel needs Stars and Shapers.");
 		}
 	}
 	else if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Right Panel needs Dots and Colored Squares.");
 	}
 	else {
-		hudManager->clearInformationalMessage(InfoMessageCategory::MissingSymbol);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::MissingSymbol);
 	}
 }
 
@@ -1727,7 +1772,7 @@ void APWatchdog::CheckEPSkips() {
 	}
 
 	if (!panelsToSkip.empty()) {
-		hudManager->queueBannerMessage("Puzzle symbols removed to make Environmental Pattern solvable.");
+		HudManager::get()->queueBannerMessage("Puzzle symbols removed to make Environmental Pattern solvable.");
 	}
 
 	for (int panel : panelsToSkip) {
@@ -1785,7 +1830,7 @@ void APWatchdog::QueueItemMessages() {
 			count = " (x" + std::to_string(itemCounts[name]) + ")";
 		}
 
-		hudManager->queueNotification("Received " + name + count + ".", itemColors[name]);
+		HudManager::get()->queueNotification("Received " + name + count + ".", itemColors[name]);
 	}
 }
 
@@ -1799,14 +1844,14 @@ void APWatchdog::SetStatusMessages() {
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Walking) {
-		if (hasDeathLink){
-			int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(deathLinkStartTime).count() / 1000;
+		if (isKnockedOut){
+			int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(knockOutStartTime).count() / 1000;
 
 			if (secondsRemainingDeathLink <= 0) {
-				hudManager->clearWalkStatusMessage();
+				HudManager::get()->clearWalkStatusMessage();
 			}
 			else {
-				hudManager->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
+				HudManager::get()->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
 			}
 		}
 
@@ -1815,13 +1860,13 @@ void APWatchdog::SetStatusMessages() {
 			int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
 			if (speedTime > 0) {
-				hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+				HudManager::get()->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
 			}
 			else if (speedTime < 0) {
-				hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+				HudManager::get()->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
 			}
 			else {
-				hudManager->clearWalkStatusMessage();
+				HudManager::get()->clearWalkStatusMessage();
 			}
 		}
 	}
@@ -1873,14 +1918,20 @@ void APWatchdog::SetStatusMessages() {
 			}
 		}
 
-		hudManager->setSolveStatusMessage(skipMessage);
+		HudManager::get()->setSolveStatusMessage(skipMessage);
 	}
 	else if (interactionState == InteractionState::Keybinding) {
 //		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
-//		hudManager->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
+//		HudManager::get()->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
+	}
+	else if (interactionState == InteractionState::Sleeping) {
+		HudManager::get()->setWalkStatusMessage("Sleeping. Press [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to warp to town.");
+	}
+	else if (interactionState == InteractionState::Warping) {
+		HudManager::get()->setWalkStatusMessage("Warping...");
 	}
 	else {
-//		hudManager->clearStatusMessage();
+//		HudManager::get()->clearStatusMessage();
 	}
 }
 
@@ -1921,7 +1972,7 @@ void APWatchdog::WriteMovementSpeed(float currentSpeed) {
 void APWatchdog::LookingAtObelisk() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	if (interactionState != InteractionState::Focusing) {
-		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 		return;
 	}
 
@@ -1977,10 +2028,10 @@ void APWatchdog::LookingAtObelisk() {
 	}
 
 	if (entityToName.count(lookingAtEP)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP]);
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP]);
 	}
 	else {
-		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 	}
 
 	return;
@@ -1999,11 +2050,11 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 		if (dogBarkDuration > 0.f) {
 			dogBarkDuration -= deltaSeconds;
 			if (dogBarkDuration <= 1.f) {
-				hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+				HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 			}
 		}
 		else {
-			hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+			HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 		}
 
 		return;
@@ -2011,7 +2062,7 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 	else if (dogBarkDuration > 0.f) {
 		dogBarkDuration -= deltaSeconds;
 		if (dogBarkDuration <= 1.f) {
-			hudManager->clearInformationalMessage(InfoMessageCategory::Dog);
+			HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 		}
 
 		return;
@@ -2020,7 +2071,7 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 	memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
 	if (dogPettingDuration >= 4.0f) {
-		hudManager->showInformationalMessage(InfoMessageCategory::Dog, "Woof Woof!");
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::Dog, "Woof Woof!");
 
 		Memory::get()->writeCursorSize(1.0f);
 		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
@@ -2031,7 +2082,7 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 		sentDog = true;
 	}
 	else if (dogPettingDuration > 0.f) {
-		hudManager->showInformationalMessage(InfoMessageCategory::Dog, "Petting progress: " + std::to_string((int)(dogPettingDuration * 100 / 4.0f)) + "%");
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::Dog, "Petting progress: " + std::to_string((int)(dogPettingDuration * 100 / 4.0f)) + "%");
 	}
 
 	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
@@ -2127,16 +2178,16 @@ void APWatchdog::CheckDeathLink() {
 			DeathLinkCount++;
 			if (DeathLinkCount > DeathLinkAmnesty) {
 				SendDeathLink(mostRecentActivePanelId);
-				hudManager->queueNotification("Death Sent.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+				HudManager::get()->queueNotification("Death Sent.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				DeathLinkCount = 0;
 			}
 			else {
 				int remain_amnesty = DeathLinkAmnesty - DeathLinkCount;
 				if (remain_amnesty == 0) {
-					hudManager->queueNotification("Panel failed. The next panel fail will cause a DeathLink.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+					HudManager::get()->queueNotification("Panel failed. The next panel fail will cause a DeathLink.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				}
 				else {
-					hudManager->queueNotification("Panel failed. Remaining DeathLink Amnesty: " + std::to_string(remain_amnesty) + ".", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+					HudManager::get()->queueNotification("Panel failed. Remaining DeathLink Amnesty: " + std::to_string(remain_amnesty) + ".", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				}
 			}
 			ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, false, { {"replace", DeathLinkCount} });
@@ -2191,7 +2242,7 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		firstSentence = "Received death from " + source + ".";
 	}
 
-	hudManager->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+	HudManager::get()->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 }
 
 void APWatchdog::UpdateInfiniteChallenge() {
@@ -2222,6 +2273,12 @@ void APWatchdog::HandleReceivedItems() {
 
 	while (!queuedReceivedItems.empty()) {
 		auto item = queuedReceivedItems.front();
+		InteractionState iState = InputWatchdog::get()->getInteractionState();
+
+		if (item.item == ITEM_BONK_TRAP && iState == InteractionState::Sleeping || iState == InteractionState::Warping) {
+			return;
+		}
+
 		queuedReceivedItems.pop();
 		int realitem = item.item;
 		int advancement = item.flags;
@@ -2322,4 +2379,31 @@ void APWatchdog::CheckFinalRoom() {
 	Memory::get()->ReadAbsolute(reinterpret_cast<LPCVOID>(soundStreamPointer + 0x70), &finalRoomMusicTimer, sizeof(double));
 
 	return;
+}
+
+void APWatchdog::ToggleSleep() {
+	InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState iState = inputWatchdog->getInteractionState();
+
+	if (isKnockedOut || iState == InteractionState::Cutscene) {
+		HudManager::get()->queueBannerMessage("Can't go into sleep mode right now.");
+		return;
+	}
+	if (iState == InteractionState::Warping) return;
+
+	if (iState == InteractionState::Sleeping) {
+		inputWatchdog->setSleep(false);
+	}
+	else {
+		inputWatchdog->setSleep(true);
+	}
+}
+
+void APWatchdog::TryWarp() {
+	InputWatchdog* inputWatchdog = InputWatchdog::get();
+	InteractionState iState = inputWatchdog->getInteractionState();
+
+	if (iState != InteractionState::Sleeping) return;
+	inputWatchdog->startWarp();
+	ClientWindow::get()->focusGameWindow();
 }

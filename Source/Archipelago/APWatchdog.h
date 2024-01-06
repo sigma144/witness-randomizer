@@ -12,7 +12,6 @@
 #include <queue>
 
 class Generate;
-class HudManager;
 class PanelLocker;
 
 
@@ -75,8 +74,6 @@ public:
 
 	void QueueReceivedItem(std::vector<__int64> item);
 
-	HudManager* getHudManager() const { return hudManager.get(); }
-
 	std::set<int> seenAudioMessages;
 
 private:
@@ -103,8 +100,6 @@ private:
 	std::map<int, std::set<int>> itemIdToDoorSet;
 	std::map<int, std::vector<int>> progressiveItems;
 
-	std::shared_ptr<HudManager> hudManager;
-
 	int DeathLinkAmnesty = 0;
 	int DeathLinkCount = 0;
 
@@ -121,9 +116,9 @@ private:
 	bool FirstEverLocationCheckDone = false;
 
 	bool hasPowerSurge = false;
-	bool hasDeathLink = false;
+	bool isKnockedOut = false;
 	std::chrono::system_clock::time_point powerSurgeStartTime;
-	std::chrono::system_clock::time_point deathLinkStartTime;
+	std::chrono::system_clock::time_point knockOutStartTime;
 
 	std::set<double> deathLinkTimestamps;
 
@@ -165,7 +160,9 @@ private:
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
 	void HandleDeathLink();
-	void HandleVision(float deltaSeconds);
+	bool IsEncumbered();
+	void HandleEncumberment(float deltaSeconds);
+	void HandleWarp(float deltaSeconds);
 
 	void LookingAtObelisk();
 
@@ -205,6 +202,9 @@ private:
 	void unlockItem(int item);
 
 	void CheckFinalRoom();
+
+	void ToggleSleep();
+	void TryWarp();
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;

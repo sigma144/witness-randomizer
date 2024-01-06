@@ -3,6 +3,7 @@
 #include "Memory.h"
 #include "Utilities.h"
 #include "ClientWindow.h"
+#include "HUDManager.h"
 
 
 #define PRINT_INPUT_DEBUG 0
@@ -27,6 +28,7 @@ InputWatchdog::InputWatchdog() : Watchdog(0.016f) {
 
 	// TEMP: Set default keybinds.
 	customKeybinds[CustomKey::SKIP_PUZZLE] = InputButton::KEY_T;
+	customKeybinds[CustomKey::SLEEP] = InputButton::KEY_E;
 }
 
 void InputWatchdog::action() {
@@ -46,8 +48,14 @@ InputButton InputWatchdog::getCustomKeybind(CustomKey key) const {
 }
 
 InteractionState InputWatchdog::getInteractionState() const {
+	if (warpTimer >= 0) {
+		return InteractionState::Warping;
+	}
 	if (currentlyRebindingKey.has_value()) {
 		return InteractionState::Keybinding;
+	}
+	if (isAsleep) {
+		return InteractionState::Sleeping;
 	}
 	else if (currentMenuOpenPercent >= 1.f) {
 		return InteractionState::Menu;
@@ -96,6 +104,9 @@ void InputWatchdog::loadCustomKeybind(CustomKey key, InputButton button) {
 }
 
 void InputWatchdog::beginCustomKeybind(CustomKey key) {
+	if (getInteractionState() == InteractionState::Sleeping) {
+		HudManager::get()->queueBannerMessage("Cannot keybind while sleeping.");
+	}
 	currentlyRebindingKey = key;
 	ClientWindow::get()->focusGameWindow();
 }
@@ -163,6 +174,29 @@ bool InputWatchdog::isValidForCustomKeybind(InputButton button) const
 	}
 
 	return true;
+}
+
+void InputWatchdog::setSleep(bool sleep) {
+	this->isAsleep = sleep;
+}
+
+void InputWatchdog::startWarp() {
+	this->warpTimer = WARPTIME;
+}
+
+void InputWatchdog::endWarp() {
+	this->setSleep(false);
+	this->warpTimer = -1;
+}
+
+float InputWatchdog::getWarpTime() {
+	return this->warpTimer;
+}
+
+void InputWatchdog::updateWarpTimer(float deltaSeconds) {
+	if (this->warpTimer == -1) return;
+	if (this->warpTimer - deltaSeconds < 0) this->warpTimer = 0;
+	else this->warpTimer -= deltaSeconds;
 }
 
 void InputWatchdog::updateKeyState() {

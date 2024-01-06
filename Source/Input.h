@@ -8,11 +8,13 @@
 #ifndef INPUT_KEYSTATE_SIZE
 // The size of the Keyboard::key_state array, which in the most recent build is an int[256]. Note that this differs from the PDB build.
 #define INPUT_KEYSTATE_SIZE 0x200
+#define WARPTIME 5.0f
 #endif
 
 
 // Custom keys for randomizer-specific functionality.
 enum class CustomKey : int {
+	SLEEP,
 	SKIP_PUZZLE,
 	COUNT
 };
@@ -179,7 +181,9 @@ enum InteractionState {
 	Solving,	// Actively solving a puzzle
 	Cutscene,	// In the ending cutscene
 	Menu,		// A menu is shown and blocking game input
-	Keybinding	// The randomizer is intercepting input in order to register a keybind.
+	Keybinding,	// The randomizer is intercepting input in order to register a keybind.
+	Sleeping,   // "Sleep mode", for warps
+	Warping,    // Warping, NYI
 };
 
 
@@ -227,8 +231,13 @@ public:
 	// Determines whether or not the given button is valid for use as a custom keybind.
 	bool isValidForCustomKeybind(InputButton button) const;
 
-private:
+	void setSleep(bool sleep);
+	void startWarp();
+	void endWarp();
+	float getWarpTime();
+	void updateWarpTimer(float deltaSeconds);
 
+private:
 	InputWatchdog();
 	static InputWatchdog* _singleton;
 
@@ -265,4 +274,6 @@ private:
 	std::map<InputButton, std::chrono::system_clock::time_point> pressTimes;
 	std::vector<InputButton> pendingTapEvents;
 
+	bool isAsleep = false;
+	float warpTimer = -1.0f;
 };

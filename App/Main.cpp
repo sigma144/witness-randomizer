@@ -28,6 +28,7 @@
 #include "Archipelago/APRandomizer.h"
 #include <Archipelago/APGameData.h>
 #include <Archipelago/ASMPayloadManager.h>
+#include <HUDManager.h>
 
 
 #define IDC_RANDOMIZE 0x401
@@ -242,6 +243,7 @@ void Main::randomize() {
 	randomizer->doubleMode = false;
 
 	ASMPayloadManager::create();
+	HudManager::create();
 
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->Init();

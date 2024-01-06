@@ -6,6 +6,8 @@ std::string InputWatchdog::getNameForCustomKey(CustomKey key)
 	switch (key) {
 	case CustomKey::SKIP_PUZZLE:
 		return "Skip Puzzle";
+	case CustomKey::SLEEP:
+		return "Sleep (Warp)";
 	default:
 		return "UNKNOWN KEY";
 	};

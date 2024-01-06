@@ -20,7 +20,13 @@ enum class InfoMessageCategory : int {
 };
 
 class HudManager {
+private:
+	static HudManager* _singleton;
+
 public:
+
+	static void create();
+	static HudManager* get();
 
 	HudManager();
 	
