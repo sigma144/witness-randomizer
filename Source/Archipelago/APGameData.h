@@ -1804,3 +1804,35 @@ private:
 
 RgbColor getColorByItemFlag(const __int64 flags);
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
+
+struct Warp {
+	std::string name;
+	std::vector<float> playerPosition;
+	std::vector<float> cameraAngle;
+	int entityToCheckForLoading;
+	bool tutorial;
+};
+
+inline std::vector<Warp> allPossibleWarps = {
+	{"Tutorial First Hallway", {-201.449, -114.798, 3.727}, {-1.25665, -0.00438}, 0x3CF69, true }, 
+	{"Tutorial First Hallway Room", {-184.818, -165.605, 4.228}, {0.314, -0.184}, 0x30448, true }, 
+	{"Tutorial", {-155.009, -155.843, 7.601}, {0.32, -0.069}, 0x06A8E, true }, 
+
+	{"Outside Tutorial", {-117.623, -104.855, 8.303}, {2.395, -0.059}, 0x3099F, false },
+	{"Outside Tutorial Vault", {-152.191, -109.122, 6.991}, {0.669, -0.167}, 0x0C8AB, false },
+	{"Outside Tutorial Path to Outpost", {-109.310, -134.790, 7.278}, {1.616, -0.05}, 0x3CFA2, false },
+	{"Outside Tutorial Outpost", {-108.383, -123.101, 7.222}, {-3.005, -0.0633}, 0x2FC05, false },
+
+	{"Orchard", {-126.014, -11.035, 10.793}, {1.461, 0.106}, 0x0C2A6, false },
+	{"Orchard Beyond First Gate", {-107.530, 24.751, 16.460}, {-3.001, -0.074}, 0x0ABF7, false },
+	{"Orchard Beyond Second Gate", {-99.434, 21.863, 17.640}, {2.296, 0}, 0x17C75, false },
+
+	{"Quarry", {-26.390, 140.466, 3.593}, {2.907, 0.038}, 0x30663, false}, // Untested
+
+	{"Town", {-36.540f, -5.633f, 11.054f}, {2.514f, 0.08f}, 0x309C0, false },
+	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false}, // TODO: Load entities
+	{"Treehouse", {200.388, 148.100, 2.167}, {3.01215, 0}, 0x068C7, false},
+	{"Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false},
+	{"Desert", {-139.404, 157.708, 7.166}, {2.87715, 0}, 0x06221, false},
+	{"Caves", {117.457, -52.997, -1.76}, {2.09, 0}, 0x2D924, false},
+};

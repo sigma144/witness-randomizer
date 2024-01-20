@@ -139,6 +139,12 @@ void ASMPayloadManager::CallVoidFunction(uint64_t functionAddress, int id) {
 	ExecuteASM(buffer, sizeof(buffer));
 }
 
+void ASMPayloadManager::ActivateMarker(int id) {
+	Memory* memory = Memory::get();
+
+	CallVoidFunction(memory->activateMarkerFunction, id);
+}
+
 void ASMPayloadManager::OpenDoor(int id) {
 	Memory* memory = Memory::get();
 	

@@ -53,6 +53,11 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
 
+	 // TODO: Obviously not all warps should immediately be unlocked lol
+	for (int i = 0; i < allPossibleWarps.size(); i++) {
+		unlockedWarps.push_back(&allPossibleWarps[i]);
+	}
+
 	if (Collect == "Free Skip + Unlock") {
 		Collect = "Free Skip";
 		CollectUnlock = true;
@@ -99,12 +104,14 @@ void APWatchdog::action() {
 	lastFrameTime = currentFrameTime;
 
 	timePassedSinceRandomisation += frameDuration;
+	halfSecondCountdown -= frameDuration;
+
 
 	HandleReceivedItems();
 
 	HandleInteractionState();
 
-	HandleEncumberment(frameDuration);
+	HandleEncumberment(frameDuration, halfSecondCountdown <= 0);
 	HandleWarp(frameDuration);
 	HandleMovementSpeed(frameDuration);
 	
@@ -114,7 +121,6 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
-	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
 
@@ -607,7 +613,7 @@ bool APWatchdog::IsEncumbered() {
 	return isKnockedOut || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping;
 }
 
-void APWatchdog::HandleEncumberment(float deltaSeconds) {
+void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 	Memory *memory = Memory::get();
 
 	if (IsEncumbered()) {
@@ -617,7 +623,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds) {
 		memory->MoveVisionTowards(0.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
+		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing && doFunctions) {
 			Memory::get()->ExitSolveMode();
 		}
 	}
@@ -630,16 +636,35 @@ void APWatchdog::HandleEncumberment(float deltaSeconds) {
 }
 
 void APWatchdog::HandleWarp(float deltaSeconds){
+	if (selectedWarp == NULL && unlockedWarps.size()) selectedWarp = unlockedWarps[0];
+
 	Memory *memory = Memory::get();
 	InputWatchdog* inputWatchdog = InputWatchdog::get();
 	if (inputWatchdog->getInteractionState() == InteractionState::Warping) {
+		if (!(ReadPanelData<char>(selectedWarp->entityToCheckForLoading, 0xBC) & 2)) {
+			inputWatchdog->allowWarpCompletion();
+		}
+		
 		inputWatchdog->updateWarpTimer(deltaSeconds);
 		memory->FloatWithoutMovement(true);
 
 		float warpTime = inputWatchdog->getWarpTime();
 
 		if (warpTime <= WARPTIME - 0.5f) {
-			memory->WritePlayerPosition({ -53.132, -46.210, 4.154 });
+			memory->WritePlayerPosition(selectedWarp->playerPosition); // TODO: Entry Hallway
+			memory->WriteCameraAngle(selectedWarp->cameraAngle); // TODO: Entry Hallway
+
+			// Show or hide Tutorial 
+			if (!hasTeleported) {
+				if (selectedWarp->tutorial) {
+					ASMPayloadManager::get()->ActivateMarker(0x034F6);
+				}
+				else
+				{
+					ASMPayloadManager::get()->ActivateMarker(0x033ED);
+				}
+				hasTeleported = true;
+			}
 		}
 
 		if (warpTime == 0.0f) {
@@ -1163,6 +1188,29 @@ void APWatchdog::HandleKeyTaps() {
 				if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) {
 					TryWarp();
 					return;
+				}
+
+				auto i = distance(unlockedWarps.begin(), find(unlockedWarps.begin(), unlockedWarps.end(), selectedWarp));
+
+				if (tappedButton == InputButton::KEY_A || tappedButton == InputButton::KEY_ARROW_LEFT || tappedButton == InputButton::CONTROLLER_DPAD_LEFT || tappedButton == InputButton::CONTROLLER_LSTICK_LEFT) {
+					if (i >= unlockedWarps.size()) {
+						i = 1;
+					}
+
+					i--;
+
+					if (i < 0) i = unlockedWarps.size() - 1;
+
+					selectedWarp = unlockedWarps[i];
+				}
+
+				if (tappedButton == InputButton::KEY_D || tappedButton == InputButton::KEY_ARROW_RIGHT || tappedButton == InputButton::CONTROLLER_DPAD_RIGHT || tappedButton == InputButton::CONTROLLER_LSTICK_RIGHT) {
+					i++;
+					if (i >= unlockedWarps.size()) {
+						i = 0;
+					}
+
+					selectedWarp = unlockedWarps[i];
 				}
 			}
 			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SLEEP)) {
@@ -1925,10 +1973,20 @@ void APWatchdog::SetStatusMessages() {
 //		HudManager::get()->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
 	}
 	else if (interactionState == InteractionState::Sleeping) {
-		HudManager::get()->setWalkStatusMessage("Sleeping. Press [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to warp to town.");
+		if (selectedWarp == NULL) {
+			HudManager::get()->setWalkStatusMessage("Sleeping.");
+		} else {
+			HudManager::get()->setWalkStatusMessage("Sleeping. Press [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to warp to: " + selectedWarp->name);
+		}
 	}
 	else if (interactionState == InteractionState::Warping) {
-		HudManager::get()->setWalkStatusMessage("Warping...");
+		if (inputWatchdog->warpIsGoingOvertime()) {
+			HudManager::get()->setWalkStatusMessage("Warping... This is taking longer than expected.\n(Please have the game in focus while warping!)");
+		}
+		else
+		{
+			HudManager::get()->setWalkStatusMessage("Warping...");
+		}
 	}
 	else {
 //		HudManager::get()->clearStatusMessage();
@@ -2404,6 +2462,8 @@ void APWatchdog::TryWarp() {
 	InteractionState iState = inputWatchdog->getInteractionState();
 
 	if (iState != InteractionState::Sleeping) return;
+	if (selectedWarp == NULL) return;
 	inputWatchdog->startWarp();
+	hasTeleported = false;
 	ClientWindow::get()->focusGameWindow();
 }

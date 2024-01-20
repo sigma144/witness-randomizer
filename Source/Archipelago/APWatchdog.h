@@ -161,7 +161,7 @@ private:
 	void HandlePowerSurge();
 	void HandleDeathLink();
 	bool IsEncumbered();
-	void HandleEncumberment(float deltaSeconds);
+	void HandleEncumberment(float deltaSeconds, bool doFunctions);
 	void HandleWarp(float deltaSeconds);
 
 	void LookingAtObelisk();
@@ -205,6 +205,10 @@ private:
 
 	void ToggleSleep();
 	void TryWarp();
+
+	std::vector<Warp*> unlockedWarps = {};
+	Warp* selectedWarp = NULL;
+	bool hasTeleported = true;
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;

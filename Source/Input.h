@@ -8,7 +8,8 @@
 #ifndef INPUT_KEYSTATE_SIZE
 // The size of the Keyboard::key_state array, which in the most recent build is an int[256]. Note that this differs from the PDB build.
 #define INPUT_KEYSTATE_SIZE 0x200
-#define WARPTIME 5.0f
+#define WARPTIME 3.0f
+#define WARPFINALISATIONTIME 1.5f
 #endif
 
 
@@ -234,6 +235,8 @@ public:
 	void setSleep(bool sleep);
 	void startWarp();
 	void endWarp();
+	void allowWarpCompletion();
+	bool warpIsGoingOvertime() const;
 	float getWarpTime();
 	void updateWarpTimer(float deltaSeconds);
 
@@ -276,4 +279,5 @@ private:
 
 	bool isAsleep = false;
 	float warpTimer = -1.0f;
+	bool isAllowedToCompleteWarp = false;
 };

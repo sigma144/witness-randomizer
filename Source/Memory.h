@@ -197,6 +197,7 @@ public:
 	}
 
 	void WritePlayerPosition(std::vector<float> playerPosition);
+	void WriteCameraAngle(std::vector<float> cameraAngle);
 
 	void OpenDoor(int id) {
 		CallVoidFunction(id, openDoorFunction);
@@ -327,6 +328,7 @@ public:
 	uint64_t exitSolveModeFunction;
 	uint64_t setUserBrightnessFunction;
 	uint64_t deviceDisplay;
+	uint64_t activateMarkerFunction;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;

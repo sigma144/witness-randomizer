@@ -182,11 +182,20 @@ void InputWatchdog::setSleep(bool sleep) {
 
 void InputWatchdog::startWarp() {
 	this->warpTimer = WARPTIME;
+	this->isAllowedToCompleteWarp = false;
 }
 
 void InputWatchdog::endWarp() {
 	this->setSleep(false);
 	this->warpTimer = -1;
+}
+
+void InputWatchdog::allowWarpCompletion() {
+	isAllowedToCompleteWarp = true;
+}
+
+bool InputWatchdog::warpIsGoingOvertime() const {
+	return !isAllowedToCompleteWarp && this->warpTimer == WARPFINALISATIONTIME;
 }
 
 float InputWatchdog::getWarpTime() {
@@ -195,8 +204,15 @@ float InputWatchdog::getWarpTime() {
 
 void InputWatchdog::updateWarpTimer(float deltaSeconds) {
 	if (this->warpTimer == -1) return;
-	if (this->warpTimer - deltaSeconds < 0) this->warpTimer = 0;
-	else this->warpTimer -= deltaSeconds;
+	if (this->warpTimer - deltaSeconds <= 0) {
+		this->warpTimer = 0;
+	}
+	else if (!isAllowedToCompleteWarp && this->warpTimer - deltaSeconds <= WARPFINALISATIONTIME) {
+		this->warpTimer = WARPFINALISATIONTIME;
+	}
+	else {
+		this->warpTimer -= deltaSeconds;
+	}
 }
 
 void InputWatchdog::updateKeyState() {

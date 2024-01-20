@@ -27,6 +27,7 @@ public:
 	static void create();
 	static ASMPayloadManager* get();
 
+	void ActivateMarker(int id);
 	void OpenDoor(int id);
 	void CloseDoor(int id);
 	void UpdateEntityPosition(int id);

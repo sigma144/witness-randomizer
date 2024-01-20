@@ -383,6 +383,13 @@ void Memory::findImportantFunctionAddresses(){
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
 
+	//Activate Marker
+	executeSigScan({ 0x40, 0x55, 0x57, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24, 0xD0, 0x48, 0x81, 0xEC, 0x30, 0x01, 0x00, 0x00, 0x48, 0x8B, 0xF9, 0xE8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->activateMarkerFunction = _baseAddress + offset + index;
+
+		return true;
+	});
+
 	executeSigScan({ 0x0F, 0x29, 0x74, 0x24, 0x20, 0x0F, 0x28, 0xF0, 0x48, 0x8B, 0x01, 0xF3, 0x0F }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (;; index--) {
 			if ((data[index] == 0x48 || data[index] == 0xC3) && data[index + 1] == 0x83 && data[index + 2] == 0xEC) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
@@ -1457,6 +1464,10 @@ void Memory::WritePlayerPosition(std::vector<float> playerPosition) {
 	this->WriteData<float>({ CAMERAPOSITION }, playerPosition);
 	playerPosition[2] -= 1.69f;
 	this->WriteData<float>({ GLOBALS, 0x18, 0x1E465 * 8, 0x24 }, playerPosition);
+}
+
+void Memory::WriteCameraAngle(std::vector<float> cameraAngle) {
+	this->WriteData<float>({ CAMERAANG }, cameraAngle);
 }
 
 std::pair<float, float> Memory::MoveVisionTowards(float target, float deltaAbs) {
