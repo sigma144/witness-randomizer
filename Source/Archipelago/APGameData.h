@@ -1827,12 +1827,27 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Orchard Beyond First Gate", {-107.530, 24.751, 16.460}, {-3.001, -0.074}, 0x0ABF7, false },
 	{"Orchard Beyond Second Gate", {-99.434, 21.863, 17.640}, {2.296, 0}, 0x17C75, false },
 
+	{"Outside Glass Factory", {-170.611, -34.887, 2.694}, {3.01785398, 0.0}, 0x1B232, false },
+	{"Inside Glass Factory", {-191.871, -38.314, 2.720}, {2.933, 0.0}, 0x14C28, false},
+
+	{"Outside Symmetry Island", {-160.390, 31.471, 11.394}, {3.03225493, 0.0}, 0x06A3C, false },
+	{"Symmetry Island Lower", {-174.229, 32.756, 11.828}, {2.793, -0.047}, 0x36577, false},
+	{"Symmetry Island Upper", {-192.211, 36.385, 17.130}, {2.931, 0.078}, 0x0D1BD, false},
+	
+	{"Desert Outside", {-139.404, 157.708, 7.166}, {2.87715, 0}, 0x06221, false},
+	{"Desert Vault", {-231.3, 197.655, 3.304}, {1.776, -0.1}, 0x351C3, false },
+	{"Desert Light Room", {-174.588, 167.4, 3.937}, {2.892, -0.025}, 0x0C852, false},
+	{"Desert Pond Room", {-173.792, 166.858, -2.456}, {2.818, -0.08}, 0x22C98, false},
+	{"Desert Flood Room", {-184.652, 167.168, -6.781}, {-0.458, -0.152}, 0x22CC1, false},
+	{"Desert Elevator Room", {-144.363, 129.63, -5.540}, {-1.765, -0.047}, 0x272B1, false},
+	{"Desert Behind Elevator", {-138.181, 113.782, -5.540}, {2.09, 0}, 0x272B8, false},
+
 	{"Quarry", {-26.390, 140.466, 3.593}, {2.907, 0.038}, 0x30663, false}, // Untested
 
 	{"Town", {-36.540f, -5.633f, 11.054f}, {2.514f, 0.08f}, 0x309C0, false },
 	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false}, // TODO: Load entities
 	{"Treehouse", {200.388, 148.100, 2.167}, {3.01215, 0}, 0x068C7, false},
 	{"Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false},
-	{"Desert", {-139.404, 157.708, 7.166}, {2.87715, 0}, 0x06221, false},
+
 	{"Caves", {117.457, -52.997, -1.76}, {2.09, 0}, 0x2D924, false},
 };
