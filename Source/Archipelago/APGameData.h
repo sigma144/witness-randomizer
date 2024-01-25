@@ -1842,10 +1842,21 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Desert Elevator Room", {-144.363, 129.63, -5.540}, {-1.765, -0.047}, 0x272B1, false},
 	{"Desert Behind Elevator", {-138.181, 113.782, -5.540}, {2.09, 0}, 0x272B8, false},
 
-	{"Quarry", {-26.390, 140.466, 3.593}, {2.907, 0.038}, 0x30663, false}, // Untested
+	{"Outside Quarry", {-54.314, 85.340, 11.068}, {0.637, 0}, 0x31A1D, false},
+	{"Quarry Between Entry Doors", {-50.448, 92.804, 8.863}, {1.66, -0.165}, 0x31DE7, false},
+	{"Quarry", {-26.390, 140.466, 3.593}, {2.907, 0.038}, 0x30663, false},
+
+	{"Quarry Stoneworks Ground Floor", {-62.301, 155.597, 3.538}, {-1.645, 0.042}, 0x276F8, false},
+	{"Quarry Stoneworks Middle Floor", {-60.933, 148.549, 5.034}, {2.860, -0.086}, 0x276C3, false},
+	{"Quarry Stoneworks Upper Floor", {-64.938, 158.237, 6.975}, {-2.446, 0}, 0x276BB, false },
+
+	{"Quarry Boathouse", {-15.998, 181.732, 3.692}, {0.997, 0}, 0x275F3, false},
+	{"Quarry Boathouse Upper Front", {-10.918, 185.979, 5.888}, {1.047, 0}, 0x27600, false},
+	{"Quarry Boathouse Upper Middle", {-7.107, 195.324, 6.034}, {1.734, 0}, 0x27655, false},
+	{"Quarry Boathouse Upper Back", {-10.729, 208.022, 6.774}, {-1.507, -0.01}, 0x38661, false },
 
 	{"Town", {-36.540f, -5.633f, 11.054f}, {2.514f, 0.08f}, 0x309C0, false },
-	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false}, // TODO: Load entities
+	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false},
 	{"Treehouse", {200.388, 148.100, 2.167}, {3.01215, 0}, 0x068C7, false},
 	{"Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false},
 
