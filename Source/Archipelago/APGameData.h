@@ -1874,10 +1874,26 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Shipwreck", {123.407, 214.291, 9.998}, {-0.3, -0.15}, 0x17D56, false},
 	{"Shipwreck Vault", {177.506, 219.689, 1.97}, {-0.644, -0.156}, 0x07955, false},
 
-	{"Town", {-36.540f, -5.633f, 11.054f}, {2.514f, 0.08f}, 0x309C0, false },
+	{"Outside Monastery", {11.151, -69.042, 10.059}, {1.36583734, 0.175}, 0x18321, false},
+	{"Inside Monastery", {22.997, -33.212, 16.83}, {2.66071, 0.0}, 0x0CD4B, false},
+	{"Monastery Garden", {36.31, -34.583, 16.723}, {-1.777, 0.0}, 0x27F16, false},
+
+	{"Town", {-38.275, -16.534, 11.054}, {0.70478326, 0.0}, 0x0D601, false},
+	{"Town Inside Cargo Box", {-45.829, -37.879, 6.328}, {-0.069, -0.114}, 0x09D7F, false},
+	{"Town Maze Rooftop", {-15.078, -13.697, 15.755}, {-2.5207, -0.1}, 0x18701, false},
+	{"Town Red Rooftop", {-29.879, -22.817, 16.501}, {2.168, -0.02}, 0x311E5, false},
+	{"Town Wooden Rooftop", {-54.302, -17.632, 15.502}, {0.179, 0.0}, 0x26FBA, false},
+	{"Town Church", {-39.109, 11.403, 11.267}, {0.019, 0.0}, 0x266CA, false},
+	{"Town RGB House", {-29.244, 2.384, 11.1116}, {0.56152, -0.02}, 0x26BA3, false},
+	{"Town RGB House Upstairs", {-20.863, 2.441, 14.412}, {-2.863, 0.0}, 0x387EE, false},
+	{"Town Tower After First Door", {-43.754, -15.419, 14.146}, {-0.178, 0.0}, 0x265FC, false},
+	{"Town Tower After Second Door", {-38.995, -14.638, 16.151}, {2.802, 0.11}, 0x277D0, false},
+	{"Town Tower After Third Door", {-38.288, -16.289, 21.161}, {2.912, -0.098}, 0x277C6, false},
+	{"Town Tower After Fourth Door", {-37.685, -11.318, 23.146}, {-1.766, 0.0}, 0x277C8, false},
 
 	{"Treehouse", {200.388, 148.100, 2.167}, {3.01215, 0}, 0x068C7, false},
 
+	{"Mountainside", {106.337, -17.439, 24.157}, {-0.72, 0.188}, 0x2D90C, false},
 	{"Mountainside Vault", {179.680, -53.101, 43.856}, {2.956, -0.055}, 0x2774A, false},
 	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false},
 	
