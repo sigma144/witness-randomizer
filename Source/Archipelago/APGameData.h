@@ -1859,6 +1859,7 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Shadows Ledge", {-21.145, 119.759, 7.378}, {1.786, -0.045}, 0x19AF1, false},
 	{"Shadows Laser Room", {-2.551, 88.78, 15.529}, {2.875, -0.115}, 0x18318, false},
 
+	{"Outside Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false},
 	{"Keep", {49.881, 131.068, 20.823}, {-0.2, 0}, 0x284BB, false},
 	{"Keep 2nd Maze", {65.726, 102.196, 20.885}, {-2.075, -0.082}, 0x3095B, false},
 	{"Keep 3rd Maze", {45.453, 89.383, 20.885}, {2.616, -0.032}, 0x3094A, false},
@@ -1874,9 +1875,30 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Shipwreck Vault", {177.506, 219.689, 1.97}, {-0.644, -0.156}, 0x07955, false},
 
 	{"Town", {-36.540f, -5.633f, 11.054f}, {2.514f, 0.08f}, 0x309C0, false },
-	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false},
+
 	{"Treehouse", {200.388, 148.100, 2.167}, {3.01215, 0}, 0x068C7, false},
-	{"Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false},
+
+	{"Mountainside Vault", {179.680, -53.101, 43.856}, {2.956, -0.055}, 0x2774A, false},
+	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false},
+	
+	{"Mountain Floor 1", {154.062, -42.562, 53.141}, {-1.49050689, -0.2177794}, 0x0D407, false},
+
+	{"Mountain Floor 2", {159.934, -60.495, 27.304}, {-1.49372685, 0.0}, 0x26BB2, false},
+	{"Mountain Floor 2 Light Bridge Room Near", {155.732, -63.72, 30.879}, {1.64945543, 0.0}, 0x389A4, false},
+	{"Mountain Floor 2 Beyond Bridge", {150.14, -45.408, 27.303}, {1.64513314, 0.0}, 0x26BB0, false},
+	{"Mountain Floor 2 Light Bridge Room Far", {154.067, -42.593, 30.881}, {-1.49449492, 0.0}, 0x0CC7C, false},
+	{"Mountain Floor 2 Elevator Room", {142.662, -55.858, 27.196}, {-3.0530591, 0.0}, 0x387DF, false},
+
+	{"Mountain Floor 3", {146.337, -53.809, 4.796}, {0.07693315, -0.075}, 0x27985, false},
+	{"Mountain Bottom Floor", {173.599, -51.343, 2.337}, {0.05800205, -0.158}, 0x305F7, false},
+	{"Mountain Bottom Floor Pillars Room", {186.329, -50.508, 1.427}, {0.07368734, 0.0}, 0x35224, false},
+	{"Mountain Bottom Floor Path to Caves", {163.086, -42.92, 4.985}, {-3.07381296, 0.0}, 0x3CE3F, false},
 
 	{"Caves", {117.457, -52.997, -1.76}, {2.09, 0}, 0x2D924, false},
+	{"Caves Path to Challenge", {86.643, -35.05, 0.628}, {3.14144945, 0.0}, 0x2D957, false},
+
+	{"Challenge", {-42.622, -31.288, -9.823}, {-0.03665126, -0.075}, 0x314A6, false},
+	{"Challenge Vault", {64.031, -34.844, -0.246}, {-3.12983704, 0.0}, 0x17FE0, false},
+
+	{"Tunnels", {-63.066, -5.41, 5.01}, {-2.57802415, 0.0}, 0x38CCE, false},
 };
