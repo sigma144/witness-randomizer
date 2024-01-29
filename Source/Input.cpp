@@ -49,12 +49,18 @@ InputButton InputWatchdog::getCustomKeybind(CustomKey key) const {
 
 InteractionState InputWatchdog::getInteractionState() const {
 	if (warpTimer >= 0) {
+		if (currentMenuOpenPercent >= 1.f) {
+			return InteractionState::MenuAndSleeping;
+		}
 		return InteractionState::Warping;
 	}
 	if (currentlyRebindingKey.has_value()) {
 		return InteractionState::Keybinding;
 	}
 	if (isAsleep) {
+		if (currentMenuOpenPercent >= 1.f) {
+			return InteractionState::MenuAndSleeping;
+		}
 		return InteractionState::Sleeping;
 	}
 	else if (currentMenuOpenPercent >= 1.f) {
@@ -180,8 +186,9 @@ void InputWatchdog::setSleep(bool sleep) {
 	this->isAsleep = sleep;
 }
 
-void InputWatchdog::startWarp() {
+void InputWatchdog::startWarp(bool longWarp) {
 	this->warpTimer = WARPTIME;
+	if (longWarp) this->warpTimer += LONGWARPBUFFER;
 	this->isAllowedToCompleteWarp = false;
 }
 

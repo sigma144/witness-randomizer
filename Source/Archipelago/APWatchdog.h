@@ -209,6 +209,7 @@ private:
 	std::vector<Warp*> unlockedWarps = {};
 	Warp* selectedWarp = NULL;
 	bool hasTeleported = true;
+	bool hasDoneTutorialMarker = true;
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;

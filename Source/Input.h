@@ -9,7 +9,8 @@
 // The size of the Keyboard::key_state array, which in the most recent build is an int[256]. Note that this differs from the PDB build.
 #define INPUT_KEYSTATE_SIZE 0x200
 #define WARPTIME 3.0f
-#define WARPFINALISATIONTIME 1.5f
+#define LONGWARPBUFFER 0.5f
+#define WARPFINALISATIONTIME 1.0f
 #endif
 
 
@@ -182,6 +183,7 @@ enum InteractionState {
 	Solving,	// Actively solving a puzzle
 	Cutscene,	// In the ending cutscene
 	Menu,		// A menu is shown and blocking game input
+	MenuAndSleeping, // A menu is shown AND the player is in "sleep mode"
 	Keybinding,	// The randomizer is intercepting input in order to register a keybind.
 	Sleeping,   // "Sleep mode", for warps
 	Warping,    // Warping, NYI
@@ -233,7 +235,7 @@ public:
 	bool isValidForCustomKeybind(InputButton button) const;
 
 	void setSleep(bool sleep);
-	void startWarp();
+	void startWarp(bool longwarp);
 	void endWarp();
 	void allowWarpCompletion();
 	bool warpIsGoingOvertime() const;

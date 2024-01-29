@@ -610,7 +610,7 @@ void APWatchdog::HandleDeathLink() {
 bool APWatchdog::IsEncumbered() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 
-	return isKnockedOut || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping;
+	return isKnockedOut || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping || interactionState == InteractionState::MenuAndSleeping;
 }
 
 void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
@@ -650,21 +650,23 @@ void APWatchdog::HandleWarp(float deltaSeconds){
 
 		float warpTime = inputWatchdog->getWarpTime();
 
-		if (warpTime <= WARPTIME - 0.5f) {
-			memory->WritePlayerPosition(selectedWarp->playerPosition); // TODO: Entry Hallway
-			memory->WriteCameraAngle(selectedWarp->cameraAngle); // TODO: Entry Hallway
-
-			// Show or hide Tutorial 
-			if (!hasTeleported) {
-				if (selectedWarp->tutorial) {
-					ASMPayloadManager::get()->ActivateMarker(0x034F6);
+		if (warpTime <= WARPTIME - 0.5f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
+			if (warpTime <= WARPTIME - 1.0f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
+				if (hasTeleported && !hasDoneTutorialMarker && warpTime <= WARPTIME - 1.0f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
+					if (selectedWarp->tutorial) {
+						ASMPayloadManager::get()->ActivateMarker(0x034F6);
+					}
+					else
+					{
+						ASMPayloadManager::get()->ActivateMarker(0x033ED);
+					}
+					hasDoneTutorialMarker = true;
 				}
-				else
-				{
-					ASMPayloadManager::get()->ActivateMarker(0x033ED);
-				}
-				hasTeleported = true;
 			}
+
+			memory->WritePlayerPosition(selectedWarp->playerPosition);
+			memory->WriteCameraAngle(selectedWarp->cameraAngle);
+			hasTeleported = true;
 		}
 
 		if (warpTime == 0.0f) {
@@ -1214,8 +1216,10 @@ void APWatchdog::HandleKeyTaps() {
 				}
 			}
 			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SLEEP)) {
-				ToggleSleep();
-				return;
+				if (interactionState != InteractionState::Menu && interactionState != InteractionState::MenuAndSleeping) {
+					ToggleSleep();
+					return;
+				}
 			}
 
 			switch (tappedButton) {
@@ -1972,7 +1976,7 @@ void APWatchdog::SetStatusMessages() {
 //		CustomKey currentKey = inputWatchdog->getCurrentlyRebindingKey();
 //		HudManager::get()->setStatusMessage("Press key to bind to " + inputWatchdog->getNameForCustomKey(currentKey) + "... (ESC to cancel)");
 	}
-	else if (interactionState == InteractionState::Sleeping) {
+	else if (interactionState == InteractionState::Sleeping || interactionState == InteractionState::MenuAndSleeping) {
 		if (selectedWarp == NULL) {
 			HudManager::get()->setWalkStatusMessage("Sleeping.");
 		} else {
@@ -2333,7 +2337,7 @@ void APWatchdog::HandleReceivedItems() {
 		auto item = queuedReceivedItems.front();
 		InteractionState iState = InputWatchdog::get()->getInteractionState();
 
-		if (item.item == ITEM_BONK_TRAP && iState == InteractionState::Sleeping || iState == InteractionState::Warping) {
+		if (item.item == ITEM_BONK_TRAP && (iState == InteractionState::Sleeping || iState == InteractionState::MenuAndSleeping || iState == InteractionState::Menu || iState == InteractionState::Warping)) {
 			return;
 		}
 
@@ -2463,7 +2467,8 @@ void APWatchdog::TryWarp() {
 
 	if (iState != InteractionState::Sleeping) return;
 	if (selectedWarp == NULL) return;
-	inputWatchdog->startWarp();
+	inputWatchdog->startWarp(selectedWarp->tutorial);
 	hasTeleported = false;
+	hasDoneTutorialMarker = false;
 	ClientWindow::get()->focusGameWindow();
 }

@@ -1437,7 +1437,7 @@ void Memory::EnableMovement(bool enable) {
 void Memory::FloatWithoutMovement(bool enable) {
 	if (enable) {
 		this->WriteData<char>({ NOCLIPENABLED }, { 1 });
-		this->WriteData<float>({ NOCLIPSPEED }, { 2.0f });
+		this->WriteData<float>({ NOCLIPSPEED }, { 0.0f });
 	}
 	else {
 		this->WriteData<char>({ NOCLIPENABLED }, { 0 });

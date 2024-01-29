@@ -1814,8 +1814,8 @@ struct Warp {
 };
 
 inline std::vector<Warp> allPossibleWarps = {
-	{"Tutorial First Hallway", {-201.449, -114.798, 3.727}, {-1.25665, -0.00438}, 0x3CF69, true }, 
-	{"Tutorial First Hallway Room", {-184.818, -165.605, 4.228}, {0.314, -0.184}, 0x30448, true }, 
+	{"Tutorial First Hallway", {-201.449, -114.798, 3.727}, {-1.25665, -0.00438}, 0x00064, true },
+	{"Tutorial First Hallway Room", {-184.818, -165.605, 4.228}, {0.314, -0.184}, 0x300BF, true },
 	{"Tutorial", {-155.009, -155.843, 7.601}, {0.32, -0.069}, 0x06A8E, true }, 
 
 	{"Outside Tutorial", {-117.623, -104.855, 8.303}, {2.395, -0.059}, 0x3099F, false },
@@ -1890,6 +1890,23 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Town Tower After Second Door", {-38.995, -14.638, 16.151}, {2.802, 0.11}, 0x277D0, false},
 	{"Town Tower After Third Door", {-38.288, -16.289, 21.161}, {2.912, -0.098}, 0x277C6, false},
 	{"Town Tower After Fourth Door", {-37.685, -11.318, 23.146}, {-1.766, 0.0}, 0x277C8, false},
+
+	{"Outside Windmill", {-76.986, 27.816, 12.026}, {-3.055, 0.176}, 0x2DE6B, false},
+	{"Windmill Interior", {-93.528, 25.415, 14.38}, {2.094, -0.03}, 0x17C80, false},
+	{"Theater", {-68.699, -1.014, -1.282}, {-0.997, 0.03}, 0x343FC, false},
+
+	{"Jungle", {14.414, -91.009, 7.453}, {-0.183, 0.219}, 0x1B21F, false},
+	{"Outside Jungle River", {77.528, -45.431, 22.434}, {3.042, -0.077}, 0x0C76F, false},
+	{"Jungle Vault", {49.278, -74.481, 10.68}, {2.387, 0.0}, 0x1527E, false},
+
+	{"Outside Bunker", {148.9, -96.764, 8.811}, {-0.39739844, 0.0}, 0x34D90, false},
+	{"Bunker", {164.047, -99.107, 8.871}, {0.107, 0.0}, 0x2734F, false},
+	{"Bunker Glass Room", {171.764, -102.629, 8.871}, {-3.042, -0.06}, 0x2D70F, false},
+	{"Bunker Ultraviolet Room", {170.664, -101.789, 12.565}, {-1.109, -0.046}, 0x2737E, false},
+	{"Bunker Elevator Section", {167.3, -89.573, 8.881}, {2.987, 0.0}, 0x27392, false},
+	{"Bunker Cyan Room", {164.211, -87.692, 19.46}, {-3.032, -0.04}, 0x06C91, false},
+	{"Bunker Green Room", {164.263, -87.852, 23.087}, {-3.039, -0.04}, 0x0C8CF, false},
+	{"Bunker Laser Platform", {159.722, -88.577, 32.132}, {0.471, -0.08}, 0x0BF8A, false},
 
 	{"Treehouse", {200.388, 148.100, 2.167}, {3.01215, 0}, 0x068C7, false},
 
