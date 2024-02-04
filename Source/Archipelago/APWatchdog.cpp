@@ -620,7 +620,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 		memory->EnableVision(false);
 		Memory::get()->EnableMovement(false);
 		Memory::get()->EnableSolveMode(false);
-		memory->MoveVisionTowards(0.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
+		memory->MoveVisionTowards(1.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing && doFunctions) {
@@ -646,32 +646,52 @@ void APWatchdog::HandleWarp(float deltaSeconds){
 		}
 		
 		inputWatchdog->updateWarpTimer(deltaSeconds);
-		memory->FloatWithoutMovement(true);
 
 		float warpTime = inputWatchdog->getWarpTime();
 
-		if (warpTime <= WARPTIME - 0.5f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
-			if (warpTime <= WARPTIME - 1.0f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
-				if (hasTeleported && !hasDoneTutorialMarker && warpTime <= WARPTIME - 1.0f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
-					if (selectedWarp->tutorial) {
-						ASMPayloadManager::get()->ActivateMarker(0x034F6);
+		if (warpTime > 0.0f) {
+			memory->FloatWithoutMovement(true);
+
+			if (warpTime <= WARPTIME - 0.5f + (selectedWarp->tutorial ? LONGWARPBUFFER : 0)) {
+				memory->WritePlayerPosition(selectedWarp->playerPosition);
+				memory->WriteCameraAngle(selectedWarp->cameraAngle);
+				hasTeleported = true;
+			}
+		}
+		else {
+			if (hasTriedExitingNoclip) {
+				auto now = std::chrono::system_clock::now();
+				if (std::chrono::duration<float>(now - attemptedWarpCompletion).count() > 0.5f) {
+					auto currentCameraPosition = memory->ReadPlayerPosition();
+
+					if (pow(currentCameraPosition[0] - selectedWarp->playerPosition[0], 2) + pow(currentCameraPosition[1] - selectedWarp->playerPosition[1], 2) + pow(currentCameraPosition[2] - selectedWarp->playerPosition[2], 2) < 0.3) {
+						memory->WritePlayerPosition(selectedWarp->playerPosition);
+						memory->WriteCameraAngle(selectedWarp->cameraAngle);
+
+						if (!selectedWarp->tutorial) {
+							ASMPayloadManager::get()->ActivateMarker(0x033ED);
+						}
+
+						inputWatchdog->endWarp();
 					}
 					else
 					{
-						ASMPayloadManager::get()->ActivateMarker(0x033ED);
+						hasTriedExitingNoclip = false;
+
+						if (selectedWarp->tutorial) {
+							ASMPayloadManager::get()->ActivateMarker(0x034F6);
+						}
 					}
-					hasDoneTutorialMarker = true;
 				}
 			}
+			else {
+				memory->FloatWithoutMovement(false);
+				memory->WritePlayerPosition(selectedWarp->playerPosition);
+				memory->WriteCameraAngle(selectedWarp->cameraAngle);
+				hasTriedExitingNoclip = true;
 
-			memory->WritePlayerPosition(selectedWarp->playerPosition);
-			memory->WriteCameraAngle(selectedWarp->cameraAngle);
-			hasTeleported = true;
-		}
-
-		if (warpTime == 0.0f) {
-			memory->FloatWithoutMovement(false); // Test whether this is enough. I don't want to disable no-clip from the Trainer
-			inputWatchdog->endWarp();
+				attemptedWarpCompletion = std::chrono::system_clock::now();
+			}
 		}
 	}
 	else {
@@ -2467,8 +2487,14 @@ void APWatchdog::TryWarp() {
 
 	if (iState != InteractionState::Sleeping) return;
 	if (selectedWarp == NULL) return;
+
+	if (selectedWarp->tutorial) {
+		ASMPayloadManager::get()->ActivateMarker(0x034F6);
+	}
+
 	inputWatchdog->startWarp(selectedWarp->tutorial);
 	hasTeleported = false;
 	hasDoneTutorialMarker = false;
+	hasTriedExitingNoclip = false;
 	ClientWindow::get()->focusGameWindow();
 }

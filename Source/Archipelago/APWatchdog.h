@@ -210,6 +210,8 @@ private:
 	Warp* selectedWarp = NULL;
 	bool hasTeleported = true;
 	bool hasDoneTutorialMarker = true;
+	bool hasTriedExitingNoclip = true;
+	std::chrono::system_clock::time_point attemptedWarpCompletion;
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
