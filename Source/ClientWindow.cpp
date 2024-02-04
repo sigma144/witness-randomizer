@@ -86,6 +86,7 @@ void ClientWindow::saveSettings()
 
 	InputWatchdog* input = InputWatchdog::get();
 	data["key_skipPuzzle"] = static_cast<int>(input->getCustomKeybind(CustomKey::SKIP_PUZZLE));
+	data["key_sleep"] = static_cast<int>(input->getCustomKeybind(CustomKey::SLEEP));
 
 	data["apSlotName"] = getSetting(ClientStringSetting::ApSlotName);
 
@@ -122,11 +123,14 @@ void ClientWindow::loadSettings()
 			InputWatchdog* input = InputWatchdog::get();
 			input->loadCustomKeybind(CustomKey::SKIP_PUZZLE,
 				data.contains("key_skipPuzzle") ? static_cast<InputButton>(data["key_skipPuzzle"].get<int>()) : InputButton::KEY_T);
-			
+			input->loadCustomKeybind(CustomKey::SLEEP,
+				data.contains("key_sleep") ? static_cast<InputButton>(data["key_sleep"].get<int>()) : InputButton::KEY_E);
+
 			loadedSettings = true;
 		}
 
 		refreshKeybind(CustomKey::SKIP_PUZZLE);
+		refreshKeybind(CustomKey::SLEEP);
 	}
 
 	if (!loadedSettings) {
@@ -143,8 +147,10 @@ void ClientWindow::loadSettings()
 
 		InputWatchdog* input = InputWatchdog::get();
 		input->loadCustomKeybind(CustomKey::SKIP_PUZZLE, InputButton::KEY_T);
-		
+		input->loadCustomKeybind(CustomKey::SLEEP, InputButton::KEY_E);
+
 		refreshKeybind(CustomKey::SKIP_PUZZLE);
+		refreshKeybind(CustomKey::SLEEP);
 	}
 
 #if _DEBUG
