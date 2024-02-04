@@ -241,6 +241,7 @@ public:
 	bool warpIsGoingOvertime() const;
 	float getWarpTime();
 	void updateWarpTimer(float deltaSeconds);
+	int readInteractMode();
 
 private:
 	InputWatchdog();

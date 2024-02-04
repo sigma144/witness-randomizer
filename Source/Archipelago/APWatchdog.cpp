@@ -622,8 +622,8 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 		Memory::get()->EnableSolveMode(false);
 		memory->MoveVisionTowards(1.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
 
-		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing && doFunctions) {
+		int interactMode = InputWatchdog::get()->readInteractMode();
+		if ((interactMode == 0 || interactMode == 1) && doFunctions) {
 			Memory::get()->ExitSolveMode();
 		}
 	}
@@ -658,13 +658,19 @@ void APWatchdog::HandleWarp(float deltaSeconds){
 				hasTeleported = true;
 			}
 		}
+
+		// Warp time has been run out. Warp can be ended.
 		else {
 			if (hasTriedExitingNoclip) {
 				auto now = std::chrono::system_clock::now();
-				if (std::chrono::duration<float>(now - attemptedWarpCompletion).count() > 0.5f) {
-					auto currentCameraPosition = memory->ReadPlayerPosition();
 
-					if (pow(currentCameraPosition[0] - selectedWarp->playerPosition[0], 2) + pow(currentCameraPosition[1] - selectedWarp->playerPosition[1], 2) + pow(currentCameraPosition[2] - selectedWarp->playerPosition[2], 2) < 0.3) {
+				// We need to check whether the player actually safely landed.
+
+				auto currentCameraPosition = memory->ReadPlayerPosition();
+				if (pow(currentCameraPosition[0] - selectedWarp->playerPosition[0], 2) + pow(currentCameraPosition[1] - selectedWarp->playerPosition[1], 2) + pow(currentCameraPosition[2] - selectedWarp->playerPosition[2], 2) < 0.3) {
+					// If it has, we need to give some time to fail. It doesn't fail instantly, it takes a frame.
+					if (std::chrono::duration<float>(now - attemptedWarpCompletion).count() > 0.3f) {
+						// If the player has been standing safely for 0.3 seconds, we complete the warp.
 						memory->WritePlayerPosition(selectedWarp->playerPosition);
 						memory->WriteCameraAngle(selectedWarp->cameraAngle);
 
@@ -674,23 +680,50 @@ void APWatchdog::HandleWarp(float deltaSeconds){
 
 						inputWatchdog->endWarp();
 					}
-					else
-					{
-						hasTriedExitingNoclip = false;
+				}
+				else {
+					// If they have not landed safely, we have to retry the warp.
 
-						if (selectedWarp->tutorial) {
-							ASMPayloadManager::get()->ActivateMarker(0x034F6);
-						}
+					hasTriedExitingNoclip = false;
+
+					warpRetryTime += 0.5f;
+					if (warpRetryTime > 2.0f) warpRetryTime = 2.0f;
+
+					if (selectedWarp->tutorial) {
+						ASMPayloadManager::get()->ActivateMarker(0x034F6);
 					}
 				}
 			}
 			else {
-				memory->FloatWithoutMovement(false);
-				memory->WritePlayerPosition(selectedWarp->playerPosition);
-				memory->WriteCameraAngle(selectedWarp->cameraAngle);
-				hasTriedExitingNoclip = true;
+				// Player is ready to be exited from warp. 
 
-				attemptedWarpCompletion = std::chrono::system_clock::now();
+				// If there was a recent failed warp attempt, chill for a bit.
+				auto now = std::chrono::system_clock::now();
+				if (std::chrono::duration<float>(now - attemptedWarpCompletion).count() < warpRetryTime) {
+					memory->FloatWithoutMovement(true);
+					memory->WritePlayerPosition(selectedWarp->playerPosition);
+					memory->WriteCameraAngle(selectedWarp->cameraAngle);
+				}
+				// Else, let them down onto the ground.
+				else
+				{
+					memory->FloatWithoutMovement(false);
+
+					int random_value = std::rand() % 2;
+					bool debug_warp_fails = false;
+
+					if (random_value == 0 && debug_warp_fails) {
+						std::vector<float> a = { selectedWarp->playerPosition[0] + 5, selectedWarp->playerPosition[1] + 5, selectedWarp->playerPosition[2] + 5 };
+						memory->WritePlayerPosition(a);
+					}
+					else {
+						memory->WritePlayerPosition(selectedWarp->playerPosition);
+					}
+					memory->WriteCameraAngle(selectedWarp->cameraAngle);
+					hasTriedExitingNoclip = true;
+
+					attemptedWarpCompletion = std::chrono::system_clock::now();
+				}
 			}
 		}
 	}
@@ -2496,5 +2529,6 @@ void APWatchdog::TryWarp() {
 	hasTeleported = false;
 	hasDoneTutorialMarker = false;
 	hasTriedExitingNoclip = false;
+	warpRetryTime = 0.0f;
 	ClientWindow::get()->focusGameWindow();
 }

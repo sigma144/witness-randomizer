@@ -212,6 +212,7 @@ private:
 	bool hasDoneTutorialMarker = true;
 	bool hasTriedExitingNoclip = true;
 	std::chrono::system_clock::time_point attemptedWarpCompletion;
+	float warpRetryTime = 0.0f;
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;

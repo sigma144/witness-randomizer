@@ -222,6 +222,19 @@ void InputWatchdog::updateWarpTimer(float deltaSeconds) {
 	}
 }
 
+int InputWatchdog::readInteractMode() {
+	int32_t interactMode;
+
+	bool success = Memory::get()->ReadRelative(reinterpret_cast<void*>(interactModeOffset), &interactMode, sizeof(int32_t));
+	if (!success) {
+		return 0x2;
+	}
+	else
+	{
+		return interactMode;
+	}
+}
+
 void InputWatchdog::updateKeyState() {
 	Memory* memory = Memory::get();
 
@@ -344,9 +357,7 @@ void InputWatchdog::updateInteractionState() {
 
 	InteractionState oldState = getInteractionState();
 
-	if (interactModeOffset == 0 || !memory->ReadRelative(reinterpret_cast<void*>(interactModeOffset), &currentInteractMode, sizeof(int32_t))) {
-		currentInteractMode = 0x2; // fall back to not solving
-	}
+	currentInteractMode = readInteractMode();
 
 	if (menuOpenOffset == 0 || !memory->ReadRelative(reinterpret_cast<void*>(menuOpenOffset), &currentMenuOpenPercent, sizeof(float))) {
 		currentMenuOpenPercent = 0.f; // fall back to not open
