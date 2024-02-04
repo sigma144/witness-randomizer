@@ -620,7 +620,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 		memory->EnableVision(false);
 		Memory::get()->EnableMovement(false);
 		Memory::get()->EnableSolveMode(false);
-		memory->MoveVisionTowards(1.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
+		memory->MoveVisionTowards(0.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
 
 		int interactMode = InputWatchdog::get()->readInteractMode();
 		if ((interactMode == 0 || interactMode == 1) && doFunctions) {
@@ -2040,8 +2040,10 @@ void APWatchdog::SetStatusMessages() {
 		if (inputWatchdog->warpIsGoingOvertime()) {
 			HudManager::get()->setWalkStatusMessage("Warping... This is taking longer than expected.\n(Please have the game in focus while warping!)");
 		}
-		else
-		{
+		else if (warpRetryTime > 0.0f) {
+			HudManager::get()->setWalkStatusMessage("Warping... This is taking longer than expected.\n(Please have the game in focus while warping!)");
+		}
+		else {
 			HudManager::get()->setWalkStatusMessage("Warping...");
 		}
 	}
