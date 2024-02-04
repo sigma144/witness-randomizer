@@ -142,6 +142,8 @@ void APWatchdog::action() {
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
 			CheckEPs();
+			CheckPanels();
+			CheckDoors();
 
 			storageCheckCounter = 20;
 		}
@@ -1482,6 +1484,74 @@ void APWatchdog::CheckLasers() {
 	}
 }
 
+void APWatchdog::CheckPanels() {
+	int pNO = ap->get_player_number();
+
+	if (solvedPanels.empty()) {
+		ap->SetNotify({ "WitnessSolvedPanels" + std::to_string(pNO) });
+		ap->Set("WitnessSolvedPanels" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+	}
+
+	std::map<std::string, bool> newlySolvedPanels = {};
+
+	for (int panel : allPanels) {
+		if (solvedPanels.count(panel)) continue;
+
+		if (ReadPanelData<int>(panel, SOLVED)) {
+			std::stringstream stream;
+			stream << std::hex << panel;
+			std::string panel_str(stream.str());
+
+			while (panel_str.size() < 5) {
+				panel_str = "0" + panel_str;
+			}
+
+			panel_str = "0x" + panel_str;
+
+			newlySolvedPanels[panel_str] = true;
+			solvedPanels.insert(panel);
+		}
+	}
+
+	if (newlySolvedPanels.size()) {
+		ap->Set("WitnessSolvedPanels" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newlySolvedPanels } });
+	}
+}
+
+void APWatchdog::CheckDoors() {
+	int pNO = ap->get_player_number();
+
+	if (openedDoors.empty()) {
+		ap->SetNotify({ "WitnessOpenedDoors" + std::to_string(pNO) });
+		ap->Set("WitnessOpenedDoors" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+	}
+
+	std::map<std::string, bool> newlyOpenedDoors = {};
+
+	for (int door: UnlockableDoors) {
+		if (openedDoors.count(door)) continue;
+
+		if (ReadPanelData<int>(door, DOOR_OPEN)) {
+			std::stringstream stream;
+			stream << std::hex << door;
+			std::string door_str(stream.str());
+
+			while (door_str.size() < 5) {
+				door_str = "0" + door_str;
+			}
+
+			door_str = "0x" + door_str;
+
+			newlyOpenedDoors[door_str] = true;
+			openedDoors.insert(door);
+		}
+	}
+
+	if (newlyOpenedDoors.size()) {
+		ap->Set("WitnessOpenedDoors" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newlyOpenedDoors } });
+	}
+}
+
 void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 	if (key.find("WitnessDeathLink") != std::string::npos) {
 		if (DeathLinkCount != value) {
@@ -1500,7 +1570,7 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
 
-	if(!laserActiveInGame & syncprogress)
+	if(!laserActiveInGame && syncprogress)
 	{
 		Memory::get()->ActivateLaser(laserNo);
 		HudManager::get()->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
@@ -1526,6 +1596,20 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool s
 			HudManager::get()->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 		}
 	}
+}
+
+void APWatchdog::HandleSolvedPanelsResponse(nlohmann::json value, bool syncprogress) {
+	std::wstringstream s;
+	s << "Solved Panels: " << value.dump().c_str() << "\n";
+
+	OutputDebugStringW(s.str().c_str());
+}
+
+void APWatchdog::HandleOpenedDoorsResponse(nlohmann::json value, bool syncprogress) {
+	std::wstringstream s;
+	s << "Solved Doors: " << value.dump().c_str() << "\n";
+
+	OutputDebugStringW(s.str().c_str());
 }
 
 void APWatchdog::InfiniteChallenge(bool enable) {

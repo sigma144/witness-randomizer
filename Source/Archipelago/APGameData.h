@@ -820,6 +820,107 @@ const inline int LockablePuzzles[]{
 		0x17CDF, 0x17CC8, 0x17CA6, 0x09DB8, 0x17C95, 0x0A054, // Boats
 };
 
+const inline int UnlockableDoors[]{
+	0x2D73F, // Caves Mountain Shortcut
+	0x03BA2, // Outside Tutorial Outpost Path
+	0x0A170, // Outside Tutorial Outpost Entry
+	0x04CA3, // Outside Tutorial Outpost Exit
+	0x01A29, // Glass Factory Entry
+	0x0D7ED, // Glass Factory Back Wall
+	0x17F3E, // Symmetry Island Lower
+	0x18269, // Symmetry Island Upper
+	0x03307, // Orchard First Gate
+	0x03313, // Orchard Second Gate
+	0x09FEE, // Desert Light Room Entry
+	0x0C2C3, // Desert Pond Room Entry
+	0x0A24B, // Desert Flood Room Entry
+	0x0C316, // Desert Elevator Room Entry
+	0x01317, // Desert Elevator
+	0x09D6F, // Quarry Entry 1
+	0x17C07, // Quarry Entry 2
+	0x02010, // Quarry Stoneworks Entry
+	0x275FF, // Quarry Stoneworks Side Exit
+	0x17CE8, // Quarry Stoneworks Roof Exit
+	0x0368A, // Quarry Stoneworks Stairs
+	0x2769B,0x27163, // Quarry Boathouse Dock
+	0x17C50, // Quarry Boathouse First Barrier
+	0x3865F, // Quarry Boathouse Second Barrier
+	0x19B24, // Shadows Timed
+	0x194B2, // Shadows Laser Entry Right
+	0x19665, // Shadows Laser Entry Left
+	0x19865,0x0A2DF, // Shadows Quarry Barrier
+	0x1855B,0x19ADE, // Shadows Ledge Barrier
+	0x01954, // Keep Hedge Maze 1 Exit
+	0x01BEC, // Keep Pressure Plates 1 Exit
+	0x018CE, // Keep Hedge Maze 2 Shortcut
+	0x019D8, // Keep Hedge Maze 2 Exit
+	0x019B5, // Keep Hedge Maze 3 Shortcut
+	0x019E6, // Keep Hedge Maze 3 Exit
+	0x0199A, // Keep Hedge Maze 4 Shortcut
+	0x01A0E, // Keep Hedge Maze 4 Exit
+	0x01BEA, // Keep Pressure Plates 2 Exit
+	0x01CD5, // Keep Pressure Plates 3 Exit
+	0x01D40, // Keep Pressure Plates 4 Exit
+	0x09E3D, // Keep Shadows Shortcut
+	0x04F8F, // Keep Tower Shortcut
+	0x0364E, // Monastery Laser Shortcut
+	0x0C128, // Monastery Entry Inner
+	0x0C153, // Monastery Entry Outer
+	0x03750, // Monastery Garden Entry
+	0x0A0C9, // Town Cargo Box Entry
+	0x034F5, // Town Wooden Roof Stairs
+	0x28A61, // Town RGB House Entry
+	0x03BB0, // Town Church Entry
+	0x28AA2, // Town Maze Stairs
+	0x1845B, // Town Windmill Entry
+	0x2897B, // Town RGB House Stairs
+	0x27798, // Town Tower Second
+	0x27799, // Town Tower First
+	0x2779A, // Town Tower Fourth
+	0x2779C, // Town Tower Third
+	0x17F88, // Theater Entry
+	0x0A16D, // Theater Exit Left
+	0x3CCDF, // Theater Exit Right
+	0x3873B, // Jungle Laser Shortcut
+	0x1475B, // Jungle Popup Wall
+	0x0CF2A, // Jungle Monastery Garden Shortcut
+	0x0C2A4, // Bunker Entry
+	0x17C79, // Bunker Tinted Glass
+	0x0C2A3, // Bunker UV Room Entry
+	0x0A08D, // Bunker Elevator Room Entry
+	0x00C1C, // Swamp Entry
+	0x184B7, // Swamp Between Bridges First
+	0x38AE6, // Swamp Platform Shortcut
+	0x04B7F, // Swamp Cyan Water Pump
+	0x18507, // Swamp Between Bridges Second
+	0x183F2, // Swamp Red Water Pump
+	0x305D5, // Swamp Red Underwater Exit
+	0x18482, // Swamp Blue Water Pump
+	0x0A1D6, // Swamp Purple Water Pump
+	0x2D880, // Swamp Laser Shortcut
+	0x0C309, // Treehouse First
+	0x0C310, // Treehouse Second
+	0x0A181, // Treehouse Third
+	0x0C32D, // Treehouse Drawbridge
+	0x0C323, // Treehouse Laser House Entry
+	0x09E54, // Mountain Floor 1 Exit
+	0x09FFB, // Mountain Floor 2 Staircase Near
+	0x09EDD, // Mountain Floor 2 Exit
+	0x09E07, // Mountain Floor 2 Staircase Far
+	0x09F89, // Mountain Bottom Floor Giant Puzzle Exit
+	0x0C141, // Mountain Bottom Floor Pillars Room Entry
+	0x17F33, // Mountain Bottom Floor Rock
+	0x2D77D, // Caves Entry
+	0x019A5, // Caves Pillar
+	0x2D859, // Caves Swamp Shortcut
+	0x0A19A, // Challenge Entry
+	0x0348A, // Challenge Tunnels Entry
+	0x27739, // Tunnels Theater Shortcut
+	0x27263, // Tunnels Desert Shortcut
+	0x09E87, // Tunnels Town Shortcut
+};
+
+
 const inline std::set<int> deathlinkExcludeList = {
 	0x0008F, // UTM Invisible Dots 1
 	0x0006B, // UTM Invisible Dots 2

@@ -269,8 +269,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 		if (value != original_value) {
 			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
-			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
+			else if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
 		}
+
+		if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value, SyncProgress);
+		if (key.find("WitnessOpenedDoors") != std::string::npos) async->HandleOpenedDoorsResponse(value, SyncProgress);
 	});
 
 	ap->set_print_json_handler([&](const APClient::PrintJSONArgs jsonArgs) {
