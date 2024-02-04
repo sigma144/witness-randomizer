@@ -64,8 +64,10 @@ public:
 	bool CheckPanelHasBeenSolved(int panelId);
 
 	void SetValueFromServer(std::string key, nlohmann::json value);
-	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool collect);
-	void HandleEPResponse(std::string epID, nlohmann::json value, bool collect);
+	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncProgress);
+	void HandleEPResponse(std::string epID, nlohmann::json value, bool syncProgress);
+	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
+	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
 
 	void InfiniteChallenge(bool enable);
 
@@ -192,6 +194,8 @@ private:
 
 	void CheckLasers();
 	void CheckEPs();
+	void CheckPanels();
+	void CheckDoors();
 
 	void CheckImportantCollisionCubes();
 
@@ -209,6 +213,9 @@ private:
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
+
+	std::set<int> solvedPanels;
+	std::set<int> openedDoors;
 
 	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;
