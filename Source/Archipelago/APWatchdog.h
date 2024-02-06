@@ -60,6 +60,7 @@ public:
 	void SetItemRewardColor(const int& id, const int& itemFlags);
 	void PlaySentJingle(const int& id, const int& itemFlags);
 	void PlayReceivedJingle(const int& itemFlags);
+	void PlayFirstJingle();
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
@@ -97,6 +98,7 @@ private:
 	std::chrono::system_clock::time_point lastFrameTime;
 	float halfSecondCountdown = 0.f;
 	float timePassedSinceRandomisation = 0.0f;
+	float timePassedSinceFirstJinglePlayed = 0.0f;
 
 	int halfSecondCounter = 0;
 
@@ -121,6 +123,8 @@ private:
 	std::set<int> DisabledEntities;
 
 	bool FirstEverLocationCheckDone = false;
+
+	bool firstJinglePlayed = false;
 
 	bool hasPowerSurge = false;
 	bool hasDeathLink = false;

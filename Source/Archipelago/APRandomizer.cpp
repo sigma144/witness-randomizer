@@ -465,6 +465,7 @@ void APRandomizer::PostGeneration() {
 	}
 
 	async->getHudManager()->queueBannerMessage("Randomized!");
+	async->PlayFirstJingle();
 
 	async->start();
 }

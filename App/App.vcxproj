@@ -260,6 +260,7 @@
     <Media Include="..\Music\Pillars Useful Bmaj.wav" />
     <Media Include="..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\Music\Pillars Useful Emaj.wav" />
+    <Media Include="..\Music\Randomized.wav" />
     <Media Include="..\Music\Victory.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

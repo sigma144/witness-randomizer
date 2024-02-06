@@ -35,6 +35,7 @@ enum APJingle
 	UnderstatedUseful,
 
 	Victory,
+	FirstJingle,
 	DeathLink,
 };
 
@@ -127,7 +128,7 @@ private:
 		{DogUseful, {IDR_WAVE37}},
 
 		{Victory, {IDR_WAVE30}},
-
+		{FirstJingle, {IDR_WAVE50}},
 		{DeathLink, {IDR_WAVE51}}
 	};
 
@@ -158,6 +159,7 @@ private:
 		{DogUseful, {IDR_WAVE37}},
 
 		{Victory, {IDR_WAVE30}},
+		{FirstJingle, {IDR_WAVE50}},
 	};
 
 	std::set<APJingle> epJingles = {

@@ -150,6 +150,8 @@ IDR_WAVE49              WAVE                    "..\\Music\\Pillars Useful Emaj.
 
 IDR_WAVE51              WAVE                    "..\\Music\\Bonk Sound Effect.wav"
 
+IDR_WAVE50              WAVE                    "..\\Music\\Randomized.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
