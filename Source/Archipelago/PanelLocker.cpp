@@ -80,9 +80,6 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	if (neverLockAgain.count(id)) return;
 
-
-
-
 	Memory* memory = Memory::get();
 
 	bool isLocked;
@@ -131,9 +128,6 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		//puzzle should be locked
 		puzzle->UpdateLock(state);
 	}
-		}
-		memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
-	}
 	else if (isLocked) {
 		//puzzle is locked but should nolonger be locked
 		unlockPuzzle(puzzle, state);
@@ -151,21 +145,11 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id, const APState& state) {
 		LockablePuzzle* puzzle = lockedPuzzles[id];
 		unlockPuzzle(puzzle, state);
 	}
+}
+
 void PanelLocker::unlockPuzzle(LockablePuzzle* puzzle, const APState& state) {
 	puzzle->Restore();
 	recentlyUnlockedPuzzles.push_back(puzzle->id);
-	//delete puzzle;
-}
-
-std::vector<int> PanelLocker::getAndFlushRecentlyUnlockedPuzzles()
-{
-	auto returnValue = recentlyUnlockedPuzzles;
-	recentlyUnlockedPuzzles = {};
-	return returnValue;
-}
-
-		0, 0, 0, 0, 0, //top row
-	};
 
 	if (EPtoStartPoint.count(puzzle->id)) {
 		for (int conjoinedPuzzle : startPointToEPs.find(EPtoStartPoint.find(puzzle->id)->second)->second) {
@@ -176,6 +160,13 @@ std::vector<int> PanelLocker::getAndFlushRecentlyUnlockedPuzzles()
 	}
 
 	//delete puzzle;
+}
+
+std::vector<int> PanelLocker::getAndFlushRecentlyUnlockedPuzzles()
+{
+	auto returnValue = recentlyUnlockedPuzzles;
+	recentlyUnlockedPuzzles = {};
+	return returnValue;
 }
 
 bool PanelLocker::PuzzleIsLocked(int id) {
