@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <set>
+#include <vector>
 
 class APState;
 struct LockablePuzzle;

@@ -417,7 +417,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 
 	if (reason != "Collected" && reason != "Excluded" || CollectUnlock) {
-		if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id);
+		if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id, *state);
 		if (!dont_power.count(id)) WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
 	}
 
@@ -2494,7 +2494,6 @@ void APWatchdog::DisablePuzzle(int id) {
 	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id) || allPanels.count(id)) {
 		SkipPanel(id, "Disabled", false);
 	}
-}
 }
 
 void APWatchdog::CheckFinalRoom() {
