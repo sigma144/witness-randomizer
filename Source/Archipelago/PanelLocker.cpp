@@ -127,7 +127,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 	{
 		//puzzle should be locked
 		puzzle->UpdateLock(state);
-		lockedPuzzles.insert({ id, puzzle });
+		if (!isLocked) lockedPuzzles.insert({ id, puzzle });
 	}
 	else if (isLocked) {
 		//puzzle is locked but should nolonger be locked
@@ -155,6 +155,7 @@ void PanelLocker::PermanentlyUnlockPuzzle(int id, const APState& state) {
 
 void PanelLocker::unlockPuzzle(LockablePuzzle* puzzle, const APState& state) {
 	puzzle->Restore();
+	lockedPuzzles.erase(puzzle->id);
 	recentlyUnlockedPuzzles.push_back(puzzle->id);
 
 	if (EPtoStartPoint.count(puzzle->id)) {
