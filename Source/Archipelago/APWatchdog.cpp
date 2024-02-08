@@ -26,7 +26,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -50,6 +50,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	DisabledPuzzlesBehavior = dis;
 	DisabledEntities = disP;
 	ElevatorsComeToYou = elev;
+	doorToItemId = dToI;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
 
@@ -137,6 +138,8 @@ void APWatchdog::action() {
 		AudioLogPlaying(0.5f);
 
 		UpdateInfiniteChallenge();
+
+		panelLocker->UpdatePPEPPuzzleLocks(*state);
 
 		if (storageCheckCounter <= 0) {
 			CheckLasers();
@@ -382,7 +385,12 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if (dont_touch_panel_at_all.count(id) || !allPanels.count(id) || PuzzlesSkippedThisGame.count(id)) {
+	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
+	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
+	
+	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id, *state);
+
+	if (dont_touch_panel_at_all.count(id) or !allPanels.count(id) || PuzzlesSkippedThisGame.count(id)) {
 		return;
 	}
 
@@ -473,10 +481,11 @@ void APWatchdog::MarkLocationChecked(int locationId)
 		}
 	}
 
-	else if (allEPs.count(panelId) && Collect != "Unchanged") {
+	else if (allEPs.count(panelId) && Collect == "Unchanged") {
 		int eID = panelId;
 
 		Memory::get()->SolveEP(eID);
+		panelLocker->PermanentlyUnlockPuzzle(eID, *state);
 		if (precompletableEpToName.count(eID) && precompletableEpToPatternPointBytes.count(eID) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(eID), precompletableEpToPatternPointBytes.at(eID));
 		}
@@ -871,6 +880,12 @@ void APWatchdog::UnlockDoor(int id) {
 		return;
 	}
 
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
+		state->keysReceived.insert(id);
+		panelLocker->UpdatePuzzleLock(*state, id);
+		return;
+	}
+
 	if (allLasers.count(id)) {
 		Memory::get()->ActivateLaser(id);
 		return;
@@ -918,9 +933,14 @@ void APWatchdog::SeverDoor(int id) {
 	// Disabled doors should behave as vanilla
 	if (DisabledEntities.count(id)) return;
 	
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
+		state->keysInTheGame.insert(id);
+	}
+
+	if (allEPs.count(id)) return; // EPs don't need any "severing"
+
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
-		state->keysInTheGame.insert(id);
 	}
 
 	if (severTargetsById.count(id)) {
@@ -1838,7 +1858,7 @@ void APWatchdog::CheckEPSkips() {
 	}
 
 	for (int panel : panelsToSkip) {
-		panelLocker->PermanentlyUnlockPuzzle(panel);
+		panelLocker->PermanentlyUnlockPuzzle(panel, *state);
 		panelsThatHaveToBeSkippedForEPPurposes.erase(panel);
 		SkipPanel(panel, "Skipped", false, 0);
 	}
@@ -1938,9 +1958,65 @@ void APWatchdog::SetStatusMessages() {
 		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
 
 		if (activePanelId != -1) {
+			int solvingPressurePlateStartPoint = 0;
+			int solvingPressurePlateAssociatedEPID = 0;
+
+			// Weird PP allocation stuff
+			for (int ppEP : {0x1AE8, 0x01C0D, 0x01DC7, 0x01E12, 0x01E52}) {
+				int ppStartPointID = Memory::get()->ReadPanelData<int>(ppEP, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
+
+
+				if (ppStartPointID > 0 && activePanelId == ppStartPointID) {
+					solvingPressurePlateStartPoint = ppStartPointID;
+					solvingPressurePlateAssociatedEPID = startPointToEPs.find(ppEP)->second[0];
+				}
+			}
+
 			// If we have a special skip message for the current puzzle, show it above the skip count.
 			if (puzzleSkipInfoMessage.size() > 0) {
 				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
+			}
+
+			if (solvingPressurePlateStartPoint || startPointToEPs.count(activePanelId)) {
+				bool allDisabled = true;
+				bool someDisabled = false;
+
+				bool hasLockedEPs = false;
+
+				std::string name = "(Unknown Key)";
+
+				for(auto [ep, startPoint] : EPtoStartPoint){
+					if ((solvingPressurePlateStartPoint == activePanelId && ep == solvingPressurePlateAssociatedEPID || startPoint == activePanelId) && ep) {
+						bool disabled = find(DisabledEntities.begin(), DisabledEntities.end(), ep) != DisabledEntities.end();
+
+						allDisabled = allDisabled && disabled;
+						someDisabled = someDisabled || disabled;
+
+						if(panelLocker->PuzzleIsLocked(ep)){
+							hasLockedEPs = hasLockedEPs || !disabled;
+							if (doorToItemId.count(ep)) {
+								name = ap->get_item_name(doorToItemId[ep]);
+							}
+						}
+					}
+				}
+
+				if (interactionState == InteractionState::Solving) {
+					if (allDisabled) {
+						if (DisabledPuzzlesBehavior == "Prevent Solve") {
+							hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP is disabled.");
+						}
+						else {
+							skipMessage = "This EP is disabled.\n" + skipMessage;
+						}
+					}
+					else if (hasLockedEPs) {
+						hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
+					}
+					else if (someDisabled) {
+						skipMessage = "Some EPs for this start point are disabled.\n" + skipMessage;
+					}
+				}
 			}
 
 			if (DeathLinkAmnesty != -1) {
@@ -2401,6 +2477,24 @@ void APWatchdog::unlockItem(int item) {
 	case ITEM_BONK_TRAP:							TriggerBonk();						  break;
 	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
+}
+
+void APWatchdog::DisablePuzzle(int id) {
+	auto memory = Memory::get();
+
+	if (allEPs.count(id)) {
+		memory->SolveEP(id);
+		if ((DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve") && precompletableEpToName.count(id) && precompletableEpToPatternPointBytes.count(id)) {
+			memory->MakeEPGlow(precompletableEpToName.at(id), precompletableEpToPatternPointBytes.at(id));
+		}
+		if (DisabledPuzzlesBehavior == "Prevent Solve") {
+			panelLocker->DisablePuzzle(id);
+		}
+	}
+	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id) || allPanels.count(id)) {
+		SkipPanel(id, "Disabled", false);
+	}
+}
 }
 
 void APWatchdog::CheckFinalRoom() {

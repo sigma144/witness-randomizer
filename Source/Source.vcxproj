@@ -179,7 +179,7 @@
     <ClInclude Include="Archipelago\ASMPayloadManager.h" />
     <ClInclude Include="Archipelago\OriginalPanelData.h" />
     <ClInclude Include="Archipelago\PanelRestore.h" />
-    <ClInclude Include="Archipelago\PuzzleData.h" />
+    <ClInclude Include="Archipelago\LockablePuzzle.h" />
     <ClInclude Include="Archipelago\PanelLocker.h" />
     <ClInclude Include="Archipelago\APWatchdog.h" />
     <ClInclude Include="Archipelago\Client\json.hpp" />
@@ -224,7 +224,7 @@
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
     <ClCompile Include="Panel.cpp" />
-    <ClCompile Include="Archipelago\PuzzleData.cpp" />
+    <ClCompile Include="Archipelago\LockablePuzzle.cpp" />
     <ClCompile Include="Archipelago\PanelLocker.cpp" />
     <ClCompile Include="PuzzleList.cpp" />
     <ClCompile Include="Quaternion.cpp" />

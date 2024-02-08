@@ -173,6 +173,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				std::set<int> v = val;
 
 				itemIdToDoorSet.insert({ itemId, v });
+				
+				for (int door : v) {
+					doorToItemId.insert({ door, itemId });
+				}
 			}
 		}
 
@@ -443,15 +447,7 @@ void APRandomizer::PostGeneration() {
 	if (disabledEntities.size() > 0) {
 		clientWindow->setStatusMessage("Disabling Puzzles...");
 		for (int checkID : disabledEntities) {
-			if (allEPs.count(checkID)) {
-				memory->SolveEP(checkID);
-				if (precompletableEpToName.count(checkID) && precompletableEpToPatternPointBytes.count(checkID)) {
-					memory->MakeEPGlow(precompletableEpToName.at(checkID), precompletableEpToPatternPointBytes.at(checkID));
-				}
-			}
-			else if (allPanels.count(checkID)) {
-				async->SkipPanel(checkID, "Disabled", false);
-			}
+			async->DisablePuzzle(checkID);
 		}
 	}
 
@@ -503,10 +499,10 @@ void APRandomizer::setPuzzleLocks() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();
 
-	const int puzzleCount = sizeof(LockablePuzzles) / sizeof(LockablePuzzles[0]);
+	const int puzzleCount = LockablePuzzles.size();
 	for (int i = 0; i < puzzleCount; i++)	{
 		clientWindow->setStatusMessage("Locking puzzles: " + std::to_string(i) + "/" + std::to_string(puzzleCount));
-		if (!memory->ReadPanelData<int>(LockablePuzzles[i], SOLVED));
+		if (!(allPanels.count(LockablePuzzles[i]) && memory->ReadPanelData<int>(LockablePuzzles[i], SOLVED)))
 			panelLocker->UpdatePuzzleLock(state, LockablePuzzles[i]);
 	}
 }
@@ -515,7 +511,9 @@ void APRandomizer::Init() {
 	Memory* memory = Memory::get();
 
 	for (int panel : LockablePuzzles) {
-		memory->InitPanel(panel);
+		if (allPanels.count(panel)) {
+			memory->InitPanel(panel);
+		}
 	}
 
 	PanelRestore::RestoreOriginalPanelData();
@@ -524,7 +522,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, doorToItemId);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -532,7 +530,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, DeathLink, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, doorToItemId);
 	SeverDoors();
 
 	//Mess with Town targets
