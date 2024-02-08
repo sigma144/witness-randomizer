@@ -385,11 +385,6 @@ void APWatchdog::CheckSolvedPanels() {
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
-	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
-	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
-	
-	if (panelLocker->PuzzleIsLocked(id)) panelLocker->PermanentlyUnlockPuzzle(id, *state);
-
 	if (dont_touch_panel_at_all.count(id) or !allPanels.count(id) || PuzzlesSkippedThisGame.count(id)) {
 		return;
 	}
