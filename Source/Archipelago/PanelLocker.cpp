@@ -189,11 +189,18 @@ void PanelLocker::DisablePuzzle(int id) {
 			lockedPuzzles[id] = puzzle;
 		}
 		bool allDisabledForStartpoint = true;
+		bool allDisabledForEndpoint = true;
 
 		for (int associatedEP : startPointToEPs.find(EPtoStartPoint.find(id)->second)->second) {
 			allDisabledForStartpoint = allDisabledForStartpoint && disabledPuzzles.count(associatedEP);
 		}
 
-		((LockableEP*)lockedPuzzles[id])->DisableEP(allDisabledForStartpoint);
+		for (int associatedEP : endPointToEPs.find(EPtoStartPoint.find(id)->second)->second) {
+			allDisabledForEndpoint = allDisabledForEndpoint && disabledPuzzles.count(associatedEP);
+		}
+
+		((LockableEP*)lockedPuzzles[id])->DisableEP(allDisabledForStartpoint, allDisabledForEndpoint);
 	}
+
+	neverLockAgain.insert(id);
 }

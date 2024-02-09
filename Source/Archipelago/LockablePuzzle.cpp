@@ -910,10 +910,10 @@ void LockableEP::UpdateLock(APState state)
 {
 	if (!state.keysInTheGame.count(id) || state.keysReceived.count(id)) return;
 
-	LockEP(false, true);
+	LockEP(false, true, true);
 }
 
-void LockableEP::LockEP(bool disabled, bool recolor) {
+void LockableEP::LockEP(bool disabled, bool recolor, bool disableEndPoint) {
 	auto memory = Memory::get();
 
 	int startPointID = EPtoStartPoint.find(id)->second;
@@ -925,7 +925,7 @@ void LockableEP::LockEP(bool disabled, bool recolor) {
 		endPoint = memory->ReadPanelData<int>(endPoint, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
 	}
 
-	if (endPoint != -1) memory->WritePanelData<int>(endPoint, EP_PATTERN_POINT_IS_ENDPOINT, { 0 });
+	if (disableEndPoint && endPoint != -1) memory->WritePanelData<int>(endPoint, EP_PATTERN_POINT_IS_ENDPOINT, { 0 });
 
 	if (!recolor) return;
 
@@ -973,9 +973,9 @@ void LockableEP::Restore(){
 	memory->WritePanelData<float>(startPointID, EP_PARTICLE_SIZE_SCALE, particleSize);
 }
 
-void LockableEP::DisableEP(bool recolor)
+void LockableEP::DisableEP(bool recolor, bool disableEndPoint)
 {
-	LockEP(true, recolor);
+	LockEP(true, recolor, disableEndPoint);
 }
 
 void LockableObelisk::Read()
