@@ -126,7 +126,7 @@ inline const std::set<int> dont_touch_panel_at_all = {
 	0x00064, 0x00182, // Entry Panels
 
 	0x03505, // Gate Close
-
+	0x09F7F, // Mountaintop Box
 	0x00C09, // Challenge Maze
 	0x00CDB, 0x0051F, 0x00524, 0x00CD4, // Challenge reallocating
 };
