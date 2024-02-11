@@ -212,13 +212,11 @@ void ClientWindow::setStatusMessage(std::string statusMessage) const
 }
 
 void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints) {
-	std::string hintsText = "";
+	std::string hintsText = "Audio Log Hints:\r\n";
 
 	for (std::string hint : hints) {
 		hintsText += hint + "\r\n";
 	}
-
-	if (hintsText == "") return;
 
 	hintsText.pop_back();
 	hintsText.pop_back();
