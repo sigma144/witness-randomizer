@@ -61,7 +61,7 @@ class APRandomizer {
 			{ 158210, {158010, 158001}},
 			{ 158260, {158060, 158061}},
 		};
-		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
+		std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> audioLogMessages;
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> disabledEntities;
 

@@ -198,18 +198,34 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
 				std::string message;
-				int64_t location_id_in_this_world = -1;
-				for (int i = 0; i < val.size() - 1; i++) {
-					std::string line = val[i];
-					if (!line.empty()) {
-						message.append(line);
-						message.append(" ");
+				uint64_t location_id = -1;
+				int player_no = 0;
+				int intcounter = 0;
+
+				for (int i = 0; i < val.size(); i++) {
+					auto token = val[i];
+
+					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned) {
+						uint64_t integer = token;
+						if (intcounter == 0) {
+							location_id = integer;
+							player_no = ap->get_player_number();
+						}
+						else if (intcounter == 1) {
+							player_no = integer;
+						}
+						intcounter++;
+					}
+					else {
+						std::string line = token;
+						if (!line.empty()) {
+							message.append(line);
+							message.append(" ");
+						}
 					}
 				}
-
-				location_id_in_this_world = val[val.size() - 1];
 				
-				audioLogMessages.insert({ logId, std::pair(message, location_id_in_this_world) });
+				audioLogMessages.insert({ logId, {message, {location_id, player_no}} });
 			}
 		}
 
@@ -274,6 +290,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (value != original_value) {
 			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
 			else if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
+			else if(key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value, SyncProgress);
 		}
 
 		if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value, SyncProgress);
@@ -314,7 +331,9 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		bool found = (jsonArgs.found) ? *jsonArgs.found : false;
 
 		if (hint) {
-			if (async->seenAudioMessages.count(item.location)) return;
+			for (int seenAudioLog : async->seenAudioLogs) {
+				if (audioLogMessages[seenAudioLog].second.first == item.location && audioLogMessages[seenAudioLog].second.second == ap->get_player_number()) return;
+			}
 
 			std::string isFor = "";
 			if (!receiving) isFor = " for " + player;

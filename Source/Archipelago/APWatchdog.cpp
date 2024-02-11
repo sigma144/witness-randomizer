@@ -26,7 +26,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -146,6 +146,8 @@ void APWatchdog::action() {
 			CheckEPs();
 			CheckPanels();
 			CheckDoors();
+
+			firstStorageCheckDone = true;
 
 			storageCheckCounter = 20;
 		}
@@ -1199,34 +1201,38 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	std::string line2 = "";
 	std::string line3 = "";
 
+	int pNO = ap->get_player_number();
+
+	if (!firstStorageCheckDone) {
+		for (int logId : audioLogs) {
+			std::string key = "WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId);
+			ap->SetNotify({ key });
+			ap->Set(key, false, true, { { "default", false } });
+		}
+	}
+
+	std::set<std::pair<std::string, std::pair<int64_t, int>>> seenMessages = {};
+
 	for (int logId : audioLogs) {
-		bool logPlaying = ReadPanelData<int>(logId, AUDIO_LOG_IS_PLAYING) != 0;
-		if (logPlaying && logId != currentAudioLog) {
-			currentAudioLog = logId;
+		bool audioLogHasBeenPlayed = ReadPanelData<int>(logId, AUDIO_LOG_PLAYED);
 
-			std::string message = audioLogMessages[logId].first;
-			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
-			currentAudioLogDuration = 8.f;
+		if (audioLogHasBeenPlayed) {
+			seenMessages.insert(audioLogMessages[logId]);
 
-			APClient::DataStorageOperation operation;
-			operation.operation = "replace";
-			operation.value = true;
-
-			std::list<APClient::DataStorageOperation> operations;
-			operations.push_back(operation);
-
-			int pNO = ap->get_player_number();
-
-			ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, operations);
-
-			int locationId = audioLogMessages[logId].second;
-
-			if (locationId != -1 && !seenAudioMessages.count(locationId)) {
-				ap->LocationScouts({ locationId }, 2);
-				seenAudioMessages.insert(locationId);
+			if (!seenAudioLogs.count(logId)) {
+				int locationId = audioLogMessages[logId].second.first;
+				if (locationId != -1 && audioLogMessages[logId].second.second == pNO) ap->LocationScouts({ locationId }, 2);
+				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
+				seenAudioLogs.insert(logId);
 			}
+		}
 
-			break;
+		bool logPlaying = ReadPanelData<int>(logId, AUDIO_LOG_IS_PLAYING) != 0;
+		if (logPlaying) {
+			if (logId != currentAudioLog) {
+				currentAudioLog = logId;
+				currentAudioLogDuration = 8.f;
+			}
 		}
 		else if (!logPlaying && logId == currentAudioLog) {
 			currentAudioLog = -1;
@@ -1235,11 +1241,20 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	}
 
 	if (currentAudioLog != -1) {
-		// We're playing an audio log. Track how long it's been playing for.
+		// We're playing an audio log. Show its hint, unless it's already been on screen for a while.
+		if (currentAudioLogDuration <= 0.f) {
+			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+		}
+		else
+		{
+			std::string message = audioLogMessages[currentAudioLog].first;
+			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
+		}
+
 		currentAudioLogDuration -= deltaSeconds;
 	}
 	else if (currentAudioLogDuration > 0.f) {
-		// We don't have an audio log playing. Run out the timer on the hint display.
+		// We don't have an audio log playing. Run out the timer on any hint that may still be playing.
 		currentAudioLogDuration -= deltaSeconds;
 		if (currentAudioLogDuration <= 0.f) {
 			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
@@ -1248,10 +1263,48 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
+
+	std::vector<std::pair<std::string, std::pair<uint64_t, int>>> seenMessagesVec(seenMessages.begin(), seenMessages.end());
+	std::sort(seenMessagesVec.begin(), seenMessagesVec.end(), [pNO](std::pair<std::string, std::pair<uint64_t, int>> a, std::pair<std::string, std::pair<uint64_t, int>> b) {		
+		bool aIsArea = a.second.first == -1 && a.second.second == pNO;
+		bool bIsArea = b.second.first == -1 && b.second.second == pNO;
+		
+		if (aIsArea && bIsArea) {
+			return a.first.compare(b.first) < 0;
+		}
+		else if (aIsArea) {
+			return true;
+		}
+		else if (bIsArea) {
+			return false;
+		}
+		
+		if (a.second.first > b.second.first) {
+			return true;
+		}
+		
+		return a.first.compare(b.first) < 0;
+	});
+	std::vector<std::pair<std::string, std::pair<uint64_t, int>>> seenMessagesVecCleaned = {};
+	for (auto message : seenMessagesVec) {
+		if (message.second.first == -1 && message.second.second == -1) {
+			continue;
+		}
+		seenMessagesVecCleaned.push_back(message);
+	}
+
+	std::vector<std::string> seenMessagesStrings = {};
+	for (auto message : seenMessagesVecCleaned) {
+		std::string cleanedMessage = message.first;
+		std::replace(cleanedMessage.begin(), cleanedMessage.end(), '\n', ' ');
+		seenMessagesStrings.push_back(cleanedMessage);
+	}
+
+	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings);
 }
 
 void APWatchdog::CheckEPs() {
-	if (EPIDsToEPs.empty()) {
+	if (!firstStorageCheckDone) {
 		int pNO = ap->get_player_number();
 
 		for (int ep : allEPs) {
@@ -1300,7 +1353,7 @@ void APWatchdog::CheckEPs() {
 }
 
 void APWatchdog::CheckLasers() {
-	if (laserIDsToLasers.empty()) {
+	if (!firstStorageCheckDone) {
 		int pNO = ap->get_player_number();
 
 		for (int laser : allLasers) {
@@ -1473,6 +1526,19 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool s
 		if (syncprogress){
 			hudManager->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 		}
+	}
+}
+
+void APWatchdog::HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress) {
+	bool audioLogSeen = value == true;
+	int logID = stoi(logIDstr.substr(logIDstr.find("-") + 1));
+
+	if (!audioLogSeen) return;
+
+	if (syncprogress)
+	{
+		WritePanelData<int>(logID, AUDIO_LOG_PLAYED, { 1 });
+		seenAudioLogs.insert(logID);
 	}
 }
 

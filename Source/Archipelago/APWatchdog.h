@@ -18,7 +18,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -69,6 +69,7 @@ public:
 	void SetValueFromServer(std::string key, nlohmann::json value);
 	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncProgress);
 	void HandleEPResponse(std::string epID, nlohmann::json value, bool syncProgress);
+	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
 	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
 	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
 
@@ -82,7 +83,7 @@ public:
 
 	HudManager* getHudManager() const { return hudManager.get(); }
 
-	std::set<int> seenAudioMessages;
+	std::set<int> seenAudioLogs;
 
 private:
 	APClient* ap;
@@ -127,7 +128,7 @@ private:
 	std::map<int, int> doorToItemId;
 
 	bool FirstEverLocationCheckDone = false;
-
+	bool firstStorageCheckDone = false;
 	bool firstJinglePlayed = false;
 
 	bool hasPowerSurge = false;
@@ -245,7 +246,7 @@ private:
 	//   skipped for whatever reason.
 	int puzzleSkipCost = -1;
 
-	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
+	std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> entityToName = {};

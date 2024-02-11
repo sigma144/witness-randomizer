@@ -68,8 +68,8 @@ public:
 	// Sets the status message field.
 	void setStatusMessage(std::string statusMessage) const;
 
-	// Sets the "last error message" field.
-	void setErrorMessage(std::string errorMessage) const;
+	// Display seen Audio Logs.
+	void displaySeenAudioHints(std::vector<std::string> hints);
 
 	void setWindowMode(ClientWindowMode mode);
 
@@ -88,7 +88,7 @@ private:
 	void addGameOptions(int& currentY);
 	void addKeybindings(int& currentY);
 	void addPuzzleEditor(int& currentY);
-	void addErrorMessage(int& currentY);
+	void addHintsView(int& currentY);
 
 	void show(int nCmdShow);
 
@@ -113,7 +113,7 @@ private:
 	HINSTANCE hAppInstance;
 	HWND hwndRootWindow;
 	HWND hwndApLoadCredentials, hwndApConnect;
-	HWND hwndStatusText, hwndErrorText;
+	HWND hwndStatusText, hwndHintsView;
 
 	HWND hwndTEMPfocusWindow;
 
@@ -126,6 +126,8 @@ private:
 	std::map<ClientStringSetting, HWND> stringSettingTextBoxes;
 	std::map<CustomKey, HWND> customKeybindValues;
 	std::map<CustomKey, HWND> customKeybindButtons;
+
+	std::string lastHintText = "";
 
 	// HACK: Due to things like menu bar thickness, the working area of the root window won't
 	//   actually be whatever we request. As such, we need to store the delta between the requested

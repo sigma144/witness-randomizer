@@ -1129,7 +1129,7 @@ void Memory::ThrowError(std::string message) {
 	if (!showMsg) {
 		ClientWindow* clientWindow = ClientWindow::get();
 		if (clientWindow != nullptr) {
-			clientWindow->setErrorMessage("Most recent error: " + message);
+			// clientWindow->setErrorMessage("Most recent error: " + message);
 		}
 		throw std::exception(message.c_str());
 	}

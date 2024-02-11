@@ -211,9 +211,22 @@ void ClientWindow::setStatusMessage(std::string statusMessage) const
 	writeStringToTextBox(statusMessage, hwndStatusText);
 }
 
-void ClientWindow::setErrorMessage(std::string errorMessage) const
-{
-	writeStringToTextBox(errorMessage, hwndErrorText);
+void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints) {
+	std::string hintsText = "";
+
+	for (std::string hint : hints) {
+		hintsText += hint + "\r\n";
+	}
+
+	if (hintsText == "") return;
+
+	hintsText.pop_back();
+	hintsText.pop_back();
+
+	if (hintsText == lastHintText) return;
+	lastHintText = hintsText;
+	writeStringToTextBox(hintsText, hwndHintsView);
+	SendMessage(hwndHintsView, EM_LINESCROLL, 0, 100000000);
 }
 
 void ClientWindow::setWindowMode(ClientWindowMode mode)
@@ -390,7 +403,7 @@ void ClientWindow::buildWindow() {
 	addHorizontalRule(currentY);
 	addKeybindings(currentY);
 	addHorizontalRule(currentY);
-	addErrorMessage(currentY);
+	addHintsView(currentY);
 
 	// Resize the window to match its contents.
 	MoveWindow(hwndRootWindow, 650, 200,
@@ -681,16 +694,16 @@ void ClientWindow::addPuzzleEditor(int& currentY) {
 	// TODO
 }
 
-void ClientWindow::addErrorMessage(int& currentY) {
+void ClientWindow::addHintsView(int& currentY) {
 
 	// Most recent error.
-	hwndErrorText = CreateWindow(L"STATIC", L"Most Recent Error:",
-		WS_VISIBLE | WS_CHILD | SS_LEFT,
+	hwndHintsView = CreateWindow(L"Edit", L"Seen Audio Log Hints:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
 		STATIC_TEXT_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 3,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 9,
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
-	currentY += STATIC_TEXT_HEIGHT * 3;
+	currentY += STATIC_TEXT_HEIGHT * 9;
 }
 
 void ClientWindow::show(int nCmdShow) {
