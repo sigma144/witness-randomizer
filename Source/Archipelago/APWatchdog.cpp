@@ -26,7 +26,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, audioLogHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -462,8 +462,10 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 	}
 }
 
-void APWatchdog::MarkLocationChecked(int locationId)
+void APWatchdog::MarkLocationChecked(int64_t locationId)
 {
+	checkedLocations.insert(locationId);
+
 	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
 	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
@@ -1211,22 +1213,20 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		}
 	}
 
-	std::set<std::pair<std::string, std::pair<int64_t, int>>> seenMessages = {};
+	std::set<audioLogHint> seenMessages = {};
 
 	for (int logId : audioLogs) {
 		bool audioLogHasBeenPlayed = ReadPanelData<int>(logId, AUDIO_LOG_PLAYED);
 
 		if (audioLogHasBeenPlayed) {
 			seenMessages.insert(audioLogMessages[logId]);
-
 			if (!seenAudioLogs.count(logId)) {
-				int locationId = audioLogMessages[logId].second.first;
-				if (locationId != -1 && audioLogMessages[logId].second.second == pNO) ap->LocationScouts({ locationId }, 2);
+				int locationId = audioLogMessages[logId].locationID;
+				if (locationId != -1 && audioLogMessages[logId].playerNo == pNO) ap->LocationScouts({ locationId }, 2);
 				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
 				seenAudioLogs.insert(logId);
 			}
 		}
-
 		bool logPlaying = ReadPanelData<int>(logId, AUDIO_LOG_IS_PLAYING) != 0;
 		if (logPlaying) {
 			if (logId != currentAudioLog) {
@@ -1247,7 +1247,7 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		}
 		else
 		{
-			std::string message = audioLogMessages[currentAudioLog].first;
+			std::string message = audioLogMessages[currentAudioLog].message;
 			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
 		}
 
@@ -1263,14 +1263,13 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
-
-	std::vector<std::pair<std::string, std::pair<uint64_t, int>>> seenMessagesVec(seenMessages.begin(), seenMessages.end());
-	std::sort(seenMessagesVec.begin(), seenMessagesVec.end(), [pNO](std::pair<std::string, std::pair<uint64_t, int>> a, std::pair<std::string, std::pair<uint64_t, int>> b) {		
-		bool aIsArea = a.second.first == -1 && a.second.second == pNO;
-		bool bIsArea = b.second.first == -1 && b.second.second == pNO;
+	std::vector<audioLogHint> seenMessagesVec(seenMessages.begin(), seenMessages.end());
+	std::sort(seenMessagesVec.begin(), seenMessagesVec.end(), [pNO](audioLogHint a, audioLogHint b) {
+		bool aIsArea = a.areaHint != "";
+		bool bIsArea = b.areaHint != "";
 		
 		if (aIsArea && bIsArea) {
-			return a.first.compare(b.first) < 0;
+			return a.message.compare(b.message) < 0;
 		}
 		else if (aIsArea) {
 			return true;
@@ -1279,24 +1278,49 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 			return false;
 		}
 		
-		if (a.second.first > b.second.first) {
+		if (a.locationID > b.locationID) {
 			return true;
 		}
 		
-		return a.first.compare(b.first) < 0;
+		return a.message.compare(b.message) < 0;
 	});
-	std::vector<std::pair<std::string, std::pair<uint64_t, int>>> seenMessagesVecCleaned = {};
-	for (auto message : seenMessagesVec) {
-		if (message.second.first == -1 && message.second.second == -1) {
+	std::vector<audioLogHint> seenMessagesVecCleaned = {};
+	for (audioLogHint audioLogHint : seenMessagesVec) {
+		if (audioLogHint.locationID == -1 && audioLogHint.playerNo == -1) {
 			continue;
 		}
-		seenMessagesVecCleaned.push_back(message);
+		seenMessagesVecCleaned.push_back(audioLogHint);
 	}
 
 	std::vector<std::string> seenMessagesStrings = {};
-	for (auto message : seenMessagesVecCleaned) {
-		std::string cleanedMessage = message.first;
+	for (auto audioLogHint : seenMessagesVecCleaned) {
+		std::string cleanedMessage = audioLogHint.message;
 		std::replace(cleanedMessage.begin(), cleanedMessage.end(), '\n', ' ');
+
+		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
+			cleanedMessage += " (" + getStringFromFlag(locationIdToItemFlags[audioLogHint.locationID]) + ")";
+		}
+		
+		if (areaNameToLocationIDs.count(audioLogHint.areaHint)) {
+			int foundProgression = 0;
+			int unchecked = 0;
+
+			for (int64_t locationID : areaNameToLocationIDs[audioLogHint.areaHint]) {
+				if (locationIdToItemFlags.count(locationID)) {
+					if (checkedLocations.count(locationID)) {
+						if (locationIdToItemFlags[locationID] == APClient::ItemFlags::FLAG_ADVANCEMENT) {
+							foundProgression += 1;
+						}
+					}
+					else {
+						unchecked += 1;
+					}
+				}
+			}
+
+			cleanedMessage += " (" + std::to_string(foundProgression) + " found, " + std::to_string(unchecked) + " unchecked)";
+		}
+
 		seenMessagesStrings.push_back(cleanedMessage);
 	}
 
@@ -1554,6 +1578,10 @@ void APWatchdog::HandleOpenedDoorsResponse(nlohmann::json value, bool syncprogre
 	s << "Solved Doors: " << value.dump().c_str() << "\n";
 
 	OutputDebugStringW(s.str().c_str());
+}
+
+void APWatchdog::setLocationItemFlag(int64_t location, unsigned int flags) {
+	locationIdToItemFlags[location] = flags;
 }
 
 void APWatchdog::InfiniteChallenge(bool enable) {

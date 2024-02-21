@@ -198,34 +198,39 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
 				std::string message;
-				uint64_t location_id = -1;
-				int player_no = 0;
-				int intcounter = 0;
+				int64_t location_id = -1;
+				int32_t player_no = 0;
+				bool extraInfoFound = false;
+				std::string area = "";
 
 				for (int i = 0; i < val.size(); i++) {
 					auto token = val[i];
 
 					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned) {
 						uint64_t integer = token;
-						if (intcounter == 0) {
+						if (!extraInfoFound) {
 							location_id = integer;
 							player_no = ap->get_player_number();
+							extraInfoFound = true;
 						}
-						else if (intcounter == 1) {
+						else {
 							player_no = integer;
 						}
-						intcounter++;
 					}
 					else {
 						std::string line = token;
-						if (!line.empty()) {
+						if (line.rfind("hinted_area:", 0) == 0) {
+							area = line.substr(12);
+							extraInfoFound = true;
+						}
+						else if (!line.empty()) {
+							if(message != "") message.append(" ");
 							message.append(line);
-							message.append(" ");
 						}
 					}
 				}
 				
-				audioLogMessages.insert({ logId, {message, {location_id, player_no}} });
+				audioLogMessages.insert({ logId, {message, location_id, player_no, area} });
 			}
 		}
 
@@ -271,6 +276,12 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			double timestamp = data["time"];
 
 			async->ProcessDeathLink(timestamp, cause, source);
+		}
+	});
+
+	ap->set_location_info_handler([&](const std::list<APClient::NetworkItem> itemlist) {
+		for (APClient::NetworkItem n : itemlist) {
+			async->setLocationItemFlag(n.location, n.flags);
 		}
 	});
 
@@ -332,7 +343,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 		if (hint) {
 			for (int seenAudioLog : async->seenAudioLogs) {
-				if (audioLogMessages[seenAudioLog].second.first == item.location && audioLogMessages[seenAudioLog].second.second == ap->get_player_number()) return;
+				if (audioLogMessages[seenAudioLog].locationID == item.location && audioLogMessages[seenAudioLog].playerNo == ap->get_player_number()) return;
 			}
 
 			std::string isFor = "";
@@ -401,6 +412,13 @@ void APRandomizer::PostGeneration() {
 
 	ap->SetNotify({ "WitnessDeathLink" + std::to_string(ap->get_player_number()) });
 	ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, true, { {"default", 0} });
+
+	std::set<int64_t> allLocations;
+	std::set<int64_t> missingLocations = ap->get_missing_locations();
+	std::set<int64_t> checkedLocations = ap->get_checked_locations();
+	allLocations.insert(missingLocations.begin(), missingLocations.end());
+	allLocations.insert(checkedLocations.begin(), checkedLocations.end());
+	std::list<int64_t> allLocationsList(allLocations.begin(), allLocations.end());
 
 	// EP-related slowing down of certain bridges etc.
 	if (EPShuffle) {
@@ -483,6 +501,8 @@ void APRandomizer::PostGeneration() {
 	async->PlayFirstJingle();
 
 	async->start();
+
+	ap->LocationScouts(allLocationsList);
 }
 
 void APRandomizer::HighContrastMode() {

@@ -16,7 +16,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 
 #define SAVE_VERSION 6
 
-#define CLIENT_WINDOW_WIDTH 700
+#define CLIENT_WINDOW_WIDTH 650
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
 #define CLIENT_WINDOW_CLASS_NAME L"WitnessRandomizer"
 

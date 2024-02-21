@@ -3,6 +3,7 @@
 
 #include "../Watchdog.h"
 #include "APGameData.h"
+#include "APWitnessData.h"
 #include "APState.h"
 #include "nlohmann/json.hpp"
 #include "Client/apclientpp/apclient.hpp"
@@ -18,7 +19,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, audioLogHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -29,7 +30,7 @@ public:
 
 	virtual void action();
 
-	void MarkLocationChecked(int locationId);
+	void MarkLocationChecked(int64_t locationId);
 	void ApplyTemporarySpeedBoost();
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
@@ -72,6 +73,7 @@ public:
 	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
 	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
 	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
+	void setLocationItemFlag(int64_t location, unsigned int flags);
 
 	void InfiniteChallenge(bool enable);
 
@@ -92,6 +94,8 @@ private:
 	std::map<int, int> panelIdToLocationId;
 	std::set<int> panelsThatAreLocations;
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
+	std::map<int64_t, unsigned int> locationIdToItemFlags;
+	std::set<int64_t> checkedLocations;
 	int finalPanel;
 	bool isCompleted = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
@@ -246,7 +250,7 @@ private:
 	//   skipped for whatever reason.
 	int puzzleSkipCost = -1;
 
-	std::map<int, std::pair<std::string, std::pair<uint64_t, int>>> audioLogMessages = {};
+	std::map<int, audioLogHint> audioLogMessages = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> entityToName = {};

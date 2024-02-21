@@ -172,10 +172,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Archipelago\worlds\witness\APWitnessData.h" />
     <ClInclude Include="Archipelago\APAudioPlayer.h" />
     <ClInclude Include="Archipelago\APState.h" />
     <ClInclude Include="Archipelago\APRandomizer.h" />
-    <ClInclude Include="Archipelago\APGameData.h" />
+    <ClInclude Include="Archipelago\APWitnessData.h" />
     <ClInclude Include="Archipelago\ASMPayloadManager.h" />
     <ClInclude Include="Archipelago\OriginalPanelData.h" />
     <ClInclude Include="Archipelago\PanelRestore.h" />

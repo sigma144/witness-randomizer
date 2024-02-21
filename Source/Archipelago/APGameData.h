@@ -2204,3 +2204,4 @@ private:
 
 RgbColor getColorByItemFlag(const __int64 flags);
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
+std::string getStringFromFlag(unsigned int flags);

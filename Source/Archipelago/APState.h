@@ -1,6 +1,18 @@
 #pragma once
 
 #include <set>
+#include <string>
+
+struct audioLogHint {
+	std::string message;
+	int64_t locationID;
+	int32_t playerNo;
+	std::string areaHint;
+};
+
+inline bool operator<(const audioLogHint& lhs, const audioLogHint& rhs) {
+	return lhs.message < rhs.message;
+}
 
 class APState
 {

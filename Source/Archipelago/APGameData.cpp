@@ -25,3 +25,19 @@ RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags) {
 	}
 	return getColorByItemFlag(flags);
 }
+
+std::string getStringFromFlag(unsigned int flags) {
+	if (flags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+		return "Progression";
+	}
+	else if (flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+		// NOTE: "never exclude" here maps onto "useful" in the AP source.
+		return "Useful";
+	}
+	else if (flags & APClient::ItemFlags::FLAG_TRAP) {
+		return "Trap";
+	}
+	else {
+		return "Filler";
+	}
+}
