@@ -16,7 +16,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 
 #define SAVE_VERSION 6
 
-#define CLIENT_WINDOW_WIDTH 650
+#define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
 #define CLIENT_WINDOW_CLASS_NAME L"WitnessRandomizer"
 
@@ -235,7 +235,7 @@ void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::ve
 	}
 
 
-	std::string deadChecksText = "Hinted locations that are cleared or have Filler/Traps:\r\n";
+	std::string deadChecksText = "Hinted locations that have Filler/Traps:\r\n";
 
 	if (auto i = deadChecks.begin(), e = deadChecks.end(); i != e) {
 		deadChecksText += *i++;
@@ -743,7 +743,7 @@ void ClientWindow::addHintsView(int& currentY) {
 
 	addHorizontalRule(currentY);
 
-	hwndClearedChecksView = CreateWindow(L"Edit", L"Hinted locations that are cleared or have Filler/Traps:",
+	hwndClearedChecksView = CreateWindow(L"Edit", L"Hinted locations that have Filler/Traps:",
 		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
 		STATIC_TEXT_MARGIN, currentY,
 		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 3,
