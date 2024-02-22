@@ -202,6 +202,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				int32_t player_no = 0;
 				bool extraInfoFound = false;
 				std::string area = "";
+				int32_t area_progression = -1;
 
 				for (int i = 0; i < val.size(); i++) {
 					auto token = val[i];
@@ -213,6 +214,9 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 							player_no = ap->get_player_number();
 							extraInfoFound = true;
 						}
+						else if (area != "") {
+							area_progression = integer;
+						}
 						else {
 							player_no = integer;
 						}
@@ -221,6 +225,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 						std::string line = token;
 						if (line.rfind("hinted_area:", 0) == 0) {
 							area = line.substr(12);
+							player_no = ap->get_player_number();
 							extraInfoFound = true;
 						}
 						else if (!line.empty()) {
@@ -230,7 +235,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 					}
 				}
 				
-				audioLogMessages.insert({ logId, {message, location_id, player_no, area} });
+				audioLogMessages.insert({ logId, {message, location_id, player_no, area, area_progression} });
 			}
 		}
 

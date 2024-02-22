@@ -69,7 +69,7 @@ public:
 	void setStatusMessage(std::string statusMessage) const;
 
 	// Display seen Audio Logs.
-	void displaySeenAudioHints(std::vector<std::string> hints);
+	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks);
 
 	void setWindowMode(ClientWindowMode mode);
 
@@ -113,7 +113,7 @@ private:
 	HINSTANCE hAppInstance;
 	HWND hwndRootWindow;
 	HWND hwndApLoadCredentials, hwndApConnect;
-	HWND hwndStatusText, hwndHintsView;
+	HWND hwndStatusText, hwndHintsView, hwndClearedAreasView, hwndClearedChecksView;
 
 	HWND hwndTEMPfocusWindow;
 
@@ -128,6 +128,8 @@ private:
 	std::map<CustomKey, HWND> customKeybindButtons;
 
 	std::string lastHintText = "";
+	std::string lastDeadAreasText = "";
+	std::string lastDeadChecksText = "";
 
 	// HACK: Due to things like menu bar thickness, the working area of the root window won't
 	//   actually be whatever we request. As such, we need to store the delta between the requested

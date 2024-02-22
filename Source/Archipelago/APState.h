@@ -8,6 +8,7 @@ struct audioLogHint {
 	int64_t locationID;
 	int32_t playerNo;
 	std::string areaHint;
+	int32_t areaProgression;
 };
 
 inline bool operator<(const audioLogHint& lhs, const audioLogHint& rhs) {

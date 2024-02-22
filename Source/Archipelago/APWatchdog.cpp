@@ -1293,11 +1293,18 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	}
 
 	std::vector<std::string> seenMessagesStrings = {};
+	std::vector<std::string> fullyClearedAreas = {};
+	std::vector<std::string> deadChecks = {};
 	for (auto audioLogHint : seenMessagesVecCleaned) {
 		std::string cleanedMessage = audioLogHint.message;
 		std::replace(cleanedMessage.begin(), cleanedMessage.end(), '\n', ' ');
 
 		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
+			if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NONE) {
+				deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
+				continue;
+			}
+
 			cleanedMessage += " (" + getStringFromFlag(locationIdToItemFlags[audioLogHint.locationID]) + ")";
 		}
 		
@@ -1318,13 +1325,20 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 				}
 			}
 
-			cleanedMessage += " (" + std::to_string(foundProgression) + " found, " + std::to_string(unchecked) + " unchecked)";
+			if (audioLogHint.areaProgression != -1 && foundProgression >= audioLogHint.areaProgression) {
+				fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
+				continue;
+			}
+
+			cleanedMessage += " (";
+			cleanedMessage += std::to_string(foundProgression) + " found, ";
+			cleanedMessage += std::to_string(unchecked) + " unchecked)";
 		}
 
 		seenMessagesStrings.push_back(cleanedMessage);
 	}
 
-	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings);
+	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings, fullyClearedAreas, deadChecks);
 }
 
 void APWatchdog::CheckEPs() {

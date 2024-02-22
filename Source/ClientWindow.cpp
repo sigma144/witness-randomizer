@@ -211,7 +211,7 @@ void ClientWindow::setStatusMessage(std::string statusMessage) const
 	writeStringToTextBox(statusMessage, hwndStatusText);
 }
 
-void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints) {
+void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks) {
 	std::string hintsText = "Audio Log Hints:\r\n";
 
 	for (std::string hint : hints) {
@@ -221,10 +221,38 @@ void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints) {
 	hintsText.pop_back();
 	hintsText.pop_back();
 
-	if (hintsText == lastHintText) return;
-	lastHintText = hintsText;
-	writeStringToTextBox(hintsText, hwndHintsView);
-	SendMessage(hwndHintsView, EM_LINESCROLL, 0, 100000000);
+	if (hintsText != lastHintText) {
+		lastHintText = hintsText;
+		writeStringToTextBox(hintsText, hwndHintsView);
+		SendMessage(hwndHintsView, EM_LINESCROLL, 0, 0);
+	}
+
+	std::string deadAreasText = "Hinted areas with no more progression:\r\n";
+	
+	if (auto i = fullyClearedAreas.begin(), e = fullyClearedAreas.end(); i != e) {
+		deadAreasText += *i++;
+		for (; i != e; ++i) deadAreasText.append(", ").append(*i);
+	}
+
+
+	std::string deadChecksText = "Hinted locations that are cleared or have Filler/Traps:\r\n";
+
+	if (auto i = deadChecks.begin(), e = deadChecks.end(); i != e) {
+		deadChecksText += *i++;
+		for (; i != e; ++i) deadChecksText.append(", ").append(*i);
+	}
+
+	if (deadAreasText != lastDeadAreasText) {
+		writeStringToTextBox(deadAreasText, hwndClearedAreasView);
+		SendMessage(hwndClearedAreasView, EM_LINESCROLL, 0, 0);
+		lastDeadAreasText = deadAreasText;
+	}
+
+	if (deadChecksText != lastDeadChecksText) {
+		writeStringToTextBox(deadChecksText, hwndClearedChecksView);
+		SendMessage(hwndClearedChecksView, EM_LINESCROLL, 0, 0);
+		lastDeadChecksText = deadChecksText;
+	}
 }
 
 void ClientWindow::setWindowMode(ClientWindowMode mode)
@@ -695,13 +723,33 @@ void ClientWindow::addPuzzleEditor(int& currentY) {
 void ClientWindow::addHintsView(int& currentY) {
 
 	// Most recent error.
-	hwndHintsView = CreateWindow(L"Edit", L"Seen Audio Log Hints:",
+	hwndHintsView = CreateWindow(L"Edit", L"Audio Log Hints:",
 		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
 		STATIC_TEXT_MARGIN, currentY,
 		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 9,
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT * 9;
+
+	addHorizontalRule(currentY);
+
+	hwndClearedAreasView = CreateWindow(L"Edit", L"Hinted areas with no more progression:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
+		STATIC_TEXT_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 3,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	currentY += STATIC_TEXT_HEIGHT * 3;
+
+	addHorizontalRule(currentY);
+
+	hwndClearedChecksView = CreateWindow(L"Edit", L"Hinted locations that are cleared or have Filler/Traps:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
+		STATIC_TEXT_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 3,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING; // Idk
 }
 
 void ClientWindow::show(int nCmdShow) {
