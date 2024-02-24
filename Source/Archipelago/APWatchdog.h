@@ -229,6 +229,7 @@ private:
 
 	std::set<int> solvedPanels;
 	std::set<int> openedDoors;
+	std::map<std::string, bool> lastDeadChecks;
 
 	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;

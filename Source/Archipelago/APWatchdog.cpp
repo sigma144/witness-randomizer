@@ -1295,6 +1295,9 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	std::vector<std::string> seenMessagesStrings = {};
 	std::vector<std::string> fullyClearedAreas = {};
 	std::vector<std::string> deadChecks = {};
+
+	std::map<std::string, bool> implicitlyClearedLocations = {};
+
 	for (auto audioLogHint : seenMessagesVecCleaned) {
 		std::string cleanedMessage = audioLogHint.message;
 		std::replace(cleanedMessage.begin(), cleanedMessage.end(), '\n', ' ');
@@ -1302,6 +1305,19 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
 			if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NONE || locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_TRAP) {
 				deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
+
+				std::stringstream stream;
+				stream << std::hex << audioLogHint.locationID;
+				std::string panel_str(stream.str());
+
+				while (panel_str.size() < 5) {
+					panel_str = "0" + panel_str;
+				}
+
+				panel_str = "0x" + panel_str;
+
+				implicitlyClearedLocations[panel_str] = true;
+
 				continue;
 			}
 
@@ -1312,8 +1328,12 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 			int foundProgression = 0;
 			int unchecked = 0;
 
+			std::set<int64_t> associatedChecks = {};
+
 			for (int64_t locationID : areaNameToLocationIDs[audioLogHint.areaHint]) {
 				if (locationIdToItemFlags.count(locationID)) {
+					associatedChecks.insert(locationID);
+
 					if (checkedLocations.count(locationID)) {
 						if (locationIdToItemFlags[locationID] == APClient::ItemFlags::FLAG_ADVANCEMENT) {
 							foundProgression += 1;
@@ -1327,6 +1347,21 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 
 			if (audioLogHint.areaProgression != -1 && foundProgression >= audioLogHint.areaProgression) {
 				fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
+				
+				for (int64_t id : associatedChecks) {
+					std::stringstream stream;
+					stream << std::hex << id;
+					std::string panel_str(stream.str());
+
+					while (panel_str.size() < 5) {
+						panel_str = "0" + panel_str;
+					}
+
+					panel_str = "0x" + panel_str;
+
+					implicitlyClearedLocations[panel_str] = true;
+				}
+				
 				continue;
 			}
 
@@ -1336,6 +1371,11 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		}
 
 		seenMessagesStrings.push_back(cleanedMessage);
+	}
+
+	if (lastDeadChecks != implicitlyClearedLocations) {
+		ap->Set("WitnessDeadChecks" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , implicitlyClearedLocations } });
+		lastDeadChecks = implicitlyClearedLocations;
 	}
 
 	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings, fullyClearedAreas, deadChecks);
