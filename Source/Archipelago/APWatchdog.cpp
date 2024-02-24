@@ -1900,7 +1900,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 
 void APWatchdog::PlayReceivedJingle(const int& itemFlags) {
 	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Off") return;
-	if (0.0f < timePassedSinceFirstJinglePlayed < 10.0f) return;
+	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 		APAudioPlayer::get()->PlayAudio(APJingle::IncomingProgression, APJingleBehavior::DontQueue);
