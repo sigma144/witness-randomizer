@@ -1306,17 +1306,7 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 			if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NONE || locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_TRAP) {
 				deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
 
-				std::stringstream stream;
-				stream << std::hex << audioLogHint.locationID;
-				std::string panel_str(stream.str());
-
-				while (panel_str.size() < 5) {
-					panel_str = "0" + panel_str;
-				}
-
-				panel_str = "0x" + panel_str;
-
-				implicitlyClearedLocations[panel_str] = true;
+				implicitlyClearedLocations[std::to_string(audioLogHint.locationID)] = true;
 
 				continue;
 			}
@@ -1349,17 +1339,7 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 				fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
 				
 				for (int64_t id : associatedChecks) {
-					std::stringstream stream;
-					stream << std::hex << id;
-					std::string panel_str(stream.str());
-
-					while (panel_str.size() < 5) {
-						panel_str = "0" + panel_str;
-					}
-
-					panel_str = "0x" + panel_str;
-
-					implicitlyClearedLocations[panel_str] = true;
+					implicitlyClearedLocations[std::to_string(id)] = true;
 				}
 				
 				continue;
