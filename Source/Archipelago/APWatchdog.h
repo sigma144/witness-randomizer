@@ -19,7 +19,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, audioLogHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -71,6 +71,7 @@ public:
 	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncProgress);
 	void HandleEPResponse(std::string epID, nlohmann::json value, bool syncProgress);
 	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
+	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value, bool syncprogress);
 	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
 	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
@@ -86,6 +87,7 @@ public:
 	HudManager* getHudManager() const { return hudManager.get(); }
 
 	std::set<int> seenAudioLogs;
+	std::set<int> seenLasers;
 
 private:
 	APClient* ap;
@@ -175,7 +177,7 @@ private:
 
 	void DisableCollisions();
 
-	void AudioLogPlaying(float deltaSeconds);
+	void HandleInGameHints(float deltaSeconds);
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
@@ -183,7 +185,6 @@ private:
 	void HandleDeathLink();
 	void HandleVision(float deltaSeconds);
 
-	void StandingNearLaser();
 	void LookingAtObelisk();
 
 	void PettingTheDog(float deltaSeconds);
@@ -240,8 +241,8 @@ private:
 
 	std::set<int> PuzzlesSkippedThisGame = {};
 
-	int currentAudioLog = -1;
-	float currentAudioLogDuration = 0.f;
+	int currentHintEntity = -1;
+	float currentHintEntityDuration = 0.f;
 
 	int activePanelId = -1;
 	int mostRecentActivePanelId = -1;
@@ -254,7 +255,7 @@ private:
 	//   skipped for whatever reason.
 	int puzzleSkipCost = -1;
 
-	std::map<int, audioLogHint> audioLogMessages = {};
+	std::map<int, inGameHint> inGameHints = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> entityToName = {};

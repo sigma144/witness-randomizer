@@ -235,7 +235,42 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 					}
 				}
 				
-				audioLogMessages.insert({ logId, {message, location_id, player_no, area, area_progression} });
+				inGameHints.insert({ logId, {message, location_id, player_no, area, area_progression, false} });
+			}
+		}
+
+		if (slotData.contains("laser_ids_to_hints")) {
+			for (auto& [key, val] : slotData["laser_ids_to_hints"].items()) {
+				int logId = std::stoul(key, nullptr, 10);
+				std::string message;
+				int64_t location_id = -1;
+				int32_t player_no = 0;
+				bool extraInfoFound = false;
+
+				for (int i = 0; i < val.size(); i++) {
+					auto token = val[i];
+
+					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned) {
+						uint64_t integer = token;
+						if (!extraInfoFound) {
+							location_id = integer;
+							player_no = ap->get_player_number();
+							extraInfoFound = true;
+						}
+						else {
+							player_no = integer;
+						}
+					}
+					else {
+						std::string line = token;
+						if (!line.empty()) {
+							if (message != "") message.append(" ");
+							message.append(line);
+						}
+					}
+				}
+
+				inGameHints.insert({ logId, {message, location_id, player_no, "", -1, true} });
 			}
 		}
 
@@ -304,9 +339,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		}
 
 		if (value != original_value) {
-			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
-			else if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
-			else if(key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value, SyncProgress);
+			if (key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
+			else if (key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
+			else if (key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value, SyncProgress);
+			else if (key.find("WitnessLaserHint") != std::string::npos) async->HandleLaserHintResponse(key, value, SyncProgress);
 		}
 
 		if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value, SyncProgress);
@@ -348,7 +384,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 		if (hint) {
 			for (int seenAudioLog : async->seenAudioLogs) {
-				if (audioLogMessages[seenAudioLog].locationID == item.location && audioLogMessages[seenAudioLog].playerNo == ap->get_player_number()) return;
+				if (inGameHints[seenAudioLog].locationID == item.location && inGameHints[seenAudioLog].playerNo == ap->get_player_number()) return;
+			}
+			for (int seenLaser : async->seenLasers) {
+				if (inGameHints[seenLaser].locationID == item.location && inGameHints[seenLaser].playerNo == ap->get_player_number()) return;
 			}
 
 			std::string isFor = "";
@@ -566,7 +605,7 @@ void APRandomizer::Init() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -574,7 +613,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, audioLogMessages, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	//Mess with Town targets

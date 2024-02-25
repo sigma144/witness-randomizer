@@ -27,7 +27,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, audioLogHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -40,7 +40,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	DeathLinkAmnesty = dlA;
 	finalPanel = lastPanel;
 	panelLocker = p;
-	audioLogMessages = a;
+	inGameHints = a;
 	state = s;
 	EPShuffle = ep;
 	obeliskHexToEPHexes = o;
@@ -136,7 +136,7 @@ void APWatchdog::action() {
 		HandlePowerSurge();
 		HandleDeathLink();
 		DisableCollisions();
-		AudioLogPlaying(0.5f);
+		HandleInGameHints(0.5f);
 
 		UpdateInfiniteChallenge();
 
@@ -1200,7 +1200,7 @@ void APWatchdog::DisableCollisions() {
 	}
 }
 
-void APWatchdog::AudioLogPlaying(float deltaSeconds) {
+void APWatchdog::HandleInGameHints(float deltaSeconds) {
 	std::string line1 = "";
 	std::string line2 = "";
 	std::string line3 = "";
@@ -1215,58 +1215,128 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		}
 	}
 
-	std::set<audioLogHint> seenMessages = {};
+	std::set<inGameHint> seenMessages = {};
 
+	// Laser Hints
+
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+
+	int candidate = -1;
+	int currentLaser = -1;
+	int currentAudioLog = -1;
+
+	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+
+	for (int laserID : allLasers) {
+		std::vector<float> laserPosition = ReadPanelData<float>(laserID, POSITION, 3);
+
+		if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) > 200) {
+			continue;
+		}
+
+		candidate = laserID;
+	}
+
+	if (candidate != -1 && ReadPanelData<int>(candidate, LASER_TARGET) == 0 && inGameHints.count(candidate)) {
+		if (candidate != 0x012FB) {
+			if (laserCollisions[candidate]->containsPoint(headPosition)) {
+				currentLaser = candidate;
+			}
+		}
+		else {
+			std::vector<float> laserPosition = ReadPanelData<float>(candidate, POSITION, 3);
+
+			if (abs(-140.690979 - laserPosition[0]) < 1 && abs(118.1552734 - laserPosition[1]) < 1) {
+				if (abs(laserPosition[2] - headPosition[2]) < 2 && laserCollisions[candidate]->containsPoint(headPosition)) {
+					currentLaser = candidate;
+				}
+			}
+			else {
+				void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
+				if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) < 120) {
+					currentLaser = candidate;
+				}
+			}
+		}
+	}
+
+
+	for (int laserID : allLasers) {
+		if (inGameHints.count(laserID)) {
+			bool laserHasBeenSeen = ReadPanelData<float>(laserID, 0x108) > 1;
+			bool laserIsCurrentlyNearby = currentLaser == laserID;
+			
+			if (laserHasBeenSeen || laserIsCurrentlyNearby) {
+				seenMessages.insert(inGameHints[laserID]);
+				if (!seenLasers.count(laserID)) {
+					WritePanelData<float>(laserID, 0x108, { 1.0001f });
+					int locationId = inGameHints[laserID].locationID;
+					if (locationId != -1 && inGameHints[laserID].playerNo == pNO) ap->LocationScouts({ locationId }, 2);
+					ap->Set("WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID), NULL, false, { {"replace", true} });
+					seenLasers.insert(laserID);
+				}
+			}
+		}
+	}
+
+	// Audiolog Hints
 	for (int logId : audioLogs) {
 		bool audioLogHasBeenPlayed = ReadPanelData<int>(logId, AUDIO_LOG_PLAYED);
+		bool logPlaying = ReadPanelData<int>(logId, AUDIO_LOG_IS_PLAYING) != 0;
 
-		if (audioLogHasBeenPlayed) {
-			seenMessages.insert(audioLogMessages[logId]);
+		if (audioLogHasBeenPlayed || logPlaying) {
+			seenMessages.insert(inGameHints[logId]);
 			if (!seenAudioLogs.count(logId)) {
-				int locationId = audioLogMessages[logId].locationID;
-				if (locationId != -1 && audioLogMessages[logId].playerNo == pNO) ap->LocationScouts({ locationId }, 2);
+				int locationId = inGameHints[logId].locationID;
+				if (locationId != -1 && inGameHints[logId].playerNo == pNO) ap->LocationScouts({ locationId }, 2);
 				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
 				seenAudioLogs.insert(logId);
 			}
 		}
-		bool logPlaying = ReadPanelData<int>(logId, AUDIO_LOG_IS_PLAYING) != 0;
 		if (logPlaying) {
-			if (logId != currentAudioLog) {
-				currentAudioLog = logId;
-				currentAudioLogDuration = 8.f;
-			}
-		}
-		else if (!logPlaying && logId == currentAudioLog) {
-			currentAudioLog = -1;
-			break;
+			currentAudioLog = logId;
 		}
 	}
 
-	if (currentAudioLog != -1) {
-		// We're playing an audio log. Show its hint, unless it's already been on screen for a while.
-		if (currentAudioLogDuration <= 0.f) {
+	if (currentAudioLog == -1 && currentLaser == -1) {
+		currentHintEntity = -1;
+	}
+	else {
+		if (currentLaser != -1) {
+			currentHintEntity = currentLaser;
+			currentHintEntityDuration = 0.5f;
+		}
+		else if (currentAudioLog != currentHintEntity) {
+			currentHintEntity = currentAudioLog;
+			currentHintEntityDuration = 8.f;
+		}
+	}
+
+	if (currentHintEntity != -1) {
+		// We're playing an audio log or near a laser. Show its hint, unless it's already been on screen for a while.
+		if (currentHintEntityDuration <= 0.f) {
 			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 		}
 		else
 		{
-			std::string message = audioLogMessages[currentAudioLog].message;
+			std::string message = inGameHints[currentHintEntity].message;
 			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
 		}
 
-		currentAudioLogDuration -= deltaSeconds;
+		currentHintEntityDuration -= deltaSeconds;
 	}
-	else if (currentAudioLogDuration > 0.f) {
-		// We don't have an audio log playing. Run out the timer on any hint that may still be playing.
-		currentAudioLogDuration -= deltaSeconds;
-		if (currentAudioLogDuration <= 0.f) {
+	else if (currentHintEntityDuration > 0.f) {
+		// We don't have an audio log playing and aren't near a laser. Run out the timer on any hint that may still be playing.
+		currentHintEntityDuration -= deltaSeconds;
+		if (currentHintEntityDuration <= 0.f) {
 			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 		}
 	}
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
-	std::vector<audioLogHint> seenMessagesVec(seenMessages.begin(), seenMessages.end());
-	std::sort(seenMessagesVec.begin(), seenMessagesVec.end(), [pNO](audioLogHint a, audioLogHint b) {
+	std::vector<inGameHint> seenMessagesVec(seenMessages.begin(), seenMessages.end());
+	std::sort(seenMessagesVec.begin(), seenMessagesVec.end(), [pNO](inGameHint a, inGameHint b) {
 		bool aIsArea = a.areaHint != "";
 		bool bIsArea = b.areaHint != "";
 		
@@ -1286,8 +1356,8 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		
 		return a.message.compare(b.message) < 0;
 	});
-	std::vector<audioLogHint> seenMessagesVecCleaned = {};
-	for (audioLogHint audioLogHint : seenMessagesVec) {
+	std::vector<inGameHint> seenMessagesVecCleaned = {};
+	for (inGameHint audioLogHint : seenMessagesVec) {
 		if (audioLogHint.locationID == -1 && audioLogHint.playerNo == -1) {
 			continue;
 		}
@@ -1608,6 +1678,19 @@ void APWatchdog::HandleAudioLogResponse(std::string logIDstr, nlohmann::json val
 	{
 		WritePanelData<int>(logID, AUDIO_LOG_PLAYED, { 1 });
 		seenAudioLogs.insert(logID);
+	}
+}
+
+void APWatchdog::HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value, bool syncprogress) {
+	bool laserHintSeen = value == true;
+	int laserID = stoi(laserIDstr.substr(laserIDstr.find("-") + 1));
+
+	if (!laserHintSeen) return;
+
+	if (syncprogress)
+	{
+		WritePanelData<float>(laserID, 0x108, { 1.0001 });
+		seenLasers.insert(laserID);
 	}
 }
 
@@ -2239,68 +2322,10 @@ void APWatchdog::WriteMovementSpeed(float currentSpeed) {
 	}
 }
 
-void APWatchdog::StandingNearLaser() {
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-
-	int candidate = -1;
-
-	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
-
-	for (int laserID : allLasers) {
-		std::vector<float> laserPosition = ReadPanelData<float>(laserID, POSITION, 3);
-
-		if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) > 200) {
-			continue;
-		}
-
-		candidate = laserID;
-	}
-
-	if (candidate == -1) {
-		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
-		return;
-	}
-
-	if (ReadPanelData<int>(candidate, LASER_TARGET) != 0) {
-		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
-		return;
-	}
-
-	if (!laserMessages.count(candidate)) {
-		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
-		return;
-	}
-
-	if (candidate != 0x012FB) {
-		if (laserCollisions[candidate]->containsPoint(headPosition)) {
-			hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Lazor");
-			return;
-		}
-	}
-	else {
-		std::vector<float> laserPosition = ReadPanelData<float>(candidate, POSITION, 3);
-
-		if (abs(-140.690979 - laserPosition[0]) < 1 && abs(118.1552734 - laserPosition[1]) < 1) {
-			if (abs(laserPosition[2] - headPosition[2]) < 2 && laserCollisions[candidate]->containsPoint(headPosition)) {
-				hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Lazor");
-				return;
-			}
-		}
-		else {
-			if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) < 120) {
-				hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Lazor");
-				return;
-			}
-		}
-	}
-
-	hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
-}
-
 void APWatchdog::LookingAtObelisk() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	if (interactionState != InteractionState::Focusing) {
-		StandingNearLaser();
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 		return;
 	}
 

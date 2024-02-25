@@ -3,15 +3,16 @@
 #include <set>
 #include <string>
 
-struct audioLogHint {
+struct inGameHint {
 	std::string message;
 	int64_t locationID;
 	int32_t playerNo;
 	std::string areaHint;
 	int32_t areaProgression;
+	bool isLaserHint;
 };
 
-inline bool operator<(const audioLogHint& lhs, const audioLogHint& rhs) {
+inline bool operator<(const inGameHint& lhs, const inGameHint& rhs) {
 	return lhs.message < rhs.message;
 }
 

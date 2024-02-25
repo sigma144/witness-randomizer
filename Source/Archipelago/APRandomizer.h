@@ -61,7 +61,7 @@ class APRandomizer {
 			{ 158210, {158010, 158001}},
 			{ 158260, {158060, 158061}},
 		};
-		std::map<int, audioLogHint> audioLogMessages;
+		std::map<int, inGameHint> inGameHints;
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> disabledEntities;
 
