@@ -59,4 +59,16 @@ public:
 	static std::vector<int> findAllSequences(const std::vector<T>& sourceData, const std::vector<T>& searchSequence) {
 		return findAllSequences(sourceData, searchSequence, 0, sourceData.size() - searchSequence.size());
 	}
+
+	static bool isAprilFools() {
+		time_t rawtime;
+		time(&rawtime);
+		struct tm timeinfo;
+		localtime_s(&timeinfo, &rawtime);
+
+		int day = timeinfo.tm_mday;
+		int month = timeinfo.tm_mon + 1;
+
+		return day == 1 && month == 4;
+	}
 };

@@ -11,6 +11,7 @@
 #include "Watchdog.h"
 
 #include <thread>
+#include "Utilities.h"
 
 void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
 	do {
@@ -2131,7 +2132,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	float width = 1.0f;
 
 	if (text == "Disabled Completely") {
-		if (false) { // Make this true for an Easter Egg :)
+		if (Utilities::isAprilFools()) { // Make this true for an Easter Egg :)
 			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f,
 				0.25f, 0.9f, 0.25f, 0.6f,
 				0.65f, 0.9f, 0.65f, 0.6f,     0.85f, 0.8f, 0.85f, 0.6f,

@@ -96,6 +96,7 @@ private:
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	std::map<int64_t, unsigned int> locationIdToItemFlags;
 	std::set<int64_t> checkedLocations;
+	std::set<std::pair<int, int64_t>> locationsThatContainedItemsFromOtherPlayers;
 	int finalPanel;
 	bool isCompleted = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
@@ -182,6 +183,7 @@ private:
 	void HandleDeathLink();
 	void HandleVision(float deltaSeconds);
 
+	void StandingNearLaser();
 	void LookingAtObelisk();
 
 	void PettingTheDog(float deltaSeconds);
@@ -226,6 +228,7 @@ private:
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
+	std::map<int, std::string> laserMessages;
 
 	std::set<int> solvedPanels;
 	std::set<int> openedDoors;
@@ -263,20 +266,6 @@ private:
 	bool letGoSinceInteractModeOpen = false;
 
 	double finalRoomMusicTimer = -1;
-
-	CollisionCube townRedRoof = CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
-	CollisionCube swampLongBridgeFar = CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
-	CollisionCube swampLongBridgeNear = CollisionCube(200.75f, 14.5f, 0.5f, 207.7f, 18.15f, 2.85f);
-	CollisionCube bunkerElevatorCube = CollisionCube(161.9f, -86.2f, 28.0f, 158.1f, -91.0f, 29.2f);
-	CollisionCube quarryElevatorUpper = CollisionCube(-61.1f, 175.6f, 11.5f, -66.3f, 171.8f, 14.2f);
-	CollisionCube quarryElevatorLower = CollisionCube(-69.0f, 165.7f, 2.1f, -54.7f, 174.8f, 4.5f);
-	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
-	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5f);
-	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
-	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
-	CollisionCube quarryLaserPanel = CollisionCube(-59, 90, 17, -67, 100, 21);
-	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6f, -185, 37, 17);
-	CollisionCube challengeTimer = CollisionCube(-27, -40, -20, -50, -20, -4);
 
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 

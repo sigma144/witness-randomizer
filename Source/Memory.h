@@ -253,6 +253,7 @@ public:
 	void SetInfiniteChallenge(bool enable);
 
 	void RemoveMesh(int id);
+	void DoFullPositionUpdate();
 
 	void DisplayHudMessage(std::string message, std::array<float, 3> rgbColor);
 

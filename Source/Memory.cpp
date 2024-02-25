@@ -370,16 +370,7 @@ void Memory::doSecretThing() {
 }
 
 void Memory::findImportantFunctionAddresses(){
-
-	time_t rawtime;
-	time(&rawtime);
-	struct tm timeinfo;
-	localtime_s(&timeinfo, &rawtime);
-
-	int day = timeinfo.tm_mday;
-	int month = timeinfo.tm_mon + 1;
-
-	if (day == 1 && month == 4) {
+	if (Utilities::isAprilFools()) {
 		doSecretThing();
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
@@ -1569,6 +1560,11 @@ void Memory::RemoveMesh(int id) {
 	buffer[0] = 0;
 
 	__int64 collisionMesh = WriteAbsolute(reinterpret_cast<LPVOID>(meshPointer + 0x98), buffer, sizeof(buffer)); //Collision Mesh
+}
+
+void Memory::DoFullPositionUpdate() {
+	this->WriteData<byte>({ GLOBALS, 0x278 + 0x39 }, { 1 });
+	return;
 }
 
 void Memory::MakeEPGlow(std::string name, std::vector<byte> patternPointBytes) {

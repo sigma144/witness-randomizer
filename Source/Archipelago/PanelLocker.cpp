@@ -195,7 +195,7 @@ void PanelLocker::DisablePuzzle(int id) {
 			allDisabledForStartpoint = allDisabledForStartpoint && disabledPuzzles.count(associatedEP);
 		}
 
-		for (int associatedEP : endPointToEPs.find(EPtoStartPoint.find(id)->second)->second) {
+		for (int associatedEP : endPointToEPs.find(EPtoEndPoint.find(id)->second)->second) {
 			allDisabledForEndpoint = allDisabledForEndpoint && disabledPuzzles.count(associatedEP);
 		}
 

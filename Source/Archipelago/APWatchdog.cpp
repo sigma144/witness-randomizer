@@ -21,6 +21,7 @@
 #include "PanelRestore.h"
 #include "APAudioPlayer.h"
 #include "ASMPayloadManager.h"
+#include "../Utilities.h"
 
 
 #define CHEAT_KEYS_ENABLED 0
@@ -1006,6 +1007,7 @@ void APWatchdog::SeverDoor(int id) {
 			if (conn.id == 0x012FB) {
 				WritePanelData<float>(0x012FB, POSITION, { -124.4, 90.37, 13 });
 				ASMPayloadManager::get()->UpdateEntityPosition(0x012FB);
+				Memory::get()->DoFullPositionUpdate();
 			}
 
 			if (conn.id == 0x34BD2) {
@@ -1295,12 +1297,21 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 	std::vector<std::string> seenMessagesStrings = {};
 	std::vector<std::string> fullyClearedAreas = {};
 	std::vector<std::string> deadChecks = {};
+	std::vector<std::string> otherPeoplesDeadChecks = {};
 
 	std::map<std::string, bool> implicitlyClearedLocations = {};
 
 	for (auto audioLogHint : seenMessagesVecCleaned) {
 		std::string cleanedMessage = audioLogHint.message;
 		std::replace(cleanedMessage.begin(), cleanedMessage.end(), '\n', ' ');
+
+		if (audioLogHint.areaHint == "" && audioLogHint.playerNo != -1 && audioLogHint.playerNo != ap->get_player_number()) {
+			if (locationsThatContainedItemsFromOtherPlayers.count({ audioLogHint.playerNo, audioLogHint.locationID })) {
+				otherPeoplesDeadChecks.push_back(ap->get_location_name(audioLogHint.locationID) + " (" + ap->get_player_alias(audioLogHint.playerNo) + ")");
+
+				continue;
+			}
+		}
 
 		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
 			if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NONE || locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_TRAP) {
@@ -1358,7 +1369,7 @@ void APWatchdog::AudioLogPlaying(float deltaSeconds) {
 		lastDeadChecks = implicitlyClearedLocations;
 	}
 
-	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings, fullyClearedAreas, deadChecks);
+	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings, fullyClearedAreas, deadChecks, otherPeoplesDeadChecks);
 }
 
 void APWatchdog::CheckEPs() {
@@ -1635,7 +1646,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		return;
 	}
 
-	insideChallengeBoxRange = challengeTimer.containsPoint(playerPosition);
+	insideChallengeBoxRange = challengeTimer->containsPoint(playerPosition);
 
 	
 	if (severedDoorsList.count(0x012FB) || severedDoorsList.count(0x01317)) {
@@ -1658,15 +1669,15 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 	if (ElevatorsComeToYou){
-		if (quarryElevatorUpper.containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 1.0f) {
+		if (quarryElevatorUpper->containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 1.0f) {
 			ASMPayloadManager::get()->BridgeToggle(0x17CC4, false);
 		}
 
-		if (quarryElevatorLower.containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 0.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 0.0f) {
+		if (quarryElevatorLower->containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 0.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 0.0f) {
 			ASMPayloadManager::get()->BridgeToggle(0x17CC4, true);
 		}
 
-		if (bunkerElevatorCube.containsPoint(playerPosition)) {
+		if (bunkerElevatorCube->containsPoint(playerPosition)) {
 			std::vector<int> allBunkerElevatorDoors = { 0x0A069, 0x0A06A, 0x0A06B, 0x0A06C, 0x0A070, 0x0A071, 0x0A072, 0x0A073, 0x0A074, 0x0A075, 0x0A076, 0x0A077 };
 
 			bool problem = false;
@@ -1683,21 +1694,21 @@ void APWatchdog::CheckImportantCollisionCubes() {
 			if(!problem) ASMPayloadManager::get()->SendBunkerElevatorToFloor(5, true);
 		}
 
-		if (swampLongBridgeNear.containsPoint(playerPosition) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == 1.0f) {
+		if (swampLongBridgeNear->containsPoint(playerPosition) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == 1.0f) {
 			if (ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) == 1.0f) {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", false);
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", true);
 			}
 		}
 
-		if (swampLongBridgeFar.containsPoint(playerPosition) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == 1.0f) {
+		if (swampLongBridgeFar->containsPoint(playerPosition) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == 1.0f) {
 			if (ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) == 1.0f) {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", true);
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", false);
 			}
 		}
 
-		if (townRedRoof.containsPoint(playerPosition) && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) == ReadPanelData<float>(0x2897C, DOOR_OPEN_T_TARGET)) {
+		if (townRedRoof->containsPoint(playerPosition) && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) == ReadPanelData<float>(0x2897C, DOOR_OPEN_T_TARGET)) {
 			ASMPayloadManager::get()->OpenDoor(0x2897C);
 		}
 	}
@@ -1716,26 +1727,30 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 	hudManager->clearInformationalMessage(InfoMessageCategory::Settings);
 
-	if (tutorialPillarCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
+	if (tutorialPillarCube->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0xc335)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Stone Pillar needs Triangles.");
 	}
-	else if ((riverVaultLowerCube.containsPoint(playerPosition) || riverVaultUpperCube.containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
+	else if (bunkerLaserPlatform->containsPoint(playerPosition) && Utilities::isAprilFools()) {
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
+			"what if we kissed,,, on the Bunker Laser Platform,,,\nhaha jk,,,, unless??");
+	}
+	else if ((riverVaultLowerCube->containsPoint(playerPosition) || riverVaultUpperCube->containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Dots, Black/White Squares.");
 	}
-	else if (bunkerPuzzlesCube.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
+	else if (bunkerPuzzlesCube->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Most Bunker panels need Black/White Squares and Colored Squares.");
 	}
-	else if (quarryLaserPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
+	else if (quarryLaserPanel->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
 		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Eraser, Triangles,\n"
 			"Stars, Stars + Same Colored Symbol.");
 		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Shapers and Eraser.");
 	}
-	else if (symmetryUpperPanel.containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
+	else if (symmetryUpperPanel->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
 		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Symmetry and Triangles.");
 		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
@@ -2224,10 +2239,68 @@ void APWatchdog::WriteMovementSpeed(float currentSpeed) {
 	}
 }
 
+void APWatchdog::StandingNearLaser() {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+
+	int candidate = -1;
+
+	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+
+	for (int laserID : allLasers) {
+		std::vector<float> laserPosition = ReadPanelData<float>(laserID, POSITION, 3);
+
+		if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) > 200) {
+			continue;
+		}
+
+		candidate = laserID;
+	}
+
+	if (candidate == -1) {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		return;
+	}
+
+	if (ReadPanelData<int>(candidate, LASER_TARGET) != 0) {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		return;
+	}
+
+	if (!laserMessages.count(candidate)) {
+		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		return;
+	}
+
+	if (candidate != 0x012FB) {
+		if (laserCollisions[candidate]->containsPoint(headPosition)) {
+			hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Lazor");
+			return;
+		}
+	}
+	else {
+		std::vector<float> laserPosition = ReadPanelData<float>(candidate, POSITION, 3);
+
+		if (abs(-140.690979 - laserPosition[0]) < 1 && abs(118.1552734 - laserPosition[1]) < 1) {
+			if (abs(laserPosition[2] - headPosition[2]) < 2 && laserCollisions[candidate]->containsPoint(headPosition)) {
+				hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Lazor");
+				return;
+			}
+		}
+		else {
+			if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) < 120) {
+				hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Lazor");
+				return;
+			}
+		}
+	}
+
+	hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+}
+
 void APWatchdog::LookingAtObelisk() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	if (interactionState != InteractionState::Focusing) {
-		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
+		StandingNearLaser();
 		return;
 	}
 
@@ -2520,6 +2593,8 @@ void APWatchdog::UpdateInfiniteChallenge() {
 }
 
 void APWatchdog::QueueItem(APClient::NetworkItem i) {
+	locationsThatContainedItemsFromOtherPlayers.insert({ i.player, i.location });
+
 	queuedReceivedItems.push(i);
 }
 

@@ -2169,7 +2169,15 @@ const inline std::map<int, std::vector<uint8_t>> precompletableEpToPatternPointB
 	}, //Tutorial Wall Reflection
 };
 
-class CollisionCube
+class CollisionVolume
+{
+public:
+	CollisionVolume() {}
+	virtual bool containsPoint(std::vector<float> playerPos) = 0;
+	virtual bool containsPoint(float playerPosX, float playerPosY, float playerPosZ) = 0;
+};
+
+class CollisionCube : public CollisionVolume
 {
 public:
 	CollisionCube(float x1, float y1, float z1, float x2, float y2, float z2) {
@@ -2201,6 +2209,83 @@ private:
 	float y2;
 	float z2;
 };
+
+class ExactCollisionCube : public CollisionVolume
+{
+public:
+	ExactCollisionCube(std::vector<float> xyzBase, std::vector<float> xyz1, std::vector<float> xyz2, std::vector<float> xyz3) {
+		Vector3 xyz_piv(xyzBase);
+		Vector3 xyz_x(xyz1);
+		Vector3 xyz_y(xyz2);
+		Vector3 xyz_z(xyz3);
+
+		dx = xyz_x - xyz_piv;
+		dy = xyz_y - xyz_piv;
+		dz = xyz_z - xyz_piv;
+
+		dx = dx / 2;
+		dy = dy / 2;
+		dz = dz / 2;
+
+		center = xyz_piv + dx + dy + dz;
+
+		half = Vector3(dx.length(), dy.length(), dz.length());
+
+		dx = dx.normalized();
+		dy = dy.normalized();
+		dz = dz.normalized();
+	}
+
+	bool containsPoint(std::vector<float> playerPos) {
+		return containsPoint(playerPos[0], playerPos[1], playerPos[2]);
+	}
+
+	bool containsPoint(float playerPosX, float playerPosY, float playerPosZ) {
+		Vector3 point(playerPosX, playerPosY, playerPosZ);
+
+		Vector3 d = point - center;
+		return abs(d * dx) <= half.X && abs(d * dy) <= half.Y && abs(d * dz) <= half.Z;
+	}
+
+private:
+	Vector3 center;
+	Vector3 dx;
+	Vector3 dy;
+	Vector3 dz;
+	Vector3 half;
+};
+
+inline CollisionVolume* townRedRoof = new CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
+inline CollisionVolume* swampLongBridgeFar = new CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
+inline CollisionVolume* swampLongBridgeNear = new CollisionCube(200.75f, 14.5f, 0.5f, 207.7f, 18.15f, 2.85f);
+inline CollisionVolume* bunkerElevatorCube = new CollisionCube(161.9f, -86.2f, 28.0f, 158.1f, -91.0f, 29.2f);
+inline CollisionVolume* quarryElevatorUpper = new CollisionCube(-61.1f, 175.6f, 11.5f, -66.3f, 171.8f, 14.2f);
+inline CollisionVolume* quarryElevatorLower = new CollisionCube(-69.0f, 165.7f, 2.1f, -54.7f, 174.8f, 4.5f);
+inline CollisionVolume* riverVaultUpperCube = new CollisionCube(52, -51, 19, 44, -47, 23);
+inline CollisionVolume* riverVaultLowerCube = new CollisionCube(40, -56, 16, 46, -47, 20.5);
+inline CollisionVolume* bunkerPuzzlesCube = new CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
+inline CollisionVolume* tutorialPillarCube = new CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
+inline CollisionVolume* quarryLaserPanel = new CollisionCube(-59, 90, 17, -67, 100, 21);
+inline CollisionVolume* symmetryUpperPanel = new CollisionCube(-180, 31, 12.6f, -185, 37, 17);
+inline CollisionVolume* challengeTimer = new CollisionCube(-27, -40, -20, -50, -20, -4);
+
+inline CollisionVolume* bunkerLaserPlatform = new ExactCollisionCube({ 161.838, -86.685, 30.5 }, { 158.985, -86.927, 30.5 }, { 162.049, -89.407, 30.5 }, { 161.838, -86.685, 34 });
+
+inline std::map<int, CollisionVolume*> laserCollisions = {
+	{0x00509, new ExactCollisionCube({-199.963, 33.558, 16}, {-198.783, 43.078, 16}, {-207.646, 44.368, 16}, {-199.963, 33.558, 20})}, // Symmetry
+	{0x012FB, new ExactCollisionCube({-139.577, 120.460, -10}, {-138.074, 117.916, -10}, {-143.288, 118.357, -10}, {-139.577, 120.460, 21})}, // Desert
+	{0x01539, new ExactCollisionCube({-56.964, 97.491, 17.5}, {-65.689, 100.040, 17.5}, {-67.272, 94.522, 17.5}, {-56.964, 97.491, 20})}, // Bunker
+	{0x181B3, new ExactCollisionCube({ -3.264, 86.099, 14.0 }, { -8.329, 87.306, 14.0 }, { -2.048, 91.37, 14.0 }, { -3.264, 86.099, 18.0 })}, // Shadows
+	{0x014BB, new ExactCollisionCube({47.981, 135.773, 41}, {57.653, 133.734, 41}, {50.264, 148.514, 41}, {47.981, 135.773, 44})}, // Keep
+	{0x17C65, new ExactCollisionCube({31.289, -15.792, 16.4}, {28.5, -28.717, 16.4}, {13.644, -12.87, 16.4}, {31.289, -15.792, 18})}, // Monastery
+	{0x032F9, new ExactCollisionCube({-36.859, -11.220, 23}, {-37.813, -15.858, 23}, {-38.085, -10.73, 23}, {-36.859, -11.220, 30})}, // Town
+	{0x00274, new ExactCollisionCube({85.17, -55.891, 26}, {82.895, -50.217, 26}, {91.857, -51.481, 26}, {85.17, -55.891, 30})}, // Jungle
+	{0x00BF6, new ExactCollisionCube({153.334, -3.836, 7.8}, {142.850, -2.083, 7.8}, {152.526, -8.985, 7.8}, {152.526, -8.985, 14})}, // Swamp
+	{0x0C2B2, new ExactCollisionCube({163.029, -84.098, 26}, {175.137, -82.494, 26}, {164.033, -92.094, 26},{163.029, -84.098, 30})}, // Bunker
+	{0x028A4, new ExactCollisionCube({103.063, 131.681, 18}, {102.415, 134.121, 18}, {108.478, 132.748, 18}, {103.063, 131.681, 19})}, // Treehouse
+};
+
+// 0x012FB,
 
 RgbColor getColorByItemFlag(const __int64 flags);
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);

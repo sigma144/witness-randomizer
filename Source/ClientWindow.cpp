@@ -211,7 +211,7 @@ void ClientWindow::setStatusMessage(std::string statusMessage) const
 	writeStringToTextBox(statusMessage, hwndStatusText);
 }
 
-void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks) {
+void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks) {
 	std::string hintsText = "Audio Log Hints:\r\n";
 
 	for (std::string hint : hints) {
@@ -238,6 +238,13 @@ void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::ve
 	std::string deadChecksText = "Hinted locations that are cleared or have Filler/Traps:\r\n";
 
 	if (auto i = deadChecks.begin(), e = deadChecks.end(); i != e) {
+		deadChecksText += *i++;
+		for (; i != e; ++i) deadChecksText.append(", ").append(*i);
+	}
+
+	if (!deadChecks.empty()) deadChecksText += ",\r\n";
+
+	if (auto i = otherPeoplesDeadChecks.begin(), e = otherPeoplesDeadChecks.end(); i != e) {
 		deadChecksText += *i++;
 		for (; i != e; ++i) deadChecksText.append(", ").append(*i);
 	}
@@ -746,10 +753,10 @@ void ClientWindow::addHintsView(int& currentY) {
 	hwndClearedChecksView = CreateWindow(L"Edit", L"Hinted locations that are cleared or have Filler/Traps:",
 		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
 		STATIC_TEXT_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 3,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 4,
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
-	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING; // Idk
+	currentY += STATIC_TEXT_HEIGHT * 4 + LINE_SPACING; // Idk
 }
 
 void ClientWindow::show(int nCmdShow) {

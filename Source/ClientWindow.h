@@ -69,7 +69,7 @@ public:
 	void setStatusMessage(std::string statusMessage) const;
 
 	// Display seen Audio Logs.
-	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks);
+	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks);
 
 	void setWindowMode(ClientWindowMode mode);
 
