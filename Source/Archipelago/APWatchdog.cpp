@@ -1298,19 +1298,46 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		}
 	}
 
+	// If no hint has to be shown, don't show a hint.
 	if (currentAudioLog == -1 && currentLaser == -1) {
 		currentHintEntity = -1;
 	}
-	else {
-		if (currentLaser != -1) {
-			currentHintEntity = currentLaser;
+	// If it is unambiguous what to show, show that.
+	else if (currentAudioLog != -1 && currentLaser == -1) {
+		if (currentHintEntity != currentAudioLog) currentHintEntityDuration = 8.0f;
+		currentHintEntity = currentAudioLog;
+	}
+	else if (currentAudioLog == -1 && currentLaser != -1) {
+		currentHintEntityDuration = 0.5f;
+		currentHintEntity = currentLaser;
+	}
+	// If both a laser and an audio log are playing... 
+	else if (currentAudioLog != -1 && currentLaser != -1) {
+		// ...if one of them *just* started playing, give priority to that ("focus request")
+		if (lastLaser != currentLaser) {
 			currentHintEntityDuration = 0.5f;
+			currentHintEntity = currentLaser;
 		}
-		else if (currentAudioLog != currentHintEntity) {
+		else if (lastAudioLog != currentAudioLog) {
+			if (currentHintEntity != currentAudioLog) currentHintEntityDuration = 8.0f;
 			currentHintEntity = currentAudioLog;
-			currentHintEntityDuration = 8.f;
+		}
+
+		// otherwise, continue showing the hint that has been showing.
+		else {
+			if (currentHintEntity == currentLaser) {
+				currentHintEntityDuration = 0.5f;
+				currentHintEntity = currentLaser;
+			}
+			else {
+				if (currentHintEntity != currentAudioLog) currentHintEntityDuration = 8.0f;
+				currentHintEntity = currentAudioLog;
+			}
 		}
 	}
+
+	lastLaser = currentLaser;
+	lastAudioLog = currentAudioLog;
 
 	if (currentHintEntity != -1) {
 		// We're playing an audio log or near a laser. Show its hint, unless it's already been on screen for a while.

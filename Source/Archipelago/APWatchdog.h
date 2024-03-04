@@ -242,6 +242,8 @@ private:
 	std::set<int> PuzzlesSkippedThisGame = {};
 
 	int currentHintEntity = -1;
+	int lastLaser = -1;
+	int lastAudioLog = -1;
 	float currentHintEntityDuration = 0.f;
 
 	int activePanelId = -1;
