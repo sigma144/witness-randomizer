@@ -1340,7 +1340,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 	lastAudioLog = currentAudioLog;
 
 	// If we're solving, don't show hint, but also don't advance the timer
-	if (interactionState != InteractionState::Walking) {
+	if (interactionState != InteractionState::Walking && currentHintEntity == currentAudioLog) {
 		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 	else if (currentHintEntity != -1) {
