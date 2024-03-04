@@ -1339,8 +1339,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 	lastLaser = currentLaser;
 	lastAudioLog = currentAudioLog;
 
-	// If we're solving, don't show hint, but also don't advance the timer
-	if (interactionState != InteractionState::Walking && currentHintEntity == currentLaser) {
+	// If we're solving, don't show hint anymore if it's a laser hint
+	if (interactionState != InteractionState::Walking && !audioLogs.count(currentHintEntity)) {
 		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 	else if (currentHintEntity != -1) {
