@@ -1417,7 +1417,9 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 
 		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
 			if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT) {
-				deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
+				std::string name = ap->get_location_name(audioLogHint.locationID);
+				if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) name += " (Useful)";
+				deadChecks.push_back(name);
 
 				implicitlyClearedLocations[std::to_string(audioLogHint.locationID)] = true;
 
