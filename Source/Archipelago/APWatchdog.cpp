@@ -1416,15 +1416,13 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		}
 
 		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
-			if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NONE || locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_TRAP) {
+			if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT) {
 				deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
 
 				implicitlyClearedLocations[std::to_string(audioLogHint.locationID)] = true;
 
 				continue;
 			}
-
-			cleanedMessage += " (" + getStringFromFlag(locationIdToItemFlags[audioLogHint.locationID]) + ")";
 		}
 		
 		if (areaNameToLocationIDs.count(audioLogHint.areaHint)) {
