@@ -1338,7 +1338,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 
 	lastLaser = currentLaser;
 	lastAudioLog = currentAudioLog;
-	lastRealHintEntity == (currentHintEntity == -1) ? lastRealHintEntity : currentHintEntity;
+	lastRealHintEntity = (currentHintEntity == -1) ? lastRealHintEntity : currentHintEntity;
 
 	// If we're solving, don't show hint anymore if it's a laser hint
 	if (interactionState != InteractionState::Walking && !audioLogs.count(lastRealHintEntity)) {
