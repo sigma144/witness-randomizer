@@ -1339,7 +1339,11 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 	lastLaser = currentLaser;
 	lastAudioLog = currentAudioLog;
 
-	if (currentHintEntity != -1) {
+	// If we're solving, don't show hint, but also don't advance the timer
+	if (interactionState != InteractionState::Walking) {
+		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+	}
+	else if (currentHintEntity != -1) {
 		// We're playing an audio log or near a laser. Show its hint, unless it's already been on screen for a while.
 		if (currentHintEntityDuration <= 0.f) {
 			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
@@ -1852,13 +1856,6 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	else if (bunkerPuzzlesCube->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x09FDC)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Most Bunker panels need Black/White Squares and Colored Squares.");
-	}
-	else if (quarryLaserPanel->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x03612)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"Needs Eraser, Triangles,\n"
-			"Stars, Stars + Same Colored Symbol.");
-		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"Needs Shapers and Eraser.");
 	}
 	else if (symmetryUpperPanel->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
 		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,

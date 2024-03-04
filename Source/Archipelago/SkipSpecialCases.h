@@ -269,6 +269,7 @@ inline const std::set<int> very_thin_panels = {
 
 inline const std::set<int> fairly_thin_panels = {
 	0x335AB,0x335AC,0x3369D, // Mountain & Caves Elevators
+	0x03612, // Quarry Laser Panel
 };
 
 inline const std::set<int> wide_panels = {
