@@ -12,6 +12,7 @@
 #include "../DateTime.h"
 #include "PanelRestore.h"
 #include "ASMPayloadManager.h"
+#include "LockablePuzzle.h"
 
 APRandomizer::APRandomizer() {
 	panelLocker = new PanelLocker();
