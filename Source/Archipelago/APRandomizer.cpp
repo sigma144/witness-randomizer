@@ -185,14 +185,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				doorsActuallyInTheItemPool.insert(key);
 			}
 		}
-		else
-		{
-			for (auto& [key, val] : itemIdToDoorSet) {
-				for(int door : val){
-					doorsActuallyInTheItemPool.insert(door);
-				}
-			}
-		}
 
 		if (slotData.contains("log_ids_to_hints")) {
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {

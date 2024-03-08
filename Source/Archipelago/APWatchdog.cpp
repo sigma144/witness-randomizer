@@ -22,6 +22,7 @@
 #include "APAudioPlayer.h"
 #include "ASMPayloadManager.h"
 #include "../Utilities.h"
+#include "LockablePuzzle.h"
 
 
 #define CHEAT_KEYS_ENABLED 0
