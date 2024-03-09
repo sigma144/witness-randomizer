@@ -903,6 +903,10 @@ void APWatchdog::UnlockDoor(int id) {
 		ASMPayloadManager::get()->UpdateEntityPosition(0x17CAA);
 	}
 
+	if (allObelisks.count(id)) {
+		disableCollisionList.erase(id);
+	}
+
 	if (ReadPanelData<int>(id, DOOR_OPEN)) {
 		std::wstringstream s;
 		s << std::hex << id << " is already open.\n";
@@ -942,6 +946,10 @@ void APWatchdog::SeverDoor(int id) {
 
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+	}
+
+	if (allObelisks.count(id)) {
+		disableCollisionList.insert(id);
 	}
 
 	if (severTargetsById.count(id)) {

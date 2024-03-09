@@ -581,17 +581,22 @@ void Memory::findImportantFunctionAddresses(){
 	});
 
 	//open door
-	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		for (;; index--) {
-			if (data[index] == 0x40 && data[index + 1] == 0x53) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
-				this->closeDoorFunction = _baseAddress + offset + index;
+	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {	
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) {
+				this->openDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
 		}
-		
+
+		return true;
+	});
+
+	//close door
+	executeSigScan({ 0x8B, 0x7B, 0x30, 0x4D, 0x8B, 0x63, 0x38, 0x49, 0x8B, 0xE3, 0x41, 0x5F, 0x41, 0x5E, 0x5D, 0xC3 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
-			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // The open door function comes after.
-				this->openDoorFunction = _baseAddress + offset + index - 2;
+			if (data[index - 2] == 0x40 && data[index - 1] == 0x53 && data[index] == 0x48) { // The open door function comes after.
+				this->closeDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
 		}
