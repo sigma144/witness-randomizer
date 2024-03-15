@@ -137,6 +137,8 @@ public:
 
 	static std::string readStringFromPanels(std::vector<int> panelIDs);
 	static void writeStringToPanels(std::string string, std::vector<int> panelIDs);
+	static void swapStartAndEnd(int id);
+	static void flipPanelHorizontally(int id);
 
 	static void testSwap(int id1, int id2) {
 		Memory* memory = Memory::get();

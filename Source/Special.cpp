@@ -2380,4 +2380,35 @@ void Special::writeStringToPanels(std::string string, std::vector<int> panelIDs)
 	}
 }
 
+void Special::swapStartAndEnd(int id) {
+	Memory* memory = Memory::get();
+	int num_intersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersection_flags = memory->ReadArray<int>(id, DOT_FLAGS, num_intersections);
+
+	for (int i = 0; i < intersection_flags.size(); i++) {
+		int flag = intersection_flags[i];
+		if ((flag & IntersectionFlags::STARTPOINT) == IntersectionFlags::STARTPOINT) {
+			intersection_flags[i] = (flag & !IntersectionFlags::STARTPOINT) | IntersectionFlags::ENDPOINT;
+		}
+		else if ((flag & IntersectionFlags::ENDPOINT) == IntersectionFlags::ENDPOINT) {
+			intersection_flags[i] = (flag & !IntersectionFlags::ENDPOINT) | IntersectionFlags::STARTPOINT;
+		}
+	}
+
+	memory->WriteArray<int>(id, DOT_FLAGS, intersection_flags);
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
+void Special::flipPanelHorizontally(int id) {
+	Memory* memory = Memory::get();
+	int num_intersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, num_intersections * 2);
+
+	for (int i = 0; i < intersections.size(); i += 2){
+		intersections[i] = 1 - intersections[i];
+	}
+
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+}
+
 std::map<int, int> Special::correctShapesById = {};

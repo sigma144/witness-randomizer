@@ -13,6 +13,8 @@
 #include "PanelRestore.h"
 #include "ASMPayloadManager.h"
 #include "LockablePuzzle.h"
+#include "../Utilities.h"
+#include "SkipSpecialCases.h"
 
 APRandomizer::APRandomizer() {
 	panelLocker = new PanelLocker();
@@ -456,6 +458,16 @@ void APRandomizer::PostGeneration() {
 	allLocations.insert(missingLocations.begin(), missingLocations.end());
 	allLocations.insert(checkedLocations.begin(), checkedLocations.end());
 	std::list<int64_t> allLocationsList(allLocations.begin(), allLocations.end());
+
+	// :)
+	if (Utilities::isAprilFools()) {
+		for (int panel : trivial_panels) {
+			Special::swapStartAndEnd(panel);
+		}
+		for (int panel : door_timers) {
+			Special::flipPanelHorizontally(panel);
+		}
+	}
 
 	// EP-related slowing down of certain bridges etc.
 	if (EPShuffle) {
