@@ -325,6 +325,9 @@ public:
 	uint64_t exitSolveModeFunction;
 	uint64_t setUserBrightnessFunction;
 	uint64_t deviceDisplay;
+	uint64_t windmillCurrentlyTurning;
+	uint64_t windmillMaxTurnSpeed;
+	uint64_t windmillCurrentTurnSpeed;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;

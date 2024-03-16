@@ -375,6 +375,47 @@ void Memory::findImportantFunctionAddresses(){
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
 
+	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x57, 0x48, 0x81, 0xEC, 0x10, 0x01, 0x00, 0x00, 0x48, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0xF3 && data[index + 1] == 0x44 && data[index + 2] == 0x0F && data[index + 3] == 0x10 && data[index + 4] == 0x35) {
+				index += 5;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->windmillMaxTurnSpeed = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x80 && data[index - 1] == 0x3D && data[index + 4] == 0x00) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->windmillCurrentlyTurning = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 4] == 0xF3 && data[index - 3] == 0x0F && data[index - 2] == 0x10 && data[index - 1] == 0x05 && data[index - 9] == 0x0D) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->windmillCurrentTurnSpeed = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		return true;
+	});
+
 	executeSigScan({ 0x0F, 0x29, 0x74, 0x24, 0x20, 0x0F, 0x28, 0xF0, 0x48, 0x8B, 0x01, 0xF3, 0x0F }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (;; index--) {
 			if ((data[index] == 0x48 || data[index] == 0xC3) && data[index + 1] == 0x83 && data[index + 2] == 0xEC) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.

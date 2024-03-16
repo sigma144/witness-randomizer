@@ -122,6 +122,10 @@ void APWatchdog::action() {
 
 	HandleVision(frameDuration);
 
+	if (Utilities::isAprilFools()) {
+		DoAprilFoolsEffects(frameDuration);
+	}
+
 	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
 		halfSecondCountdown += 0.5f;
@@ -2779,4 +2783,55 @@ void APWatchdog::CheckFinalRoom() {
 	Memory::get()->ReadAbsolute(reinterpret_cast<LPCVOID>(soundStreamPointer + 0x70), &finalRoomMusicTimer, sizeof(double));
 
 	return;
+}
+
+void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
+	// Windmill
+	
+	Memory* memory = Memory::get();
+
+	bool windmill_turning;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(memory->windmillCurrentlyTurning), &windmill_turning, sizeof(bool));
+
+	float currentSpeed;
+	float targetSpeed;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(memory->windmillCurrentTurnSpeed), &currentSpeed, sizeof(float));
+	float normalMaxSpeed;
+	memory->ReadAbsolute(reinterpret_cast<LPCVOID>(memory->windmillMaxTurnSpeed), &normalMaxSpeed, sizeof(float));
+
+	if (windmill_turning) {
+		if (memory->GetActivePanel() == 0x17d90) {
+			targetSpeed = normalMaxSpeed;
+		}
+		else
+		{
+			targetSpeed = 20;
+		}
+	}
+	else
+	{
+		if (currentSpeed < normalMaxSpeed) return;
+		targetSpeed = normalMaxSpeed;
+	}
+
+	if (targetSpeed > currentSpeed) {
+		float delta = (targetSpeed - currentSpeed) * deltaSeconds;
+		if (delta > 5 * deltaSeconds) delta = 5 * deltaSeconds;
+		if (currentSpeed - normalMaxSpeed < 2) {
+			delta = deltaSeconds * 5 * ((currentSpeed - normalMaxSpeed) / 2);
+			if (delta < deltaSeconds) delta = deltaSeconds;
+		}
+
+		currentSpeed += delta;
+		if (currentSpeed > targetSpeed) currentSpeed = targetSpeed;
+	}
+	else {
+		float delta = (currentSpeed - targetSpeed) * deltaSeconds;
+		if (delta > 5 * deltaSeconds) delta = 5 * deltaSeconds;
+		if (delta < deltaSeconds * 0.5) delta = deltaSeconds * 0.5;
+		currentSpeed -= (currentSpeed - targetSpeed) * deltaSeconds;
+		if (currentSpeed < targetSpeed) currentSpeed = targetSpeed;
+	}
+
+	memory->WriteAbsolute(reinterpret_cast<LPVOID>(memory->windmillCurrentTurnSpeed), &currentSpeed, sizeof(float));
 }

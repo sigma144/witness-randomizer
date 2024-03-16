@@ -226,6 +226,8 @@ private:
 
 	void CheckFinalRoom();
 
+	void DoAprilFoolsEffects(float deltaSeconds);
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
