@@ -198,6 +198,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				bool extraInfoFound = false;
 				std::string area = "";
 				int32_t area_progression = -1;
+				bool allowScout = true;
 
 				for (int i = 0; i < val.size(); i++) {
 					auto token = val[i];
@@ -214,6 +215,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 						}
 						else {
 							player_no = integer;
+
+							if (player_no == -1 && location_id != -1) {
+								player_no = ap->get_player_number();
+								allowScout = false;
+							}
 						}
 					}
 					else {
@@ -223,6 +229,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 							player_no = ap->get_player_number();
 							extraInfoFound = true;
 						}
+						else if (line.rfind("containing_area:", 0) == 0) {
+							area = line.substr(16);
+							allowScout = false;
+						}
 						else if (!line.empty()) {
 							if(message != "") message.append(" ");
 							message.append(line);
@@ -230,7 +240,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 					}
 				}
 				
-				inGameHints.insert({ logId, {message, location_id, player_no, area, area_progression, false} });
+				inGameHints.insert({ logId, {message, location_id, player_no, area, area_progression, false, allowScout} });
 			}
 		}
 

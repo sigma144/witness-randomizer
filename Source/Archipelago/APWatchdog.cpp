@@ -1284,7 +1284,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 				if (!seenLasers.count(laserID)) {
 					WritePanelData<float>(laserID, 0x108, { 1.0001f });
 					int locationId = inGameHints[laserID].locationID;
-					if (locationId != -1 && inGameHints[laserID].playerNo == pNO) ap->LocationScouts({ locationId }, 2);
+					if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout) ap->LocationScouts({locationId}, 2);
 					ap->Set("WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID), NULL, false, { {"replace", true} });
 					seenLasers.insert(laserID);
 				}
@@ -1301,7 +1301,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 			seenMessages.insert(inGameHints[logId]);
 			if (!seenAudioLogs.count(logId)) {
 				int locationId = inGameHints[logId].locationID;
-				if (locationId != -1 && inGameHints[logId].playerNo == pNO) ap->LocationScouts({ locationId }, 2);
+				if (locationId != -1 && inGameHints[logId].playerNo == pNO && inGameHints[logId].allowScout) ap->LocationScouts({ locationId }, 2);
 				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
 				seenAudioLogs.insert(logId);
 			}
@@ -1420,27 +1420,28 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		std::string cleanedMessage = audioLogHint.message;
 		std::replace(cleanedMessage.begin(), cleanedMessage.end(), '\n', ' ');
 
-		if (audioLogHint.areaHint == "" && audioLogHint.playerNo != -1 && audioLogHint.playerNo != ap->get_player_number()) {
-			if (locationsThatContainedItemsFromOtherPlayers.count({ audioLogHint.playerNo, audioLogHint.locationID })) {
-				otherPeoplesDeadChecks.push_back(ap->get_location_name(audioLogHint.locationID) + " (" + ap->get_player_alias(audioLogHint.playerNo) + ")");
+		if (audioLogHint.areaHint == "") {
+			if (audioLogHint.playerNo != -1 && audioLogHint.playerNo != ap->get_player_number()) {
+				if (locationsThatContainedItemsFromOtherPlayers.count({ audioLogHint.playerNo, audioLogHint.locationID })) {
+					otherPeoplesDeadChecks.push_back(ap->get_location_name(audioLogHint.locationID) + " (" + ap->get_player_alias(audioLogHint.playerNo) + ")");
 
-				continue;
+					continue;
+				}
+			}
+
+			if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
+				if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT) {
+					std::string name = ap->get_location_name(audioLogHint.locationID);
+					if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) name += " (Useful)";
+					deadChecks.push_back(name);
+
+					implicitlyClearedLocations[std::to_string(audioLogHint.locationID)] = true;
+
+					continue;
+				}
 			}
 		}
-
-		if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
-			if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT) {
-				std::string name = ap->get_location_name(audioLogHint.locationID);
-				if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) name += " (Useful)";
-				deadChecks.push_back(name);
-
-				implicitlyClearedLocations[std::to_string(audioLogHint.locationID)] = true;
-
-				continue;
-			}
-		}
-		
-		if (areaNameToLocationIDs.count(audioLogHint.areaHint)) {
+		else {
 			int foundProgression = 0;
 			int unchecked = 0;
 
@@ -1461,19 +1462,29 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 				}
 			}
 
-			if (audioLogHint.areaProgression != -1 && foundProgression >= audioLogHint.areaProgression) {
-				fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
-				
-				for (int64_t id : associatedChecks) {
-					implicitlyClearedLocations[std::to_string(id)] = true;
-				}
-				
-				continue;
-			}
+			if (audioLogHint.locationID == -1) {
+				if (audioLogHint.areaProgression != -1 && foundProgression >= audioLogHint.areaProgression) {
+					fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
 
-			cleanedMessage += " (";
-			cleanedMessage += std::to_string(foundProgression) + " found, ";
-			cleanedMessage += std::to_string(unchecked) + " unchecked)";
+					for (int64_t id : associatedChecks) {
+						implicitlyClearedLocations[std::to_string(id)] = true;
+					}
+
+					continue;
+				}
+
+				cleanedMessage += " (";
+				cleanedMessage += std::to_string(foundProgression) + " found, ";
+				cleanedMessage += std::to_string(unchecked) + " unchecked)";
+			}
+			else
+			{
+				if (unchecked == 0 || checkedLocations.count(audioLogHint.locationID)) {
+					deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
+					continue;
+				}
+				cleanedMessage += " (" + std::to_string(unchecked) + " unchecked)";
+			}
 		}
 
 		seenMessagesStrings.push_back(cleanedMessage);

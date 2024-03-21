@@ -2,6 +2,8 @@
 
 #include <vector>
 
+inline int isAprilFoolsValue = -1;
+
 class Utilities {
 
 public:
@@ -61,6 +63,8 @@ public:
 	}
 
 	static bool isAprilFools() {
+		if (isAprilFoolsValue != -1) return isAprilFoolsValue == 1;
+
 		time_t rawtime;
 		time(&rawtime);
 		struct tm timeinfo;
@@ -69,6 +73,9 @@ public:
 		int day = timeinfo.tm_mday;
 		int month = timeinfo.tm_mon + 1;
 
-		return day == 1 && month == 4;
+		if (day == 1 && month == 4) isAprilFoolsValue = 1;
+		else isAprilFoolsValue = 0;
+
+		return isAprilFoolsValue == 1;
 	}
 };

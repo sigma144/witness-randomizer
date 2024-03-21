@@ -10,6 +10,7 @@ struct inGameHint {
 	std::string areaHint;
 	int32_t areaProgression;
 	bool isLaserHint;
+	bool allowScout;
 };
 
 inline bool operator<(const inGameHint& lhs, const inGameHint& rhs) {
