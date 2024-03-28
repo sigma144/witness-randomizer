@@ -457,11 +457,19 @@ void APRandomizer::PreGeneration() {
 	std::shuffle(jokeHintOrder.begin(), jokeHintOrder.end(), Random::gen);
 
 	int jokeIndex = 0;
+	std::vector<int> jokeHints;
 	for (auto& [id, hint] : inGameHints) {
 		if (hint.message.empty()) {
+			jokeHints.push_back(id);
 			hint.message = GetJokeHints().at(jokeHintOrder.at(jokeIndex));
 			jokeIndex++;
 		}
+	}
+
+	// Replace one junk hint with the credits hint.
+	if (!jokeHints.empty()) {
+		inGameHint& hint = inGameHints.at(jokeHints.at(Random::rand() % jokeHints.size()));
+		hint.message = GetCreditsHint();
 	}
 }
 

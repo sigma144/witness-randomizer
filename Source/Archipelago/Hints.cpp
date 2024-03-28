@@ -1,5 +1,12 @@
 #include "Hints.h"
 
+const std::string& GetCreditsHint() {
+  static const std::string creditsHint = "This Randomizer is brought to you by\n"
+    "NewSoupVi, Jarno, blastron,\n"
+    "jbzdarkid, sigma144, IHNN, oddGarrett, Exempt-Medic, hatkirby.";
+  return creditsHint;
+}
+
 const std::vector<std::string>& GetJokeHints() {
   static const std::vector<std::string> jokeHints = {
     "Have you tried Adventure?\n...Holy crud, that game is 17 years older than me.",
