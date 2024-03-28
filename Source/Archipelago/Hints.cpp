@@ -150,7 +150,7 @@ const std::vector<std::string>& GetJokeHints() {
     "A non-edge start point is similar to a cat.\nIt must be either inside or outside, it can't be both.",
     "What if we kissed on the Bunker Laser Platform?\nJk... unless?",
     "You don't have Boat? Invisible boat time!\nYou do have boat? Boat clipping time!",
-    "Cet indice est en français. Nous nous excusons de tout inconvénients engendrés par cela.",
+    u8"Cet indice est en français. Nous nous excusons de tout inconvénients engendrés par cela.",
     "How many of you have personally witnessed a total solar eclipse?",
     "In the Treehouse area, you will find 69 progression items.\nNice.\n(Source: Just trust me)",
     "Lingo\nLingoing\nLingone",
