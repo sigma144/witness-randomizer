@@ -8,6 +8,7 @@
 #include "APGameData.h"
 #include "APWatchdog.h"
 #include "Client/apclientpp/apclient.hpp"
+#include "Hints.h"
 #include "PanelLocker.h"
 #include "../DateTime.h"
 #include "PanelRestore.h"
@@ -448,6 +449,23 @@ std::string APRandomizer::buildUri(std::string& server)
 
 	return uri;
 }
+
+void APRandomizer::PreGeneration() {
+	// Generate joke hints.
+	std::vector<int> jokeHintOrder(GetJokeHints().size());
+	std::iota(jokeHintOrder.begin(), jokeHintOrder.end(), 0);
+	std::shuffle(jokeHintOrder.begin(), jokeHintOrder.end(), Random::gen);
+
+	int jokeIndex = 0;
+	for (auto& [id, hint] : inGameHints) {
+		if (hint.message.empty()) {
+			hint.message = GetJokeHints().at(jokeHintOrder.at(jokeIndex));
+			jokeIndex++;
+		}
+	}
+}
+
+
 
 void APRandomizer::PostGeneration() {
 	ClientWindow* clientWindow = ClientWindow::get();

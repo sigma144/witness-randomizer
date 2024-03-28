@@ -36,6 +36,7 @@ class APRandomizer {
 		bool randomizationFinished = false;
 
 		bool Connect(std::string& server, std::string& user, std::string& password);
+		void PreGeneration();
 		void PostGeneration();
 
 		void GenerateNormal();

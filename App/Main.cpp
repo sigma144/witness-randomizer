@@ -254,6 +254,8 @@ void Main::randomize() {
 
 	// Run the AP randomizer.
 	clientWindow->setStatusMessage("Setting up AP features...");
+	apRandomizer->PreGeneration();
+
 	if (puzzleRando == SIGMA_EXPERT)
 		apRandomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
