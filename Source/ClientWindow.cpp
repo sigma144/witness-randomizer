@@ -3,6 +3,9 @@
 #include "Converty.h"
 #include "nlohmann/json.hpp"
 #include <Richedit.h>
+#include <numeric>
+#include <set>
+#include <vector>
 
 #include "ClientWindow.h"
 
@@ -417,7 +420,7 @@ void ClientWindow::buildWindow() {
 	RegisterClassW(&wndClass);
 
 	// Create the root window.
-	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_TABSTOP | WS_MINIMIZEBOX,
+	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_THICKFRAME | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_TABSTOP | WS_MINIMIZEBOX,
 		650, 200, CLIENT_WINDOW_WIDTH, 100, nullptr, nullptr, hAppInstance, nullptr);
 
 	// HACK: Due to things like menu bar thickness, the root window won't actually be the requested size. Grab the actual size here for later comparison.
@@ -438,22 +441,28 @@ void ClientWindow::buildWindow() {
 	addHorizontalRule(currentY);
 	addHintsView(currentY);
 
+	standardHeight = currentY;
+	currentWidth = CLIENT_WINDOW_WIDTH;
+	currentHeight = currentY;
+
 	// Resize the window to match its contents.
 	MoveWindow(hwndRootWindow, 650, 200,
 		CLIENT_WINDOW_WIDTH + windowWidthAdjustment, currentY + windowHeightAdjustment, true);
 }
 
-void ClientWindow::addHorizontalRule(int& currentY) {
+HWND ClientWindow::addHorizontalRule(int& currentY) {
 
 	currentY += LINE_SPACING + 4;
 
-	CreateWindow(L"STATIC", L"",
+	HWND hwnd = CreateWindow(L"STATIC", L"",
 		WS_VISIBLE | WS_CHILD | SS_ETCHEDHORZ,
 		8, currentY,
 		CLIENT_WINDOW_WIDTH - 16, 2,
 		hwndRootWindow, 0, hAppInstance, NULL);
 
 	currentY += 2 + LINE_SPACING + 4;
+
+	return hwnd;
 }
 
 void ClientWindow::addVersionDisplay(int& currentY) {
@@ -728,8 +737,8 @@ void ClientWindow::addPuzzleEditor(int& currentY) {
 }
 
 void ClientWindow::addHintsView(int& currentY) {
+	startingHeightOfHintsView = currentY;
 
-	// Most recent error.
 	hwndHintsView = CreateWindow(L"Edit", L"Audio Log Hints:",
 		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
 		STATIC_TEXT_MARGIN, currentY,
@@ -738,7 +747,7 @@ void ClientWindow::addHintsView(int& currentY) {
 
 	currentY += STATIC_TEXT_HEIGHT * 9;
 
-	addHorizontalRule(currentY);
+	hwndHintsSeparator1 = addHorizontalRule(currentY);
 
 	hwndClearedAreasView = CreateWindow(L"Edit", L"Hinted areas with no more progression:",
 		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
@@ -748,7 +757,7 @@ void ClientWindow::addHintsView(int& currentY) {
 
 	currentY += STATIC_TEXT_HEIGHT * 3;
 
-	addHorizontalRule(currentY);
+	hwndHintsSeparator2 = addHorizontalRule(currentY);
 
 	hwndClearedChecksView = CreateWindow(L"Edit", L"Hinted locations that are cleared or have Filler/Traps:",
 		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
@@ -757,6 +766,111 @@ void ClientWindow::addHintsView(int& currentY) {
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT * 4 + LINE_SPACING; // Idk
+
+	standardHeightOfHintsView = currentY - startingHeightOfHintsView;
+}
+
+void ClientWindow::resize(int width, int height) {
+	/*std::wstringstream s;
+	s << standardHeight << "\n";
+	s << height << "\n";
+	s << standardHeightOfHintsView << "\n";*/
+
+	if (width != currentWidth) {
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+		return;
+	}
+
+	int distributeHeight = (height - standardHeight);
+	std::vector<int> sizes = { 9, 3, 4 };
+	int total = 0;
+
+	std::vector<int> currentHeights = {};
+	std::set<int> distributableIndices = {};
+
+	for (int i = 0; i < sizes.size(); i++) {
+		currentHeights.push_back(STATIC_TEXT_HEIGHT * sizes[i]);
+		distributableIndices.insert(i);
+	}
+
+	while (distributeHeight < 0 || distributeHeight >= sizes.size()) {
+		if (distributableIndices.empty()) break;
+
+		total = 0;
+
+		for (int i = 0; i < sizes.size(); i++) {
+			if (distributableIndices.count(i) == 0) continue;
+			total += sizes[i];
+		}
+		int distributeHeightFixed = distributeHeight;
+		for (int i = 0; i < sizes.size(); i++) {
+			if (distributableIndices.count(i) == 0) continue;
+			int change = (distributeHeightFixed * sizes[i]) / total;
+			if (change == 0) change = distributeHeight > 0 ? 1 : -1;
+			currentHeights[i] += change;
+			distributeHeight -= change;
+		}
+
+		for (int i = 0; i < currentHeights.size(); i++) {
+			if (currentHeights[i] < STATIC_TEXT_HEIGHT * 3) {
+				distributeHeight -= STATIC_TEXT_HEIGHT * 3 - currentHeights[i];
+				currentHeights[i] = STATIC_TEXT_HEIGHT * 3;
+				distributableIndices.erase(i);
+			}
+		}
+	}
+	
+	if (distributeHeight < 0) {
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+		return;
+	}
+
+	for (int i = 0; i < sizes.size(); i++) {
+		if (distributeHeight < 0) {
+			break;
+		}
+		currentHeights[i]++;
+		distributeHeight--;
+	}
+
+	
+
+	currentWidth = width;
+	currentHeight = height;
+
+	int currentY = startingHeightOfHintsView;
+
+	SetWindowPos(hwndHintsView, NULL,
+		STATIC_TEXT_MARGIN, currentY, CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, currentHeights[0], SWP_SHOWWINDOW);
+
+	currentY += currentHeights[0];
+
+	currentY += LINE_SPACING + 4;
+
+	SetWindowPos(hwndHintsSeparator1, NULL,
+		8, currentY, CLIENT_WINDOW_WIDTH - 16, 2, SWP_SHOWWINDOW);
+
+	currentY += 2 + LINE_SPACING + 4;
+
+
+	SetWindowPos(hwndClearedAreasView, NULL,
+		STATIC_TEXT_MARGIN, currentY, CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, currentHeights[1], SWP_SHOWWINDOW);
+
+	currentY += currentHeights[1];
+
+	currentY += LINE_SPACING + 4;
+
+	SetWindowPos(hwndHintsSeparator2, NULL,
+		8, currentY, CLIENT_WINDOW_WIDTH - 16, 2, SWP_SHOWWINDOW);
+
+	currentY += 2 + LINE_SPACING + 4;
+
+	SetWindowPos(hwndClearedChecksView, NULL,
+		STATIC_TEXT_MARGIN, currentY, CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, currentHeights[2], SWP_SHOWWINDOW);
+
+	if (distributeHeight < 0) {
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+	}
 }
 
 void ClientWindow::show(int nCmdShow) {
@@ -782,6 +896,12 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		if (MessageBox(hwnd, L"Warning: Some puzzles may be unsolvable if you close the randomizer while the game is running.\r\n\r\nExit anyway?", L"", MB_OKCANCEL) == IDOK)
 			DestroyWindow(hwnd);
 		return 0;
+	}
+	else if (message == WM_SIZE) {
+		int width = LOWORD(lParam);
+		int height = HIWORD(lParam);
+		
+		resize(width, height);
 	}
 	else if (message == WM_DESTROY) {
 		// The window was destroyed. Inform the OS that we want to terminate.

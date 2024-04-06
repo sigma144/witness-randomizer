@@ -82,13 +82,15 @@ private:
 	static ClientWindow* _singleton;
 
 	void buildWindow();
-	void addHorizontalRule(int& currentY);
+	HWND addHorizontalRule(int& currentY);
 	void addVersionDisplay(int& currentY);
 	void addArchipelagoCredentials(int& currentY);
 	void addGameOptions(int& currentY);
 	void addKeybindings(int& currentY);
 	void addPuzzleEditor(int& currentY);
 	void addHintsView(int& currentY);
+
+	void resize(int width, int height);
 
 	void show(int nCmdShow);
 
@@ -113,7 +115,7 @@ private:
 	HINSTANCE hAppInstance;
 	HWND hwndRootWindow;
 	HWND hwndApLoadCredentials, hwndApConnect;
-	HWND hwndStatusText, hwndHintsView, hwndClearedAreasView, hwndClearedChecksView;
+	HWND hwndStatusText, hwndHintsView, hwndHintsSeparator1, hwndClearedAreasView, hwndHintsSeparator2, hwndClearedChecksView;
 
 	HWND hwndTEMPfocusWindow;
 
@@ -137,4 +139,10 @@ private:
 	int windowWidthAdjustment;
 	int windowHeightAdjustment;
 
+	int standardHeight;
+	int startingHeightOfHintsView;
+	int standardHeightOfHintsView;
+
+	int currentWidth;
+	int currentHeight;
 };
