@@ -276,7 +276,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 					}
 				}
 
-				inGameHints.insert({ logId, {message, location_id, player_no, "", -1, true} });
+				inGameHints.insert({ logId, {message, location_id, player_no, "", -1, true, true} });
 			}
 		}
 
