@@ -204,8 +204,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				for (int i = 0; i < val.size(); i++) {
 					auto token = val[i];
 
-					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned) {
-						uint64_t integer = token;
+					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned || token.type() == nlohmann::json::value_t::null) {
+						uint64_t integer = -1;
+						if (token.type() != nlohmann::json::value_t::null) {
+							integer = token;
+						}
 						if (!extraInfoFound) {
 							location_id = integer;
 							player_no = ap->get_player_number();
@@ -256,8 +259,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				for (int i = 0; i < val.size(); i++) {
 					auto token = val[i];
 
-					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned) {
-						uint64_t integer = token;
+					if (token.type() == nlohmann::json::value_t::number_integer || token.type() == nlohmann::json::value_t::number_unsigned || token.type() == nlohmann::json::value_t::null) {
+						uint64_t integer = -1;
+						if (token.type() != nlohmann::json::value_t::null) {
+							integer = token;
+						}
 						if (!extraInfoFound) {
 							location_id = integer;
 							player_no = ap->get_player_number();
