@@ -29,8 +29,10 @@ Memory::Memory() {
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	bool supposedlyFound = false;
 	while (Process32Next(snapshot, &entry)) {
 		if (entry.szExeFile == process64) {
+			supposedlyFound = true;
 			_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 			break;
 		}
@@ -38,17 +40,33 @@ Memory::Memory() {
 
 	// If we didn't find the process, terminate.
 	if (!_handle) {
+		if (supposedlyFound) {
+			MessageBox(GetActiveWindow(), L"Found Witness exe but could not retrieve handle to it.", NULL, MB_OK);
+			throw std::exception("Found Witness exe but could not retrieve handle to it.");
+		}
+		std::ofstream outputStream = std::ofstream("FindProcessErrorLog.txt");
+		outputStream << "Found processes:";
+
 		PROCESSENTRY32 entry;
 		entry.dwSize = sizeof(entry);
 		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		bool found32 = false;
 		while (Process32Next(snapshot, &entry)) {
+			outputStream << entry.szExeFile << "\n";
+
 			if (process32 == entry.szExeFile) {
-				MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
-				throw std::exception("Unable to find process!");
+				found32 = true;
+				break;
 			}
 		}
+		outputStream.close();
 
-		MessageBox(GetActiveWindow(), L"Process not found in RAM. Please open The Witness and then try again.", NULL, MB_OK);
+		if (found32) {
+			MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
+		}
+		else {
+			MessageBox(GetActiveWindow(), L"Process not found in RAM. Please open The Witness and then try again. See FindProcessErrorLog.txt for list of found processes.", NULL, MB_OK);
+		}
 		throw std::exception("Unable to find process!");
 	}
 
