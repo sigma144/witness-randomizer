@@ -75,6 +75,8 @@ ClientWindow* ClientWindow::get() {
 
 void ClientWindow::saveSettings()
 {
+	currentJingles = getSetting(ClientDropdownSetting::Jingles);
+
 	json data;
 
 	data["saveVersion"] = SAVE_VERSION;
@@ -263,6 +265,11 @@ void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::ve
 		SendMessage(hwndClearedChecksView, EM_LINESCROLL, 0, 0);
 		lastDeadChecksText = deadChecksText;
 	}
+}
+
+std::string ClientWindow::getJinglesSettingSafe()
+{
+	return currentJingles;
 }
 
 void ClientWindow::setWindowMode(ClientWindowMode mode)
@@ -917,6 +924,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 				Main::randomize();
 				return 0;
 			}
+		}
+
+		if (HIWORD(wParam) == CBN_SELCHANGE && currentWindowMode == ClientWindowMode::Randomized) {
+			saveSettings();
 		}
 
 		switch (LOWORD(wParam)) {

@@ -70,6 +70,7 @@ public:
 
 	// Display seen Audio Logs.
 	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks);
+	std::string getJinglesSettingSafe();
 
 	void setWindowMode(ClientWindowMode mode);
 
@@ -145,4 +146,6 @@ private:
 
 	int currentWidth;
 	int currentHeight;
+
+	std::string currentJingles = "Understated";
 };

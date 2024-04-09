@@ -197,7 +197,7 @@ void APWatchdog::CheckSolvedPanels() {
 		hudManager->queueBannerMessage("Victory!");
 		
 		if (timePassedSinceRandomisation > 10.0f) {
-			if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+			if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 		}
 		ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
@@ -209,7 +209,7 @@ void APWatchdog::CheckSolvedPanels() {
 			isCompleted = true;
 			hudManager->queueBannerMessage("Victory!");
 			if (timePassedSinceRandomisation > 10.0f) {
-				if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+				if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			}
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
@@ -222,7 +222,7 @@ void APWatchdog::CheckSolvedPanels() {
 			isCompleted = true;
 			hudManager->queueBannerMessage("Victory!");
 			if (timePassedSinceRandomisation > 10.0f) {
-				if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+				if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
 			}
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
@@ -604,7 +604,7 @@ void APWatchdog::ResetPowerSurge() {
 }
 
 void APWatchdog::TriggerBonk() {
-	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
+	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
 
 	if (hasDeathLink) {
 		deathLinkStartTime = std::chrono::system_clock::now();
@@ -1858,7 +1858,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 			"Collect Setting: " + CollectText + ".\nDisabled Setting: " + DisabledPuzzlesBehavior + ".");
 		return;
 	}
-	else if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f && ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
+	else if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f && ClientWindow::get()->getJinglesSettingSafe() != "Off") {
 		hudManager->showInformationalMessage(InfoMessageCategory::Settings,
 			"Change Volume of jingles using the Windows Volume Mixer, where the Randomizer Client will show up as its own app.");
 		return;
@@ -1941,7 +1941,7 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 }
 
 void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
-	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Off") return;
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return;
 
 	bool isEP = allEPs.count(id);
 
@@ -1967,7 +1967,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		epicVersion = !(severedDoorsList.count(0x2D880) && ReadPanelData<int>(0x2D880, DOOR_OPEN)) || !severedDoorsList.count(id);
 	}
 
-	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Understated") {
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedProgression, APJingleBehavior::Queue, epicVersion);
 		}
@@ -2046,7 +2046,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 }
 
 void APWatchdog::PlayReceivedJingle(const int& itemFlags) {
-	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) == "Off") return;
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return;
 	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
@@ -2066,7 +2066,7 @@ void APWatchdog::PlayReceivedJingle(const int& itemFlags) {
 void APWatchdog::PlayFirstJingle() {
 	if (firstJinglePlayed) return;
 
-	if (ClientWindow::get()->getSetting(ClientDropdownSetting::Jingles) != "Off") {
+	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") {
 		APAudioPlayer::get()->PlayAudio(APJingle::FirstJingle, APJingleBehavior::PlayImmediate);
 		firstJinglePlayed = true;
 	}
