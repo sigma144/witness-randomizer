@@ -96,6 +96,7 @@ Memory::Memory() {
 	}
 
 	if (_baseAddress == 0) {
+		MessageBox(GetActiveWindow(), L"Was able to access the Witness .exe, but couldn't find the base process address!", NULL, MB_OK);
 		throw std::exception("Couldn't find the base process address!");
 	}
 }
