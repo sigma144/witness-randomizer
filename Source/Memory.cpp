@@ -31,7 +31,13 @@ Memory::Memory() {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	bool supposedlyFound = false;
 	bool foundAnyProcesses = false;
+
+	std::ofstream outputStream = std::ofstream("FindProcessErrorLog.txt");
+	outputStream << "Found processes:";
+
 	while (Process32Next(snapshot, &entry)) {
+		outputStream << entry.szExeFile << "\n";
+
 		foundAnyProcesses = true;
 		if (entry.szExeFile == process64) {
 			supposedlyFound = true;
@@ -39,6 +45,8 @@ Memory::Memory() {
 			break;
 		}
 	}
+
+	outputStream.close();
 
 	if (!foundAnyProcesses) {
 		MessageBox(GetActiveWindow(), L"Unable to see any processes at all. Is this program being quarantined by an antivirus?", NULL, MB_OK);
@@ -51,22 +59,17 @@ Memory::Memory() {
 			MessageBox(GetActiveWindow(), L"Found Witness exe but could not retrieve handle to it. Is this program being quarantined by an antivirus?", NULL, MB_OK);
 			throw std::exception("Found Witness exe but could not retrieve handle to it.");
 		}
-		std::ofstream outputStream = std::ofstream("FindProcessErrorLog.txt");
-		outputStream << "Found processes:";
 
 		PROCESSENTRY32 entry;
 		entry.dwSize = sizeof(entry);
 		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		bool found32 = false;
 		while (Process32Next(snapshot, &entry)) {
-			outputStream << entry.szExeFile << "\n";
-
 			if (process32 == entry.szExeFile) {
 				found32 = true;
 				break;
 			}
 		}
-		outputStream.close();
 
 		if (found32) {
 			MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
