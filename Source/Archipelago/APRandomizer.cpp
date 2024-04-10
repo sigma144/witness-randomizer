@@ -441,10 +441,12 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		}
 	});
 
+	clientWindow->logLine("Connect: Starting poller.");
 	(new APServerPoller(ap))->start();
 
 	auto start = std::chrono::system_clock::now();
 
+	clientWindow->logLine("Connect: Waiting for connection result.");
 	while (!hasConnectionResult) {
 		if (DateTime::since(start).count() > 5000) { //5 seconnd timeout on waiting for response from server
 			connected = false;
