@@ -166,10 +166,12 @@ void ClientWindow::loadSettings()
 }
 
 void ClientWindow::showMessageBox(std::string message) const {
+	logLine("Message box: " + message);
 	MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), NULL, MB_OK);
 }
 
 bool ClientWindow::showDialogPrompt(std::string message) const {
+	logLine("Dialog prompt: " + message);
 	return MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), NULL, MB_YESNO) == IDYES;
 }
 
@@ -213,6 +215,7 @@ void ClientWindow::refreshKeybind(const CustomKey& customKey) const {
 
 void ClientWindow::setStatusMessage(std::string statusMessage) const
 {
+	logLine("Dialog prompt: " + statusMessage);
 	writeStringToTextBox(statusMessage, hwndStatusText);
 }
 
@@ -407,6 +410,12 @@ void ClientWindow::focusGameWindow()
 void ClientWindow::focusClientWindow()
 {
 	SetForegroundWindow(hwndRootWindow);
+}
+
+void ClientWindow::logLine(std::string line) const
+{
+	clientLog << line << "\n";
+	clientLog.flush();
 }
 
 void ClientWindow::buildWindow() {

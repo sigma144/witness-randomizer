@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 #include <wtypes.h>
 
@@ -77,6 +79,8 @@ public:
 	void focusGameWindow();
 	void focusClientWindow();
 
+	void logLine(std::string line) const;
+
 private:
 
 	ClientWindow(HINSTANCE hAppInstance) : hAppInstance(hAppInstance) {}
@@ -149,3 +153,5 @@ private:
 
 	std::string currentJingles = "Understated";
 };
+
+inline std::ofstream clientLog = std::ofstream("WitnessRandomizerLog.txt");

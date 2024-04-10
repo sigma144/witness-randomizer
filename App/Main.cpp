@@ -166,6 +166,8 @@ void Main::randomize() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
 
+	clientWindow->logLine("Attempting randomization.");
+
 	Memory* memory = Memory::get();
 
 	bool rerandomize = false;
@@ -179,10 +181,14 @@ void Main::randomize() {
 		}
 	}
 
+	clientWindow->logLine("Rerandomize: " + std::to_string(rerandomize));
+
 	// Retrieve AP credentials from the main window.
 	std::string apAddress = clientWindow->getSetting(ClientStringSetting::ApAddress);
 	std::string apSlotName = clientWindow->getSetting(ClientStringSetting::ApSlotName);
 	std::string apPassword = clientWindow->getSetting(ClientStringSetting::ApPassword);
+
+	clientWindow->logLine("Credentials: " + apAddress + " | " + apSlotName + " | " + apPassword);
 
 	randomizer->seedIsRNG = false;
 	apRandomizer->SyncProgress = clientWindow->getSetting(ClientToggleSetting::SyncProgress);
@@ -224,23 +230,26 @@ void Main::randomize() {
 		else return;
 	}
 
+	clientWindow->logLine("Last seed: " + std::to_string(lastSeed));
+
 	if (lastSeed == 0) {
 		memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 8, { 0.0f });
 	}
 
-	// Store AP credentials to in-game data.
+	clientWindow->logLine("Store AP credentials to in-game data.");
 	Special::writeStringToPanels(apAddress, addressPanels);
 	Special::writeStringToPanels(apSlotName, slotNamePanels);
 	Special::writeStringToPanels(apPassword, passwordPanels);
 
-	// Store non-AP settings.
+	clientWindow->logLine("Store settings.");
 	clientWindow->saveSettings();
 
-	// Configure and run the base randomizer.
+	clientWindow->logLine("Configure base randomizer.");
 	randomizer->seed = seed;
 	randomizer->colorblind = clientWindow->getSetting(ClientToggleSetting::ColorblindMode);
 	randomizer->doubleMode = false;
 
+	clientWindow->logLine("Create ASMPayloadManager.");
 	ASMPayloadManager::create();
 
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
@@ -258,6 +267,7 @@ void Main::randomize() {
 	clientWindow->setStatusMessage("Setting up AP features...");
 	apRandomizer->PreGeneration();
 
+	clientWindow->logLine("Generating random puzzles.");
 	if (puzzleRando == SIGMA_EXPERT)
 		apRandomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
@@ -267,11 +277,14 @@ void Main::randomize() {
 	memory->WritePanelData(0x00182, VIDEO_STATUS_COLOR + 8, puzzleRando);
 
 	if (clientWindow->getSetting(ClientToggleSetting::HighContrast)) {
+		clientWindow->logLine("Setting up High Contrast Mode.");
 		apRandomizer->HighContrastMode();
 	}
 
+	clientWindow->logLine("Start PostGeneration.");
 	apRandomizer->PostGeneration();
 
+	clientWindow->logLine("Start InputWatchdog.");
 	InputWatchdog::get()->start();
 
 	clientWindow->setStatusMessage("Connected.");

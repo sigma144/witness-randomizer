@@ -22,6 +22,8 @@ APRandomizer::APRandomizer() {
 };
 
 bool APRandomizer::Connect(std::string& server, std::string& user, std::string& password) {
+	ClientWindow* clientWindow = ClientWindow::get();
+	clientWindow->logLine("Connecting");
 	std::string uri = buildUri(server);
 
 	if (ap) ap->reset();
@@ -30,6 +32,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	bool connected = false;
 	bool hasConnectionResult = false;
 
+	clientWindow->logLine("Connect: Setting handlers.");
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
@@ -70,6 +73,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	});
 
 	ap->set_slot_connected_handler([&](const nlohmann::json& slotData) {
+		clientWindow->logLine("Connect: Successful connection response!");
+		clientWindow->logLine("Connect: Getting basic slot data information.");
 		Seed = slotData["seed"];
 		FinalPanel = slotData["victory_location"];
 
@@ -107,6 +112,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		state.requiredChallengeLasers = ChallengeLasers;
 		state.requiredMountainLasers = MountainLasers;
 
+		clientWindow->logLine("Connect: Getting progressive items.");
 		if (slotData.contains("progressive_item_lists")) {
 			for (auto& [key, val] : slotData["progressive_item_lists"].items()) {
 				int itemId = std::stoul(key, nullptr, 10);
@@ -116,6 +122,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting panelhex to id.");
 		for (auto& [key, val] : slotData["panelhex_to_id"].items()) {
 			int panelId = std::stoul(key, nullptr, 16);
 			int locationId = val;
@@ -124,6 +131,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			panelIdToLocationIdReverse.insert({ locationId, panelId });
 		}
 
+		clientWindow->logLine("Connect: Getting Obelisk Side to EPs.");
 		if (slotData.contains("obelisk_side_id_to_EPs")) {
 			for (auto& [key, val] : slotData["obelisk_side_id_to_EPs"].items()) {
 				int sideId = std::stoul(key, nullptr, 10);
@@ -133,6 +141,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting EP to name.");
 		if (slotData.contains("ep_to_name")) {
 			for (auto& [key, val] : slotData["ep_to_name"].items()) {
 				int sideId = std::stoul(key, nullptr, 16);
@@ -141,6 +150,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting Entity to Name.");
 		if (slotData.contains("entity_to_name")) {
 			for (auto& [key, val] : slotData["entity_to_name"].items()) {
 				int sideId = std::stoul(key, nullptr, 16);
@@ -149,6 +159,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting Precompleted Puzzles.");
 		if (slotData.contains("precompleted_puzzles")) {
 			for (int key : slotData["precompleted_puzzles"]) {
 				precompletedLocations.insert(key);
@@ -158,6 +169,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting Disabled Puzzles.");
 		if (slotData.contains("disabled_panels")) {
 			for (std::string keys : slotData["disabled_panels"]) {
 				int key = std::stoul(keys, nullptr, 16);
@@ -171,6 +183,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting item id to door hexes.");
 		if (slotData.contains("item_id_to_door_hexes")) {
 			for (auto& [key, val] : slotData["item_id_to_door_hexes"].items()) {
 				int itemId = std::stoul(key, nullptr, 10);
@@ -184,12 +197,14 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting door hexes in the pool.");
 		if (slotData.contains("door_hexes_in_the_pool")) {
 			for (int key : slotData["door_hexes_in_the_pool"]) {
 				doorsActuallyInTheItemPool.insert(key);
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting audio log hints.");
 		if (slotData.contains("log_ids_to_hints")) {
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
@@ -248,6 +263,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting lasers hints.");
 		if (slotData.contains("laser_ids_to_hints")) {
 			for (auto& [key, val] : slotData["laser_ids_to_hints"].items()) {
 				int logId = std::stoul(key, nullptr, 10);
@@ -287,11 +303,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		}
 
 		if (DeathLink) {
+			clientWindow->logLine("Connect: Setting DeathLink.");
 			std::list<std::string> newTags = { "DeathLink" };
 
 			ap->ConnectUpdate(false, 7, true, newTags);
 		}
-
 
 		connected = true;
 		hasConnectionResult = true;
@@ -487,6 +503,7 @@ void APRandomizer::PostGeneration() {
 
 	// Write gameplay relevant client options into datastorage
 
+	clientWindow->logLine("Putting Settings in Datastorage.");
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-Collect", NULL, false, {{"replace", CollectedPuzzlesBehavior}});
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-Disabled", NULL, false, {{"replace", DisabledPuzzlesBehavior} });
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-SyncProgress", NULL, false, { {"replace", SyncProgress} });
@@ -511,6 +528,7 @@ void APRandomizer::PostGeneration() {
 		}
 	}
 
+	clientWindow->logLine("Making postgeneration game modifications.");
 	// EP-related slowing down of certain bridges etc.
 	if (EPShuffle) {
 		clientWindow->setStatusMessage("Adjusting EP element speeds...");
@@ -538,6 +556,7 @@ void APRandomizer::PostGeneration() {
 	clientWindow->setStatusMessage("Applying progression...");
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
+	clientWindow->logLine("Changing mounatain laser box and goal condition.");
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 	if (MountainLasers > 7) {
 		memory->WritePanelData<float>(0x09f7f, POSITION, { 153.95224, -53.066, 68.343, 0.97, -0.2462272793, 0.01424658205, -0.980078876, 0.06994858384 });
@@ -561,12 +580,15 @@ void APRandomizer::PostGeneration() {
 		memory->UpdatePanelJunctions(panel);
 	}
 	
+	clientWindow->logLine("Setting Puzzle Locks.");
 	setPuzzleLocks();
 
+	clientWindow->logLine("Restoring previously taken actions.");
 	async->SkipPreviouslySkippedPuzzles();
 
 	async->ResetPowerSurge();
 
+	clientWindow->logLine("Apply patches.");
 	Memory::get()->applyDestructivePatches();
 
 	randomizationFinished = true;
@@ -588,11 +610,14 @@ void APRandomizer::PostGeneration() {
 		}
 	}
 
+	clientWindow->logLine("Randomization finished.");
 	async->getHudManager()->queueBannerMessage("Randomized!");
 	async->PlayFirstJingle();
 
+	clientWindow->logLine("Starting APWatchdog.");
 	async->start();
 
+	clientWindow->logLine("Firing Locationscout.");
 	ap->LocationScouts(allLocationsList);
 }
 
