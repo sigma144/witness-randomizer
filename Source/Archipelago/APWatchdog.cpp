@@ -486,7 +486,7 @@ void APWatchdog::MarkLocationChecked(int64_t locationId)
 		}
 	}
 
-	else if (allEPs.count(panelId) && Collect == "Unchanged") {
+	else if (allEPs.count(panelId) && Collect != "Unchanged") {
 		int eID = panelId;
 
 		Memory::get()->SolveEP(eID);
