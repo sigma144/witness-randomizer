@@ -206,8 +206,12 @@ const std::vector<std::string>& GetJokeHints() {
     "Witness players be like \"sorry i can't get your moon pearl i need three more progressive squiggles and also my negative rotated eraser :(\"",
     "Rotated Shapers can be found somewhere (at some point).",
     "The more you bug Violet about double rando, the sooner it will come.\nTrust me.",
+    "The Linghost will get you.\nRun.",
+    "It's a secret to everybody.",
+    "Just do the right check lol",
+    "For the record, this is a completely separate game from \"The Wortness\".",
 
-    "Hints suggested by:\nIHNN, Beaker, MrPokemon11, Ember, TheM8, NewSoupVi, Jasper Bird, T1mshady, KF, Yoshi348, Berserker, BowlinJim, oddGarrett, Pink Switch, Rever, Ishigh, snolid, CodeGorilla, Quas NaArt, Scipio, Projectyl, ManyPinkHats.",
+    "Hints suggested by:\nIHNN, Beaker, MrPokemon11, Ember, TheM8, NewSoupVi, Jasper Bird, T1mshady, KF, Yoshi348, Berserker, BowlinJim, oddGarrett, Pink Switch, Rever, Ishigh, snolid, CodeGorilla, Quas NaArt, Scipio, Projectyl, ManyPinkHats, m4elstrom.",
   };
 
   return jokeHints;
