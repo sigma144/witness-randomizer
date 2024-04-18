@@ -1271,7 +1271,6 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 				}
 			}
 			else {
-				void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
 				if (pow(headPosition[0] - laserPosition[0], 2) + pow(headPosition[1] - laserPosition[1], 2) + pow(headPosition[2] - laserPosition[2], 2) < 120) {
 					currentLaser = candidate;
 				}
