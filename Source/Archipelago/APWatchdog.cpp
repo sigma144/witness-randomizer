@@ -1226,6 +1226,12 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 			ap->SetNotify({ key });
 			ap->Set(key, false, true, { { "default", false } });
 		}
+
+		for (int laserID : lasers) {
+			std::string key = "WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID);
+			ap->SetNotify({ key });
+			ap->Set(key, false, true, { { "default", false } });
+		}
 	}
 
 	std::set<inGameHint> seenMessages = {};
@@ -1690,11 +1696,11 @@ void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncprogress) {
 	int laserNo = laserIDsToLasers[laserID];
 
-	bool laserActiveAccordingToDataPackage = value == true;
+	bool laserActiveAccordingToDataStore = value == true;
 
 	bool laserActiveInGame = ReadPanelData<int>(laserNo, LASER_TARGET) != 0;
 
-	if (laserActiveInGame == laserActiveAccordingToDataPackage) return;
+	if (laserActiveInGame == laserActiveAccordingToDataStore) return;
 
 	if(!laserActiveInGame && syncprogress)
 	{
