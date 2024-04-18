@@ -1227,7 +1227,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 			ap->Set(key, false, true, { { "default", false } });
 		}
 
-		for (int laserID : lasers) {
+		for (int laserID : allLasers) {
 			std::string key = "WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID);
 			ap->SetNotify({ key });
 			ap->Set(key, false, true, { { "default", false } });
