@@ -32,6 +32,17 @@ void Randomizer::GenerateNormal() {
 	if (doubleMode) ShufflePanels(false);
 }
 
+void Randomizer::GenerateVariety() {
+	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
+	puzzles->setSeed(seed, seedIsRNG, colorblind);
+	puzzles->GenerateAllV();
+	//if (doubleMode) ShufflePanels(false);
+
+	ClientWindow* clientWindow = ClientWindow::get();
+	clientWindow->setStatusMessage("Starting variety symbol watchdogs...");
+	Panel::StartArrowWatchdogs(_shuffleMapping);
+}
+
 void Randomizer::GenerateHard() {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
 	puzzles->setSeed(seed, seedIsRNG, colorblind);

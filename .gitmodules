@@ -4,3 +4,6 @@
 [submodule "Source/Archipelago/Client/wswrap"]
 	path = Source/Archipelago/Client/wswrap
 	url = https://github.com/black-sliver/wswrap
+[submodule "Variety-Randomiser"]
+	path = Variety-Randomiser
+	url = https://github.com/Penguin12335/Variety-Randomiser.git

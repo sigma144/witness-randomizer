@@ -64,7 +64,7 @@ public:
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);
 	static void drawText(int id, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB, const std::vector<float>& finalLine);
-	static void drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options);
+	static void drawSeedAndDifficulty(int id, int seed, std::string mode, bool setSeed, bool options);
 	static void drawGoodLuckPanel(int id);
     static void SetRequiredLasers(int mountain, int challenge);
 

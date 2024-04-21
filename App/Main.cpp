@@ -260,6 +260,8 @@ void Main::randomize() {
 		randomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL)
 		randomizer->GenerateNormal();
+	else if (puzzleRando == VARIETY)
+		randomizer->GenerateVariety();
 	else
 		Random::seed(seed);
 
@@ -272,6 +274,8 @@ void Main::randomize() {
 		apRandomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
 		apRandomizer->GenerateNormal();
+	else if (puzzleRando == VARIETY)
+		apRandomizer->GenerateVariety();
 
 	memory->WritePanelData(0x00064, VIDEO_STATUS_COLOR + 8, seed);
 	memory->WritePanelData(0x00182, VIDEO_STATUS_COLOR + 8, puzzleRando);
