@@ -132,6 +132,8 @@ void APWatchdog::action() {
 
 		QueueItemMessages();
 
+		HandleInGameHints(0.5f);
+
 		CheckFinalRoom();
 
 		CheckSolvedPanels();
@@ -141,7 +143,6 @@ void APWatchdog::action() {
 		HandlePowerSurge();
 		HandleDeathLink();
 		DisableCollisions();
-		HandleInGameHints(0.5f);
 
 		UpdateInfiniteChallenge();
 
@@ -1214,6 +1215,8 @@ void APWatchdog::DisableCollisions() {
 }
 
 void APWatchdog::HandleInGameHints(float deltaSeconds) {
+	if (!FirstEverLocationCheckDone) return;
+
 	std::string line1 = "";
 	std::string line2 = "";
 	std::string line3 = "";
@@ -1288,8 +1291,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 				seenMessages.insert(inGameHints[laserID]);
 				if (!seenLasers.count(laserID)) {
 					WritePanelData<float>(laserID, 0x108, { 1.0001f });
-					int locationId = inGameHints[laserID].locationID;
-					if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout) ap->LocationScouts({locationId}, 2);
+					int64_t locationId = inGameHints[laserID].locationID;
+					if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({locationId}, 2);
 					ap->Set("WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID), NULL, false, { {"replace", true} });
 					seenLasers.insert(laserID);
 				}
@@ -1305,8 +1308,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		if (audioLogHasBeenPlayed || logPlaying) {
 			seenMessages.insert(inGameHints[logId]);
 			if (!seenAudioLogs.count(logId)) {
-				int locationId = inGameHints[logId].locationID;
-				if (locationId != -1 && inGameHints[logId].playerNo == pNO && inGameHints[logId].allowScout) ap->LocationScouts({ locationId }, 2);
+				int64_t locationId = inGameHints[logId].locationID;
+				if (locationId != -1 && inGameHints[logId].playerNo == pNO && inGameHints[logId].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({ locationId }, 2);
 				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
 				seenAudioLogs.insert(logId);
 			}
