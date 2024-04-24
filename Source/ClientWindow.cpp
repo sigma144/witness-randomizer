@@ -493,7 +493,7 @@ void ClientWindow::addVersionDisplay(int& currentY) {
 
 	LPCWSTR versionStr = L"Archipelago Version: " AP_VERSION_STR;
 	if (AP_VERSION_STR_BACKCOMPAT != "") {
-		versionStr = L"Archipelago Versions: " AP_VERSION_STR_BACKCOMPAT L" - " AP_VERSION_STR;
+		versionStr = L"Compatible Archipelago Versions: " AP_VERSION_STR_BACKCOMPAT L" - " AP_VERSION_STR;
 	}
 
 	// AP version name. Left-justified.
