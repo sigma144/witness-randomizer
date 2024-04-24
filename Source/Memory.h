@@ -331,6 +331,7 @@ public:
 
 	uint64_t globalTextureCatalog;
 	uint64_t acquireByNameFunction;
+	uint64_t loadTextureMapFunction;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;

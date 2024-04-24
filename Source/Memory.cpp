@@ -432,6 +432,22 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x57, 0x48, 0x83, 0xEC, 0x50, 0x48, 0x8B, 0x41 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 7] == 0x48 && data[index - 6] == 0x8B && data[index - 5] == 0xD9 && data[index - 4] == 0x48 && data[index - 3] == 0x8B && data[index - 2] == 0x49 && data[index] == 0xE8) {
+				index++;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->loadTextureMapFunction = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+		return true;
+	});	
+
 	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x57, 0x48, 0x81, 0xEC, 0x10, 0x01, 0x00, 0x00, 0x48, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index] == 0xF3 && data[index + 1] == 0x44 && data[index + 2] == 0x0F && data[index + 3] == 0x10 && data[index + 4] == 0x35) {
