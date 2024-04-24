@@ -1,10 +1,9 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
-
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #include "Watchdog.h"
 #include "Quaternion.h"
 #include <thread>
+#include "Panel.h"
+#include "Randomizer.h"
 
 void Watchdog::start()
 {
@@ -35,8 +34,28 @@ void KeepWatchdog::action() {
 
 //Arrow Watchdog - To run the arrow puzzles
 
+ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f) {
+	Panel panel(id);
+	this->id = id;
+	grid = backupGrid = panel._grid;
+	width = static_cast<int>(grid.size());
+	height = static_cast<int>(grid[0].size());
+	pillarWidth = tracedLength = 0;
+	complete = false;
+	style = ReadPanelData<int>(id, STYLE_FLAGS);
+	DIRECTIONS = { Point(0, 2), Point(0, -2), Point(2, 0), Point(-2, 0), Point(2, 2), Point(2, -2), Point(-2, -2), Point(-2, 2) };
+	exitPos = panel.xy_to_loc(panel._endpoints[0].GetX(), panel._endpoints[0].GetY());
+	exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
+	exitPoint = (width / 2 + 1) * (height / 2 + 1);
+}
+
+ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
+	this->pillarWidth = pillarWidth;
+	if (pillarWidth > 0) exitPoint = (width / 2) * (height / 2 + 1);
+}
+
 void ArrowWatchdog::action() {
-	int length = ReadPanelData<int>(id, TRACED_EDGES);
+	int length = ReadPanelDataIntentionallyUnsafe<int>(id, TRACED_EDGES);
 	if (length != tracedLength) {
 		complete = false;
 	}
@@ -173,19 +192,19 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 
 void BridgeWatchdog::action()
 {
-	int length1 = _memory->ReadPanelData<int>(id1, TRACED_EDGES);
-	int length2 = _memory->ReadPanelData<int>(id2, TRACED_EDGES);
+	int length1 = ReadPanelData<int>(id1, TRACED_EDGES);
+	int length2 = ReadPanelData<int>(id2, TRACED_EDGES);
 	if (solLength1 > 0 && length1 == 0) {
-		_memory->WritePanelData<int>(id2, STYLE_FLAGS, { _memory->ReadPanelData<int>(id2, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id2, STYLE_FLAGS, { ReadPanelData<int>(id2, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
 	}
 	if (solLength2 > 0 && length2 == 0) {
-		_memory->WritePanelData<int>(id1, STYLE_FLAGS, { _memory->ReadPanelData<int>(id1, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id1, STYLE_FLAGS, { ReadPanelData<int>(id1, STYLE_FLAGS) | Panel::Style::HAS_DOTS });
 	}
 	if (length1 != solLength1 && length1 > 0 && !checkTouch(id2)) {
-		_memory->WritePanelData<int>(id2, STYLE_FLAGS, { _memory->ReadPanelData<int>(id2, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id2, STYLE_FLAGS, { ReadPanelData<int>(id2, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
 	}
 	if (length2 != solLength2 && length2 > 0 && !checkTouch(id1)) {
-		_memory->WritePanelData<int>(id1, STYLE_FLAGS, { _memory->ReadPanelData<int>(id1, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
+		WritePanelData<int>(id1, STYLE_FLAGS, { ReadPanelData<int>(id1, STYLE_FLAGS) & ~Panel::Style::HAS_DOTS });
 	}
 	solLength1 = length1;
 	solLength2 = length2;
@@ -193,11 +212,11 @@ void BridgeWatchdog::action()
 
 bool BridgeWatchdog::checkTouch(int id)
 {
-	int length = _memory->ReadPanelData<int>(id, TRACED_EDGES);
+	int length = ReadPanelData<int>(id, TRACED_EDGES);
 	if (length == 0) return false;
-	int numIntersections = _memory->ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<int> intersectionFlags = _memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
-	std::vector<SolutionPoint> edges = _memory->ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, length);
+	int numIntersections = ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersectionFlags = ReadArray<int>(id, DOT_FLAGS, numIntersections);
+	std::vector<SolutionPoint> edges = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, length);
 	for (const SolutionPoint& sp : edges) if (intersectionFlags[sp.pointA] == Decoration::Dot_Intersection || intersectionFlags[sp.pointB] == Decoration::Dot_Intersection) return true;
 	return false;
 }
@@ -209,6 +228,20 @@ void TreehouseWatchdog::action()
 		WritePanelData<int>(0x17DAE, NEEDS_REDRAW, { 1 });
 		terminate = true;
 	}
+}
+
+// Jungle watchdog
+
+JungleWatchdog::JungleWatchdog(int id, std::vector<int> correctSeq1, std::vector<int> correctSeq2) : Watchdog(0.5f) {
+	this->id = id;
+	int size = ReadPanelData<int>(id, NUM_DOTS);
+	sizes = ReadArray<int>(id, DOT_FLAGS, ReadPanelData<int>(id, NUM_DOTS));
+	this->correctSeq1 = correctSeq1;
+	this->correctSeq2 = correctSeq2;
+	state = false;
+	tracedLength = 0;
+	ptr1 = ReadPanelData<long>(id, DOT_SEQUENCE);
+	ptr2 = ReadPanelData<long>(id, DOT_SEQUENCE_REFLECTION);
 }
 
 void JungleWatchdog::action()
@@ -235,6 +268,8 @@ void JungleWatchdog::action()
 		}
 	}
 }
+
+// Town door watchdog
 
 void TownDoorWatchdog::action()
 {

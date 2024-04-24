@@ -1,11 +1,14 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
-
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #include "Special.h"
+
+#include "../App/Version.h"
+//#include "Archipelago/SkipSpecialCases.h"
 #include "MultiGenerate.h"
 #include "Quaternion.h"
-#include "../App/Version.h"
+#include "Watchdog.h"
+
+#include <thread>
+#include "Utilities.h"
 
 void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
 	do {
@@ -32,6 +35,8 @@ void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
 
 void Special::generateReflectionDotPuzzle(std::shared_ptr<Generate> gen, int id1, int id2, std::vector<std::pair<int, int>> symbols, Panel::Symmetry symmetry, bool split)
 {
+	Memory* memory = Memory::get();
+
 	gen->setFlagOnce(Generate::Config::DisableWrite);
 	gen->generate(id1, symbols);
 	std::shared_ptr<Panel> puzzle = gen->_panel;
@@ -65,8 +70,8 @@ void Special::generateReflectionDotPuzzle(std::shared_ptr<Generate> gen, int id1
 			Point sp = puzzle->get_sym_point(dot.first, dot.second, symmetry);
 			flippedPuzzle->_grid[sp.first][sp.second] &= ~IntersectionFlags::DOT_IS_INVISIBLE;
 		}
-		Color color = flippedPuzzle->_memory->ReadPanelData<Color>(id2, SUCCESS_COLOR_A);
-		flippedPuzzle->_memory->WritePanelData<Color>(id2, PATTERN_POINT_COLOR, { color });
+		Color color = memory->ReadPanelData<Color>(id2, SUCCESS_COLOR_A);
+		memory->WritePanelData<Color>(id2, PATTERN_POINT_COLOR, { color });
 	}
 	flippedPuzzle->_startpoints.clear();
 	for (Point p : puzzle->_startpoints) {
@@ -179,7 +184,7 @@ void Special::generateColorFilterPuzzle(int id, Point size, const std::vector<st
 	}
 	generator->setFlagOnce(Generate::Config::WriteColors);
 	generator->write(id);
-	WriteArray(id, DECORATION_COLORS, symbolColors);
+	Memory::get()->WriteArray(id, DECORATION_COLORS, symbolColors);
 	generator->resetConfig();
 }
 
@@ -187,7 +192,7 @@ void Special::generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSeque
 	generator->setFlag(Generate::Config::DisableReset);
 	generateSoundDotPuzzle(id1, { 5, 5 }, dotSequence, writeSequence);
 	generator->write(id2);
-	WritePanelData(id2, PATTERN_POINT_COLOR, ReadPanelData<Color>(id2, SUCCESS_COLOR_A));
+	Memory::get()->WritePanelData(id2, PATTERN_POINT_COLOR, Memory::get()->ReadPanelData<Color>(id2, SUCCESS_COLOR_A));
 	generator->resetConfig();
 }
 
@@ -227,21 +232,25 @@ void Special::generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSeq
 			if (dotSequence[i] == DOT_MEDIUM) dotSequence[i] = 2;
 			if (dotSequence[i] == DOT_LARGE) dotSequence[i] = 3;
 		}
-		WritePanelData(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence.size()) });
-		WriteArray(id, DOT_SEQUENCE, dotSequence, true);
+
+		Memory* memory = Memory::get();
+		memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence.size()) });
+		memory->WriteArray(id, DOT_SEQUENCE, dotSequence, true);
 	}
 	generator->write(id);
 }
 
 void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored, bool writeSequence)
 {
+	Memory* memory = Memory::get();
+
 	generator->resetConfig();
 	generator->setFlagOnce(Generate::Config::DisableWrite);
 	generator->setFlagOnce(Generate::Config::LongPath);
 	generator->setSymmetry(Panel::Symmetry::Rotational);
 	generator->setGridSize(size.first, size.second);
 	if (id != 0x00AFB) {
-		WritePanelData(id, SUCCESS_COLOR_B, ReadPanelData<Color>(id, SUCCESS_COLOR_A));
+		memory->WritePanelData(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
 		generator->setSymbol(Decoration::Start, 0, generator->_height - 1); generator->setSymbol(Decoration::Start, generator->_width - 1, 0);
 		generator->setSymbol(Decoration::Exit, 0, 0); generator->setSymbol(Decoration::Exit, generator->_width - 1, generator->_height - 1);
 	}
@@ -317,23 +326,25 @@ void Special::generateSoundDotReflectionPuzzle(int id, Point size, std::vector<i
 			if (dotSequence1[i] == DOT_MEDIUM) dotSequence1[i] = 2;
 			if (dotSequence1[i] == DOT_LARGE) dotSequence1[i] = 3;
 		}
-		WritePanelData(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence1.size()) });
-		WriteArray(id, DOT_SEQUENCE, dotSequence1, true);
+		memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence1.size()) });
+		memory->WriteArray(id, DOT_SEQUENCE, dotSequence1, true);
 		for (int i = 0; i < dotSequence2.size(); i++) {
 			if (dotSequence2[i] == DOT_SMALL) dotSequence2[i] = 1;
 			if (dotSequence2[i] == DOT_MEDIUM) dotSequence2[i] = 2;
 			if (dotSequence2[i] == DOT_LARGE) dotSequence2[i] = 3;
 		}
-		WritePanelData(id, DOT_SEQUENCE_LEN_REFLECTION, { static_cast<int>(dotSequence2.size()) });
-		WriteArray(id, DOT_SEQUENCE_REFLECTION, dotSequence2, true);
+		memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { static_cast<int>(dotSequence2.size()) });
+		memory->WriteArray(id, DOT_SEQUENCE_REFLECTION, dotSequence2, true);
 	}
 	generator->write(id);
-	WritePanelData(id, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(id, POWER_OFF_ON_FAIL, 0);
 	generator->setSymmetry(Panel::Symmetry::None);
 	if (dotSequence1 != dotSequence2 && id != 0x00AFB) (new JungleWatchdog(id, dotSequence1, dotSequence2))->start();
 }
 
 bool Special::generateSoundDotReflectionSpecial(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored) {
+	Memory* memory = Memory::get(); 
+	
 	generator->resetConfig();
 	generator->resetVars();
 	generator->setFlagOnce(Generate::Config::DisableWrite);
@@ -417,15 +428,15 @@ bool Special::generateSoundDotReflectionSpecial(int id, Point size, std::vector<
 		if (dotSequence1[i] == DOT_MEDIUM) dotSequence1[i] = 2;
 		if (dotSequence1[i] == DOT_LARGE) dotSequence1[i] = 3;
 	}
-	WritePanelData(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence1.size()) });
-	WriteArray(id, DOT_SEQUENCE, dotSequence1, true);
+	memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence1.size()) });
+	memory->WriteArray(id, DOT_SEQUENCE, dotSequence1, true);
 	for (int i = 0; i < dotSequence2.size(); i++) {
 		if (dotSequence2[i] == DOT_SMALL) dotSequence2[i] = 1;
 		if (dotSequence2[i] == DOT_MEDIUM) dotSequence2[i] = 2;
 		if (dotSequence2[i] == DOT_LARGE) dotSequence2[i] = 3;
 	}
-	WritePanelData(id, DOT_SEQUENCE_LEN_REFLECTION, { static_cast<int>(dotSequence2.size()) });
-	WriteArray(id, DOT_SEQUENCE_REFLECTION, dotSequence2, true);
+	memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { static_cast<int>(dotSequence2.size()) });
+	memory->WriteArray(id, DOT_SEQUENCE_REFLECTION, dotSequence2, true);
 	generator->_panel->_startpoints = { { 0, 0}, { generator->_width - 1, 0 }, { 0, generator->_height - 1 }, { generator->_width - 1, generator->_height - 1 } };
 	generator->write(id);
 	generator->setSymmetry(Panel::Symmetry::None);
@@ -517,11 +528,13 @@ void Special::generateRGBStonePuzzleH(int id) {
 }
 
 void Special::generateRGBDotPuzzleH(int id) {
-	WritePanelData(id, PATTERN_POINT_COLOR, {1, 0, 0, 1});
-	WritePanelData(id, PATTERN_POINT_COLOR_A, { 0, 1, 1, 1 });
-	WritePanelData(id, PATTERN_POINT_COLOR_B, { 1, 1, 0, 1 });
-	WritePanelData(id, ACTIVE_COLOR, { 0, 1, 1, 1 });
-	WritePanelData(id, REFLECTION_PATH_COLOR, { 1, 1, 0, 1 });
+	Memory* memory = Memory::get();
+
+	memory->WritePanelData<float>(id, PATTERN_POINT_COLOR, {1, 0, 0, 1});
+	memory->WritePanelData<float>(id, PATTERN_POINT_COLOR_A, { 0, 1, 1, 1 });
+	memory->WritePanelData<float>(id, PATTERN_POINT_COLOR_B, { 1, 1, 0, 1 });
+	memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0, 1, 1, 1 });
+	memory->WritePanelData<float>(id, REFLECTION_PATH_COLOR, { 1, 1, 0, 1 });
 	generator->setGridSize(7, 7);
 	generator->setSymmetry(Panel::Symmetry::Rotational);
 	generator->setSymbol(Decoration::Exit, 0, 14); generator->setSymbol(Decoration::Exit, 14, 0);
@@ -533,6 +546,8 @@ void Special::generateRGBDotPuzzleH(int id) {
 
 void Special::generateJungleVault(int id)
 {
+	Memory* memory = Memory::get();
+
 	//This panel won't render symbols off the grid, so all I can do is move the dots around
 
 	//a: 4 9 16 23, b: 12, c: 1, ab: 3 5 6 10 11 15 17 18 20 21 22, ac: 14, bc: 2 19, all: 7 8 13
@@ -549,17 +564,19 @@ void Special::generateJungleVault(int id)
 	auto[x2, y2] = generator->_panel->loc_to_xy(generator->pick_random(dotPoints2[sol]));
 	generator->set(x1, y1, Decoration::Dot_Intersection);
 	generator->set(x2, y2, Decoration::Dot_Intersection);
-	WritePanelData(id, SEQUENCE_LEN, static_cast<int>(sols[sol].size()));
-	WriteArray(id, SEQUENCE, sols[sol], true);
+	memory->WritePanelData(id, SEQUENCE_LEN, static_cast<int>(sols[sol].size()));
+	memory->WriteArray(id, SEQUENCE, sols[sol], true);
 	generator->write(id);
 }
 
 void Special::generateApplePuzzle(int id, bool changeExit, bool flip)
 {
+	Memory* memory = Memory::get();
+
 	//Is there a way to move the apples? Might be impossible without changing the game files.
-	int numIntersections = ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<int> intersectionFlags = ReadArray<int>(id, DOT_FLAGS, numIntersections);
-	std::vector<int> sequence = ReadArray<int>(id, SEQUENCE, 6);
+	int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersectionFlags = memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
+	std::vector<int> sequence = memory->ReadArray<int>(id, SEQUENCE, 6);
 	int exit = sequence[5];
 	std::vector<int> exits;
 	if (changeExit) {
@@ -573,28 +590,28 @@ void Special::generateApplePuzzle(int id, bool changeExit, bool flip)
 			sequence[i] = newExit;
 			newExit = (newExit - 1) / 2;
 		}
-		int numConnections = ReadPanelData<int>(id, NUM_CONNECTIONS);
-		std::vector<int> connections_a = ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
-		std::vector<int> connections_b = ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
+		int numConnections = memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
+		std::vector<int> connections_a = memory->ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
+		std::vector<int> connections_b = memory->ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
 		for (int i = 0; i < numConnections; i++) {
 			if (connections_b[i] == exit) {
 				connections_a[i] = sequence[4];
 				connections_b[i] = sequence[5];
 			}
 		}
-		WriteArray(id, DOT_FLAGS, intersectionFlags);
-		WriteArray(id, SEQUENCE, sequence, true);
-		WriteArray(id, DOT_CONNECTION_A, connections_a);
-		WriteArray(id, DOT_CONNECTION_B, connections_b);
-		WritePanelData(id, NEEDS_REDRAW, 1);
+		memory->WriteArray(id, DOT_FLAGS, intersectionFlags);
+		memory->WriteArray(id, SEQUENCE, sequence, true);
+		memory->WriteArray(id, DOT_CONNECTION_A, connections_a);
+		memory->WriteArray(id, DOT_CONNECTION_B, connections_b);
+		memory->WritePanelData(id, NEEDS_REDRAW, 1);
 	}
 	if (flip) {
-		std::vector<float> intersections = ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
+		std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
 		for (int i = 0; i < intersections.size(); i += 2) {
 			intersections[i] = 1 - intersections[i];
 		}
-		WriteArray(id, DOT_POSITIONS, intersections);
-		WritePanelData(id, NEEDS_REDRAW, 1);
+		memory->WriteArray(id, DOT_POSITIONS, intersections);
+		memory->WritePanelData(id, NEEDS_REDRAW, 1);
 	}
 }
 
@@ -719,6 +736,8 @@ void Special::generateMountaintop(int id, const std::vector<std::pair<int, int>>
 }
 
 void Special::generateMultiPuzzle(std::vector<int> ids, const std::vector<std::vector<std::pair<int, int>>>& symbolVec, bool flip) {
+	Memory* memory = Memory::get();
+
 	generator->resetConfig();
 	generator->setFlagOnce(Generate::Config::DisableWrite);
 	generator->generate(ids[0]);
@@ -738,8 +757,8 @@ void Special::generateMultiPuzzle(std::vector<int> ids, const std::vector<std::v
 		gens[i].write(ids[i]);
 		generator->incrementProgress();
 		if (symbolVec[0][0].first == (Decoration::Triangle | Decoration::Color::Orange)) { //Hard mode
-			int numIntersections = ReadPanelData<int>(ids[i], NUM_DOTS);
-			std::vector<float> intersections = ReadArray<float>(ids[i], DOT_POSITIONS, numIntersections * 2);
+			int numIntersections = memory->ReadPanelData<int>(ids[i], NUM_DOTS);
+			std::vector<float> intersections = memory->ReadArray<float>(ids[i], DOT_POSITIONS, numIntersections * 2);
 			for (int j = 0; j < intersections.size(); j += 2) {
 				float x = intersections[j], y = intersections[j + 1];
 				if (i == 1) { intersections[j] = y; intersections[j + 1] = x; }
@@ -748,7 +767,7 @@ void Special::generateMultiPuzzle(std::vector<int> ids, const std::vector<std::v
 				if (i == 4) { intersections[j] = 1 - x; }
 				if (i == 5) { intersections[j] = 1 - x; intersections[j + 1] = 1 - y; }
 			}
-			WriteArray(ids[i], DOT_POSITIONS, intersections);
+			memory->WriteArray(ids[i], DOT_POSITIONS, intersections);
 		}
 	}
 	generator->resetConfig();
@@ -862,6 +881,8 @@ bool Special::generate2Bridge(int id1, int id2, std::vector<std::shared_ptr<Gene
 
 void Special::generate2BridgeH(int id1, int id2)
 {
+	Memory* memory = Memory::get();
+
 	std::vector<std::shared_ptr<Generate>> gens;
 	for (int i = 0; i < 3; i++) gens.push_back(std::make_shared<Generate>());
 	for (std::shared_ptr<Generate> g : gens) {
@@ -878,9 +899,9 @@ void Special::generate2BridgeH(int id1, int id2)
 	gens[0]->write(id2);
 	generator->incrementProgress();
 
-	int numIntersections = ReadPanelData<int>(id1, NUM_DOTS);
-	std::vector<int> intersectionFlags = ReadArray<int>(id1, DOT_FLAGS, numIntersections);
-	std::vector<int> intersectionFlags2 = ReadArray<int>(id2, DOT_FLAGS, numIntersections);
+	int numIntersections = memory->ReadPanelData<int>(id1, NUM_DOTS);
+	std::vector<int> intersectionFlags = memory->ReadArray<int>(id1, DOT_FLAGS, numIntersections);
+	std::vector<int> intersectionFlags2 = memory->ReadArray<int>(id2, DOT_FLAGS, numIntersections);
 	for (int x = 0; x < gens[0]->_panel->_width; x += 2) {
 		for (int y = 0; y < gens[0]->_panel->_height; y += 2) {
 			if (gens[0]->get(x, y) == Decoration::Dot_Intersection) {
@@ -893,10 +914,10 @@ void Special::generate2BridgeH(int id1, int id2)
 			}
 		}
 	}
-	WriteArray(id1, DOT_FLAGS, intersectionFlags);
-	WriteArray(id2, DOT_FLAGS, intersectionFlags2);
-	WritePanelData(id1, NEEDS_REDRAW, 1);
-	WritePanelData(id2, NEEDS_REDRAW, 1);
+	memory->WriteArray(id1, DOT_FLAGS, intersectionFlags);
+	memory->WriteArray(id2, DOT_FLAGS, intersectionFlags2);
+	memory->WritePanelData(id1, NEEDS_REDRAW, 1);
+	memory->WritePanelData(id2, NEEDS_REDRAW, 1);
 }
 
 bool Special::generate2BridgeH(int id1, int id2, std::vector<std::shared_ptr<Generate>> gens)
@@ -1042,6 +1063,9 @@ void Special::generateMountainFloor()
 	int rotateIndex = Random::rand() % 3;
 	for (int i = 0; i < 4; i++) {
 		int symbol = generator->get(floorPos[i]);
+
+		correctShapesById[ids[i]] = symbol;
+
 		//Convert to shape
 		Shape shape;
 		for (int j = 0; j < 16; j++) {
@@ -1125,6 +1149,8 @@ void Special::generateMountainFloorH()
 	int combine = 0;
 	for (int i = 0; i < 4; i++) {
 		int symbol = generator->get(floorPos[i]);
+
+		correctShapesById[ids[i]] = symbol;
 		//Convert to shape
 		Shape shape;
 		for (int j = 0; j < 16; j++) {
@@ -1225,20 +1251,23 @@ void Special::generatePivotPanel(int id, Point gridSize, const std::vector<std::
 	gens[0]->_panel->SetGridSymbol(width / 2, 0, Decoration::Exit, Decoration::Color::None);
 	gens[0]->setFlag(Generate::Config::TreehouseColors);
 	gens[0]->write(id);
-	int style = ReadPanelData<int>(id, STYLE_FLAGS);
-	WritePanelData(id, STYLE_FLAGS, { style | Panel::Style::IS_PIVOTABLE });
+	Memory* memory = Memory::get();
+	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	memory->WritePanelData<int>(id, STYLE_FLAGS, { style | Panel::Style::IS_PIVOTABLE });
 }
 
 void Special::modifyGate(int id)
 {
-	int numIntersections = ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<float> intersections = ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
-	std::vector<int> intersectionFlags = ReadArray<int>(id, DOT_FLAGS, numIntersections);
+	Memory* memory = Memory::get();
+
+	int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
+	std::vector<int> intersectionFlags = memory->ReadArray<int>(id, DOT_FLAGS, numIntersections);
 	if (intersectionFlags[24] == 0) return;
-	int numConnections = ReadPanelData<int>(id, NUM_CONNECTIONS);
-	std::vector<int> connections_a = ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
-	std::vector<int> connections_b = ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
-	int style = ReadPanelData<int>(id, STYLE_FLAGS);
+	int numConnections = memory->ReadPanelData<int>(id, NUM_CONNECTIONS);
+	std::vector<int> connections_a = memory->ReadArray<int>(id, DOT_CONNECTION_A, numConnections);
+	std::vector<int> connections_b = memory->ReadArray<int>(id, DOT_CONNECTION_B, numConnections);
+	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
 	intersectionFlags[6] |= Decoration::Start;
 	intersectionFlags[18] |= Decoration::Start;
 	intersectionFlags[11] = Decoration::Dot_Intersection;
@@ -1261,18 +1290,18 @@ void Special::modifyGate(int id)
 		}
 		if (!pushed) symData.push_back(0);
 	}
-	WriteArray(id, DOT_FLAGS, intersectionFlags);
-	WriteArray(id, DOT_POSITIONS, intersections);
-	WriteArray(id, DOT_CONNECTION_A, connections_a);
-	WriteArray(id, DOT_CONNECTION_B, connections_b);
-	WritePanelData(id, NUM_DOTS, numIntersections + 1);
-	WritePanelData(id, NUM_CONNECTIONS, numConnections + 1);
-	WriteArray(id, REFLECTION_DATA, symData);
-	Color successColor = ReadPanelData<Color>(id, SUCCESS_COLOR_A);
-	WritePanelData(id, SUCCESS_COLOR_B, successColor);
-	WritePanelData(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
-	WritePanelData(id, STYLE_FLAGS, style | Panel::Style::HAS_DOTS);
-	WritePanelData(id, NEEDS_REDRAW, 1);
+	memory->WriteArray(id, DOT_FLAGS, intersectionFlags);
+	memory->WriteArray(id, DOT_POSITIONS, intersections);
+	memory->WriteArray(id, DOT_CONNECTION_A, connections_a);
+	memory->WriteArray(id, DOT_CONNECTION_B, connections_b);
+	memory->WritePanelData(id, NUM_DOTS, numIntersections + 1);
+	memory->WritePanelData(id, NUM_CONNECTIONS, numConnections + 1);
+	memory->WriteArray(id, REFLECTION_DATA, symData);
+	Color successColor = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
+	memory->WritePanelData(id, SUCCESS_COLOR_B, successColor);
+	memory->WritePanelData<float>(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
+	memory->WritePanelData(id, STYLE_FLAGS, style | Panel::Style::HAS_DOTS);
+	memory->WritePanelData(id, NEEDS_REDRAW, 1);
 }
 
 void Special::addDecoyExits(std::shared_ptr<Generate> gen, int amount) {
@@ -1324,11 +1353,15 @@ void Special::initPillarSymmetry(std::shared_ptr<Generate> gen, int id, Panel::S
 	case Panel::Symmetry::PillarRotational:
 		gen->setSymbol(Decoration::Start, 0, gen->_height - 1);  gen->setSymbol(Decoration::Exit, 6, gen->_height - 1), gen->setSymbol(Decoration::Exit, 0, 0);  gen->setSymbol(Decoration::Start, 6, 0); break;
 	}
-	WritePanelData(id, SUCCESS_COLOR_B, { ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
+
+	Memory* memory = Memory::get();
+	memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, { memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
 }
 
 void Special::generateSymmetryGate(int id)
 {
+	Memory* memory = Memory::get();
+
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::DisableWrite);
 	generator->setFlag(Generate::Config::WriteInvisible);
@@ -1352,8 +1385,8 @@ void Special::generateSymmetryGate(int id)
 	generator->_panel->miny = 0.08f;
 	generator->_panel->maxy = 0.92f;
 	generator->write(id);
-	int numIntersections = ReadPanelData<int>(id, NUM_DOTS);
-	std::vector<float> intersections = ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
+	int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
 	std::vector<int> symData;
 	for (int i = 0; i < numIntersections; i++) {
 		bool pushed = false;
@@ -1369,7 +1402,7 @@ void Special::generateSymmetryGate(int id)
 		if (!pushed)
 			symData.push_back(0);
 	}
-	WriteArray(id, REFLECTION_DATA, symData);
+	memory->WriteArray(id, REFLECTION_DATA, symData);
 }
 
 bool Special::checkDotSolvability(std::shared_ptr<Panel> panel1, std::shared_ptr<Panel> panel2, Panel::Symmetry correctSym) {
@@ -1465,23 +1498,60 @@ void Special::createText(int id, std::string text, std::vector<float>& intersect
 	//345
 	//678
 	std::map<char, std::vector<int>> coords = {
-		{ 'a',{ 6,0,2,8,5,3 } },{ 'c',{ 2,0,6,8 } },{ 'd',{ 0,1,5,7,6,0 } },{ 'e',{ 2,0,3,5,3,6,8 } },{ 'g',{ 2,0,6,8,5,4 } },{ 'i',{ 0,2,1,7,6,8 } },{ 'k',{ 0,6,3,2,3,8 } },
-		{ 'l',{ 0,6,8 } },{ 'm',{ 6,0,4,2,8 } },{ 'n',{ 6,0,8,2 } },{ 'o',{ 0,2,8,6,0 } },{ 'p',{ 6,0,2,5,3 } },{ 'r',{ 6,0,2,5,3,8 } },{ 's',{ 2,0,3,5,8,6 } },
-		{ 't',{ 0,2,1,7 } },{ 'u',{ 0,6,8,2 } },{ 'x',{ 0,8,4,2,6 } },{ '0',{ 0,2,8,6,0 } },{ '1',{ 0,1,7,6,8 } },{ '2',{ 0,2,5,3,6,8 } },{ '3',{ 0,2,5,3,5,8,6 } },
-		{ '4',{ 0,3,5,2,8 } },{ '5',{ 2,0,3,5,8,6 } },{ '6',{ 2,0,6,8,5,3 } },{ '7',{ 0,2,7 } },{ '8',{ 0,2,8,6,0,3,5 } },{ '9',{ 6,8,2,0,3,5 } },
-		{ '!',{ 1,4,7 } },{ ' ',{ } },{ '.',{ 7 } },{ '-',{ 3,5 } }
+		{ 'a',{ 6,0,2,8,5,3 } },
+		{ 'b',{ 0,2,8,6,0,3,5 } },
+		{ 'c',{ 2,0,6,8 } },
+		{ 'd',{ 0,1,5,7,6,0 } },
+		{ 'e',{ 2,0,3,5,3,6,8 } },
+		{ 'f',{ 6,0,2,0,3,5 } },
+		{ 'g',{ 2,0,6,8,5,4 } },
+		{ 'h',{ 6,0,3,5,2,8 } },
+		{ 'i',{ 0,2,1,7,6,8 } },
+		{ 'j',{ 3,6,8,2 } },
+		{ 'k',{ 0,6,3,2,3,8 } },
+		{ 'l',{ 0,6,8 } },
+		{ 'm',{ 6,0,4,2,8 } },
+		{ 'n',{ 6,0,8,2 } },
+		{ 'o',{ 0,2,8,6,0 } },
+		{ 'p',{ 6,0,2,5,3 } },
+		{ 'q',{ 0,2,8,4,8,6,0 } },
+		{ 'r',{ 6,0,2,5,3,8 } },
+		{ 's',{ 2,0,3,5,8,6 } },
+		{ 't',{ 0,2,1,7 } },
+		{ 'u',{ 0,6,8,2 } },
+		{ 'v',{ 0,7,2 } },
+		{ 'w',{ 0,6,4,8,2 } },
+		{ 'x',{ 0,8,4,2,6 } },
+		{ 'y',{ 0,4,7,4,2 } },
+		{ 'z',{ 0,2,6,8 } },
+		{ '0',{ 0,2,8,6,0 } },
+		{ '1',{ 0,1,7,6,8 } },
+		{ '2',{ 0,2,5,3,6,8 } },
+		{ '3',{ 0,2,5,3,5,8,6 } },
+		{ '4',{ 0,3,5,2,8 } },
+		{ '5',{ 2,0,3,5,8,6 } },
+		{ '6',{ 2,0,6,8,5,3 } },
+		{ '7',{ 0,2,7 } },
+		{ '8',{ 0,2,8,6,0,3,5 } },
+		{ '9',{ 6,8,2,0,3,5 } },
+		{ '!',{ 1,4,7 } },
+		{ ' ',{ } },
+		{ '.',{ 7 } },
+		{ '-',{ 3,5 } },
+		{ ':',{ 4,7 } },
+		{ '/', {6,1} },
 	};
 
 	float spacingX = (right - left) / (text.size() * 3 - 1);
 	float spacingY = (top - bottom) / 2;
 
 	for (int i = 0; i < text.size(); i++) {
-		char c = text[i];
+		char c = std::tolower(text[i]);
 		for (int j = 0; j < coords[c].size(); j++) {
 			int n = coords[c][j];
 			intersections.emplace_back((n % 3 + i * 3) * spacingX + left);
 			intersections.emplace_back(1 - ((2 - n / 3) * spacingY + bottom));
-			if (j > 0 && !(c == '!' && j == 2)) {
+			if (j > 0 && !(c == '!' && j == 2) && !(c == ':')) {
 				connectionsA.emplace_back(static_cast<int>(intersections.size()) / 2 - 2);
 				connectionsB.emplace_back(static_cast<int>(intersections.size()) / 2 - 1);
 			}
@@ -1506,15 +1576,15 @@ void Special::drawText(int id, std::vector<float>& intersections, std::vector<in
 		}
 	}
 
-	Panel panel;
-	panel._memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
-	panel._memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
-	panel._memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
-	panel._memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
-	panel._memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
-	panel._memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
-	panel._memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	Memory* memory = Memory::get();
+	memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { 0.6f });
+	memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
 void Special::drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options)
@@ -1526,13 +1596,18 @@ void Special::drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, b
 	createText(id, hard ? "expert" : "normal", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.25f, 0.4f);
 	std::string seedStr = std::to_string(seed);
 	createText(id, seedStr, intersections, connectionsA, connectionsB, 0.5f - seedStr.size()*0.06f, 0.5f + seedStr.size()*0.06f, setSeed ? 0.6f : 0.65f, setSeed ? 0.75f : 0.8f);
-	if (setSeed) createText(id, "set seed", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.86f, 0.96f);
+	if (setSeed) createText(id, "Archipelago", intersections, connectionsA, connectionsB, 0.05f, 0.95f, 0.86f, 0.96f);
 	std::string version = VERSION_STR;
 	createText(id, version, intersections, connectionsA, connectionsB, 0.98f - version.size()*0.06f, 0.98f, 0.02f, 0.10f);
 	if (options) createText(id, "option", intersections, connectionsA, connectionsB, 0.02f, 0.5f, 0.02f, 0.10f);
 
 	drawText(id, intersections, connectionsA, connectionsB, { 0.1f, 0.5f, 0.9f, 0.5f });
+
+	Memory* memory = Memory::get();
+	memory->WritePanelData(id, PATH_WIDTH_SCALE, 0.5f);
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
+
 
 void Special::drawGoodLuckPanel(int id)
 {
@@ -1549,3 +1624,92 @@ void Special::test() {
 
 }
 
+
+std::string Special::readStringFromPanels(std::vector<int> panelIDs) {
+	std::string output;
+	for (int panelIndex = 0; panelIndex < panelIDs.size(); panelIndex++) {
+		int panelID = panelIDs[panelIndex];
+
+		// First, check to see if this panel has been overridden at all.
+		Memory* memory = Memory::get();
+		if (memory->ReadPanelData<float>(panelID, VIDEO_STATUS_COLOR) == 1.0f) {
+			// This panel hasn't been overridden, which means there is no more string data to read.
+			break;
+		}
+
+		for (int propertyOffset = 0; propertyOffset < 16; propertyOffset += 4) {
+			// Retrieve the data and append it to the array.
+			const int intData = memory->ReadPanelData<int>(panelID, VIDEO_STATUS_COLOR + propertyOffset);
+			output.append(reinterpret_cast<const char*>(&intData), 4);
+
+			// Check to see if the string length matches what we would expect it to be if we had just written 4 bytes
+			//   to it. This will not be the case if the data we just read contains a null terminator.
+			int targetCharCount = panelIndex * 16 + propertyOffset + 4;
+			if (output.length() < targetCharCount) {
+				break;
+			}
+		}
+	}
+
+	return output;
+}
+
+void Special::writeStringToPanels(std::string string, std::vector<int> panelIDs) {
+	for (int panelIndex = 0; panelIndex < panelIDs.size(); panelIndex++) {
+		int panelID = panelIDs[panelIndex];
+
+		// When determining whether a panel has been overridden, we check VIDEO_STATUS_COLOR + 12 to see if it has its
+		//   default value of 1.0f. Clear this value so that we will always know that this panel has been overridden,
+		//   even if we don't actually write enough data to require overriding VIDEO_STATUS_COLOR + 12.
+		Memory* memory = Memory::get();
+		memory->WritePanelData(panelID, VIDEO_STATUS_COLOR + 12, 0);
+
+		// Iterate through the string, writing 4 characters at a time.
+		for (int propertyOffset = 0; propertyOffset < 16; propertyOffset += 4) {
+			int charIndex = propertyOffset + panelIndex * 16;
+			if (charIndex > string.length()) {
+				// We've run past the end of the string.
+				return;
+			}
+
+			// Cast four bytes of the array to an integer and write it to the panel. We don't actually care if we read
+			//   past the end of the character array here because we'll still be capturing the null terminator, which
+			//   is what actually matters for reading.
+			int intData = *reinterpret_cast<const int*>(string.c_str() + charIndex);
+			memory->WritePanelData(panelID, VIDEO_STATUS_COLOR + propertyOffset, intData);
+		}
+	}
+}
+
+void Special::swapStartAndEnd(int id) {
+	Memory* memory = Memory::get();
+	int num_intersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersection_flags = memory->ReadArray<int>(id, DOT_FLAGS, num_intersections);
+
+	for (int i = 0; i < intersection_flags.size(); i++) {
+		int flag = intersection_flags[i];
+		if ((flag & IntersectionFlags::STARTPOINT) == IntersectionFlags::STARTPOINT) {
+			intersection_flags[i] = (flag & !IntersectionFlags::STARTPOINT) | IntersectionFlags::ENDPOINT;
+		}
+		else if ((flag & IntersectionFlags::ENDPOINT) == IntersectionFlags::ENDPOINT) {
+			intersection_flags[i] = (flag & !IntersectionFlags::ENDPOINT) | IntersectionFlags::STARTPOINT;
+		}
+	}
+
+	memory->WriteArray<int>(id, DOT_FLAGS, intersection_flags);
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
+void Special::flipPanelHorizontally(int id) {
+	Memory* memory = Memory::get();
+	int num_intersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, num_intersections * 2);
+
+	for (int i = 0; i < intersections.size(); i += 2){
+		intersections[i] = 1 - intersections[i];
+	}
+
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+}
+
+std::map<int, int> Special::correctShapesById = {};

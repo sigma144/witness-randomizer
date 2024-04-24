@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
-
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #include "windows.h"
 #include <Richedit.h>
@@ -17,6 +14,7 @@
 #include "PuzzleList.h"
 #include "Watchdog.h"
 #include "Random.h"
+#include "Memory.h"
 
 #define IDC_RANDOMIZE 0x401
 #define IDC_TOGGLESPEED 0x402
@@ -145,8 +143,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//Randomize button
 		case IDC_RANDOMIZE:
 		{
+			Memory* memory = Memory::get();
 			bool rerandomize = false;
-			if (Special::ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
+			if (memory->ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
 				if (MessageBox(hwnd, L"Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", NULL, MB_YESNO) == IDYES) {
 					rerandomize = true;
 					seedIsRNG = false;
@@ -173,14 +172,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			else randomizer->seedIsRNG = false;
 
-			randomizer->ClearOffsets();
+			//randomizer->ClearOffsets();
 			
 			ShowWindow(hwndLoadingText, SW_SHOW);
 
 			randomizer->AdjustSpeed(); //Makes certain moving objects move faster
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
-			int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+			int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
 			if (lastSeed > 0 && !rerandomize && !DEBUG) {
 				if (seed != lastSeed && !randomizer->seedIsRNG) {
 					if (MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". Are you sure you want to use seed " + std::to_wstring(seed) + L" instead?").c_str(), NULL, MB_YESNO) == IDNO) {
@@ -188,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+				lastHard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
 				if (!lastHard && hard) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Normal. Are you sure you want to switch to Expert?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
@@ -205,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				bool lastDouble = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+				bool lastDouble = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
 				if (lastDouble && !doubleMode) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Double Mode. Are you sure you want to disable it?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
@@ -246,9 +245,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			randomizer->doubleMode = doubleMode;
 			if (hard) randomizer->GenerateHard(hwndLoadingText);
 			else randomizer->GenerateNormal(hwndLoadingText);
-			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
-			Special::WritePanelData(0x0A3B2, BACKGROUND_REGION_COLOR + 12, doubleMode);
+			memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
+			memory->WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, (int)hard);
+			memory->WritePanelData(0x0A3B2, BACKGROUND_REGION_COLOR + 12, (int)doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndSeed, std::to_wstring(seed).c_str());
 
@@ -412,47 +411,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
       650, 200, 600, DEBUG ? 700 : 320, nullptr, nullptr, hInstance, nullptr);
 
-	//Initialize memory globals constant depending on game version
-	Memory memory("witness64_d3d11.exe");
-	Memory::showMsg = false;
-	for (int g : Memory::globalsTests) {
-		try {
-			Memory::GLOBALS = g;
-			if (memory.ReadPanelData<int>(0x17E52, STYLE_FLAGS) != 0xA040) throw std::exception();
-			break;
-		}
-		catch (std::exception) { Memory::GLOBALS = 0; }
-	}
-	if (!Memory::GLOBALS) {
-		std::ifstream file("WRPGglobals.txt");
-		if (file.is_open()) {
-			file >> std::hex >> Memory::GLOBALS;
-			file.close();
-		}
-		else {
-			std::wstring str = L"Globals ptr not found. Press OK to search for globals ptr (may take a minute or two). Please keep The Witness open during this time.";
-			if (MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK) != IDOK) return 0;
-			int address = memory.findGlobals();
-			if (address) {
-				std::wstringstream ss; ss << std::hex << "Address found: 0x" << address << ". This address wil be automatically loaded next time. Please post an issue on Github with this address so that it can be added in the future.";
-				MessageBox(GetActiveWindow(), ss.str().c_str(), NULL, MB_OK);
-				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
-				ofile << std::hex << address << std::endl;
-				ofile.close();
-			}
-			else {
-				str = L"Address could not be found. Please post an issue on the Github page.";
-				MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK);
-				return 0;
-			}
-		}
-	}
-	Memory::showMsg = true;
-
 	//Get the seed and difficulty previously used for this save file (if applicable)
-	int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-	hard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
-	doubleMode = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+	Memory::create();
+	Memory* memory = Memory::get();
+	int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+	hard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+	doubleMode = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
 
 	//-------------------------Basic window controls---------------------------
 
