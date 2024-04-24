@@ -491,8 +491,13 @@ HWND ClientWindow::addHorizontalRule(int& currentY) {
 void ClientWindow::addVersionDisplay(int& currentY) {
 	const int halfWidth = CLIENT_WINDOW_WIDTH / 2 - STATIC_TEXT_MARGIN;
 
+	LPCWSTR versionStr = L"Archipelago Version: " AP_VERSION_STR;
+	if (AP_VERSION_STR_BACKCOMPAT != "") {
+		versionStr = L"Archipelago Versions: " AP_VERSION_STR_BACKCOMPAT L" - " AP_VERSION_STR;
+	}
+
 	// AP version name. Left-justified.
-	CreateWindow(L"STATIC", L"Archipelago Version: " AP_VERSION_STR,
+	CreateWindow(L"STATIC", versionStr,
 		WS_VISIBLE | WS_CHILD | SS_LEFT,
 		STATIC_TEXT_MARGIN, currentY,
 		halfWidth, STATIC_TEXT_HEIGHT,
@@ -506,19 +511,6 @@ void ClientWindow::addVersionDisplay(int& currentY) {
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT;
-
-	if (AP_VERSION_STR_BACKCOMPAT != "") {
-		currentY += LINE_SPACING;
-
-		// AP version name. Left-justified.
-		CreateWindow(L"STATIC", L"Backwards Compatible with: " AP_VERSION_STR_BACKCOMPAT,
-			WS_VISIBLE | WS_CHILD | SS_LEFT,
-			STATIC_TEXT_MARGIN, currentY,
-			halfWidth, STATIC_TEXT_HEIGHT,
-			hwndRootWindow, NULL, hAppInstance, NULL);
-
-		currentY += STATIC_TEXT_HEIGHT;
-	}
 }
 
 void ClientWindow::addArchipelagoCredentials(int& currentY) {

@@ -655,6 +655,15 @@ void APRandomizer::DisableColorCycle() {
 	for (int id : allPanels) {
 		memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
 	}
+
+	for (int id : mountainOffset) {
+		if (id == 0x09e79) {
+			memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x00089, PATTERN_NAME));
+		}
+		else {
+			memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x0008a, PATTERN_NAME));
+		}
+	}
 }
 
 void APRandomizer::setPuzzleLocks() {
@@ -669,7 +678,7 @@ void APRandomizer::setPuzzleLocks() {
 	}
 }
 
-void APRandomizer::Init() {
+void APRandomizer::InitPanels() {
 	Memory* memory = Memory::get();
 
 	for (int panel : LockablePuzzles) {
@@ -678,9 +687,11 @@ void APRandomizer::Init() {
 		}
 	}
 
-	PanelRestore::RestoreOriginalPanelData();
-
 	Special::SetVanillaMetapuzzleShapes();
+}
+
+void APRandomizer::RestoreOriginals() {
+	PanelRestore::RestoreOriginalPanelData();
 }
 
 void APRandomizer::GenerateNormal() {

@@ -349,6 +349,16 @@ inline std::vector<int> challengePanels = {
 //	0x0356B, // Challenge Vault Box
 };
 
+inline std::vector<int> mountainOffset = {
+    0x09E73, // Mountain 1 Orange 1
+    0x09E75, // Mountain 1 Orange 2
+    0x09E78, // Mountain 1 Orange 3
+    0x09E79, // Mountain 1 Orange 4
+    0x09E6C, // Mountain 1 Orange 5
+    0x09E6F, // Mountain 1 Orange 6
+    0x09E6B, // Mountain 1 Orange 7
+};
+
 inline std::vector<int> mountainMultipanel = {
 	0x09FCC, // Mountain 2 Multipanel 1
 	0x09FCE, // Mountain 2 Multipanel 2

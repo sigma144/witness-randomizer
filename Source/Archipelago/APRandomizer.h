@@ -51,7 +51,8 @@ class APRandomizer {
 
 		bool InfiniteChallenge(bool enable);
 
-		void Init();
+		void InitPanels();
+		void RestoreOriginals();
 
 	private:
 		std::map<int, int> panelIdToLocationId;
