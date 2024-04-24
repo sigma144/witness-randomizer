@@ -281,6 +281,11 @@ void Main::randomize() {
 		apRandomizer->HighContrastMode();
 	}
 
+	if (clientWindow->getSetting(ClientToggleSetting::PanelEffects)) {
+		clientWindow->logLine("Disabling color cycle effects.");
+		apRandomizer->DisableColorCycle();
+	}
+
 	clientWindow->logLine("Start PostGeneration.");
 	apRandomizer->PostGeneration();
 

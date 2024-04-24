@@ -649,6 +649,14 @@ void APRandomizer::HighContrastMode() {
 	}
 }
 
+void APRandomizer::DisableColorCycle() {
+	Memory* memory = Memory::get();
+
+	for (int id : allPanels) {
+		memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
+	}
+}
+
 void APRandomizer::setPuzzleLocks() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();
