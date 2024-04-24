@@ -404,6 +404,34 @@ void Memory::findImportantFunctionAddresses(){
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
 
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xEA, 0x4C, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x48 && data[index + 7] == 0x45 && data[index + 8] == 0x33 && data[index + 9] == 0xC9 && data[index + 10] == 0x41) {
+				index += 3;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->globalTextureCatalog = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x01 && data[index - 1] == 0xE8) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->acquireByNameFunction = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+		return true;
+	});
+
 	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x57, 0x48, 0x81, 0xEC, 0x10, 0x01, 0x00, 0x00, 0x48, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index] == 0xF3 && data[index + 1] == 0x44 && data[index + 2] == 0x0F && data[index + 3] == 0x10 && data[index + 4] == 0x35) {

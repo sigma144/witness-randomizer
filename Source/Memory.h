@@ -329,6 +329,9 @@ public:
 	uint64_t windmillMaxTurnSpeed;
 	uint64_t windmillCurrentTurnSpeed;
 
+	uint64_t globalTextureCatalog;
+	uint64_t acquireByNameFunction;
+
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
 	int DECELERATION;
