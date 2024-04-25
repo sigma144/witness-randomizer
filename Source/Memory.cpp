@@ -1098,6 +1098,30 @@ void Memory::findImportantFunctionAddresses(){
 }
 
 void Memory::findMovementSpeed() {
+	executeSigScan({ 0x84, 0xC0, 0x75, 0x59, 0xBA, 0x20, 0x00, 0x00, 0x00 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		// This int is actually desired_movement_direction, which immediately preceeds camera_position
+		this->CAMERAPOS = Memory::ReadStaticInt(offset, index + 0x19, data) + 0x10;
+
+		// This doesn't have a consistent offset from the scan, so search until we find "mov eax, [addr]"
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x8B && data[index - 1] == 0x05) {
+				this->NOCLIPENABLED = Memory::ReadStaticInt(offset, index, data);
+				return true;
+			}
+		}
+		return false;
+	});
+
+	executeSigScan({ 0xC7, 0x45, 0x77, 0x00, 0x00, 0x80, 0x3F, 0xC7, 0x45, 0x7F, 0x00, 0x00, 0x80, 0x3F }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->CAMERAANG = Memory::ReadStaticInt(offset, index + 0x17, data);
+		return true;
+	});
+
+	executeSigScan({ 0x0F, 0x29, 0x7C, 0x24, 0x70, 0x44, 0x0F, 0x29, 0x54, 0x24, 0x60 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->NOCLIPSPEED = Memory::ReadStaticInt(offset, index + 0x4F, data);
+		return true;
+	});
+
 	executeSigScan({ 0xF3, 0x0F, 0x59, 0xFD, 0xF3, 0x0F, 0x5C, 0xC8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		int found = 0;
 

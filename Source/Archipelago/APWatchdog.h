@@ -150,8 +150,12 @@ private:
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
+	std::set<int> lockedDoors;
+	std::set<int> unlockedDoors;
 	std::map<int, std::vector<float>> collisionPositions;
 	std::set<int> alreadyTriedUpdatingNormally;
+
+	std::map<int, Vector3> recordedEntityPositions = {};
 
 	int storageCheckCounter = 6;
 
@@ -185,7 +189,7 @@ private:
 	void HandleDeathLink();
 	void HandleVision(float deltaSeconds);
 
-	void LookingAtObelisk();
+	void LookingAtLockedEntity();
 
 	void PettingTheDog(float deltaSeconds);
 	bool LookingAtTheDog() const;
@@ -228,6 +232,10 @@ private:
 
 	void DoAprilFoolsEffects(float deltaSeconds);
 
+	Vector3 getCachedEntityPosition(int id);
+
+	Vector3 getCameraDirection();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
@@ -252,6 +260,7 @@ private:
 	int activePanelId = -1;
 	int mostRecentActivePanelId = -1;
 	int mostRecentPanelState = -1;
+	int lookingAtLockedEntity = -1;
 
 	std::string puzzleSkipInfoMessage;
 	float skipButtonHeldTime = 0.f; // Tracks how long the skip button has been held.

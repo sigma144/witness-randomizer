@@ -195,6 +195,10 @@ public:
 		return this->ReadData<float>({ CAMERAPOSITION }, 3);
 	}
 
+	std::vector<float> ReadCameraAngle() {
+		return this->ReadData<float>({ CAMERAANG }, 2);
+	}
+
 	void OpenDoor(int id) {
 		CallVoidFunction(id, openDoorFunction);
 	}
@@ -337,6 +341,10 @@ public:
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
 	int DECELERATION;
+	int NOCLIPENABLED;
+	int CAMERAANG;
+	int CAMERAPOS;
+	int NOCLIPSPEED;
 
 	float DEFAULTACCEL;
 	float DEFAULTDECEL;

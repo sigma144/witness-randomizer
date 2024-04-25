@@ -830,6 +830,10 @@ const inline std::set<int> allObelisks = {
 	0x00367, 0x0A16C, 0x00097, 0x00263, 0x00359, 0x22073,
 };
 
+const inline std::set<int> omniDirectionalEntities = {
+	0x09D9B,
+};
+
 const inline std::set<int> swampLowContrastPanels = {
 	0x0056E,
 	0x00390,
