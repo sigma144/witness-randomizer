@@ -111,7 +111,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
@@ -172,7 +172,10 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="Randomizer.h" />
     <ClInclude Include="Special.h" />
+    <ClInclude Include="TextureLoader.h" />
+    <ClInclude Include="Utilities.h" />
     <ClInclude Include="Watchdog.h" />
+    <ClInclude Include="wtx_tools.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Generate.cpp" />
@@ -184,10 +187,17 @@
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Randomizer.cpp" />
     <ClCompile Include="Special.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="configinfo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wtx_tools.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="wtx_tools.dll.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

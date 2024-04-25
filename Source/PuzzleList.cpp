@@ -7,6 +7,7 @@
 
 void PuzzleList::GenerateAllN()
 {
+	generator->setLoadingHandle(_handle);
 	generator->setLoadingData(336);
 	CopyTargets();
 	GenerateTutorialN();
@@ -264,14 +265,14 @@ void PuzzleList::GenerateQuarryN()
 	//Eraser + Shapes
 	generator->setFlag(Generate::Config::ResetColors);
 	generator->generate(0x021B3, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B4, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B0, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
 	generator->setFlagOnce(Generate::Config::SmallShapes);
 	generator->generate(0x021AF, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
 	generator->generate(0x021AE, Decoration::Poly, 3, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->removeFlag(Generate::Config::ResetColors);
@@ -1280,15 +1281,15 @@ void PuzzleList::GenerateQuarryH()
 	//Eraser + Shapes
 	generator->setFlag(Generate::Config::ResetColors);
 	generator->generate(0x021B3, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B4, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021B0, Decoration::Poly, 4, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
-	specialCase->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
 	generator->setGridSize(4, 4);
 	generator->generate(0x021AF, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 2, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
-	specialCase->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+	Memory::get()->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
 	generator->generate(0x021AE, Decoration::Poly, 3, Decoration::Poly | Decoration::Negative, 1, Decoration::Eraser | Decoration::Color::White, 1);
 	generator->resetConfig();
 	//Eraser + Stars
@@ -2189,7 +2190,7 @@ void PuzzleList::GenerateCavesH()
 		Decoration::Eraser | Decoration::Color::Cyan, 1);
 	//Arrow Pillar
 	generator->resetConfig();
-	specialCase->WritePanelData(0x09DD5, PATH_COLOR, { 0.01f, 0, 0.02f, 1 });
+	//Memory::get()->WritePanelData(0x09DD5, PATH_COLOR, { 0.01f, 0, 0.02f, 1 });
 	generator->backgroundColor = { 0, 0, 0, 1 };
 	generator->arrowColor = { 0.6f, 0, 1, 1 };
 	generator->successColor = { 1, 1, 1, 1 };

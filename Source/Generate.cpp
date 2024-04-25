@@ -224,6 +224,8 @@ void Generate::write(int id)
 
 	incrementProgress();
 
+	Memory* memory = Memory::get();
+
 	if (hasFlag(Config::ResetColors)) {
 		_panel->colorMode = Panel::ColorMode::Reset;
 	}
@@ -237,34 +239,34 @@ void Generate::write(int id)
 		_panel->colorMode = colorblind ? Panel::ColorMode::TreehouseAlternate : Panel::ColorMode::Treehouse;
 	}
 	if (hasFlag(Config::Write2Color)) {
-		Special::WritePanelData(id, PATTERN_POINT_COLOR_A, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
-		Special::WritePanelData(id, PATTERN_POINT_COLOR_B, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
-		Special::WritePanelData(id, REFLECTION_PATH_COLOR, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
-		Special::WritePanelData(id, ACTIVE_COLOR, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
+		memory->WritePanelData(id, PATTERN_POINT_COLOR_A, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
+		memory->WritePanelData(id, PATTERN_POINT_COLOR_B, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
+		memory->WritePanelData(id, REFLECTION_PATH_COLOR, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
+		memory->WritePanelData(id, ACTIVE_COLOR, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
 	}
 	if (hasFlag(Config::WriteInvisible)) {
-		Special::WritePanelData(id, REFLECTION_PATH_COLOR, _panel->_memory->ReadPanelData<Color>(0x00076, REFLECTION_PATH_COLOR));
+		memory->WritePanelData(id, REFLECTION_PATH_COLOR, memory->ReadPanelData<Color>(0x00076, REFLECTION_PATH_COLOR));
 	}
 	if (hasFlag(Config::WriteDotColor))
-		Special::WritePanelData(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
+		memory->WritePanelData<float>(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
 	if (hasFlag(Config::WriteDotColor2)) {
-		Color color = _panel->_memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
-		Special::WritePanelData(id, PATTERN_POINT_COLOR, color);
+		Color color = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
+		memory->WritePanelData(id, PATTERN_POINT_COLOR, color);
 	}
 	if (arrowColor.a > 0 || backgroundColor.a > 0 || successColor.a > 0) {
-		Special::WritePanelData(id, OUTER_BACKGROUND, { backgroundColor });
+		memory->WritePanelData<Color>(id, OUTER_BACKGROUND, { backgroundColor });
 		if (arrowColor.a == 0)
-			Special::WritePanelData(id, BACKGROUND_REGION_COLOR, { _panel->_memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
-		Special::WritePanelData(id, BACKGROUND_REGION_COLOR, { arrowColor });
-		Special::WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
-		if (successColor.a == 0) Special::WritePanelData(id, SUCCESS_COLOR_A, _panel->_memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
-		else Special::WritePanelData(id, SUCCESS_COLOR_A, successColor);
-		Special::WritePanelData(id, SUCCESS_COLOR_B, _panel->_memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
-		Special::WritePanelData(id, ACTIVE_COLOR, { 1, 1, 1, 1 });
-		Special::WritePanelData(id, REFLECTION_PATH_COLOR, { 1, 1, 1, 1 });
+			memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
+		memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { arrowColor });
+		memory->WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
+		if (successColor.a == 0) memory->WritePanelData(id, SUCCESS_COLOR_A, memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
+		else memory->WritePanelData(id, SUCCESS_COLOR_A, successColor);
+		memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
+		memory->WritePanelData<float>(id, ACTIVE_COLOR, { 1, 1, 1, 1 });
+		memory->WritePanelData<float>(id, REFLECTION_PATH_COLOR, { 1, 1, 1, 1 });
 	}
 	if (hasFlag(Config::TreehouseLayout)) {
-		Special::WritePanelData(id, SPECULAR_ADD, 0.001f);
+		memory->WritePanelData(id, SPECULAR_ADD, 0.001f);
 	}
 
 	_panel->decorationsOnly = hasFlag(Config::DecorationsOnly);
@@ -309,7 +311,7 @@ void Generate::incrementProgress()
 	_areaTotal++;
 	_genTotal++;
 	if (_handle) {
-		int total = (_totalPuzzles == 0 ? _areaPuzzles : _totalPuzzles);
+	int total = (_totalPuzzles == 0 ? _areaPuzzles : _totalPuzzles);
 		if (total == 0) return;
 		std::wstring text = _areaName + L": " + std::to_wstring(_areaTotal) + L"/" + std::to_wstring(_areaPuzzles) + L" (" + std::to_wstring(_genTotal * 100 / total) + L"%)";
 		SetWindowText(_handle, text.c_str());
