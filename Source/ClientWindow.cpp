@@ -591,7 +591,7 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 
 void ClientWindow::addGameOptions(int& currentY) {
 	// Colorblind option. This is 3 lines tall.
-	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
+	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzle contents will be identical apart from that.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
 		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 3,
@@ -599,7 +599,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 	toggleSettingButtonIds[ClientToggleSetting::ColorblindMode] = IDC_SETTING_COLORBLIND;
 	toggleSettingCheckboxes[ClientToggleSetting::ColorblindMode] = hwndOptionColorblind;
 
-	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING;
+	currentY += STATIC_TEXT_HEIGHT * 2 + LINE_SPACING;
 
 	// High contrast
 	HWND hwndOptionHighContrast = CreateWindow(L"BUTTON", L"High Contrast Mode",
