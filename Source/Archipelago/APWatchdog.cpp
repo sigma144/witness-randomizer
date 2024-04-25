@@ -2425,6 +2425,7 @@ void APWatchdog::LookingAtObelisk() {
 
 		std::vector<float> v = { epPosition[0] - headPosition[0], epPosition[1] - headPosition[1], epPosition[2] - headPosition[2] };
 		float t = v[0] * cursorDirection.X + v[1] * cursorDirection.Y + v[2] * cursorDirection.Z;
+		if (t < 0) continue;
 		std::vector<float> p = { headPosition[0] + t * cursorDirection.X, headPosition[1] + t * cursorDirection.Y, headPosition[2] + t * cursorDirection.Z };
 		
 		float distance = sqrt(pow(p[0] - epPosition[0], 2) + pow(p[1] - epPosition[1], 2) + pow(p[2] - epPosition[2], 2));
