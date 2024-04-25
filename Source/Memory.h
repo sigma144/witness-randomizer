@@ -376,6 +376,8 @@ public:
 
 	uint64_t getBaseAddress() const;
 
+	bool isProcessStillRunning();
+
 private:
 
 	std::recursive_mutex mtx;

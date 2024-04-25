@@ -134,6 +134,8 @@ void APWatchdog::action() {
 
 	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
+		if (!Memory::get()->isProcessStillRunning()) throw std::exception("Game was closed.");
+
 		halfSecondCountdown += 0.5f;
 
 		QueueItemMessages();
@@ -198,7 +200,7 @@ void APWatchdog::HandleInteractionState() {
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
 
-	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelDataIntentionallyUnsafe<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
+	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelData<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
 
 		hudManager->queueBannerMessage("Victory!");
@@ -210,7 +212,7 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0x09F7F && !isCompleted)
 	{
-		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17C6C, CABLE_POWER);
+		float power = ReadPanelData<float>(0x17C6C, CABLE_POWER);
 
 		if (power > 0.0f) {
 			isCompleted = true;
@@ -223,7 +225,7 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0xFFF00 && !isCompleted)
 	{
-		float power = ReadPanelDataIntentionallyUnsafe<float>(0x1800F, CABLE_POWER);
+		float power = ReadPanelData<float>(0x1800F, CABLE_POWER);
 
 		if (power > 0.0f) {
 			isCompleted = true;

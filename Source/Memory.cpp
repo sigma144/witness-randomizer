@@ -1264,6 +1264,20 @@ uint64_t Memory::getBaseAddress() const
 	return _baseAddress;
 }
 
+bool Memory::isProcessStillRunning() {
+	DWORD exitCodeOut;
+
+	// GetExitCodeProcess returns zero on failure
+	if (GetExitCodeProcess(_handle, &exitCodeOut) == 0)
+	{
+		// Optionally get the error
+		// DWORD error = GetLastError();
+		return false;
+	}
+	// Return if the process is still active
+	return exitCodeOut == STILL_ACTIVE;
+}
+
 void Memory::ThrowError(std::string message) {
 	if (!showMsg) {
 		ClientWindow* clientWindow = ClientWindow::get();

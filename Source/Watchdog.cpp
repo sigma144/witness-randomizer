@@ -58,7 +58,7 @@ ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
 }
 
 void ArrowWatchdog::action() {
-	int length = ReadPanelDataIntentionallyUnsafe<int>(id, TRACED_EDGES);
+	int length = ReadPanelData<int>(id, TRACED_EDGES);
 	if (length != tracedLength) {
 		complete = false;
 	}
