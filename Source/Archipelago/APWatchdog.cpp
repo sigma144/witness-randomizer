@@ -34,8 +34,8 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	panelIdToLocationId = mapping;
 
 	for (auto [key, value] : panelIdToLocationId) {
+		panelIdToLocationId_READ_ONLY[key] = value;
 		locationIdToPanelId_READ_ONLY[value] = key;
-		panelsThatAreLocations.insert(key);
 	}
 
 	DeathLinkAmnesty = dlA;
@@ -55,6 +55,12 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	doorToItemId = dToI;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
+
+	for (auto [sideHex, epSet] : obeliskHexToEPHexes) {
+		for (int epHex : epSet) {
+			epToObeliskSides[epHex] = sideHex;
+		}
+	}
 
 	if (Collect == "Free Skip + Unlock") {
 		Collect = "Free Skip";
@@ -407,7 +413,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 				int panel = *it;
 
 				if (panel == id) continue; // Let's not make infinite recursion by accident
-				if (panelsThatAreLocations.count(panel)) break;
+				if (panelIdToLocationId_READ_ONLY.count(panel)) break;
 				// Add panel hunt panels to this later
 
 				if (ReadPanelData<int>(panel, SOLVED)) continue;
@@ -2471,8 +2477,19 @@ void APWatchdog::LookingAtLockedEntity() {
 		}
 	}
 
-	if (allEPs.count(lookingAtEP)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP]);
+	if (entityToName.count(lookingAtEP)) {
+		std::string epName = entityToName[lookingAtEP];
+
+		if (epToObeliskSides.count(lookingAtEP)) {
+			int obeliskSideHex = epToObeliskSides[lookingAtEP];
+			if (panelIdToLocationId.count(obeliskSideHex)) {
+				epName += " (" + ap->get_location_name(panelIdToLocationId[obeliskSideHex]) + ")";
+			}
+
+			hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP] + " (" + + ")");
+		}
+
+		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, epName);
 	}
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);

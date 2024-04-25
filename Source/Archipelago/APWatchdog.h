@@ -94,7 +94,7 @@ private:
 	PanelLocker* panelLocker;
 	std::shared_ptr<Generate> generator;
 	std::map<int, int> panelIdToLocationId;
-	std::set<int> panelsThatAreLocations;
+	std::map<int, int> panelIdToLocationId_READ_ONLY;
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	std::map<int64_t, unsigned int> locationIdToItemFlags;
 	std::set<int64_t> checkedLocations;
@@ -271,6 +271,7 @@ private:
 
 	std::map<int, inGameHint> inGameHints = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
+	std::map<int, int> epToObeliskSides = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 	std::map<int, std::string> entityToName = {};
 
