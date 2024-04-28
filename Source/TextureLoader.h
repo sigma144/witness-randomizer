@@ -1,15 +1,15 @@
 #pragma once
-#include <cstdint>
 #include <string>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
-#include "TextureLoader.h"
 
 class TextureLoader
 {
-
-	std::unordered_map < int32_t, std::vector<uint8_t> > storedTextures;
-	std::unordered_map < int32_t, uint64_t > storedTexMaps;
+	// texture name -> wtx
+	std::unordered_map < std::string, std::vector<uint8_t> > storedTextures;
+	// wtx -> in-game texmap
+	std::unordered_map < std::string, uint64_t > storedTexMaps;
 
 	void generateColorBunkerTexture(int32_t panelid);
 
@@ -22,6 +22,7 @@ public:
 	static TextureLoader* get();
 	void loadTextures();
 	void generateTexture(int32_t panelid);
+	void generateSpecTexture(int32_t panelid);
 };
 
 inline std::unordered_map<int32_t, std::string> textureNames = {

@@ -8,6 +8,10 @@
 
 typedef std::set<Point> Shape;
 
+#define DEFAULT_GRID 0
+#define HEXAGON_GRID 1
+#define TRIANGLE_GRID 2
+
 //Functions to handle special case puzzles
 
 template <class T> struct MemoryWrite {
@@ -61,6 +65,9 @@ public:
 	void createArrowPuzzle(int id, int x, int y, int dir, int ticks, const std::vector<Point>& gaps);
 	void createArrowSecretDoor(int id);
 	void generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType);
+	void generateSpecularPuzzle(int id, int gridShape);
+	void generateSpecularPuzzle(int id) { generateSpecularPuzzle(id, DEFAULT_GRID); }
+	std::vector<int> generatePathByConnections(std::vector<int> connectionsA, std::vector<int> connectionsB, std::vector<int> flags);
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);
 	static void drawText(int id, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB, const std::vector<float>& finalLine);

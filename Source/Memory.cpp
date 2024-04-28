@@ -144,9 +144,6 @@ void Memory::findGlobals() {
 
 		_singleton->showMsg = showMsgTemp;
 
-		//if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)")) {
-		//	return;
-		//}
 
 		// Checked for a cached value.
 		std::ifstream file("WRPGglobals.txt");
@@ -361,6 +358,59 @@ void Memory::applyDestructivePatches() {
 }
 
 void Memory::findImportantFunctionAddresses(){
+
+
+	executeSigScan({ 0x44, 0x89, 0x4C, 0x24, 0x20, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->loadPackageFunction = _baseAddress + offset + index;
+		return true;
+	});
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xEA, 0x4C, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x48 && data[index + 7] == 0x45 && data[index + 8] == 0x33 && data[index + 9] == 0xC9 && data[index + 10] == 0x41) {
+				index += 3;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->globalTextureCatalog = addressOfRelativePointer + relativePointer + 4;
+
+				int64_t texcatalogpointer = 0;
+				ReadAbsolute((LPCVOID)this->globalTextureCatalog, &texcatalogpointer, sizeof(int64_t));
+				this->globalTextureCatalog = texcatalogpointer;
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x01 && data[index - 1] == 0xE8) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->acquireByNameFunction = addressOfRelativePointer + relativePointer + 4;
+
+				return true;
+			}
+		}
+		return false;
+	});
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x57, 0x48, 0x83, 0xEC, 0x50, 0x48, 0x8B, 0x41 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 7] == 0x48 && data[index - 6] == 0x8B && data[index - 5] == 0xD9 && data[index - 4] == 0x48 && data[index - 3] == 0x8B && data[index - 2] == 0x49 && data[index] == 0xE8) {
+				index++;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->loadTextureMapFunction = addressOfRelativePointer + relativePointer + 4;
+
+				return true;
+			}
+		}
+		return false;
+	});	
 
 	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x57, 0x48, 0x81, 0xEC, 0x10, 0x01, 0x00, 0x00, 0x48, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
@@ -889,19 +939,6 @@ void Memory::findImportantFunctionAddresses(){
 
 		return true;
 	});
-
-	//TODO these values probably only work in steam release version
-	this->globalTextureCatalog = _baseAddress + 0x4697eb8; 
-	// this is really a pointer to the texture catalog, not the catalog itself. manually dereference.
-	// we want to point directly at the catalog, not to another pointer
-	int64_t texcatalogpointer = 0;
-	ReadAbsolute((LPCVOID)this->globalTextureCatalog, &texcatalogpointer, sizeof(int64_t));
-	this->globalTextureCatalog = texcatalogpointer;
-
-	this->acquireByNameFunction = _baseAddress + 0x33a810;
-	this->loadTextureMapFunction = _baseAddress + 0x35a330; 
-	this->loadPackageFunction = _baseAddress + 0x5d030;
-
 }
 
 void Memory::findActivePanel() {

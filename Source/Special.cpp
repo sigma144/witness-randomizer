@@ -6,6 +6,7 @@
 #include "Watchdog.h"
 #include <thread>
 #include "Utilities.h"
+#include "TextureLoader.h"
 
 void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
 	do {
@@ -1489,6 +1490,74 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
+void Special::generateSpecularPuzzle(int id, int gridShape)
+{
+	Memory* memory = Memory::get();
+	std::vector<float> positions;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<int> flags;
+	if (gridShape == HEXAGON_GRID) {
+		positions = { .5f, .5f, .5f, .876f, .174f, .688f, .174f, .312f, .5f, .124f, .826f, .312f, .826f,
+		.688f, .5f, .97f, .093f, .735f, .093f, .265f, .5f, .03f, .907f, .265f, .907f, .735f };
+		connectionsA = {0,0,0,0,0,0,1,2,3,4,5,6,1,2,3,4,5,6};
+		connectionsB = {1,2,3,4,5,6,2,3,4,5,6,1,7,8,9,10,11,12};
+		flags = { 0x400002, 0x400002, 0x400002, 0x400002, 0x400002, 0x400002, 0x400002,
+			0x400001, 0x000001, 0x000001, 0x400001, 0x000001, 0x000001 };
+	}
+	if (gridShape == DEFAULT_GRID) {
+		positions = memory->ReadArray<float>(id, DOT_POSITIONS, memory->ReadPanelData<int>(id, NUM_DOTS));
+		connectionsA = memory->ReadArray<int>(id, DOT_CONNECTION_A, memory->ReadPanelData<int>(id, NUM_CONNECTIONS));
+		connectionsB = memory->ReadArray<int>(id, DOT_CONNECTION_B, memory->ReadPanelData<int>(id, NUM_CONNECTIONS));
+		flags = memory->ReadArray<int>(id, DOT_FLAGS, memory->ReadPanelData<int>(id, NUM_DOTS));
+	}
+	else {
+		memory->WriteArray<float>(id, DOT_POSITIONS, positions);
+		memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+		memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+		memory->WriteArray<int>(id, DOT_FLAGS, flags);
+		memory->WritePanelData<int>(id, NUM_DOTS, flags.size());
+		memory->WritePanelData<int>(id, NUM_CONNECTIONS, connectionsA.size());
+	}
+	std::vector<int> solution = generatePathByConnections(connectionsA, connectionsB, flags);
+	memory->WriteArray<int>(id, SEQUENCE, solution, true);
+	memory->WritePanelData<int>(id, SEQUENCE_LEN, solution.size());
+	TextureLoader::get()->generateSpecTexture(id);
+}
+
+std::vector<int> Special::generatePathByConnections(std::vector<int> connectionsA, std::vector<int> connectionsB, std::vector<int> flags)
+{
+	std::vector<std::vector<int>> paths;
+	std::vector<std::vector<int>> solutions;
+	std::vector<std::vector<int>> connections(flags.size());
+	for (int i = 0; i < connectionsA.size(); i++) {
+		connections[connectionsA[i]].emplace_back(connectionsB[i]);
+		connections[connectionsB[i]].emplace_back(connectionsA[i]);
+	}
+	for (int i = 0; i < flags.size(); i++) {
+		if ((flags[i] & 0xF) == IntersectionFlags::STARTPOINT) {
+			paths.push_back({ i });
+		}
+	}
+	int pi = 0;
+	while (pi < paths.size()) {
+		std::vector<int> path = paths[pi];
+		path.emplace_back(-1);
+		for (int n : connections[path[path.size() - 2]]) {
+			if ((flags[n] & 0xF) == IntersectionFlags::ENDPOINT) {
+				path[path.size() - 1] = n;
+				solutions.push_back(path);
+			}
+			else if (std::find(path.begin(), path.end(), n) == path.end()) {
+				path[path.size() - 1] = n;
+				paths.push_back(path);
+			}
+		}
+		pi++;
+	}
+	return solutions[Random::rand() % solutions.size()];
+}
+
 void Special::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom) {
 	//012
@@ -1616,12 +1685,6 @@ void Special::drawGoodLuckPanel(int id)
 	drawText(id, intersections, connectionsA, connectionsB, { 0.66f, 0.62f, 0.66f, 0.69f, 0.32f, 0.69f, 0.51f, 0.51f, 0.32f, 0.32f, 0.66f, 0.32f, 0.66f, 0.39f });
 }
 
-//For testing/debugging purposes only
-void Special::test() {
-
-}
-
-
 std::string Special::readStringFromPanels(std::vector<int> panelIDs) {
 	std::string output;
 	for (int panelIndex = 0; panelIndex < panelIDs.size(); panelIndex++) {
@@ -1710,3 +1773,42 @@ void Special::flipPanelHorizontally(int id) {
 }
 
 std::map<int, int> Special::correctShapesById = {};
+
+//For testing/debugging purposes only
+void Special::test() {
+	//Surface
+	generateSpecularPuzzle(0x00698, HEXAGON_GRID);
+	generateSpecularPuzzle(0x0048F, HEXAGON_GRID);
+	generateSpecularPuzzle(0x09F92);
+	generateSpecularPuzzle(0x0A036);
+	generateSpecularPuzzle(0x09DA6);
+	generateSpecularPuzzle(0x0A049);
+	generateSpecularPuzzle(0x0A053);
+	generateSpecularPuzzle(0x09F94);
+	//Light Room
+	generateSpecularPuzzle(0x00422);
+	generateSpecularPuzzle(0x006E3);
+	generateSpecularPuzzle(0x0A02D);
+	//Pond Room
+	generateSpecularPuzzle(0x00C72);
+	generateSpecularPuzzle(0x0129D, HEXAGON_GRID);
+	generateSpecularPuzzle(0x008BB);
+	generateSpecularPuzzle(0x0078D);
+	generateSpecularPuzzle(0x18313);
+	//Flood Room
+	generateSpecularPuzzle(0x04D18);
+	generateSpecularPuzzle(0x01205);
+	generateSpecularPuzzle(0x181AB);
+	generateSpecularPuzzle(0x0117A);
+	generateSpecularPuzzle(0x17ECA);
+	generateSpecularPuzzle(0x18076); //Rectangular
+	//Final Room
+	generateSpecularPuzzle(0x0A15C); //Concave
+	generateSpecularPuzzle(0x09FFF); //Convex
+	generateSpecularPuzzle(0x0A15F); //Tall
+	generateSpecularPuzzle(0x17C31); //Glass
+	generateSpecularPuzzle(0x012D7); //Final
+
+	setPower(0x09F94, false); // Turn off desert surface 8
+	setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
+}

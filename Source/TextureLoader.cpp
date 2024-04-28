@@ -1,5 +1,6 @@
 #include "TextureLoader.h"
 #include "Panel.h"
+#include "Randomizer.h"
 #include "wtx_tools.h"
 #include "Memory.h"
 
@@ -44,7 +45,27 @@ void TextureLoader::generateColorBunkerTexture(int32_t panelid)
 	//let rust free the memory it allocated
 	free_texbuf(tex);
 
-	storedTextures[panelid] = wtxBuffer;
+	storedTextures[textureNames[panelid]] = wtxBuffer;
+}
+
+void TextureLoader::generateSpecTexture(int32_t id)
+{
+	Memory* memory = Memory::get();
+	std::vector<int> solution = Memory::get()->ReadArray<int>(id, SEQUENCE, Memory::get()->ReadPanelData<int>(id, SEQUENCE_LEN));
+	std::vector<float> allPoints = Memory::get()->ReadArray<float>(id, DOT_POSITIONS, Memory::get()->ReadPanelData<int>(id, NUM_DOTS) * 2);
+	std::vector<float> linePointsX;
+	std::vector<float> linePointsY;
+	for (int i : solution) {
+		linePointsX.emplace_back(allPoints[i * 2]);
+		linePointsY.emplace_back(1 - allPoints[i * 2 + 1]);
+	}
+	float scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	TextureBuffer tex = generate_desert_spec_line(&linePointsX[0], &linePointsY[0], solution.size(), scale*35);//memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE));
+	std::vector<uint8_t> wtxBuffer = std::vector<uint8_t>(tex.data, tex.data + tex.len);
+	free_texbuf(tex);
+	//storedTextures[textureNames[id]] = wtxBuffer;
+	memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer);
+	memory->WritePanelData(id, NEEDS_REDRAW, 1);
 }
 
 TextureLoader* TextureLoader::get()
@@ -61,7 +82,7 @@ void TextureLoader::loadTextures()
 	memory->LoadPackage("save_58472"); //tells game to load the color bunker assets into memory, so we can edit them
 
 	for (auto& elem : storedTextures) {
-		auto texturename = textureNames[elem.first];
+		auto texturename = elem.first;
 		auto texmap = memory->GetTextureMapFromCatalog(texturename);
 		memory->LoadTexture(texmap, elem.second);
 		storedTexMaps[elem.first] = texmap; //store the tex map. (in case we want to unload it some day)

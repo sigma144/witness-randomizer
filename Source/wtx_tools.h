@@ -61,6 +61,11 @@ extern "C" {
 /// Rust will keep track of memory it allocated and must be informed to free it.
 void free_texbuf(TextureBuffer buf);
 
+TextureBuffer generate_desert_spec_line(const float *xpoints,
+                                        const float *ypoints,
+                                        size_t numpoints,
+                                        float thickness);
+
 TextureBuffer generate_desert_spec_wtx(const char *instructions);
 
 /// Old function - to be removed. Generates only 3x3 grid, takes a struct containing array of 9 enums.
