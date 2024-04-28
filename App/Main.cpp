@@ -255,10 +255,8 @@ void Main::randomize() {
 	clientWindow->setStatusMessage("Initialising puzzles...");
 	apRandomizer->InitPanels();
 
-	if (clientWindow->getSetting(ClientToggleSetting::PanelEffects)) {
-		clientWindow->logLine("Disabling color cycle effects.");
-		apRandomizer->DisableColorCycle();
-	}
+	clientWindow->logLine("Disabling/Enabling color cycle effects.");
+	apRandomizer->DisableColorCycle(!clientWindow->getSetting(ClientToggleSetting::PanelEffects));
 
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->RestoreOriginals();

@@ -649,19 +649,28 @@ void APRandomizer::HighContrastMode() {
 	}
 }
 
-void APRandomizer::DisableColorCycle() {
+void APRandomizer::DisableColorCycle(bool revert) {
 	Memory* memory = Memory::get();
 
-	for (int id : allPanels) {
-		memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
-	}
-
-	for (int id : mountainOffset) {
-		if (id == 0x09e79) {
-			memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x00089, PATTERN_NAME));
+	if (revert) {
+		for (auto [id, name] : mountainOffset) {
+			std::vector<char> data(name.begin(), name.end());
+			data.push_back(0);
+			memory->WriteArray<char>(id, PATTERN_NAME, data, true);
 		}
-		else {
-			memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x0008a, PATTERN_NAME));
+	}
+	else {
+		for (int id : allPanels) {
+			memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
+		}
+
+		for (auto [id, name] : mountainOffset) {
+			if (id == 0x09e79) {
+				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x00089, PATTERN_NAME));
+			}
+			else {
+				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x0008a, PATTERN_NAME));
+			}
 		}
 	}
 }

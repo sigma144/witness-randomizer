@@ -349,14 +349,14 @@ inline std::vector<int> challengePanels = {
 //	0x0356B, // Challenge Vault Box
 };
 
-inline std::vector<int> mountainOffset = {
-    0x09E73, // Mountain 1 Orange 1
-    0x09E75, // Mountain 1 Orange 2
-    0x09E78, // Mountain 1 Orange 3
-    0x09E79, // Mountain 1 Orange 4
-    0x09E6C, // Mountain 1 Orange 5
-    0x09E6F, // Mountain 1 Orange 6
-    0x09E6B, // Mountain 1 Orange 7
+inline std::map<int, std::string> mountainOffset = {
+    { 0x09E73, "khatz_voffset1"}, // Mountain 1 Orange 1
+    { 0x09E75, "khatz_voffset2"}, // Mountain 1 Orange 2
+    { 0x09E78, "khatz_hvoffset"}, // Mountain 1 Orange 3
+    { 0x09E79, "khatz_roffset1"}, // Mountain 1 Orange 4
+    { 0x09E6C, "khatz_crawl1"}, // Mountain 1 Orange 5
+    { 0x09E6F, "khatz_crawl2"}, // Mountain 1 Orange 6
+    { 0x09E6B, "khatz_spin"}, // Mountain 1 Orange 7
 };
 
 inline std::vector<int> mountainMultipanel = {
