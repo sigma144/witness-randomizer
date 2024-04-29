@@ -2641,8 +2641,6 @@ void PuzzleList::GenerateSwampV()
 	generator->pathWidth = 0.6f;
 	generator->setFlagOnce(Generate::Config::BigShapes);
 	generator->generate(0x181A9, Decoration::Poly, 3, Decoration::Triangle, 3);
-	//Turn off bridge control until all previous puzzles are solved
-	specialCase->setTargetAndDeactivate(0x181A9, 0x00609);
 	//Red Panels
 	generator->resetConfig();
 	generator->setGridSize(4, 4);
@@ -3275,8 +3273,6 @@ void PuzzleList::GenerateKeepV()
 		{ { Decoration::Dot, 7 },{ Decoration::Star | Decoration::Color::Black, 4 },{ Decoration::Star | Decoration::Color::White, 4 }, { Decoration::Star | Decoration::Color::Magenta, 4 }, { Decoration::Star | Decoration::Color::Cyan, 4 },
 		{ Decoration::Stone | Decoration::Color::Black, 5 },{ Decoration::Stone | Decoration::Color::White, 4 },{ Decoration::Stone | Decoration::Color::Cyan, 5 },
 		{ Decoration::Stone | Decoration::Color::Magenta, 4 },{ Decoration::Poly, 5 } });
-
-	specialCase->clearTarget(0x0360E); //Must solve pressure plate side
 }
 
 void PuzzleList::GenerateJungleV()
