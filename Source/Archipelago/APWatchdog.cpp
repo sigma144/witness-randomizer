@@ -34,8 +34,8 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	panelIdToLocationId = mapping;
 
 	for (auto [key, value] : panelIdToLocationId) {
+		panelIdToLocationId_READ_ONLY[key] = value;
 		locationIdToPanelId_READ_ONLY[value] = key;
-		panelsThatAreLocations.insert(key);
 	}
 
 	DeathLinkAmnesty = dlA;
@@ -55,6 +55,12 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	doorToItemId = dToI;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
+
+	for (auto [sideHex, epSet] : obeliskHexToEPHexes) {
+		for (int epHex : epSet) {
+			epToObeliskSides[epHex] = sideHex;
+		}
+	}
 
 	if (Collect == "Free Skip + Unlock") {
 		Collect = "Free Skip";
@@ -128,9 +134,13 @@ void APWatchdog::action() {
 
 	halfSecondCountdown -= frameDuration;
 	if (halfSecondCountdown <= 0) {
+		if (!Memory::get()->isProcessStillRunning()) throw std::exception("Game was closed.");
+
 		halfSecondCountdown += 0.5f;
 
 		QueueItemMessages();
+
+		HandleInGameHints(0.5f);
 
 		CheckFinalRoom();
 
@@ -141,7 +151,6 @@ void APWatchdog::action() {
 		HandlePowerSurge();
 		HandleDeathLink();
 		DisableCollisions();
-		HandleInGameHints(0.5f);
 
 		UpdateInfiniteChallenge();
 
@@ -164,7 +173,7 @@ void APWatchdog::action() {
 	}
 
 	CheckImportantCollisionCubes();
-	LookingAtObelisk();
+	LookingAtLockedEntity();
 	PettingTheDog(frameDuration);
 
 	SetStatusMessages();
@@ -191,7 +200,7 @@ void APWatchdog::HandleInteractionState() {
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
 
-	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelDataIntentionallyUnsafe<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
+	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelData<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
 
 		hudManager->queueBannerMessage("Victory!");
@@ -203,7 +212,7 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0x09F7F && !isCompleted)
 	{
-		float power = ReadPanelDataIntentionallyUnsafe<float>(0x17C6C, CABLE_POWER);
+		float power = ReadPanelData<float>(0x17C6C, CABLE_POWER);
 
 		if (power > 0.0f) {
 			isCompleted = true;
@@ -216,7 +225,7 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0xFFF00 && !isCompleted)
 	{
-		float power = ReadPanelDataIntentionallyUnsafe<float>(0x1800F, CABLE_POWER);
+		float power = ReadPanelData<float>(0x1800F, CABLE_POWER);
 
 		if (power > 0.0f) {
 			isCompleted = true;
@@ -406,7 +415,7 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
 				int panel = *it;
 
 				if (panel == id) continue; // Let's not make infinite recursion by accident
-				if (panelsThatAreLocations.count(panel)) break;
+				if (panelIdToLocationId_READ_ONLY.count(panel)) break;
 				// Add panel hunt panels to this later
 
 				if (ReadPanelData<int>(panel, SOLVED)) continue;
@@ -898,6 +907,8 @@ void APWatchdog::UnlockDoor(int id) {
 
 	// Is a door
 
+	unlockedDoors.insert(id);
+
 	if (id == 0x0CF2A) { // River to Garden door
 		disableCollisionList.insert(id);
 
@@ -941,6 +952,8 @@ void APWatchdog::UnlockDoor(int id) {
 void APWatchdog::SeverDoor(int id) {
 	// Disabled doors should behave as vanilla
 	if (DisabledEntities.count(id)) return;
+
+	bool isDoor = true;
 	
 	if (std::count(LockablePuzzles.begin(), LockablePuzzles.end(), id)) {
 		state->keysInTheGame.insert(id);
@@ -950,10 +963,16 @@ void APWatchdog::SeverDoor(int id) {
 
 	if (allPanels.count(id)) {
 		WritePanelData<float>(id, POWER, { 1.0f, 1.0f });
+		isDoor = false;
 	}
 
 	if (allObelisks.count(id)) {
 		disableCollisionList.insert(id);
+		isDoor = false;
+	}
+
+	if (isDoor) {
+		lockedDoors.insert(id);
 	}
 
 	if (severTargetsById.count(id)) {
@@ -1214,6 +1233,8 @@ void APWatchdog::DisableCollisions() {
 }
 
 void APWatchdog::HandleInGameHints(float deltaSeconds) {
+	if (!FirstEverLocationCheckDone) return;
+
 	std::string line1 = "";
 	std::string line2 = "";
 	std::string line3 = "";
@@ -1288,8 +1309,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 				seenMessages.insert(inGameHints[laserID]);
 				if (!seenLasers.count(laserID)) {
 					WritePanelData<float>(laserID, 0x108, { 1.0001f });
-					int locationId = inGameHints[laserID].locationID;
-					if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout) ap->LocationScouts({locationId}, 2);
+					int64_t locationId = inGameHints[laserID].locationID;
+					if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({locationId}, 2);
 					ap->Set("WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID), NULL, false, { {"replace", true} });
 					seenLasers.insert(laserID);
 				}
@@ -1305,8 +1326,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		if (audioLogHasBeenPlayed || logPlaying) {
 			seenMessages.insert(inGameHints[logId]);
 			if (!seenAudioLogs.count(logId)) {
-				int locationId = inGameHints[logId].locationID;
-				if (locationId != -1 && inGameHints[logId].playerNo == pNO && inGameHints[logId].allowScout) ap->LocationScouts({ locationId }, 2);
+				int64_t locationId = inGameHints[logId].locationID;
+				if (locationId != -1 && inGameHints[logId].playerNo == pNO && inGameHints[logId].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({ locationId }, 2);
 				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
 				seenAudioLogs.insert(logId);
 			}
@@ -2232,6 +2253,11 @@ void APWatchdog::SetStatusMessages() {
 		int availableSkips = GetAvailablePuzzleSkips();
 		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
 
+		if (lookingAtLockedEntity != -1) {
+			std::string lockName = ap->get_item_name(doorToItemId[lookingAtLockedEntity]);
+			skipMessage = "Locked by: \"" + lockName + "\"\n" + skipMessage;
+		}
+
 		if (activePanelId != -1) {
 			int solvingPressurePlateStartPoint = 0;
 			int solvingPressurePlateAssociatedEPID = 0;
@@ -2376,22 +2402,43 @@ void APWatchdog::WriteMovementSpeed(float currentSpeed) {
 	}
 }
 
-void APWatchdog::LookingAtObelisk() {
+Vector3 APWatchdog::getCachedEntityPosition(int id) {
+	if (!recordedEntityPositions.count(id)) recordedEntityPositions[id] = Vector3(ReadPanelData<float>(id, POSITION, 3));
+	return recordedEntityPositions[id];
+}
+
+Vector3 APWatchdog::getCameraDirection() {
+	std::vector<float> cameraAngle = Memory::get()->ReadCameraAngle();
+
+	float pitch = cameraAngle[0];
+	float yaw = cameraAngle[1];
+
+	float xzLen = cos(pitch);
+	return Vector3(xzLen * cos(yaw), sin(pitch), xzLen * sin(-yaw));
+}
+
+void APWatchdog::LookingAtLockedEntity() {
+	lookingAtLockedEntity = -1;
+
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	if (interactionState != InteractionState::Focusing) {
 		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 		return;
 	}
 
-	std::set<int> candidates;
-
-	std::vector<float> headPosition = Memory::get()->ReadPlayerPosition();
+	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 	Vector3 cursorDirection = InputWatchdog::get()->getMouseDirection();
+	Vector3 cameraDirection = getCameraDirection();
+
+	// EP Stuff
+
+	int lookingAtEP = -1;
+	float distanceToCenter = 10000000.0f;
 
 	for (int epID : allEPs) {
-		std::vector<float> obeliskPosition = ReadPanelData<float>(epID, POSITION, 3);
+		Vector3 obeliskPosition = getCachedEntityPosition(epID);
 
-		if (pow(headPosition[0] - obeliskPosition[0], 2) + pow(headPosition[1] - obeliskPosition[1], 2) + pow(headPosition[2] - obeliskPosition[2], 2) > 49) {
+		if ((headPosition - obeliskPosition).length() > 7) {
 			continue;
 		}
 
@@ -2404,27 +2451,25 @@ void APWatchdog::LookingAtObelisk() {
 		q.w = qData[3];
 
 		std::vector<float> facing = { 1, 0, 0 };
-
 		q.RotateVector(facing);
 
-		float dotProduct = cursorDirection.X * facing[0] + cursorDirection.Y * facing[1] + cursorDirection.Z * facing[2];
+		Vector3 facingVec = Vector3(facing);
 
-		if (dotProduct < 0) candidates.insert(epID);
+		float dotProduct = cursorDirection * facingVec;
 
-		continue;
-	}
+		// not facing the right direction
+		if (dotProduct > 0) continue;
 
-	int lookingAtEP = -1;
-	float distanceToCenter = 10000000.0f;
+		Vector3 entityPosition = Vector3(ReadPanelData<float>(epID, POSITION, 3));
 
-	for (int epID : candidates) {
-		std::vector<float> epPosition = ReadPanelData<float>(epID, POSITION, 3);
+		Vector3 v = entityPosition - headPosition;
+		float t = cursorDirection * v;
 
-		std::vector<float> v = { epPosition[0] - headPosition[0], epPosition[1] - headPosition[1], epPosition[2] - headPosition[2] };
-		float t = v[0] * cursorDirection.X + v[1] * cursorDirection.Y + v[2] * cursorDirection.Z;
-		std::vector<float> p = { headPosition[0] + t * cursorDirection.X, headPosition[1] + t * cursorDirection.Y, headPosition[2] + t * cursorDirection.Z };
-		
-		float distance = sqrt(pow(p[0] - epPosition[0], 2) + pow(p[1] - epPosition[1], 2) + pow(p[2] - epPosition[2], 2));
+		// not in front of it
+		if (t < 0) continue;
+		Vector3 p = headPosition + (cursorDirection * t);
+
+		float distance = (p - entityPosition).length();
 
 		float boundingRadius = ReadPanelData<float>(epID, BOUNDING_RADIUS);
 
@@ -2435,13 +2480,111 @@ void APWatchdog::LookingAtObelisk() {
 	}
 
 	if (entityToName.count(lookingAtEP)) {
-		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP]);
+		std::string epName = entityToName[lookingAtEP];
+
+		if (epToObeliskSides.count(lookingAtEP)) {
+			int obeliskSideHex = epToObeliskSides[lookingAtEP];
+			if (panelIdToLocationId.count(obeliskSideHex)) {
+				epName += " (" + ap->get_location_name(panelIdToLocationId[obeliskSideHex]) + ")";
+			}
+
+			hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP] + " (" + + ")");
+		}
+
+		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, epName);
 	}
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle);
 	}
 
-	return;
+	// Door stuff
+
+	//if (activePanelId != -1) return;
+
+	std::set<int> candidateEntities;
+
+	for (int lockedPanelID : state->keysInTheGame) {
+		if (!allPanels.count(lockedPanelID) || state->keysReceived.count(lockedPanelID)) continue;
+
+		Vector3 entityPosition = getCachedEntityPosition(lockedPanelID);
+		if ((headPosition - entityPosition).length() > 7) {
+			continue;
+		}
+
+		if (!omniDirectionalEntities.count(lockedPanelID)) {
+			std::vector<float> qData = ReadPanelData<float>(lockedPanelID, ORIENTATION, 4);
+
+			Quaternion q;
+			q.x = qData[0];
+			q.y = qData[1];
+			q.z = qData[2];
+			q.w = qData[3];
+
+			std::vector<float> facing = { 1, 0, 0 };
+			q.RotateVector(facing);
+
+			Vector3 facingVec = Vector3(facing);
+
+			float dotProduct = cursorDirection * facingVec;
+
+			// panel is facing away from camera
+			if (dotProduct > 0) continue;
+		}
+		
+		Vector3 v = (entityPosition - headPosition).normalized();
+		float t = v * cameraDirection;
+
+		// not facing it enough
+		if (t < 0.35) continue;
+
+		candidateEntities.insert(lockedPanelID);
+	}
+
+	for (int doorID : lockedDoors) {
+		if (unlockedDoors.count(doorID)) return;
+
+		Vector3 entityPosition = getCachedEntityPosition(doorID);
+		if ((headPosition - entityPosition).length() > 7) {
+			continue;
+		}
+
+		Vector3 v = (entityPosition - headPosition).normalized();
+		float t = v * cameraDirection;
+
+		// not facing it enough (camera)
+		if (t < 0.35) continue;
+
+		candidateEntities.insert(doorID);
+	}
+
+	std::set<int> candidates;
+
+	int lookingAtLockedEntityCandidate = -1;
+	float distanceToNearestLockedEntity = 1000000.f;
+
+	// find closest
+	for (int id : candidateEntities) {
+		Vector3 entityPosition = Vector3(ReadPanelData<float>(id, POSITION, 3));
+
+		float distance = (entityPosition - entityPosition).length();
+
+		if (distance > distanceToNearestLockedEntity) continue;
+
+		distanceToNearestLockedEntity = distance;
+		lookingAtLockedEntityCandidate = id;
+	}
+
+	if (lookingAtLockedEntityCandidate == -1) {
+		return;
+	}
+	if (doorToItemId.count(lookingAtLockedEntityCandidate)) {
+		lookingAtLockedEntity = lookingAtLockedEntityCandidate;
+	}
+	else {
+		std::stringstream s;
+		s << std::hex << lookingAtLockedEntityCandidate;
+		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Locked entity with unknown name: " + s.str());
+	}
 }
 
 void APWatchdog::PettingTheDog(float deltaSeconds) {

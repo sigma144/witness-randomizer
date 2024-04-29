@@ -252,8 +252,14 @@ void Main::randomize() {
 	clientWindow->logLine("Create ASMPayloadManager.");
 	ASMPayloadManager::create();
 
+	clientWindow->setStatusMessage("Initialising puzzles...");
+	apRandomizer->InitPanels();
+
+	clientWindow->logLine("Disabling/Enabling color cycle effects.");
+	apRandomizer->DisableColorCycle(!clientWindow->getSetting(ClientToggleSetting::PanelEffects));
+
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
-	apRandomizer->Init();
+	apRandomizer->RestoreOriginals();
 
 	clientWindow->setStatusMessage("Randomizing puzzles...");
 	if (puzzleRando == SIGMA_EXPERT)

@@ -17,7 +17,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 6
+#define SAVE_VERSION 7
 
 #define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -57,6 +57,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_SYNCPROGRESS 0x503
 #define IDC_SETTING_DISABLED 0x504
 #define IDC_SETTING_HIGHCONTRAST 0x505
+#define IDC_SETTING_PANELEFFECTS 506
 #define IDC_SETTING_JINGLES 0x510
 
 
@@ -87,6 +88,7 @@ void ClientWindow::saveSettings()
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
+	data["paneleffects"] = getSetting(ClientToggleSetting::PanelEffects);
 	data["jingles"] = getSetting(ClientDropdownSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
@@ -118,6 +120,7 @@ void ClientWindow::loadSettings()
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
 			setSetting(ClientToggleSetting::HighContrast, data.contains("highcontrast") ? data["highcontrast"].get<bool>() : false);
+			setSetting(ClientToggleSetting::PanelEffects, data.contains("paneleffects") ? data["paneleffects"].get<bool>() : false);
 
 			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
 			setSetting(ClientDropdownSetting::DisabledPuzzles, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
@@ -141,6 +144,7 @@ void ClientWindow::loadSettings()
 
 		setSetting(ClientToggleSetting::SyncProgress, false);
 		setSetting(ClientToggleSetting::HighContrast, false);
+		setSetting(ClientToggleSetting::PanelEffects, false);
 
 		setSetting(ClientDropdownSetting::Collect, "Unchanged");
 		setSetting(ClientDropdownSetting::DisabledPuzzles, "Prevent Solve");
@@ -293,6 +297,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, false);
@@ -318,6 +323,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
@@ -352,6 +358,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
@@ -484,8 +491,13 @@ HWND ClientWindow::addHorizontalRule(int& currentY) {
 void ClientWindow::addVersionDisplay(int& currentY) {
 	const int halfWidth = CLIENT_WINDOW_WIDTH / 2 - STATIC_TEXT_MARGIN;
 
+	LPCWSTR versionStr = L"Archipelago Version: " AP_VERSION_STR;
+	if (AP_VERSION_STR_BACKCOMPAT != "") {
+		versionStr = L"Compatible Archipelago Versions: " AP_VERSION_STR_BACKCOMPAT L" - " AP_VERSION_STR;
+	}
+
 	// AP version name. Left-justified.
-	CreateWindow(L"STATIC", L"Archipelago Version: " AP_VERSION_STR,
+	CreateWindow(L"STATIC", versionStr,
 		WS_VISIBLE | WS_CHILD | SS_LEFT,
 		STATIC_TEXT_MARGIN, currentY,
 		halfWidth, STATIC_TEXT_HEIGHT,
@@ -499,19 +511,6 @@ void ClientWindow::addVersionDisplay(int& currentY) {
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT;
-
-	if (AP_VERSION_STR_BACKCOMPAT != "") {
-		currentY += LINE_SPACING;
-
-		// AP version name. Left-justified.
-		CreateWindow(L"STATIC", L"Backwards Compatible with: " AP_VERSION_STR_BACKCOMPAT,
-			WS_VISIBLE | WS_CHILD | SS_LEFT,
-			STATIC_TEXT_MARGIN, currentY,
-			halfWidth, STATIC_TEXT_HEIGHT,
-			hwndRootWindow, NULL, hAppInstance, NULL);
-
-		currentY += STATIC_TEXT_HEIGHT;
-	}
 }
 
 void ClientWindow::addArchipelagoCredentials(int& currentY) {
@@ -591,18 +590,18 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 }
 
 void ClientWindow::addGameOptions(int& currentY) {
-	// Colorblind option. This is 3 lines tall.
-	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
+	// Colorblind option. This is 2 lines tall.
+	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzle contents will be identical apart from that.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 3,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 2,
 		hwndRootWindow, (HMENU)IDC_SETTING_COLORBLIND, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::ColorblindMode] = IDC_SETTING_COLORBLIND;
 	toggleSettingCheckboxes[ClientToggleSetting::ColorblindMode] = hwndOptionColorblind;
 
-	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING;
+	currentY += STATIC_TEXT_HEIGHT * 2 + LINE_SPACING; // Idk it doesn't look good with 2 lines
 
-	// Challenge timer option.
+	// High contrast
 	HWND hwndOptionHighContrast = CreateWindow(L"BUTTON", L"High Contrast Mode",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
@@ -613,7 +612,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
-	// Challenge timer option.
+	// Sync Mode
 	HWND hwndOptionSyncProgress = CreateWindow(L"BUTTON", L"Coop: Sync Lasers and EPs",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
@@ -621,6 +620,17 @@ void ClientWindow::addGameOptions(int& currentY) {
 		hwndRootWindow, (HMENU)IDC_SETTING_SYNCPROGRESS, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::SyncProgress] = IDC_SETTING_SYNCPROGRESS;
 	toggleSettingCheckboxes[ClientToggleSetting::SyncProgress] = hwndOptionSyncProgress;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
+	// Sync Mode
+	HWND hwndOptionTurnOffMountainEffects = CreateWindow(L"BUTTON", L"Disable color cycle effects",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_PANELEFFECTS, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::PanelEffects] = IDC_SETTING_PANELEFFECTS;
+	toggleSettingCheckboxes[ClientToggleSetting::PanelEffects] = hwndOptionTurnOffMountainEffects;
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
@@ -955,6 +965,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_SETTING_HIGHCONTRAST: {
 			toggleCheckbox(IDC_SETTING_HIGHCONTRAST);
+			break;
+		}
+		case IDC_SETTING_PANELEFFECTS: {
+			toggleCheckbox(IDC_SETTING_PANELEFFECTS);
 			break;
 		}
 		case IDC_SETTING_JINGLES: {

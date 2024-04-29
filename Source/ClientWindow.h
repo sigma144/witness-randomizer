@@ -13,6 +13,7 @@ enum ClientToggleSetting {
 	ChallengeTimer,
 	SyncProgress,
 	HighContrast,
+	PanelEffects,
 };
 
 enum ClientDropdownSetting {

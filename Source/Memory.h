@@ -195,6 +195,10 @@ public:
 		return this->ReadData<float>({ CAMERAPOSITION }, 3);
 	}
 
+	std::vector<float> ReadCameraAngle() {
+		return this->ReadData<float>({ CAMERAANG }, 2);
+	}
+
 	void OpenDoor(int id) {
 		CallVoidFunction(id, openDoorFunction);
 	}
@@ -329,9 +333,18 @@ public:
 	uint64_t windmillMaxTurnSpeed;
 	uint64_t windmillCurrentTurnSpeed;
 
+	uint64_t globalTextureCatalog;
+	uint64_t acquireByNameFunction;
+	uint64_t loadTextureMapFunction;
+	uint64_t loadPackageFunction;
+
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
 	int DECELERATION;
+	int NOCLIPENABLED;
+	int CAMERAANG;
+	int CAMERAPOS;
+	int NOCLIPSPEED;
 
 	float DEFAULTACCEL;
 	float DEFAULTDECEL;
@@ -362,6 +375,8 @@ public:
 	uint32_t scanForRelativeAddress(const std::vector<byte>& signatureBytes, uint32_t scanOffset = 0, uint32_t valueOffset = 0);
 
 	uint64_t getBaseAddress() const;
+
+	bool isProcessStillRunning();
 
 private:
 

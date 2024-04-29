@@ -649,6 +649,32 @@ void APRandomizer::HighContrastMode() {
 	}
 }
 
+void APRandomizer::DisableColorCycle(bool revert) {
+	Memory* memory = Memory::get();
+
+	if (revert) {
+		for (auto [id, name] : mountainOffset) {
+			std::vector<char> data(name.begin(), name.end());
+			data.push_back(0);
+			memory->WriteArray<char>(id, PATTERN_NAME, data, true);
+		}
+	}
+	else {
+		for (int id : allPanels) {
+			memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
+		}
+
+		for (auto [id, name] : mountainOffset) {
+			if (id == 0x09e79) {
+				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x00089, PATTERN_NAME));
+			}
+			else {
+				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x0008a, PATTERN_NAME));
+			}
+		}
+	}
+}
+
 void APRandomizer::setPuzzleLocks() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();
@@ -661,7 +687,7 @@ void APRandomizer::setPuzzleLocks() {
 	}
 }
 
-void APRandomizer::Init() {
+void APRandomizer::InitPanels() {
 	Memory* memory = Memory::get();
 
 	for (int panel : LockablePuzzles) {
@@ -670,9 +696,11 @@ void APRandomizer::Init() {
 		}
 	}
 
-	PanelRestore::RestoreOriginalPanelData();
-
 	Special::SetVanillaMetapuzzleShapes();
+}
+
+void APRandomizer::RestoreOriginals() {
+	PanelRestore::RestoreOriginalPanelData();
 }
 
 void APRandomizer::GenerateNormal() {
