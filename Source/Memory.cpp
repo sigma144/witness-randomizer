@@ -42,7 +42,10 @@ Memory::Memory() {
 		if (entry.szExeFile == process64) {
 			supposedlyFound = true;
 			_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
-			break;
+
+			if (_handle) {
+				break;
+			}
 		}
 	}
 
