@@ -76,6 +76,8 @@ public:
 	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
 
+	void PotentiallyColorPanel(int64_t location);
+
 	void InfiniteChallenge(bool enable);
 
 	void ProcessDeathLink(double time, std::string cause, std::string source);

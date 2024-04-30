@@ -493,6 +493,8 @@ void APWatchdog::MarkLocationChecked(int64_t locationId)
 
 			SkipPanel(panelId, "Collected", false);
 		}
+
+		PotentiallyColorPanel(locationId);
 	}
 
 	else if (allEPs.count(panelId) && Collect != "Unchanged") {
@@ -1792,6 +1794,17 @@ void APWatchdog::HandleOpenedDoorsResponse(nlohmann::json value, bool syncprogre
 
 void APWatchdog::setLocationItemFlag(int64_t location, unsigned int flags) {
 	locationIdToItemFlags[location] = flags;
+
+	PotentiallyColorPanel(location);
+}
+
+void APWatchdog::PotentiallyColorPanel(int64_t location) {
+	if (!locationIdToPanelId_READ_ONLY.count(location)) return;
+	int panelId = locationIdToPanelId_READ_ONLY[location];
+
+	if (!allPanels.count(panelId) || PuzzlesSkippedThisGame.count(panelId)) return;
+
+	APWatchdog::SetItemRewardColor(panelId, locationIdToItemFlags[location]);
 }
 
 void APWatchdog::InfiniteChallenge(bool enable) {
