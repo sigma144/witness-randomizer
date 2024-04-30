@@ -46,6 +46,9 @@ Memory::Memory() {
 			if (_handle) {
 				break;
 			}
+			else {
+				outputStream << "NOT ABLE TO RETRIEVE HANDLE TO THIS WITNESS INSTANCE.";
+			}
 		}
 	}
 
