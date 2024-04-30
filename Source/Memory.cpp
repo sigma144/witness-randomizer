@@ -29,7 +29,6 @@ Memory::Memory() {
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	bool supposedlyFound = false;
 	bool foundAnyProcesses = false;
 
 	std::ofstream outputStream = std::ofstream("FindProcessErrorLog.txt");
@@ -40,9 +39,13 @@ Memory::Memory() {
 
 		foundAnyProcesses = true;
 		if (entry.szExeFile == process64) {
-			supposedlyFound = true;
 			_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 			break;
+
+			if (!_handle) {
+				MessageBox(GetActiveWindow(), L"Found Witness exe but could not retrieve handle to it. Is this program being quarantined by an antivirus?", NULL, MB_OK);
+				throw std::exception("Found Witness exe but could not retrieve handle to it.");
+			}
 		}
 	}
 
@@ -55,11 +58,6 @@ Memory::Memory() {
 
 	// If we didn't find the process, terminate.
 	if (!_handle) {
-		if (supposedlyFound) {
-			MessageBox(GetActiveWindow(), L"Found Witness exe but could not retrieve handle to it. Is this program being quarantined by an antivirus?", NULL, MB_OK);
-			throw std::exception("Found Witness exe but could not retrieve handle to it.");
-		}
-
 		PROCESSENTRY32 entry;
 		entry.dwSize = sizeof(entry);
 		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
