@@ -1803,6 +1803,7 @@ void APWatchdog::PotentiallyColorPanel(int64_t location) {
 	int panelId = locationIdToPanelId_READ_ONLY[location];
 
 	if (!allPanels.count(panelId) || PuzzlesSkippedThisGame.count(panelId)) return;
+	if (!locationIdToItemFlags.count(location)) return;
 
 	APWatchdog::SetItemRewardColor(panelId, locationIdToItemFlags[location]);
 }
