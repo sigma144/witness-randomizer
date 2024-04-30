@@ -65,9 +65,10 @@ public:
 	void createArrowPuzzle(int id, int x, int y, int dir, int ticks, const std::vector<Point>& gaps);
 	void createArrowSecretDoor(int id);
 	void generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType);
-	void generateSpecularPuzzle(int id, int gridShape);
-	void generateSpecularPuzzle(int id) { generateSpecularPuzzle(id, DEFAULT_GRID); }
-	std::vector<int> generatePathByConnections(std::vector<int> connectionsA, std::vector<int> connectionsB, std::vector<int> flags);
+	void generateSpecularPuzzle(int id, int gridShape = DEFAULT_GRID, std::vector<std::pair<int, int>> shadows = {});
+	void generateSpecularPuzzle(int id, std::vector<std::pair<int, int>> shadows) { generateSpecularPuzzle(id, DEFAULT_GRID, shadows); }
+	std::vector<int> generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags, std::vector<std::pair<int, int>> shadows);
+	bool isAmbiguous(std::vector<int>& path, std::vector<std::vector<int>>& solutions, std::vector<std::pair<int, int>> shadows);
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);
 	static void drawText(int id, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB, const std::vector<float>& finalLine);

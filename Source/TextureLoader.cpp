@@ -51,8 +51,8 @@ void TextureLoader::generateColorBunkerTexture(int32_t panelid)
 void TextureLoader::generateSpecTexture(int32_t id)
 {
 	Memory* memory = Memory::get();
-	std::vector<int> solution = Memory::get()->ReadArray<int>(id, SEQUENCE, Memory::get()->ReadPanelData<int>(id, SEQUENCE_LEN));
-	std::vector<float> allPoints = Memory::get()->ReadArray<float>(id, DOT_POSITIONS, Memory::get()->ReadPanelData<int>(id, NUM_DOTS) * 2);
+	std::vector<int> solution = memory->ReadArray<int>(id, SEQUENCE, memory->ReadPanelData<int>(id, SEQUENCE_LEN));
+	std::vector<float> allPoints = memory->ReadArray<float>(id, DOT_POSITIONS, memory->ReadPanelData<int>(id, NUM_DOTS) * 2);
 	std::vector<float> linePointsX;
 	std::vector<float> linePointsY;
 	for (int i : solution) {
@@ -60,6 +60,7 @@ void TextureLoader::generateSpecTexture(int32_t id)
 		linePointsY.emplace_back(1 - allPoints[i * 2 + 1]);
 	}
 	float scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	int symdata = memory->ReadPanelData<int>(id, REFLECTION_DATA);
 	TextureBuffer tex = generate_desert_spec_line(&linePointsX[0], &linePointsY[0], solution.size(), scale*35);//memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE));
 	std::vector<uint8_t> wtxBuffer = std::vector<uint8_t>(tex.data, tex.data + tex.len);
 	free_texbuf(tex);

@@ -1490,7 +1490,7 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
-void Special::generateSpecularPuzzle(int id, int gridShape)
+void Special::generateSpecularPuzzle(int id, int gridShape, std::vector<std::pair<int, int>> shadows)
 {
 	Memory* memory = Memory::get();
 	std::vector<float> positions;
@@ -1519,13 +1519,14 @@ void Special::generateSpecularPuzzle(int id, int gridShape)
 		memory->WritePanelData<int>(id, NUM_DOTS, flags.size());
 		memory->WritePanelData<int>(id, NUM_CONNECTIONS, connectionsA.size());
 	}
-	std::vector<int> solution = generatePathByConnections(connectionsA, connectionsB, flags);
+	std::vector<int> solution = generatePathByConnections(connectionsA, connectionsB, flags, shadows);
 	memory->WriteArray<int>(id, SEQUENCE, solution, true);
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, solution.size());
 	TextureLoader::get()->generateSpecTexture(id);
 }
 
-std::vector<int> Special::generatePathByConnections(std::vector<int> connectionsA, std::vector<int> connectionsB, std::vector<int> flags)
+std::vector<int> Special::generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags,
+	std::vector<std::pair<int, int>> shadows)
 {
 	std::vector<std::vector<int>> paths;
 	std::vector<std::vector<int>> solutions;
@@ -1540,10 +1541,24 @@ std::vector<int> Special::generatePathByConnections(std::vector<int> connections
 		}
 	}
 	int pi = 0;
+	int MAX_PATHS = 50000;
 	while (pi < paths.size()) {
 		std::vector<int> path = paths[pi];
 		path.emplace_back(-1);
-		for (int n : connections[path[path.size() - 2]]) {
+		std::vector<int> next = connections[path[path.size() - 2]];
+		if (pi == MAX_PATHS) solutions.clear();
+		if (pi > MAX_PATHS && shadows.size() == 0) {
+			int n = next[Random::rand() % next.size()];
+			if ((flags[n] & 0xF) == IntersectionFlags::ENDPOINT && path.size() > flags.size() * 7 / 10) {
+				path[path.size() - 1] = n;
+				solutions.push_back(path);
+			}
+			else if (std::find(path.begin(), path.end(), n) == path.end()) {
+				path[path.size() - 1] = n;
+				paths.push_back(path);
+			}
+		}
+		else for (int n : next) {
 			if ((flags[n] & 0xF) == IntersectionFlags::ENDPOINT) {
 				path[path.size() - 1] = n;
 				solutions.push_back(path);
@@ -1555,7 +1570,49 @@ std::vector<int> Special::generatePathByConnections(std::vector<int> connections
 		}
 		pi++;
 	}
-	return solutions[Random::rand() % solutions.size()];
+	if (solutions.size() == 0) return generatePathByConnections(connectionsA, connectionsB, flags, shadows);
+	std::vector<int> sol = solutions[Random::rand() % solutions.size()];
+	while (shadows.size() > 0 && isAmbiguous(sol, solutions, shadows)) {
+		sol = solutions[Random::rand() % solutions.size()];
+	}
+	return sol;
+}
+
+bool Special::isAmbiguous(std::vector<int>& path, std::vector<std::vector<int>>& solutions, std::vector<std::pair<int, int>> shadows)
+{
+	std::set<std::pair<int, int>> sshadows(shadows.begin(), shadows.end());
+	std::set<std::pair<int, int>> spath;
+	bool isShadowed = false;
+	for (std::pair<int, int> p : shadows) {
+		if (path[0] == p.first || path[0] == p.second) isShadowed = true;
+	}
+	for (int i = 1; i < path.size(); i++) {
+		std::pair<int, int> p(path[i - 1], path[i]);
+		if (path[i] < path[i - 1]) p = { path[i], path[i - 1] };
+		if (sshadows.find(p) != sshadows.end()) {
+			isShadowed = true;
+			continue;
+		}
+		spath.insert(p);
+	}
+	if (!isShadowed) return true;
+	for (std::vector<int>& sol : solutions) {
+		if (sol == path) continue;
+		int countMatch = 0;
+		for (int i = 1; i <= sol.size(); i++) {
+			if (i == sol.size()) {
+				if (countMatch == spath.size()) 
+					return true;
+				break;
+			}
+			std::pair<int, int> p(sol[i - 1], sol[i]);
+			if (sol[i] < sol[i - 1]) p = { sol[i], sol[i - 1] };
+			if (sshadows.find(p) != sshadows.end()) continue;
+			if (spath.find(p) == spath.end()) break;
+			countMatch++;
+		}
+	}
+	return false;
 }
 
 void Special::createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
@@ -1773,13 +1830,15 @@ void Special::flipPanelHorizontally(int id) {
 }
 
 std::map<int, int> Special::correctShapesById = {};
-
+int sed = 0;
 //For testing/debugging purposes only
 void Special::test() {
+	//Random::seed(sed++);
+	//return;
 	//Surface
 	generateSpecularPuzzle(0x00698, HEXAGON_GRID);
-	generateSpecularPuzzle(0x0048F, HEXAGON_GRID);
-	generateSpecularPuzzle(0x09F92);
+	generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });
+	generateSpecularPuzzle(0x09F92, { {0,1},{1,7},{0,4},{4,10} });
 	generateSpecularPuzzle(0x0A036);
 	generateSpecularPuzzle(0x09DA6);
 	generateSpecularPuzzle(0x0A049);
@@ -1787,8 +1846,8 @@ void Special::test() {
 	generateSpecularPuzzle(0x09F94);
 	//Light Room
 	generateSpecularPuzzle(0x00422);
-	generateSpecularPuzzle(0x006E3);
-	generateSpecularPuzzle(0x0A02D);
+	generateSpecularPuzzle(0x006E3, { {0,1},{1,7},{0,4},{4,10} });
+	generateSpecularPuzzle(0x0A02D, { {0,1},{0,4},{1,5},{4,5},{5,6},{5,19},{19,20},{9,20},{6,21},{21,22},{10,22},{9,10} });
 	//Pond Room
 	generateSpecularPuzzle(0x00C72);
 	generateSpecularPuzzle(0x0129D, HEXAGON_GRID);
@@ -1801,10 +1860,26 @@ void Special::test() {
 	generateSpecularPuzzle(0x181AB);
 	generateSpecularPuzzle(0x0117A);
 	generateSpecularPuzzle(0x17ECA);
+	std::vector<float> positions = Memory::get()->ReadArray<float>(0x18076, DOT_POSITIONS, 38);
+	if (positions[1] > 0.9f) {
+		for (int i = 1; i < positions.size() - 1; i += 2) {
+			positions[i] -= 0.03f;
+		}
+		Memory::get()->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
+	}
 	generateSpecularPuzzle(0x18076); //Rectangular
 	//Final Room
 	generateSpecularPuzzle(0x0A15C); //Concave
 	generateSpecularPuzzle(0x09FFF); //Convex
+	Generate generate;
+	generate.setSymbol(Decoration::Start, 0, 0);
+	generate.setSymbol(Decoration::Exit, 12, 6);
+	generate.setGridSize(6, 3);
+	generate.generate(0x0A15F);
+	generate.initPanel(0x0A15F);
+	generate._panel->minx = 0.05f;
+	generate._panel->maxx = 0.9f;
+	generate.generate(0x0A15F);
 	generateSpecularPuzzle(0x0A15F); //Tall
 	generateSpecularPuzzle(0x17C31); //Glass
 	generateSpecularPuzzle(0x012D7); //Final
