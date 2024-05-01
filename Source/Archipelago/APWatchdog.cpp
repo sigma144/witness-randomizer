@@ -7,6 +7,7 @@
 
 #include "../DataTypes.h"
 #include "../HudManager.h"
+#include "DrawIngameManager.h"
 #include "../Input.h"
 #include "../Memory.h"
 #include "../Panels.h"
@@ -101,6 +102,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 
 	lastFrameTime = std::chrono::system_clock::now();
 	hudManager = std::make_shared<HudManager>();
+	drawIngameManager = std::make_shared<DrawIngameManager>();
 }
 
 void APWatchdog::action() {
