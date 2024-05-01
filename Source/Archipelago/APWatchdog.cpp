@@ -1800,6 +1800,7 @@ void APWatchdog::setLocationItemFlag(int64_t location, unsigned int flags) {
 
 void APWatchdog::PotentiallyColorPanel(int64_t location) {
 	if (!locationIdToPanelId_READ_ONLY.count(location)) return;
+	if (!checkedLocations.count(location)) return;
 	int panelId = locationIdToPanelId_READ_ONLY[location];
 
 	if (!allPanels.count(panelId) || PuzzlesSkippedThisGame.count(panelId)) return;
