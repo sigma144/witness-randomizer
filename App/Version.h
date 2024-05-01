@@ -5,9 +5,9 @@
 
 #define MAJOR 5
 #define MINOR 0
-#define PATCH 0
+#define PATCH 5
 
-#define VERSION_STR     "5.0.4"
+#define VERSION_STR     "5.0.5"
 #define VERSION			MAJOR, MINOR, PATCH
 
 #define AP_VERSION_STR	"0.4.6"
