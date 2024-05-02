@@ -1833,15 +1833,21 @@ std::map<int, int> Special::correctShapesById = {};
 int sed = 0;
 //For testing/debugging purposes only
 void Special::test() {
-	//Random::seed(sed++);
-	//return;
+	Generate generate;
+	Memory* memory = Memory::get();
 	//Surface
 	generateSpecularPuzzle(0x00698, HEXAGON_GRID);
 	generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });
 	generateSpecularPuzzle(0x09F92, { {0,1},{1,7},{0,4},{4,10} });
 	generateSpecularPuzzle(0x0A036);
+	memory->WritePanelData<Quaternion>(0x0A036, ORIENTATION,
+		Quaternion(-3 + 10 * (Random::rand() % 3 - 1), -40 + 10 * (Random::rand() % 3 - 1), 0));
 	generateSpecularPuzzle(0x09DA6);
+	memory->WritePanelData<Quaternion>(0x09DA6, ORIENTATION,
+		Quaternion(-3 + 10 * (Random::rand() % 3 - 1), -15 + 10 * (Random::rand() % 3 - 1), 0));
 	generateSpecularPuzzle(0x0A049);
+	memory->WritePanelData<Quaternion>(0x0A049, ORIENTATION,
+		Quaternion(-3 + 10 * (Random::rand() % 3 - 1), 10 + 10 * (Random::rand() % 3 - 1), 0));
 	generateSpecularPuzzle(0x0A053);
 	generateSpecularPuzzle(0x09F94);
 	//Light Room
@@ -1860,18 +1866,17 @@ void Special::test() {
 	generateSpecularPuzzle(0x181AB);
 	generateSpecularPuzzle(0x0117A);
 	generateSpecularPuzzle(0x17ECA);
-	std::vector<float> positions = Memory::get()->ReadArray<float>(0x18076, DOT_POSITIONS, 38);
+	std::vector<float> positions = memory->ReadArray<float>(0x18076, DOT_POSITIONS, 38);
 	if (positions[1] > 0.9f) {
 		for (int i = 1; i < positions.size() - 1; i += 2) {
 			positions[i] -= 0.03f;
 		}
-		Memory::get()->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
+		memory->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
 	}
 	generateSpecularPuzzle(0x18076); //Rectangular
 	//Final Room
 	generateSpecularPuzzle(0x0A15C); //Concave
 	generateSpecularPuzzle(0x09FFF); //Convex
-	Generate generate;
 	generate.setSymbol(Decoration::Start, 0, 0);
 	generate.setSymbol(Decoration::Exit, 12, 6);
 	generate.setGridSize(6, 3);

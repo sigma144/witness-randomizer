@@ -3,6 +3,22 @@
 #include <math.h>
 #include <cmath>
 
+Quaternion::Quaternion(float X, float Y, float Z, float W)
+{
+    x = X; y = Y; z = Z; w = W;
+    float length = Length();
+    w /= length; x /= length; y /= length; z /= length;
+}
+
+Quaternion::Quaternion(float pitch, float yaw, float roll)
+{
+    pitch *= M_PI / 180.0f; yaw *= M_PI / 180.0f; roll *= M_PI / 180.0f;
+    x = std::sin(roll / 2) * std::cos(pitch / 2) * std::cos(yaw / 2) - std::cos(roll / 2) * std::sin(pitch / 2) * std::sin(yaw / 2);
+    y = std::cos(roll / 2) * std::sin(pitch / 2) * std::cos(yaw / 2) + std::sin(roll / 2) * std::cos(pitch / 2) * std::sin(yaw / 2);
+    z = std::cos(roll / 2) * std::cos(pitch / 2) * std::sin(yaw / 2) - std::sin(roll / 2) * std::sin(pitch / 2) * std::cos(yaw / 2);
+    w = std::cos(roll / 2) * std::cos(pitch / 2) * std::cos(yaw / 2) + std::sin(roll / 2) * std::sin(pitch / 2) * std::sin(yaw / 2);
+}
+
 double Quaternion::Length() const {
     return std::sqrt(w * w + x * x + y * y + z * z);
 }
@@ -23,12 +39,6 @@ Quaternion Quaternion::Mul(const Quaternion& other) const {
         w * other.y - x * other.z + y * other.w + z * other.x,
         w * other.z + x * other.y - y * other.x + z * other.w
     };
-}
-
-Quaternion Quaternion::Rotate90() {
-    float angle = (float)M_PI_4;
-    auto q = Quaternion{std::cos(angle), std::sin(angle), 0, 0};
-    return this->Mul(q).Normalize();
 }
 
 void Quaternion::RotateVector(std::vector<float>& v)
