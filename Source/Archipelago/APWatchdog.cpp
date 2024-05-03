@@ -2519,10 +2519,10 @@ void APWatchdog::LookingAtLockedEntity() {
 	std::set<int> candidateEntities;
 
 	for (int lockedPanelID : state->keysInTheGame) {
-		if (!allPanels.count(lockedPanelID) || state->keysReceived.count(lockedPanelID)) continue;
+		if (!allPanels.count(lockedPanelID)) continue;
 
 		Vector3 entityPosition = getCachedEntityPosition(lockedPanelID);
-		if ((headPosition - entityPosition).length() > 7) {
+		if ((headPosition - entityPosition).length() > 5) {
 			continue;
 		}
 
@@ -2556,8 +2556,6 @@ void APWatchdog::LookingAtLockedEntity() {
 	}
 
 	for (int doorID : lockedDoors) {
-		if (unlockedDoors.count(doorID)) return;
-
 		Vector3 entityPosition = getCachedEntityPosition(doorID);
 		if ((headPosition - entityPosition).length() > 7) {
 			continue;
@@ -2589,7 +2587,7 @@ void APWatchdog::LookingAtLockedEntity() {
 		lookingAtLockedEntityCandidate = id;
 	}
 
-	if (lookingAtLockedEntityCandidate == -1) {
+	if (lookingAtLockedEntityCandidate == -1 || state->keysReceived.count(lookingAtLockedEntityCandidate) || unlockedDoors.count(lookingAtLockedEntityCandidate)) {
 		return;
 	}
 	if (doorToItemId.count(lookingAtLockedEntityCandidate)) {
