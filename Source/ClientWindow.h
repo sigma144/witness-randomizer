@@ -14,6 +14,7 @@ enum ClientToggleSetting {
 	SyncProgress,
 	HighContrast,
 	PanelEffects,
+	ExtraInfo
 };
 
 enum ClientDropdownSetting {

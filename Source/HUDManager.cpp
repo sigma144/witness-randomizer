@@ -3,6 +3,7 @@
 #include "ASMBuilder.h"
 #include "Input.h"
 #include "Memory.h"
+#include "ClientWindow.h"
 #include <cassert>
 
 
@@ -61,6 +62,11 @@ void HudManager::queueNotification(const std::string& text, RgbColor color) {
 }
 
 void HudManager::showInformationalMessage(InfoMessageCategory category, const std::string& text) {
+	if (text != "" && category == InfoMessageCategory::MissingSymbol && !ClientWindow::get()->getSetting(ClientToggleSetting::ExtraInfo)) {
+		clearInformationalMessage(category);
+		return;
+	}
+
 	if (informationalMessages[static_cast<int>(category)] == text) {
 		return;
 	}

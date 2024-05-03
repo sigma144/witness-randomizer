@@ -1911,10 +1911,6 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Stone Pillar needs Triangles.");
 	}
-	else if (bunkerLaserPlatform->containsPoint(playerPosition) && Utilities::isAprilFools()) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"what if we kissed,,, on the Bunker Laser Platform,,,\nhaha jk,,,, unless??");
-	}
 	else if ((riverVaultLowerCube->containsPoint(playerPosition) || riverVaultUpperCube->containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Dots, Black/White Squares.");
@@ -1947,6 +1943,15 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::MissingSymbol);
+	}
+
+	if (bunkerLaserPlatform->containsPoint(playerPosition) && Utilities::isAprilFools()) {
+		hudManager->showInformationalMessage(InfoMessageCategory::FlavorText,
+			"what if we kissed,,, on the Bunker Laser Platform,,,\nhaha jk,,,, unless??");
+	}
+	else
+	{
+		hudManager->clearInformationalMessage(InfoMessageCategory::FlavorText);
 	}
 }
 
@@ -2514,6 +2519,10 @@ void APWatchdog::LookingAtLockedEntity() {
 
 	// Door stuff
 
+	if (!ClientWindow::get()->getSetting(ClientToggleSetting::ExtraInfo)) {
+		return;
+	}
+
 	//if (activePanelId != -1) return;
 
 	std::set<int> candidateEntities;
@@ -2596,7 +2605,7 @@ void APWatchdog::LookingAtLockedEntity() {
 	else {
 		std::stringstream s;
 		s << std::hex << lookingAtLockedEntityCandidate;
-		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Locked entity with unknown name: " + s.str());
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "Locked entity with unknown name: " + s.str());
 	}
 }
 
