@@ -3058,7 +3058,7 @@ void APWatchdog::DrawHuntPanelSpheres() {
 		}
 
 		Vector3 actualPosition = Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
-		float radius = 0.8;
+		float radius = 0.7;
 		float alpha = (distance - 1.2) / 50;
 		if (alpha > 0.2) alpha = 0.2;
 		if (alpha < 0) alpha = 0;
