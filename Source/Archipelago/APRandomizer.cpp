@@ -83,6 +83,9 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
+
+		if (slotData.contains("panel_hunt_required_absolute")) RequiredHuntEntities = slotData["panel_hunt_required_absolute"];
+		
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
 		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
 		DeathLink = slotData.contains("death_link") ? slotData["death_link"] == true : false;
@@ -211,8 +214,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				huntEntities.insert(key);
 			}
 		}
-
-		state.requiredHuntEntities = huntEntities.size();
 
 		clientWindow->logLine("Connect: Getting audio log hints.");
 		if (slotData.contains("log_ids_to_hints")) {
