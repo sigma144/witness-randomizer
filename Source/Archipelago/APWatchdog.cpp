@@ -106,7 +106,8 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 
 	lastFrameTime = std::chrono::system_clock::now();
 	hudManager = std::make_shared<HudManager>();
-	drawIngameManager = std::make_shared<DrawIngameManager>();
+
+	DrawIngameManager::create();
 }
 
 void APWatchdog::action() {
@@ -208,7 +209,7 @@ void APWatchdog::HandleInteractionState() {
 void APWatchdog::CheckSolvedPanels() {
 	std::list<int64_t> solvedLocations;
 
-	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && ReadPanelData<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
+	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && finalPanel != 0x03629 && ReadPanelData<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
 
 		hudManager->queueBannerMessage("Victory!");
@@ -3042,15 +3043,28 @@ void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
 }
 
 void APWatchdog::DrawHuntPanelSpheres() {
-	return;
-
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
+	DrawIngameManager* drawManager = DrawIngameManager::get();
+
+	RgbColor red = RgbColor(1.0f, 0.0f, 0.0f, 0.5);
+	RgbColor green = RgbColor(0.0f, 1.0f, 0.0f, 0.5f);
 	
+	std::vector<WitnessDrawnSphere> spheresToDraw = {};
+
 	for (auto [huntEntity, solveStatus] : huntEntities) {
 		Vector3 position = getCachedEntityPosition(huntEntity);
 		
 		if ((position - headPosition).length() > 50) {
 			continue;
 		}
+
+		Vector3 actualPosition = Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
+		float radius = 1;
+		RgbColor color = solveStatus ? green : red;
+		bool cull = true;
+
+		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
 	}
+
+	drawManager->drawSpheres(spheresToDraw);
 }

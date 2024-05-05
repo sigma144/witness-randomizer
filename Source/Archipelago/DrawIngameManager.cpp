@@ -1,19 +1,22 @@
 #include "DrawIngameManager.h"
 #include "../Memory.h"
 
+DrawIngameManager* DrawIngameManager::_singleton = nullptr;
+
 DrawIngameManager::DrawIngameManager() {
 	findRelevantFunctions();
 	allocatePayloads();
 	initialPatch();
+}
 
-	drawSpheres({
-		{
-			{-164.239, -134.325, 13.0},
-			2.0f,
-			{1.0, 0.0, 0.0, 1.0},
-			false,
-		}
-	});
+void DrawIngameManager::create() {
+	if (_singleton == nullptr) {
+		_singleton = new DrawIngameManager();
+	}
+}
+
+DrawIngameManager* DrawIngameManager::get() {
+	return _singleton;
 }
 
 void DrawIngameManager::findRelevantFunctions() {

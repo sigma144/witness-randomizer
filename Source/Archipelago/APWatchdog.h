@@ -121,7 +121,6 @@ private:
 	std::map<int, std::vector<int>> progressiveItems;
 
 	std::shared_ptr<HudManager> hudManager;
-	std::shared_ptr<DrawIngameManager> drawIngameManager;
 
 	int DeathLinkAmnesty = 0;
 	int DeathLinkCount = 0;

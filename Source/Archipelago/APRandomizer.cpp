@@ -507,6 +507,10 @@ void APRandomizer::PostGeneration() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	Memory* memory = Memory::get();
 
+	if (huntEntities.size()) { // Panelhunt mode -> Tutorial Gate Open is repurposed
+		Memory::get()->PowerNext(0x03629, 0x36);
+	}
+
 	// Write gameplay relevant client options into datastorage
 
 	clientWindow->logLine("Putting Settings in Datastorage.");

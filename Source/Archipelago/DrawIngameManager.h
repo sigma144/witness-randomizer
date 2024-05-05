@@ -10,8 +10,16 @@ struct WitnessDrawnSphere {
 };
 
 class DrawIngameManager {
-public:
+private:
+
 	DrawIngameManager();
+
+	static DrawIngameManager* _singleton;
+
+public:
+	static void create();
+	static DrawIngameManager* get();
+	void drawSpheres(std::vector<WitnessDrawnSphere> spheres);
 
 private:
 	void findRelevantFunctions();
@@ -19,8 +27,6 @@ private:
 	void initialPatch();
 	void writeCapBytes(uint64_t capStart);
 	void switchBuffers();
-
-	void drawSpheres(std::vector<WitnessDrawnSphere> spheres);
 	
 	uint64_t drawEntityRenderListFunction;
 	uint64_t drawSphereCheap;
