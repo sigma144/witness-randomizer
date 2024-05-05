@@ -614,6 +614,9 @@ void LockablePanel::Read() {
 	else if (id == 0x3D9A9) { // Elevator
 		needsMountainLasers = true;
 	}
+	else if (id == 0x03629) { // Tutorial Gate Open - Panel Hunt
+		needsHuntEntities = true;
+	}
 	else if (id == 0x09FDC || id == 0x09FF7 || id == 0x09F82 || id == 0x09FF8 || id == 0x0A01B || id == 0x0A01F || id == 0x17E67 || id == 0x0A079) { // Bunker Panels don't pick up their white squares
 		hasColoredStones = true;
 		hasStones = true;
@@ -684,7 +687,8 @@ void LockablePanel::UpdateLock(APState state) {
 		|| (hasArrows && !state.unlockedArrows)
 		|| (hasSymmetry && !state.unlockedSymmetry)
 		|| (needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers)
-		|| (needsMountainLasers && state.activeLasers < state.requiredMountainLasers));
+		|| (needsMountainLasers && state.activeLasers < state.requiredMountainLasers))
+		|| (needsHuntEntities && state.solvedHuntEntities < state.requiredHuntEntities);
 
 	bool puzzleIsMissingKey = state.keysInTheGame.count(id) && !state.keysReceived.count(id);
 
@@ -707,6 +711,17 @@ void LockablePanel::UpdateLock(APState state) {
 
 		createText(laserText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - laserText2.size() * 0.029f, 0.515f + laserText2.size() * 0.029f, 0.38f, 0.47f);
 		createText(laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - laserText.size() * 0.029f, 0.5f + laserText.size() * 0.029f, 0.53f, 0.62f);
+	}
+	else if (id == 0x03629) {
+		std::string huntText = std::to_string(state.requiredHuntEntities);
+		huntText += "/";
+		huntText += std::to_string(state.requiredHuntEntities);
+		std::string huntText2 = "Panel Hunt:";
+
+		pattern_scale = 0.3f;
+
+		createText(huntText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - huntText2.size() * 0.029f, 0.515f + huntText2.size() * 0.029f, 0.38f, 0.47f);
+		createText(huntText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - huntText.size() * 0.029f, 0.5f + huntText.size() * 0.029f, 0.53f, 0.62f);
 	}
 	else if (id == 0x09D9B) { // Monastery Shutters
 		std::string text1 = "Needs Dots   Needs Dots   Needs Dots";

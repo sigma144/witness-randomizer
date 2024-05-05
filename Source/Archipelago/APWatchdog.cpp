@@ -247,11 +247,13 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0x03629 && !isCompleted) {
 		bool done = true;
+		bool newSolved = false;
 
 		for (auto [huntEntity, currentSolveStatus] : huntEntities) {
 			if (!currentSolveStatus) {
 				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
 					huntEntities[huntEntity] = true;
+					newSolved = true;
 					continue;
 				}
 
@@ -259,7 +261,19 @@ void APWatchdog::CheckSolvedPanels() {
 			}
 		}
 
-		if (done) ap->StatusUpdate(APClient::ClientStatus::GOAL);
+		if (newSolved) {
+			int huntSolveTotal = 0;
+			for (auto [huntEntity, currentSolveStatus] : huntEntities) {
+				if (currentSolveStatus) huntSolveTotal++;
+			}
+
+			state->solvedHuntEntities = huntSolveTotal;
+			panelLocker->UpdatePuzzleLock(*state, 0x03629);
+
+			hudManager->queueNotification("Panel Hunt: " + std::to_string(huntSolveTotal) + "/30");
+		}
+
+		// if (done) ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
 
 	auto it = panelIdToLocationId.begin();

@@ -24,6 +24,7 @@ class APRandomizer {
 		bool EPShuffle = false;
 		int MountainLasers = 7;
 		int ChallengeLasers = 11;
+		int RequiredHuntEntities = 0;
 		bool DeathLink;
 		int DeathLinkAmnesty = 0;
 		bool ElevatorsComeToYou = false;

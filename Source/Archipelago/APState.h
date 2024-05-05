@@ -35,9 +35,13 @@ public:
 	bool unlockedArrows = false;
 	bool unlockedSymmetry = false;
 	bool unlockedFullDots = false;
+
 	int activeLasers = 0;
+	int solvedHuntEntities = 0;
+
 	int requiredChallengeLasers = 11;
 	int requiredMountainLasers = 7;
+	int requiredHuntEntities = 30;
 
 	std::set<int> keysReceived = {};
 	std::set<int> keysInTheGame = {};
@@ -62,6 +66,7 @@ const int ITEM_B_W_SQUARES = ITEM_SQUARES + 1;
 const int ITEM_COLORED_SQUARES = ITEM_SQUARES + 2;
 const int ITEM_ARROWS = ITEM_OFFSET + 80;
 const int LASER_CHECK = 90832567;
+const int ENTITY_HUNT_CHECK = 90832954;
 
 //Powerups
 #define ITEM_POWERUP_OFFSET ITEM_OFFSET + 500

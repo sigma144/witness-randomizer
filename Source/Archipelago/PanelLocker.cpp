@@ -67,7 +67,8 @@ void PanelLocker::UpdatePuzzleLocks(const APState& state, const int& itemIndex) 
 			case ITEM_COLORED_SQUARES:				if (puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);				break;
 			case ITEM_SQUARES: if (puzzle->hasStones || puzzle->hasColoredStones) puzzlesToUpdate.push_back(puzzle);			break;
 			case ITEM_ARROWS: if (puzzle->hasArrows) puzzlesToUpdate.push_back(puzzle);			break;
-			case LASER_CHECK: if (puzzle->id == 0x0A332 || puzzle->id == 0x3D9A9)  puzzlesToUpdate.push_back(puzzle); break;
+			case LASER_CHECK: if (puzzle->needsMountainLasers || puzzle->needsChallengeLasers == 0x3D9A9)  puzzlesToUpdate.push_back(puzzle); break;
+			case ENTITY_HUNT_CHECK: if (puzzle->needsHuntEntities) puzzlesToUpdate.push_back(puzzle); break;
 
 			default:																																			break;
 		}
@@ -122,6 +123,7 @@ void PanelLocker::UpdatePuzzleLock(const APState& state, const int& id) {
 		|| (puzzle->hasSymmetry && !state.unlockedSymmetry)
 		|| (puzzle->needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers)
 		|| (puzzle->needsMountainLasers && state.activeLasers < state.requiredMountainLasers)
+		|| (puzzle->needsHuntEntities && state.solvedHuntEntities < state.requiredHuntEntities)
 		|| (state.keysInTheGame.count(puzzle->id) && !state.keysReceived.count(puzzle->id))
 		|| disabledPuzzles.count(id) && allEPs.count(id))
 	{

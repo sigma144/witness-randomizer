@@ -111,6 +111,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 		state.requiredChallengeLasers = ChallengeLasers;
 		state.requiredMountainLasers = MountainLasers;
+		state.requiredHuntEntities = RequiredHuntEntities;
 
 		clientWindow->logLine("Connect: Getting progressive items.");
 		if (slotData.contains("progressive_item_lists")) {
@@ -210,6 +211,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				huntEntities.insert(key);
 			}
 		}
+
+		state.requiredHuntEntities = huntEntities.size();
 
 		clientWindow->logLine("Connect: Getting audio log hints.");
 		if (slotData.contains("log_ids_to_hints")) {

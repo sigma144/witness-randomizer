@@ -214,6 +214,7 @@ public:
 	bool hasFullDots = false;
 	bool needsChallengeLasers = false;
 	bool needsMountainLasers = false;
+	bool needsHuntEntities = false;
 };
 
 struct LockablePanel : LockablePuzzle {
