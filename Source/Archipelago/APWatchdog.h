@@ -19,7 +19,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -134,6 +134,8 @@ private:
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
 	std::set<int> DisabledEntities;
 
+	std::map<int, bool> huntEntities;
+
 	std::map<int, int> doorToItemId;
 
 	bool FirstEverLocationCheckDone = false;
@@ -233,6 +235,8 @@ private:
 	void CheckFinalRoom();
 
 	void DoAprilFoolsEffects(float deltaSeconds);
+
+	void DrawHuntPanelSpheres();
 
 	Vector3 getCachedEntityPosition(int id);
 

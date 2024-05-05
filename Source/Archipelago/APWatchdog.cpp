@@ -28,7 +28,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -55,6 +55,10 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	doorToItemId = dToI;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
+	
+	for (int huntEntity : hunt) {
+		huntEntities[huntEntity] = false;
+	}
 
 	for (auto [sideHex, epSet] : obeliskHexToEPHexes) {
 		for (int epHex : epSet) {
@@ -146,6 +150,8 @@ void APWatchdog::action() {
 
 		CheckSolvedPanels();
 
+		DrawHuntPanelSpheres();
+
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
 		HandlePowerSurge();
@@ -235,6 +241,22 @@ void APWatchdog::CheckSolvedPanels() {
 			}
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
+	}
+	if (finalPanel == 0x03629 && !isCompleted) {
+		bool done = true;
+
+		for (auto [huntEntity, currentSolveStatus] : huntEntities) {
+			if (!currentSolveStatus) {
+				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
+					huntEntities[huntEntity] = true;
+					continue;
+				}
+
+				done = false;
+			}
+		}
+
+		if (done) ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
 
 	auto it = panelIdToLocationId.begin();
@@ -3015,4 +3037,18 @@ void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
 	}
 
 	memory->WriteAbsolute(reinterpret_cast<LPVOID>(memory->windmillCurrentTurnSpeed), &currentSpeed, sizeof(float));
+}
+
+void APWatchdog::DrawHuntPanelSpheres() {
+	return;
+
+	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
+	
+	for (auto [huntEntity, solveStatus] : huntEntities) {
+		Vector3 position = getCachedEntityPosition(huntEntity);
+		
+		if ((position - headPosition).length() > 50) {
+			continue;
+		}
+	}
 }

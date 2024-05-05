@@ -68,6 +68,8 @@ class APRandomizer {
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> disabledEntities;
 
+		std::set<int> huntEntities;
+
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
 		std::set<int> precompletedLocations;
 		std::map<int, std::string> entityToName;

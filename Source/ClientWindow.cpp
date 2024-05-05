@@ -820,6 +820,11 @@ void ClientWindow::resize(int width, int height) {
 	s << height << "\n";
 	s << standardHeightOfHintsView << "\n";*/
 
+	if (height < startingHeightOfHintsView) {
+		height = startingHeightOfHintsView;
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, height + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+	}
+
 	if (width != currentWidth) {
 		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
 		return;
@@ -865,7 +870,6 @@ void ClientWindow::resize(int width, int height) {
 	}
 	
 	if (distributeHeight < 0) {
-		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
 		return;
 	}
 
