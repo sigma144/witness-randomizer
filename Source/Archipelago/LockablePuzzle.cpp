@@ -713,15 +713,17 @@ void LockablePanel::UpdateLock(APState state) {
 		createText(laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - laserText.size() * 0.029f, 0.5f + laserText.size() * 0.029f, 0.53f, 0.62f);
 	}
 	else if (id == 0x03629) {
-		std::string huntText = std::to_string(state.requiredHuntEntities);
+		std::string huntText = std::to_string(state.solvedHuntEntities);
 		huntText += "/";
 		huntText += std::to_string(state.requiredHuntEntities);
-		std::string huntText2 = "Panel Hunt:";
+		std::string huntText2 = "Panel";
+		std::string huntText3 = "Hunt:";
 
 		pattern_scale = 0.3f;
 
-		createText(huntText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - huntText2.size() * 0.029f, 0.515f + huntText2.size() * 0.029f, 0.38f, 0.47f);
-		createText(huntText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - huntText.size() * 0.029f, 0.5f + huntText.size() * 0.029f, 0.53f, 0.62f);
+		createText(huntText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - huntText2.size() * 0.029f, 0.515f + huntText2.size() * 0.029f, 0.305f, 0.395f);
+		createText(huntText3, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - huntText3.size() * 0.029f, 0.515f + huntText3.size() * 0.029f, 0.455f, 0.545f);
+		createText(huntText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - huntText.size() * 0.029f, 0.5f + huntText.size() * 0.029f, 0.605f, 0.695f);
 	}
 	else if (id == 0x09D9B) { // Monastery Shutters
 		std::string text1 = "Needs Dots   Needs Dots   Needs Dots";

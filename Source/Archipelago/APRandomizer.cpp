@@ -512,6 +512,25 @@ void APRandomizer::PostGeneration() {
 
 	if (huntEntities.size()) { // Panelhunt mode -> Tutorial Gate Open is repurposed
 		Memory::get()->PowerNext(0x03629, 0x36);
+
+		if (!memory->ReadPanelData<int>(0x288E8, 0x1E4))
+		{
+			ASMPayloadManager::get()->OpenDoor(0x288E8);
+		}
+
+		if (!memory->ReadPanelData<int>(0x288F3, 0x1E4))
+		{
+			ASMPayloadManager::get()->OpenDoor(0x288F3);
+		}
+
+		if (!memory->ReadPanelData<int>(0x28942, 0x1E4))
+		{
+			ASMPayloadManager::get()->OpenDoor(0x28942);
+		}
+
+		memory->PowerGauge(0x003C4, 0x3F, 3);
+		memory->PowerGauge(0x003C4, 0x3C, 2);
+		memory->PowerGauge(0x003C4, 0x51, 1);
 	}
 
 	// Write gameplay relevant client options into datastorage
