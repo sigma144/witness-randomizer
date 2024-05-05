@@ -232,6 +232,7 @@ public:
 	}
 
 	void applyDestructivePatches();
+	void turnOffEEE();
 
 	void writeCursorColor(std::vector<float> color) {
 		float r = color[0];

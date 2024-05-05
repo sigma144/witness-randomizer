@@ -368,6 +368,16 @@ void Memory::applyDestructivePatches() {
 	WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
 }
 
+void Memory::turnOffEEE() {
+	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		byte newByte = 0xEB;
+
+		WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
+
+		return true;
+	});
+}
+
 void Memory::doSecretThing() {
 	// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 
@@ -1064,14 +1074,6 @@ void Memory::findImportantFunctionAddresses(){
 		LPVOID addressPointer = reinterpret_cast<LPVOID>(comissStatement);
 
 		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
-
-		return true;
-	});
-
-	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		byte newByte = 0xEB;
-
-		WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
 
 		return true;
 	});
