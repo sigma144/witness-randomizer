@@ -104,6 +104,7 @@ private:
 	std::set<std::pair<int, int64_t>> locationsThatContainedItemsFromOtherPlayers;
 	int finalPanel;
 	bool isCompleted = false;
+	bool eee = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
 
 	std::queue<APClient::NetworkItem> queuedReceivedItems = {};

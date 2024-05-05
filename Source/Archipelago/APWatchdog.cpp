@@ -273,7 +273,14 @@ void APWatchdog::CheckSolvedPanels() {
 			hudManager->queueNotification("Panel Hunt: " + std::to_string(huntSolveTotal) + "/30");
 		}
 
-		// if (done) ap->StatusUpdate(APClient::ClientStatus::GOAL);
+		std::vector<float> playerPosition = Memory::get()->ReadPlayerPosition();
+
+		if (EEEGate->containsPoint(playerPosition)) {
+			isCompleted = true;
+			eee = true;
+			hudManager->queueBannerMessage("Victory!");
+			ap->StatusUpdate(APClient::ClientStatus::GOAL);
+		}
 	}
 
 	auto it = panelIdToLocationId.begin();
@@ -2281,29 +2288,33 @@ void APWatchdog::SetStatusMessages() {
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Walking) {
-		if (hasDeathLink){
-			int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(deathLinkStartTime).count() / 1000;
-
-			if (secondsRemainingDeathLink <= 0) {
-				hudManager->clearWalkStatusMessage();
-			}
-			else {
-				hudManager->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
-			}
+		if (eee) {
+			hudManager->clearWalkStatusMessage();
 		}
-
 		else {
+			if (hasDeathLink) {
+				int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(deathLinkStartTime).count() / 1000;
 
-			int speedTimeInt = (int)std::ceil(std::abs(speedTime));
+				if (secondsRemainingDeathLink <= 0) {
+					hudManager->clearWalkStatusMessage();
+				}
+				else {
+					hudManager->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
+				}
+			}
 
-			if (speedTime > 0) {
-				hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
-			}
-			else if (speedTime < 0) {
-				hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
-			}
 			else {
-				hudManager->clearWalkStatusMessage();
+				int speedTimeInt = (int)std::ceil(std::abs(speedTime));
+
+				if (speedTime > 0) {
+					hudManager->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+				}
+				else if (speedTime < 0) {
+					hudManager->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+				}
+				else {
+					hudManager->clearWalkStatusMessage();
+				}
 			}
 		}
 	}

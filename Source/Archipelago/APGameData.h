@@ -2094,6 +2094,7 @@ inline CollisionVolume* tutorialPillarCube = new CollisionCube(-152, -150.9f, 5,
 inline CollisionVolume* quarryLaserPanel = new CollisionCube(-59, 90, 17, -67, 100, 21);
 inline CollisionVolume* symmetryUpperPanel = new CollisionCube(-180, 31, 12.6f, -185, 37, 17);
 inline CollisionVolume* challengeTimer = new CollisionCube(-27, -40, -20, -50, -20, -4);
+inline CollisionVolume* EEEGate = new ExactCollisionCube({ -502.157, -174.301, 167 }, { -502.157, -174.301, 172 }, { -510, -168, 167 }, { -508, -187.7, 167 });
 
 inline CollisionVolume* bunkerLaserPlatform = new ExactCollisionCube({ 161.838, -86.685, 30.5 }, { 158.985, -86.927, 30.5 }, { 162.049, -89.407, 30.5 }, { 161.838, -86.685, 34 });
 
