@@ -15,8 +15,9 @@ enum class InfoMessageCategory : int {
 	EnvironmentalPuzzle = 1,
 	MissingSymbol = 2,
 	ApHint = 3,
-	Dog = 4,
-	COUNT = 5, // The Categories should count from 0 to n, and then this COUNT key should come at the end with value n+1.
+	FlavorText = 4,
+	Dog = 5,
+	COUNT = 6, // The Categories should count from 0 to n, and then this COUNT key should come at the end with value n+1.
 };
 
 class HudManager {

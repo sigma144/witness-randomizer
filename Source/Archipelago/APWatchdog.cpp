@@ -29,7 +29,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -56,6 +56,10 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	doorToItemId = dToI;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
+	
+	for (int huntEntity : hunt) {
+		huntEntities[huntEntity] = false;
+	}
 
 	for (auto [sideHex, epSet] : obeliskHexToEPHexes) {
 		for (int epHex : epSet) {
@@ -148,6 +152,8 @@ void APWatchdog::action() {
 
 		CheckSolvedPanels();
 
+		DrawHuntPanelSpheres();
+
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
 		HandlePowerSurge();
@@ -237,6 +243,22 @@ void APWatchdog::CheckSolvedPanels() {
 			}
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
+	}
+	if (finalPanel == 0x03629 && !isCompleted) {
+		bool done = true;
+
+		for (auto [huntEntity, currentSolveStatus] : huntEntities) {
+			if (!currentSolveStatus) {
+				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
+					huntEntities[huntEntity] = true;
+					continue;
+				}
+
+				done = false;
+			}
+		}
+
+		if (done) ap->StatusUpdate(APClient::ClientStatus::GOAL);
 	}
 
 	auto it = panelIdToLocationId.begin();
@@ -1913,10 +1935,6 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Stone Pillar needs Triangles.");
 	}
-	else if (bunkerLaserPlatform->containsPoint(playerPosition) && Utilities::isAprilFools()) {
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"what if we kissed,,, on the Bunker Laser Platform,,,\nhaha jk,,,, unless??");
-	}
 	else if ((riverVaultLowerCube->containsPoint(playerPosition) || riverVaultUpperCube->containsPoint(playerPosition)) && panelLocker->PuzzleIsLocked(0x15ADD)) {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Needs Dots, Black/White Squares.");
@@ -1949,6 +1967,15 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 	else {
 		hudManager->clearInformationalMessage(InfoMessageCategory::MissingSymbol);
+	}
+
+	if (bunkerLaserPlatform->containsPoint(playerPosition) && Utilities::isAprilFools()) {
+		hudManager->showInformationalMessage(InfoMessageCategory::FlavorText,
+			"what if we kissed,,, on the Bunker Laser Platform,,,\nhaha jk,,,, unless??");
+	}
+	else
+	{
+		hudManager->clearInformationalMessage(InfoMessageCategory::FlavorText);
 	}
 }
 
@@ -2516,15 +2543,19 @@ void APWatchdog::LookingAtLockedEntity() {
 
 	// Door stuff
 
+	if (!ClientWindow::get()->getSetting(ClientToggleSetting::ExtraInfo)) {
+		return;
+	}
+
 	//if (activePanelId != -1) return;
 
 	std::set<int> candidateEntities;
 
 	for (int lockedPanelID : state->keysInTheGame) {
-		if (!allPanels.count(lockedPanelID) || state->keysReceived.count(lockedPanelID)) continue;
+		if (!allPanels.count(lockedPanelID)) continue;
 
 		Vector3 entityPosition = getCachedEntityPosition(lockedPanelID);
-		if ((headPosition - entityPosition).length() > 7) {
+		if ((headPosition - entityPosition).length() > 5) {
 			continue;
 		}
 
@@ -2558,8 +2589,6 @@ void APWatchdog::LookingAtLockedEntity() {
 	}
 
 	for (int doorID : lockedDoors) {
-		if (unlockedDoors.count(doorID)) return;
-
 		Vector3 entityPosition = getCachedEntityPosition(doorID);
 		if ((headPosition - entityPosition).length() > 7) {
 			continue;
@@ -2591,7 +2620,7 @@ void APWatchdog::LookingAtLockedEntity() {
 		lookingAtLockedEntityCandidate = id;
 	}
 
-	if (lookingAtLockedEntityCandidate == -1) {
+	if (lookingAtLockedEntityCandidate == -1 || state->keysReceived.count(lookingAtLockedEntityCandidate) || unlockedDoors.count(lookingAtLockedEntityCandidate)) {
 		return;
 	}
 	if (doorToItemId.count(lookingAtLockedEntityCandidate)) {
@@ -2600,7 +2629,7 @@ void APWatchdog::LookingAtLockedEntity() {
 	else {
 		std::stringstream s;
 		s << std::hex << lookingAtLockedEntityCandidate;
-		hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, "Locked entity with unknown name: " + s.str());
+		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "Locked entity with unknown name: " + s.str());
 	}
 }
 
@@ -3010,4 +3039,18 @@ void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
 	}
 
 	memory->WriteAbsolute(reinterpret_cast<LPVOID>(memory->windmillCurrentTurnSpeed), &currentSpeed, sizeof(float));
+}
+
+void APWatchdog::DrawHuntPanelSpheres() {
+	return;
+
+	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
+	
+	for (auto [huntEntity, solveStatus] : huntEntities) {
+		Vector3 position = getCachedEntityPosition(huntEntity);
+		
+		if ((position - headPosition).length() > 50) {
+			continue;
+		}
+	}
 }

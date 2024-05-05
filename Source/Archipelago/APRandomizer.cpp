@@ -204,6 +204,13 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
+		clientWindow->logLine("Connect: Getting hunt panels.");
+		if (slotData.contains("hunt_entities")) {
+			for (int key : slotData["hunt_entities"]) {
+				huntEntities.insert(key);
+			}
+		}
+
 		clientWindow->logLine("Connect: Getting audio log hints.");
 		if (slotData.contains("log_ids_to_hints")) {
 			for (auto& [key, val] : slotData["log_ids_to_hints"].items()) {
@@ -704,7 +711,7 @@ void APRandomizer::RestoreOriginals() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -712,7 +719,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	//Mess with Town targets

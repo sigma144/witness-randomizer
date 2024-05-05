@@ -17,7 +17,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 7
+#define SAVE_VERSION 8
 
 #define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -57,7 +57,8 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_SYNCPROGRESS 0x503
 #define IDC_SETTING_DISABLED 0x504
 #define IDC_SETTING_HIGHCONTRAST 0x505
-#define IDC_SETTING_PANELEFFECTS 506
+#define IDC_SETTING_PANELEFFECTS 0x506
+#define IDC_SETTING_EXTRAINFO 0x507
 #define IDC_SETTING_JINGLES 0x510
 
 
@@ -89,6 +90,7 @@ void ClientWindow::saveSettings()
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
 	data["paneleffects"] = getSetting(ClientToggleSetting::PanelEffects);
+	data["extrainfo"] = getSetting(ClientToggleSetting::ExtraInfo);
 	data["jingles"] = getSetting(ClientDropdownSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
@@ -121,6 +123,7 @@ void ClientWindow::loadSettings()
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
 			setSetting(ClientToggleSetting::HighContrast, data.contains("highcontrast") ? data["highcontrast"].get<bool>() : false);
 			setSetting(ClientToggleSetting::PanelEffects, data.contains("paneleffects") ? data["paneleffects"].get<bool>() : false);
+			setSetting(ClientToggleSetting::ExtraInfo, data.contains("extrainfo") ? data["extrainfo"].get<bool>() : true);
 
 			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
 			setSetting(ClientDropdownSetting::DisabledPuzzles, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
@@ -145,6 +148,7 @@ void ClientWindow::loadSettings()
 		setSetting(ClientToggleSetting::SyncProgress, false);
 		setSetting(ClientToggleSetting::HighContrast, false);
 		setSetting(ClientToggleSetting::PanelEffects, false);
+		setSetting(ClientToggleSetting::ExtraInfo, true);
 
 		setSetting(ClientDropdownSetting::Collect, "Unchanged");
 		setSetting(ClientDropdownSetting::DisabledPuzzles, "Prevent Solve");
@@ -301,6 +305,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, false);
 
 		for (auto keybindButton : customKeybindButtons) {
 			EnableWindow(keybindButton.second, false);
@@ -330,6 +335,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Enable "any time" settings.
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, true);
 
 		// Disable keybinds until connected.
 		for (auto keybindButton : customKeybindButtons) {
@@ -365,6 +371,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		// Enable "any time" settings.
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, true);
 
 		// Enable keybinds.
 		for (auto keybindButton : customKeybindButtons) {
@@ -623,7 +630,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
-	// Sync Mode
+	// Panel Effects
 	HWND hwndOptionTurnOffMountainEffects = CreateWindow(L"BUTTON", L"Disable color cycle effects",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
@@ -642,6 +649,17 @@ void ClientWindow::addGameOptions(int& currentY) {
 		hwndRootWindow, (HMENU)IDC_SETTING_CHALLENGE, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::ChallengeTimer] = IDC_SETTING_CHALLENGE;
 	toggleSettingCheckboxes[ClientToggleSetting::ChallengeTimer] = hwndOptionChallenge;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
+	// Extra Info
+	HWND hwndOptionExtraInfo = CreateWindow(L"BUTTON", L"Enable Extra Info (recommended for beginners)",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_EXTRAINFO, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::ExtraInfo] = IDC_SETTING_EXTRAINFO;
+	toggleSettingCheckboxes[ClientToggleSetting::ExtraInfo] = hwndOptionExtraInfo;
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
@@ -705,7 +723,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
 		hwndRootWindow, (HMENU)IDC_SETTING_JINGLES, hAppInstance, NULL);
 	dropdownBoxes[ClientDropdownSetting::Jingles] = hwndOptionJingles;
-	dropdownIds[ClientDropdownSetting::Jingles] = IDC_SETTING_COLLECT;
+	dropdownIds[ClientDropdownSetting::Jingles] = IDC_SETTING_JINGLES;
 
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Off");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated");
@@ -802,6 +820,11 @@ void ClientWindow::resize(int width, int height) {
 	s << height << "\n";
 	s << standardHeightOfHintsView << "\n";*/
 
+	if (height < startingHeightOfHintsView) {
+		height = startingHeightOfHintsView;
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, height + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+	}
+
 	if (width != currentWidth) {
 		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
 		return;
@@ -847,7 +870,6 @@ void ClientWindow::resize(int width, int height) {
 	}
 	
 	if (distributeHeight < 0) {
-		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
 		return;
 	}
 
@@ -971,8 +993,9 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			toggleCheckbox(IDC_SETTING_PANELEFFECTS);
 			break;
 		}
-		case IDC_SETTING_JINGLES: {
-			toggleCheckbox(IDC_SETTING_JINGLES);
+		case IDC_SETTING_EXTRAINFO: {
+			toggleCheckbox(IDC_SETTING_EXTRAINFO);
+			saveSettings();
 			break;
 		}
 		// Buttons.
