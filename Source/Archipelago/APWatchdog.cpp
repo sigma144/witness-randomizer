@@ -135,6 +135,8 @@ void APWatchdog::action() {
 
 	HandleVision(frameDuration);
 
+	DrawHuntPanelSpheres();
+
 	if (Utilities::isAprilFools()) {
 		DoAprilFoolsEffects(frameDuration);
 	}
@@ -152,8 +154,6 @@ void APWatchdog::action() {
 		CheckFinalRoom();
 
 		CheckSolvedPanels();
-
-		DrawHuntPanelSpheres();
 
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
@@ -3045,22 +3045,24 @@ void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
 void APWatchdog::DrawHuntPanelSpheres() {
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 	DrawIngameManager* drawManager = DrawIngameManager::get();
-
-	RgbColor red = RgbColor(1.0f, 0.0f, 0.0f, 0.5);
-	RgbColor green = RgbColor(0.0f, 1.0f, 0.0f, 0.5f);
 	
 	std::vector<WitnessDrawnSphere> spheresToDraw = {};
 
 	for (auto [huntEntity, solveStatus] : huntEntities) {
 		Vector3 position = getCachedEntityPosition(huntEntity);
 		
-		if ((position - headPosition).length() > 50) {
+		float distance = (position - headPosition).length();
+
+		if (distance > 50) {
 			continue;
 		}
 
 		Vector3 actualPosition = Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
-		float radius = 1;
-		RgbColor color = solveStatus ? green : red;
+		float radius = 0.8;
+		float alpha = (distance - 1.2) / 50;
+		if (alpha > 0.2) alpha = 0.2;
+		if (alpha < 0) alpha = 0;
+		RgbColor color = solveStatus ? RgbColor(0.0f, 1.0f, 0.0f, alpha) : RgbColor(1.0f, 0.0f, 0.0f, alpha);
 		bool cull = true;
 
 		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
