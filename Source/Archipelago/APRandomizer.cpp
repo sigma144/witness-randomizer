@@ -598,8 +598,11 @@ void APRandomizer::PostGeneration() {
 	PreventSnipes(); //Prevents Snipes to preserve progression randomizer experience
 
 	clientWindow->logLine("Changing mounatain laser box and goal condition.");
-	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
-	if (MountainLasers > 7 || (RequiredHuntEntities && (PanelHuntPostgame == 1 || PanelHuntPostgame == 3))) {
+
+	bool rotateBox = MountainLasers > 7 || (RequiredHuntEntities && ChallengeLasers > 7 && (PanelHuntPostgame == 1 || PanelHuntPostgame == 3));
+
+	if(rotateBox || MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
+	if (rotateBox) {
 		memory->WritePanelData<float>(0x09f7f, POSITION, { 153.95224, -53.066, 68.343, 0.97, -0.2462272793, 0.01424658205, -0.980078876, 0.06994858384 });
 		ASMPayloadManager::get()->UpdateEntityPosition(0x09f7f);
 	}

@@ -257,6 +257,11 @@ void APWatchdog::CheckSolvedPanels() {
 					newSolved = true;
 					continue;
 				}
+				else if (huntEntity == 0xFFF00 && ReadPanelData<float>(0x1800F, CABLE_POWER) > 0.0f) {
+					huntEntities[huntEntity] = true;
+					newSolved = true;
+					continue;
+				}
 
 				done = false;
 			}
@@ -3075,7 +3080,10 @@ void APWatchdog::DrawHuntPanelSpheres() {
 	std::vector<WitnessDrawnSphere> spheresToDraw = {};
 
 	for (auto [huntEntity, previousOpacity] : huntEntitySphereOpacities) {
-		Vector3 position = getCachedEntityPosition(huntEntity);
+		float positionEntity = huntEntity;
+		if (huntEntity == 0xFFF00) positionEntity = 0x09F7F; // Use short box for long box position
+
+		Vector3 position = getCachedEntityPosition(positionEntity);
 		
 		float distance = (position - headPosition).length();
 
@@ -3084,7 +3092,16 @@ void APWatchdog::DrawHuntPanelSpheres() {
 			continue;
 		}
 
-		Vector3 actualPosition = Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
+		Vector3 actualPosition = Vector3(ReadPanelData<float>(positionEntity, POSITION, 3));
+
+		// TODO: make better thing for special positions
+		if (huntEntity == 0x09F7F) {
+			actualPosition.Y -= 1;
+		}
+		if (huntEntity == 0xFFF00) {
+			actualPosition.Y += 1;
+		}
+
 		float workingDistance = (actualPosition - headPosition).length();
 
 		float targetOpacity = 0;
@@ -3097,8 +3114,8 @@ void APWatchdog::DrawHuntPanelSpheres() {
 			if (targetOpacity < 0) targetOpacity = 0;
 		}
 		else {
-			workingDistance += 1;
-			targetOpacity = workingDistance / 10 * 0.6;
+			workingDistance += 2;
+			targetOpacity = workingDistance / 8 * 0.6;
 
 			if (targetOpacity > 0.6) targetOpacity = 0.6;
 			// if (targetOpacity < 0) targetOpacity = 0; impossible
