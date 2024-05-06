@@ -85,7 +85,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 
 		if (slotData.contains("panel_hunt_required_absolute")) RequiredHuntEntities = slotData["panel_hunt_required_absolute"];
-		
+		PanelHuntPostgame = slotData.contains("panel_hunt_postgame") ? (int) slotData["panel_hunt_postgame"] : 0;
+
 		DisableNonRandomizedPuzzles = slotData.contains("disable_non_randomized_puzzles") ? slotData["disable_non_randomized_puzzles"] == true : false;
 		EPShuffle = slotData.contains("shuffle_EPs") ? slotData["shuffle_EPs"] != 0 : false;
 		DeathLink = slotData.contains("death_link") ? slotData["death_link"] == true : false;
@@ -598,7 +599,7 @@ void APRandomizer::PostGeneration() {
 
 	clientWindow->logLine("Changing mounatain laser box and goal condition.");
 	if(MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
-	if (MountainLasers > 7) {
+	if (MountainLasers > 7 || (RequiredHuntEntities && (PanelHuntPostgame == 1 || PanelHuntPostgame == 3))) {
 		memory->WritePanelData<float>(0x09f7f, POSITION, { 153.95224, -53.066, 68.343, 0.97, -0.2462272793, 0.01424658205, -0.980078876, 0.06994858384 });
 		ASMPayloadManager::get()->UpdateEntityPosition(0x09f7f);
 	}

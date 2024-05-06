@@ -106,6 +106,7 @@ private:
 	bool isCompleted = false;
 	bool eee = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
+	int sphereOpacityModifier = 0;
 
 	std::queue<APClient::NetworkItem> queuedReceivedItems = {};
 
@@ -137,6 +138,7 @@ private:
 	std::set<int> DisabledEntities;
 
 	std::map<int, bool> huntEntities;
+	std::map<int, float> huntEntitySphereOpacities;
 
 	std::map<int, int> doorToItemId;
 

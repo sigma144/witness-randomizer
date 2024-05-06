@@ -59,6 +59,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	
 	for (int huntEntity : hunt) {
 		huntEntities[huntEntity] = false;
+		huntEntitySphereOpacities[huntEntity] = 0.0f;
 	}
 
 	for (auto [sideHex, epSet] : obeliskHexToEPHexes) {
@@ -3073,21 +3074,55 @@ void APWatchdog::DrawHuntPanelSpheres() {
 	
 	std::vector<WitnessDrawnSphere> spheresToDraw = {};
 
-	for (auto [huntEntity, solveStatus] : huntEntities) {
+	for (auto [huntEntity, previousOpacity] : huntEntitySphereOpacities) {
 		Vector3 position = getCachedEntityPosition(huntEntity);
 		
 		float distance = (position - headPosition).length();
 
-		if (distance > 50) {
+		if (distance > 60) {
+			huntEntitySphereOpacities[huntEntity] = 0;
 			continue;
 		}
 
 		Vector3 actualPosition = Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
+		float workingDistance = (actualPosition - headPosition).length();
+
+		float targetOpacity = 0;
+
+		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+		if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+			workingDistance -= 2;
+			targetOpacity = workingDistance / 10 * 0.1;
+			if (targetOpacity > 0.1) targetOpacity = 0.1;
+			if (targetOpacity < 0) targetOpacity = 0;
+		}
+		else {
+			workingDistance += 1;
+			targetOpacity = workingDistance / 10 * 0.6;
+
+			if (targetOpacity > 0.6) targetOpacity = 0.6;
+			// if (targetOpacity < 0) targetOpacity = 0; impossible
+		}
+
+		float delta = (previousOpacity + 0.01) / 7;
+		float newOpacity = previousOpacity;
+
+		if (newOpacity > targetOpacity) {
+			newOpacity -= delta;
+			if (newOpacity < targetOpacity) newOpacity = targetOpacity;
+		}
+		else {
+			newOpacity += delta;
+			if (newOpacity > targetOpacity) newOpacity = targetOpacity;
+		}
+
+		huntEntitySphereOpacities[huntEntity] = newOpacity;
+
+		if (newOpacity == 0) continue;
+
+		bool solveStatus = huntEntities[huntEntity];
 		float radius = 0.7;
-		float alpha = (distance - 1.2) / 50;
-		if (alpha > 0.2) alpha = 0.2;
-		if (alpha < 0) alpha = 0;
-		RgbColor color = solveStatus ? RgbColor(0.0f, 1.0f, 0.0f, alpha) : RgbColor(1.0f, 0.0f, 0.0f, alpha);
+		RgbColor color = solveStatus ? RgbColor(0.0f, 1.0f, 0.0f, newOpacity) : RgbColor(1.0f, 0.0f, 0.0f, newOpacity);
 		bool cull = true;
 
 		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
