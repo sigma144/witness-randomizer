@@ -226,6 +226,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				bool extraInfoFound = false;
 				std::string area = "";
 				int32_t area_progression = -1;
+				int32_t area_hunt_entities = -1;
 				bool allowScout = true;
 
 				for (int i = 0; i < val.size(); i++) {
@@ -242,7 +243,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 							extraInfoFound = true;
 						}
 						else if (area != "") {
-							area_progression = integer;
+							area_progression = integer & 0xFF;
+							area_hunt_entities = integer >> 8;
 						}
 						else {
 							player_no = integer;
@@ -271,7 +273,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 					}
 				}
 				
-				inGameHints.insert({ logId, {message, location_id, player_no, area, area_progression, false, allowScout} });
+				inGameHints.insert({ logId, {message, location_id, player_no, area, area_progression, area_hunt_entities, false, allowScout} });
 			}
 		}
 
@@ -310,7 +312,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 					}
 				}
 
-				inGameHints.insert({ logId, {message, location_id, player_no, "", -1, true, true} });
+				inGameHints.insert({ logId, {message, location_id, player_no, "", -1, -1, true, true} });
 			}
 		}
 

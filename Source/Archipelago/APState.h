@@ -9,6 +9,7 @@ struct inGameHint {
 	int32_t playerNo;
 	std::string areaHint;
 	int32_t areaProgression;
+	int32_t areaHuntEntities;
 	bool isLaserHint;
 	bool allowScout;
 };

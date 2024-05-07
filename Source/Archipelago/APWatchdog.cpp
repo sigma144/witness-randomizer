@@ -58,8 +58,18 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	itemIdToDoorSet = iTD;
 	
 	for (int huntEntity : hunt) {
-		huntEntities[huntEntity] = false;
+		huntEntityToSolveStatus[huntEntity] = false;
 		huntEntitySphereOpacities[huntEntity] = 0.0f;
+	}
+
+	for (auto [area_name, entities] : areaNameToEntityIDs) {
+		huntEntitiesPerArea[area_name] = {};
+
+		for (int entity : entities) {
+			if (hunt.count(entity)) {
+				huntEntitiesPerArea[area_name].insert(entity);
+			}
+		}
 	}
 
 	for (auto [sideHex, epSet] : obeliskHexToEPHexes) {
@@ -250,15 +260,15 @@ void APWatchdog::CheckSolvedPanels() {
 		bool done = true;
 		bool newSolved = false;
 
-		for (auto [huntEntity, currentSolveStatus] : huntEntities) {
+		for (auto [huntEntity, currentSolveStatus] : huntEntityToSolveStatus) {
 			if (!currentSolveStatus) {
 				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
-					huntEntities[huntEntity] = true;
+					huntEntityToSolveStatus[huntEntity] = true;
 					newSolved = true;
 					continue;
 				}
 				else if (huntEntity == 0xFFF00 && ReadPanelData<float>(0x1800F, CABLE_POWER) > 0.0f) {
-					huntEntities[huntEntity] = true;
+					huntEntityToSolveStatus[huntEntity] = true;
 					newSolved = true;
 					continue;
 				}
@@ -269,14 +279,14 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (newSolved) {
 			int huntSolveTotal = 0;
-			for (auto [huntEntity, currentSolveStatus] : huntEntities) {
+			for (auto [huntEntity, currentSolveStatus] : huntEntityToSolveStatus) {
 				if (currentSolveStatus) huntSolveTotal++;
 			}
 
 			state->solvedHuntEntities = huntSolveTotal;
 			panelLocker->UpdatePuzzleLock(*state, 0x03629);
 
-			hudManager->queueNotification("Panel Hunt: " + std::to_string(huntSolveTotal) + "/30");
+			hudManager->queueNotification("Panel Hunt: " + std::to_string(huntSolveTotal) + "/" + std::to_string(state->requiredHuntEntities));
 		}
 
 		std::vector<float> playerPosition = Memory::get()->ReadPlayerPosition();
@@ -667,6 +677,8 @@ void APWatchdog::ResetPowerSurge() {
 }
 
 void APWatchdog::TriggerBonk() {
+	if (eee) return;
+
 	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
 
 	if (hasDeathLink) {
@@ -1524,6 +1536,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		else {
 			int foundProgression = 0;
 			int unchecked = 0;
+			int unfoundHuntPanels = 0;
+			bool hasHuntPanels = false;
 
 			std::set<int64_t> associatedChecks = {};
 
@@ -1542,20 +1556,47 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 				}
 			}
 
+			for (int huntEntity : huntEntitiesPerArea[audioLogHint.areaHint]) {
+				hasHuntPanels = true;
+				if (!huntEntityToSolveStatus[huntEntity]) unfoundHuntPanels++;
+			}
+
 			if (audioLogHint.locationID == -1) {
-				if (audioLogHint.areaProgression != -1 && foundProgression >= audioLogHint.areaProgression) {
-					fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
+				cleanedMessage += " (";
 
-					for (int64_t id : associatedChecks) {
-						implicitlyClearedLocations[std::to_string(id)] = true;
+				if (hasHuntPanels) {
+					if (unfoundHuntPanels == 0) {
+						cleanedMessage += "All Hunt Panels found, ";
 					}
-
-					continue;
+					else if (unfoundHuntPanels == 1) {
+						cleanedMessage += "1 Hunt Panel remaining, ";
+					}
+					else {
+						cleanedMessage += std::to_string(unfoundHuntPanels) + " Hunt Panels remaining, ";
+					}
 				}
 
-				cleanedMessage += " (";
-				cleanedMessage += std::to_string(foundProgression) + " found, ";
-				cleanedMessage += std::to_string(unchecked) + " unchecked)";
+				if (audioLogHint.areaProgression != -1 && foundProgression >= audioLogHint.areaProgression) {
+					if (!unfoundHuntPanels) {
+						for (int64_t id : associatedChecks) {
+							implicitlyClearedLocations[std::to_string(id)] = true;
+						}
+
+						fullyClearedAreas.push_back(audioLogHint.areaHint /* + " (" + std::to_string(foundProgression) + ")"*/);
+						continue;
+					}
+
+					cleanedMessage += "all progression found";
+				}
+				else {
+
+					cleanedMessage += std::to_string(audioLogHint.areaProgression - foundProgression);
+					if (hasHuntPanels) cleanedMessage += " progression";
+					cleanedMessage += " remaining, ";
+					cleanedMessage += std::to_string(unchecked) + " unchecked";
+				}
+
+				cleanedMessage += ")";
 			}
 			else
 			{
@@ -2845,6 +2886,8 @@ void APWatchdog::SendDeathLink(int panelId)
 }
 
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
+	if (eee) return;
+
 	TriggerBonk();
 
 	double a = -1;
@@ -3137,7 +3180,7 @@ void APWatchdog::DrawHuntPanelSpheres() {
 
 		if (newOpacity == 0) continue;
 
-		bool solveStatus = huntEntities[huntEntity];
+		bool solveStatus = huntEntityToSolveStatus[huntEntity];
 		float radius = 0.7;
 		RgbColor color = solveStatus ? RgbColor(0.0f, 1.0f, 0.0f, newOpacity) : RgbColor(1.0f, 0.0f, 0.0f, newOpacity);
 		bool cull = true;

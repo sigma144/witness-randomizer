@@ -137,7 +137,8 @@ private:
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
 	std::set<int> DisabledEntities;
 
-	std::map<int, bool> huntEntities;
+	std::map<int, bool> huntEntityToSolveStatus;
+	std::map<std::string, std::set<int>> huntEntitiesPerArea;
 	std::map<int, float> huntEntitySphereOpacities;
 
 	std::map<int, int> doorToItemId;
