@@ -140,6 +140,8 @@ private:
 	std::map<int, bool> huntEntityToSolveStatus;
 	std::map<std::string, std::set<int>> huntEntitiesPerArea;
 	std::map<int, float> huntEntitySphereOpacities;
+	std::map<int, Vector3> huntEntityPositions;
+	std::map<int, float> huntEntityKeepActive;
 
 	std::map<int, int> doorToItemId;
 
@@ -241,7 +243,9 @@ private:
 
 	void DoAprilFoolsEffects(float deltaSeconds);
 
-	void DrawHuntPanelSpheres();
+	Vector3 getHuntEntitySpherePosition(int huntEntity);
+
+	void DrawHuntPanelSpheres(float deltaSeconds);
 
 	Vector3 getCachedEntityPosition(int id);
 

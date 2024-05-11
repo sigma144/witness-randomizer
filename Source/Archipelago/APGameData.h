@@ -1995,6 +1995,168 @@ const inline std::map<int, std::vector<uint8_t>> precompletableEpToPatternPointB
 	}, //Tutorial Wall Reflection
 };
 
+inline std::map<int, Vector3> treehousePanelPreSolvePositions = {
+	{ 0x17D72, { 148.835312, 143.541061, 10.944015}}, // Treehouse Yellow 1
+	{ 0x17D8F, { 147.607086, 143.697037, 10.944004}}, // Treehouse Yellow 2
+	{ 0x17D74, { 146.378937, 143.853012, 10.943995}}, // Treehouse Yellow 3
+	{ 0x17DAC, { 145.150772, 144.008926, 10.944016}}, // Treehouse Yellow 4
+	{ 0x17D9E, { 143.922577, 144.164917, 10.944039}}, // Treehouse Yellow 5
+	{ 0x17DB9, { 142.694366, 144.320862, 10.944067}}, // Treehouse Yellow 6
+	{ 0x17D9C, { 141.466156, 144.476822, 10.944101}}, // Treehouse Yellow 7
+	{ 0x17DC2, { 140.237885, 144.632736, 10.944168}}, // Treehouse Yellow 8
+	{ 0x17DC4, { 139.009674, 144.788696, 10.944206}}, // Treehouse Yellow 9
+	{ 0x17DC8, { 131.435242, 140.491425, 10.881846}}, // Treehouse First Purple 1
+	{ 0x17DC7, { 131.417969, 139.253479, 10.881849}}, // Treehouse First Purple 2
+	{ 0x17CE4, { 131.400696, 138.015533, 10.881854}}, // Treehouse First Purple 3
+	{ 0x17D2D, { 131.383423, 136.777588, 10.881861}}, // Treehouse First Purple 4
+	{ 0x17D6C, { 131.366165, 135.539627, 10.881871}}, // Treehouse First Purple 5
+	{ 0x17D9B, { 128.053757, 123.863373, 15.532800}}, // Treehouse Second Purple 1
+	{ 0x17D99, { 127.549446, 124.993973, 15.532713}}, // Treehouse Second Purple 2
+	{ 0x17DAA, { 127.045052, 126.124748, 15.532825}}, // Treehouse Second Purple 3
+	{ 0x17D97, { 126.540756, 127.255440, 15.532815}}, // Treehouse Second Purple 4
+	{ 0x17BDF, { 126.036484, 128.386093, 15.532756}}, // Treehouse Second Purple 5
+	{ 0x17D91, { 125.532158, 129.516815, 15.532821}}, // Treehouse Second Purple 6
+	{ 0x17DC6, { 125.027832, 130.647522, 15.532855}}, // Treehouse Second Purple 7
+	{ 0x17DB3, { 121.664284, 134.389389, 17.506397}}, // Treehouse Left Orange 1
+	{ 0x17DB5, { 120.451157, 134.142059, 17.506420}}, // Treehouse Left Orange 2
+	{ 0x17DB6, { 119.238075, 133.894730, 17.506399}}, // Treehouse Left Orange 3
+	{ 0x17DC0, { 118.024979, 133.647369, 17.506409}}, // Treehouse Left Orange 4
+	{ 0x17DD7, { 116.811867, 133.400055, 17.506432}}, // Treehouse Left Orange 5
+	{ 0x17DD9, { 115.598763, 133.152756, 17.506433}}, // Treehouse Left Orange 6
+	{ 0x17DB8, { 114.385658, 132.905441, 17.506445}}, // Treehouse Left Orange 7
+	{ 0x17DDC, { 113.172562, 132.658096, 17.506468}}, // Treehouse Left Orange 8
+	{ 0x17DD1, { 111.959457, 132.410767, 17.506485}}, // Treehouse Left Orange 9 Directional
+	{ 0x17D88, { 113.897636, 147.744904, 17.105471}}, // Treehouse Right Orange 1
+	{ 0x17DB4, { 112.684540, 147.497574, 17.105476}}, // Treehouse Right Orange 2
+	{ 0x17D8C, { 111.471436, 147.250244, 17.105478}}, // Treehouse Right Orange 3
+	{ 0x17CE3, { 110.258331, 147.002914, 17.105488}}, // Treehouse Right Orange 4
+	{ 0x17E3C, { 120.450722, 150.494064, 17.067404}}, // Treehouse Green 1
+	{ 0x17E4D, { 121.301476, 151.393524, 17.067404}}, // Treehouse Green 2
+	{ 0x17E4F, { 122.152237, 152.292999, 17.067411}}, // Treehouse Green 3
+	{ 0x17E52, { 123.002968, 153.192459, 17.067423}}, // Treehouse Green 4
+};
+
+inline std::map<int, Vector3> greenBridge5to7Leftwards = {
+	{ 0x17E5B, { 122.348259, 154.050003, 17.067417}}, // Treehouse Green 5
+	{ 0x17E5F, { 121.448853, 154.900772, 17.067415}}, // Treehouse Green 6
+	{ 0x17E61, { 120.549362, 155.751511, 17.067446}}, // Treehouse Green 7
+};
+
+inline std::map<int, Vector3> greenBridge5to7Straight = {
+	{ 0x17E5B, { 123.853722, 154.091873, 17.067417}}, // Treehouse Green 5
+	{ 0x17E5F, { 124.704483, 154.991272, 17.067417}}, // Treehouse Green 6
+	{ 0x17E61, { 125.555229, 155.890778, 17.067446}}, // Treehouse Green 7
+};
+
+inline std::map<int, Vector3> greenBridge5to7Rightwards = {
+	{ 0x17E5B, { 123.895592, 152.586395, 17.067406}}, // Treehouse Green 5
+	{ 0x17E5F, { 124.794998, 151.735641, 17.067392}}, // Treehouse Green 6
+	{ 0x17E61, { 125.694489, 150.884888, 17.067404}}, // Treehouse Green 7
+};
+
+inline std::map<int, Vector3> leftOrange10to15Leftwards = {
+	{ 0x17DDE, { 112.002617, 131.332657, 17.506512}}, // Treehouse Left Orange 10
+	{ 0x17DE3, { 112.249931, 130.119568, 17.506527}}, // Treehouse Left Orange 11
+	{ 0x17DEC, { 112.497314, 128.906464, 17.506563}}, // Treehouse Left Orange 12
+	{ 0x17DAE, { 112.744614, 127.693352, 17.506561}}, // Treehouse Left Orange 13
+	{ 0x17DB0, { 112.991928, 126.480255, 17.506594}}, // Treehouse Left Orange 14
+	{ 0x17DDB, { 113.239281, 125.267136, 17.506615}}, // Treehouse Left Orange 15
+};
+
+inline std::map<int, Vector3> leftOrange10to15Straight = {
+	{ 0x17DDE, { 110.746346, 132.163391, 17.506514}}, // Treehouse Left Orange 10
+	{ 0x17DE3, { 109.533249, 131.916092, 17.506531}}, // Treehouse Left Orange 11
+	{ 0x17DEC, { 108.320145, 131.668716, 17.506567}}, // Treehouse Left Orange 12
+	{ 0x17DAE, { 107.107040, 131.421417, 17.506573}}, // Treehouse Left Orange 13
+	{ 0x17DB0, { 105.893936, 131.174118, 17.506603}}, // Treehouse Left Orange 14
+	{ 0x17DDB, { 104.680824, 130.926773, 17.506632}}, // Treehouse Left Orange 15
+};
+
+inline std::map<int, Vector3> leftOrange10to15Right = {
+	{ 0x17DDE, { 111.577087, 133.419662, 17.506479}}, // Treehouse Left Orange 10
+	{ 0x17DE3, { 111.329773, 134.632751, 17.506458}}, // Treehouse Left Orange 11
+	{ 0x17DEC, { 111.082397, 135.845856, 17.506451}}, // Treehouse Left Orange 12
+	{ 0x17DAE, { 110.835114, 137.058960, 17.506420}}, // Treehouse Left Orange 13
+	{ 0x17DB0, { 110.587807, 138.272064, 17.506407}}, // Treehouse Left Orange 14
+	{ 0x17DDB, { 110.340462, 139.485184, 17.506399}}, // Treehouse Left Orange 15
+};
+
+inline std::map<int, Vector3> rightOrange5To10Left = {
+	{ 0x17DCD, { 110.301468, 145.924850, 17.105497}}, // Treehouse Right Orange 5
+	{ 0x17DB2, { 110.548805, 144.711731, 17.105503}}, // Treehouse Right Orange 6
+	{ 0x17DCC, { 110.796158, 143.498611, 17.105524}}, // Treehouse Right Orange 7
+	{ 0x17DCA, { 111.043465, 142.285507, 17.105518}}, // Treehouse Right Orange 8
+	{ 0x17D8E, { 111.290810, 141.072418, 17.105526}}, // Treehouse Right Orange 9
+	{ 0x17DB7, { 111.538147, 139.859314, 17.105532}}, // Treehouse Right Orange 10
+};
+
+inline std::map<int, Vector3> rightOrange11To12LeftThenLeft = {
+	{ 0x17DB1, { 112.616219, 139.902435, 17.105545}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 113.829330, 140.149765, 17.105564}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12LeftThenStraight = {
+	{ 0x17DB1, { 111.785484, 138.646210, 17.105541}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 112.032814, 137.433105, 17.105551}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12LeftThenRight = {
+	{ 0x17DB1, { 110.359634, 139.442352, 16.687616}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 109.316132, 139.229614, 17.105503}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange5To10Straight = {
+	{ 0x17DCD, { 109.045227, 146.755585, 17.105499}}, // Treehouse Right Orange 5
+	{ 0x17DB2, { 107.832100, 146.508255, 17.105507}}, // Treehouse Right Orange 6
+	{ 0x17DCC, { 106.618988, 146.260910, 17.105526}}, // Treehouse Right Orange 7
+	{ 0x17DCA, { 105.405891, 146.013611, 17.105526}}, // Treehouse Right Orange 8
+	{ 0x17D8E, { 104.192787, 145.766266, 17.105534}}, // Treehouse Right Orange 9
+	{ 0x17DB7, { 102.979683, 145.518936, 17.105543}}, // Treehouse Right Orange 10
+};
+
+inline std::map<int, Vector3> rightOrange11To12StraightThenLeft = {
+	{ 0x17DB1, { 103.022827, 144.440872, 17.105572}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 103.270157, 143.227768, 17.105600}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12StraightThenStraight = {
+	{ 0x17DB1, { 101.766579, 145.271606, 17.105555}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 100.553474, 145.024292, 17.105568}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12StraightThenRight = {
+	{ 0x17DB1, { 102.597321, 146.527847, 17.105516}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 102.349998, 147.740952, 17.105494}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange5To10Right = {
+	{ 0x17DCD, { 109.875977, 148.011826, 17.105484}}, // Treehouse Right Orange 5
+	{ 0x17DB2, { 109.628647, 149.224945, 17.105482}}, // Treehouse Right Orange 6
+	{ 0x17DCC, { 109.381302, 150.438049, 17.105482}}, // Treehouse Right Orange 7
+	{ 0x17DCA, { 109.133995, 151.651154, 17.105469}}, // Treehouse Right Orange 8
+	{ 0x17D8E, { 108.886665, 152.864258, 17.105457}}, // Treehouse Right Orange 9
+	{ 0x17DB7, { 108.639336, 154.077362, 17.105455}}, // Treehouse Right Orange 10
+};
+
+inline std::map<int, Vector3> rightOrange11To12RightThenLeft = {
+	{ 0x17DB1, { 107.561256, 154.034225, 17.105515}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 106.348152, 153.786896, 17.105539}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12RightThenStraight = {
+	{ 0x17DB1, { 108.392006, 155.290451, 17.105503}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 108.144684, 156.503571, 17.105513}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12RightThenRight = {
+	{ 0x17DB1, { 109.648239, 154.459717, 17.105474}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 110.861343, 154.707047, 17.105455}}, // Treehouse Right Orange 12
+};
+
+
+
+
+
 class CollisionVolume
 {
 public:

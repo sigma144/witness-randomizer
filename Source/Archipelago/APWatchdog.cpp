@@ -60,6 +60,8 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	for (int huntEntity : hunt) {
 		huntEntityToSolveStatus[huntEntity] = false;
 		huntEntitySphereOpacities[huntEntity] = 0.0f;
+		huntEntityPositions[huntEntity] = Vector3(0, 0, 0);
+		huntEntityKeepActive[huntEntity] = 0.0f;
 	}
 
 	for (auto [area_name, entities] : areaNameToEntityIDs) {
@@ -146,7 +148,7 @@ void APWatchdog::action() {
 
 	HandleVision(frameDuration);
 
-	DrawHuntPanelSpheres();
+	DrawHuntPanelSpheres(frameDuration);
 
 	if (Utilities::isAprilFools()) {
 		DoAprilFoolsEffects(frameDuration);
@@ -264,11 +266,13 @@ void APWatchdog::CheckSolvedPanels() {
 			if (!currentSolveStatus) {
 				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
 					huntEntityToSolveStatus[huntEntity] = true;
+					huntEntityKeepActive[huntEntity] = 5.0f;
 					newSolved = true;
 					continue;
 				}
 				else if (huntEntity == 0xFFF00 && ReadPanelData<float>(0x1800F, CABLE_POWER) > 0.0f) {
 					huntEntityToSolveStatus[huntEntity] = true;
+					huntEntityKeepActive[huntEntity] = 5.0f;
 					newSolved = true;
 					continue;
 				}
@@ -3116,7 +3120,49 @@ void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
 	memory->WriteAbsolute(reinterpret_cast<LPVOID>(memory->windmillCurrentTurnSpeed), &currentSpeed, sizeof(float));
 }
 
-void APWatchdog::DrawHuntPanelSpheres() {
+Vector3 APWatchdog::getHuntEntitySpherePosition(int huntEntity) {
+	if (!treehouseBridgePanels.count(huntEntity) || ReadPanelData<int>(huntEntity, SOLVED)) {
+		return Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
+	}
+
+	if (treehousePanelPreSolvePositions.count(huntEntity)) {
+		return treehousePanelPreSolvePositions[huntEntity];
+	}
+
+	if (leftOrange10to15Straight.count(huntEntity)) { // TODO: Check direction
+		Vector3 panel10Position = Vector3(ReadPanelData<float>(0x17DDE, POSITION, 3));
+		int panel9Solved = ReadPanelData<int>(0x17DD1, SOLVED);
+
+		if (!panel9Solved || (panel10Position - leftOrange10to15Straight[0x17DDE]).length() < 0.5) {
+			return leftOrange10to15Straight[huntEntity];
+		}
+
+		else if ((panel10Position - leftOrange10to15Leftwards[0x17DDE]).length() < 0.5) {
+			return leftOrange10to15Leftwards[huntEntity];
+		}
+		else if ((panel10Position - leftOrange10to15Right[0x17DDE]).length() < 0.5) {
+			return leftOrange10to15Right[huntEntity];
+		}
+
+		// TODO: Maybe fix that on the first solve of 9, the spheres disappear for a brief moment
+
+		return { -1000, -1, -1 }; // -1000 is a special value to indicate that the position of this entity should be assumed to be the previous position, but the sphere should be hidden.
+	}
+
+	if (rightOrange5To10Straight.count(huntEntity)) { // TODO: Check direction
+		return rightOrange5To10Straight[huntEntity];
+	}
+
+	if (rightOrange11To12StraightThenStraight.count(huntEntity)) { // TODO: Check direction
+		return rightOrange11To12StraightThenStraight[huntEntity];
+	}
+
+	if (greenBridge5to7Straight.count(huntEntity)) { // TODO: Check direction
+		return greenBridge5to7Straight[huntEntity];
+	}
+}
+
+void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 	DrawIngameManager* drawManager = DrawIngameManager::get();
 	
@@ -3135,7 +3181,15 @@ void APWatchdog::DrawHuntPanelSpheres() {
 			continue;
 		}
 
-		Vector3 actualPosition = Vector3(ReadPanelData<float>(positionEntity, POSITION, 3));
+		Vector3 actualPosition = getHuntEntitySpherePosition(huntEntity);
+
+		bool hide = false;
+		if (actualPosition.X == -1000) { // -1000 is a special value to indicate that the position of this entity should be assumed to be the previous position.
+			actualPosition = huntEntityPositions[huntEntity];
+			hide = true;
+		}
+
+		huntEntityPositions[huntEntity] = actualPosition;
 
 		// TODO: make better thing for special positions
 		if (huntEntity == 0x09F7F) {
@@ -3150,7 +3204,12 @@ void APWatchdog::DrawHuntPanelSpheres() {
 		float targetOpacity = 0;
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-		if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+		if (hide) targetOpacity = 0;
+		else if (huntEntityKeepActive[huntEntity] > 0) {
+			targetOpacity = huntEntityKeepActive[huntEntity] / 10.0f;
+			huntEntityKeepActive[huntEntity] -= deltaSeconds;
+		}
+		else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
 			workingDistance -= 2;
 			targetOpacity = workingDistance / 10 * 0.1;
 			if (targetOpacity > 0.1) targetOpacity = 0.1;
@@ -3167,6 +3226,7 @@ void APWatchdog::DrawHuntPanelSpheres() {
 		float delta = (previousOpacity + 0.01) / 7;
 		float newOpacity = previousOpacity;
 
+
 		if (newOpacity > targetOpacity) {
 			newOpacity -= delta;
 			if (newOpacity < targetOpacity) newOpacity = targetOpacity;
@@ -3175,6 +3235,7 @@ void APWatchdog::DrawHuntPanelSpheres() {
 			newOpacity += delta;
 			if (newOpacity > targetOpacity) newOpacity = targetOpacity;
 		}
+
 
 		huntEntitySphereOpacities[huntEntity] = newOpacity;
 
