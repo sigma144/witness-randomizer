@@ -3205,22 +3205,26 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 		if (hide) targetOpacity = 0;
-		else if (huntEntityKeepActive[huntEntity] > 0) {
-			targetOpacity = huntEntityKeepActive[huntEntity] / 10.0f;
-			huntEntityKeepActive[huntEntity] -= deltaSeconds;
-		}
-		else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
-			workingDistance -= 2;
-			targetOpacity = workingDistance / 10 * 0.1;
-			if (targetOpacity > 0.1) targetOpacity = 0.1;
-			if (targetOpacity < 0) targetOpacity = 0;
-		}
 		else {
-			workingDistance += 2;
-			targetOpacity = workingDistance / 8 * 0.6;
+			if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+				workingDistance -= 2;
+				targetOpacity = workingDistance / 10 * 0.1;
+				if (targetOpacity > 0.1) targetOpacity = 0.1;
+				if (targetOpacity < 0) targetOpacity = 0;
+			}
+			else {
+				workingDistance += 2;
+				targetOpacity = workingDistance / 8 * 0.6;
 
-			if (targetOpacity > 0.6) targetOpacity = 0.6;
-			// if (targetOpacity < 0) targetOpacity = 0; impossible
+				if (targetOpacity > 0.6) targetOpacity = 0.6;
+				// if (targetOpacity < 0) targetOpacity = 0; impossible
+			}
+
+			if (huntEntityKeepActive[huntEntity] > 0) {
+				float potentialHigherTargetOpacity = huntEntityKeepActive[huntEntity] / 10.0f;
+				if (potentialHigherTargetOpacity > targetOpacity) targetOpacity = potentialHigherTargetOpacity;
+				huntEntityKeepActive[huntEntity] -= deltaSeconds;
+			}
 		}
 
 		float delta = (previousOpacity + 0.01) / 7;
