@@ -3129,37 +3129,65 @@ Vector3 APWatchdog::getHuntEntitySpherePosition(int huntEntity) {
 		return treehousePanelPreSolvePositions[huntEntity];
 	}
 
-	if (leftOrange10to15Straight.count(huntEntity)) { // TODO: Check direction
-		Vector3 panel10Position = Vector3(ReadPanelData<float>(0x17DDE, POSITION, 3));
-		int panel9Solved = ReadPanelData<int>(0x17DD1, SOLVED);
+	int directionalPanel = 0;
+	int panelAfterDirectionalPanel = 0;
+	std::vector<std::map<int, Vector3>> representativeMaps = {};
 
-		if (!panel9Solved || (panel10Position - leftOrange10to15Straight[0x17DDE]).length() < 0.5) {
-			return leftOrange10to15Straight[huntEntity];
+	if (leftOrange10to15Straight.count(huntEntity)) {
+		directionalPanel = 0x17DD1;
+		panelAfterDirectionalPanel = 0x17DDE;
+		representativeMaps = { leftOrange10to15Straight, leftOrange10to15Leftwards, leftOrange10to15Right };
+	}
+	else if (rightOrange11To12StraightThenStraight.count(huntEntity)) {
+		// Special case
+
+		// If right orange 10 has not been solved, use 4 as the reference & assume it will be solved straight
+		if (!ReadPanelData<int>(0x17DB7, SOLVED)) {
+			directionalPanel = 0x17CE3;
+			panelAfterDirectionalPanel = 0x17DCD;
+			representativeMaps = { rightOrange5To12Straight, rightOrange5To12Left, rightOrange5To12Right };
 		}
+		else {
+			// If it has been solved, it becomes the reference point
+			directionalPanel = 0x17DB7;
+			panelAfterDirectionalPanel = 0x17DB1;
 
-		else if ((panel10Position - leftOrange10to15Leftwards[0x17DDE]).length() < 0.5) {
-			return leftOrange10to15Leftwards[huntEntity];
+			representativeMaps = { rightOrange11To12LeftThenLeft, rightOrange11To12LeftThenStraight, rightOrange11To12LeftThenRight,
+								   rightOrange11To12StraightThenLeft, rightOrange11To12StraightThenStraight, rightOrange11To12StraightThenRight,
+								   rightOrange11To12RightThenLeft, rightOrange11To12RightThenStraight, rightOrange11To12RightThenRight, };
 		}
-		else if ((panel10Position - leftOrange10to15Right[0x17DDE]).length() < 0.5) {
-			return leftOrange10to15Right[huntEntity];
+	}
+	else if (rightOrange5To12Straight.count(huntEntity)) {
+		directionalPanel = 0x17CE3;
+		panelAfterDirectionalPanel = 0x17DCD;
+		representativeMaps = { rightOrange5To12Straight, rightOrange5To12Left, rightOrange5To12Right };
+	}
+	else if (greenBridge5to7Straight.count(huntEntity)) {
+		directionalPanel = 0x17E52;
+		panelAfterDirectionalPanel = 0x17E5B;
+		representativeMaps = { greenBridge5to7Straight, greenBridge5to7Leftwards, greenBridge5to7Rightwards };
+	}
+
+	if (directionalPanel == 0) return { -1, -1, -1 };
+
+	Vector3 panelAfterDirectionalPosition = Vector3(ReadPanelData<float>(panelAfterDirectionalPanel, POSITION, 3));
+	int directionalPanelSolved = ReadPanelData<int>(directionalPanel, SOLVED);
+
+	// If the directional panel has not been solved, assume the bridge is going straight.
+
+	if (!directionalPanelSolved) {
+		return representativeMaps[0][huntEntity];
+	}
+
+	// If it has been solved, check in which direction, then use that for the upcoming hunt panel positions.
+
+	for (auto map : representativeMaps) {
+		if ((panelAfterDirectionalPosition - map[panelAfterDirectionalPanel]).length() < 0.5) {
+			return map[huntEntity];
 		}
-
-		// TODO: Maybe fix that on the first solve of 9, the spheres disappear for a brief moment
-
-		return { -1000, -1, -1 }; // -1000 is a special value to indicate that the position of this entity should be assumed to be the previous position, but the sphere should be hidden.
 	}
 
-	if (rightOrange5To10Straight.count(huntEntity)) { // TODO: Check direction
-		return rightOrange5To10Straight[huntEntity];
-	}
-
-	if (rightOrange11To12StraightThenStraight.count(huntEntity)) { // TODO: Check direction
-		return rightOrange11To12StraightThenStraight[huntEntity];
-	}
-
-	if (greenBridge5to7Straight.count(huntEntity)) { // TODO: Check direction
-		return greenBridge5to7Straight[huntEntity];
-	}
+	return { -1000, -1, -1 };
 }
 
 void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {

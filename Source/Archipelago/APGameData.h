@@ -2081,13 +2081,15 @@ inline std::map<int, Vector3> leftOrange10to15Right = {
 	{ 0x17DDB, { 110.340462, 139.485184, 17.506399}}, // Treehouse Left Orange 15
 };
 
-inline std::map<int, Vector3> rightOrange5To10Left = {
+inline std::map<int, Vector3> rightOrange5To12Left = {
 	{ 0x17DCD, { 110.301468, 145.924850, 17.105497}}, // Treehouse Right Orange 5
 	{ 0x17DB2, { 110.548805, 144.711731, 17.105503}}, // Treehouse Right Orange 6
 	{ 0x17DCC, { 110.796158, 143.498611, 17.105524}}, // Treehouse Right Orange 7
 	{ 0x17DCA, { 111.043465, 142.285507, 17.105518}}, // Treehouse Right Orange 8
 	{ 0x17D8E, { 111.290810, 141.072418, 17.105526}}, // Treehouse Right Orange 9
 	{ 0x17DB7, { 111.538147, 139.859314, 17.105532}}, // Treehouse Right Orange 10
+	{ 0x17DB1, { 111.785484, 138.646210, 17.105541}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 112.032814, 137.433105, 17.105551}}, // Treehouse Right Orange 12
 };
 
 inline std::map<int, Vector3> rightOrange11To12LeftThenLeft = {
@@ -2105,13 +2107,15 @@ inline std::map<int, Vector3> rightOrange11To12LeftThenRight = {
 	{ 0x17DA2, { 109.316132, 139.229614, 17.105503}}, // Treehouse Right Orange 12
 };
 
-inline std::map<int, Vector3> rightOrange5To10Straight = {
+inline std::map<int, Vector3> rightOrange5To12Straight = {
 	{ 0x17DCD, { 109.045227, 146.755585, 17.105499}}, // Treehouse Right Orange 5
 	{ 0x17DB2, { 107.832100, 146.508255, 17.105507}}, // Treehouse Right Orange 6
 	{ 0x17DCC, { 106.618988, 146.260910, 17.105526}}, // Treehouse Right Orange 7
 	{ 0x17DCA, { 105.405891, 146.013611, 17.105526}}, // Treehouse Right Orange 8
 	{ 0x17D8E, { 104.192787, 145.766266, 17.105534}}, // Treehouse Right Orange 9
 	{ 0x17DB7, { 102.979683, 145.518936, 17.105543}}, // Treehouse Right Orange 10
+	{ 0x17DB1, { 101.766579, 145.271606, 17.105555}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 100.553474, 145.024292, 17.105568}}, // Treehouse Right Orange 12
 };
 
 inline std::map<int, Vector3> rightOrange11To12StraightThenLeft = {
@@ -2129,13 +2133,15 @@ inline std::map<int, Vector3> rightOrange11To12StraightThenRight = {
 	{ 0x17DA2, { 102.349998, 147.740952, 17.105494}}, // Treehouse Right Orange 12
 };
 
-inline std::map<int, Vector3> rightOrange5To10Right = {
+inline std::map<int, Vector3> rightOrange5To12Right = {
 	{ 0x17DCD, { 109.875977, 148.011826, 17.105484}}, // Treehouse Right Orange 5
 	{ 0x17DB2, { 109.628647, 149.224945, 17.105482}}, // Treehouse Right Orange 6
 	{ 0x17DCC, { 109.381302, 150.438049, 17.105482}}, // Treehouse Right Orange 7
 	{ 0x17DCA, { 109.133995, 151.651154, 17.105469}}, // Treehouse Right Orange 8
 	{ 0x17D8E, { 108.886665, 152.864258, 17.105457}}, // Treehouse Right Orange 9
 	{ 0x17DB7, { 108.639336, 154.077362, 17.105455}}, // Treehouse Right Orange 10
+	{ 0x17DB1, { 108.392006, 155.290451, 17.105503}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 108.144684, 156.503571, 17.105513}}, // Treehouse Right Orange 12
 };
 
 inline std::map<int, Vector3> rightOrange11To12RightThenLeft = {
