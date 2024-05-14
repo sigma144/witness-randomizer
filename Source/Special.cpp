@@ -2355,7 +2355,7 @@ void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, s
 	createText(id, goal2, intersections, connectionsA, connectionsB, 0.5f - goal2.size() * 0.04f, 0.5f + goal2.size() * 0.04f, 0.25f, 0.4f);
 
 	std::string lasersString2 = std::to_string(mountain_lasers) + " - " + std::to_string(challenge_lasers);
-	createText(id, countInfo, intersections, connectionsA, connectionsB, std::min(0.5f - countInfo.size() * 0.04f, 0.03f), std::max(0.5f + countInfo.size() * 0.04f, 0.97f), 0.6f, 0.75f);
+	createText(id, countInfo, intersections, connectionsA, connectionsB, std::max(0.5f - countInfo.size() * 0.04f, 0.03f), std::min(0.5f + countInfo.size() * 0.04f, 0.97f), 0.6f, 0.75f);
 	createText(id, lasersString2, intersections, connectionsA, connectionsB, 0.5f - lasersString2.size() * 0.04f, 0.5f + lasersString2.size() * 0.04f, 0.8f, 0.95f);
 
 	drawText(id, intersections, connectionsA, connectionsB, { 0.1f, 0.5f, 0.9f, 0.5f });
