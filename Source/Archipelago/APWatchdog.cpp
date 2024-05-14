@@ -3209,7 +3209,7 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 			continue;
 		}
 
-		Vector3 actualPosition = getHuntEntitySpherePosition(huntEntity);
+		Vector3 actualPosition = getHuntEntitySpherePosition(positionEntity);
 
 		bool hide = false;
 		if (actualPosition.X == -1000) { // -1000 is a special value to indicate that the position of this entity should be assumed to be the previous position.

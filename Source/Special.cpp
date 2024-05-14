@@ -2342,7 +2342,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	//Not really necessary, actually, as you should never re-randomize while the game is already running with randomized panels. You should only re-randomize after the game was closed, and the vanilla panels were re-loaded.
 }
 
-void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, int mountain_lasers, int challenge_lasers)
+void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, std::string countInfo, int mountain_lasers, int challenge_lasers)
 {
 	std::vector<float> intersections;
 	std::vector<int> connectionsA;
@@ -2354,9 +2354,8 @@ void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, i
 
 	createText(id, goal2, intersections, connectionsA, connectionsB, 0.5f - goal2.size() * 0.04f, 0.5f + goal2.size() * 0.04f, 0.25f, 0.4f);
 
-	std::string lasersString1 = " Lasers:";
 	std::string lasersString2 = std::to_string(mountain_lasers) + " - " + std::to_string(challenge_lasers);
-	createText(id, lasersString1, intersections, connectionsA, connectionsB, 0.5f - lasersString1.size() * 0.04f, 0.5f + lasersString1.size() * 0.04f, 0.6f, 0.75f);
+	createText(id, countInfo, intersections, connectionsA, connectionsB, 0.5f - countInfo.size() * 0.04f, 0.5f + countInfo.size() * 0.04f, 0.6f, 0.75f);
 	createText(id, lasersString2, intersections, connectionsA, connectionsB, 0.5f - lasersString2.size() * 0.04f, 0.5f + lasersString2.size() * 0.04f, 0.8f, 0.95f);
 
 	drawText(id, intersections, connectionsA, connectionsB, { 0.1f, 0.5f, 0.9f, 0.5f });

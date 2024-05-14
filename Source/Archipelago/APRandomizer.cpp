@@ -610,22 +610,22 @@ void APRandomizer::PostGeneration() {
 	}
 
 	if (FinalPanel == 0x03629) {
-		Special::writeGoalCondition(0x0042D, " Goal:", "Panel Hunt", RequiredHuntEntities, huntEntities.size());
+		Special::writeGoalCondition(0x0042D, " Goal:", "Panel Hunt", "Needed - Total:", RequiredHuntEntities, huntEntities.size());
 		Special::DrawSingleVerticalLine(0x03629);
 		memory->WritePanelData<float>(0x03629, MAX_BROADCAST_DISTANCE, -1);
 		Special::DrawSingleVerticalLine(0x03505);
 	}
 	else if (FinalPanel == 0x09F7F) {
-		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
+		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", " Lasers:", MountainLasers, ChallengeLasers);
 	}
 	else if (FinalPanel == 0xFFF00) {
-		Special::writeGoalCondition(0x0042D, " Goal:", "Box Long", MountainLasers, ChallengeLasers);
+		Special::writeGoalCondition(0x0042D, " Goal:", "Box Long", " Lasers:", MountainLasers, ChallengeLasers);
 	}
 	else if (FinalPanel == 0x3D9A9) {
-		Special::writeGoalCondition(0x0042D, " Goal:", "Elevator", MountainLasers, ChallengeLasers);
+		Special::writeGoalCondition(0x0042D, " Goal:", "Elevator", " Lasers:", MountainLasers, ChallengeLasers);
 	}
 	else if (FinalPanel == 0x0356B) {
-		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", MountainLasers, ChallengeLasers);
+		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", "Lasers:", MountainLasers, ChallengeLasers);
 	}
 
 	for (int panel : desertPanels) {
