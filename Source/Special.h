@@ -88,6 +88,8 @@ public:
 
 	static void ColorPanel(int id, std::string text);
 
+	static void DrawSingleVerticalLine(int id);
+
 	static void DrawSimplePanel(int id, std::string text, bool kickOut);
 
 	static void writeGoalCondition(int id, std::string goal1, std::string goal2, int mountain_lasers, int challenge_lasers);

@@ -2081,6 +2081,54 @@ void Special::ColorPanel(int id, std::string text) {
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
+void Special::DrawSingleVerticalLine(int id) {
+	Memory* memory = Memory::get();
+
+	std::vector<float> intersections = { 0.5f, 0.9f, 0.5f, 0.1f };
+
+	std::vector<int> intersectionFlags;
+	intersectionFlags = { Decoration::Start, Decoration::Exit };
+
+	std::vector<int> connectionsA = { 0 };
+	std::vector<int> connectionsB = { 1 };
+
+	std::vector<int> decorations(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+	std::vector<int> decorationsFlags(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+
+	float path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+	memory->WritePanelData<float>(id, PATTERN_SCALE, { 1.0f / path_width_scale });
+	memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { 0 });
+	memory->WritePanelData<INT64>(id, DOT_SEQUENCE_REFLECTION, { 0 });
+	memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { 0 });
+	memory->WritePanelData<INT64>(id, DOT_SEQUENCE, { 0 });
+
+	memory->WritePanelData<int>(id, TRACED_EDGES, { 0 });
+
+	memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	memory->WriteArray<int>(id, DECORATIONS, decorations);
+	memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+
+	memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	memory->WriteArray<int>(id, COLORED_REGIONS, { });
+
+	memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+	memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+
+	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	style &= ~Panel::Style::SYMMETRICAL;
+	memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
+	memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
+
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 {
 	ColorPanel(id, text == "Disabled Completely" ? "Disabled" : text);

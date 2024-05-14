@@ -609,7 +609,13 @@ void APRandomizer::PostGeneration() {
 		ASMPayloadManager::get()->UpdateEntityPosition(0x09f7f);
 	}
 
-	if (FinalPanel == 0x09F7F) {
+	if (FinalPanel == 0x03629) {
+		Special::writeGoalCondition(0x0042D, " Goal:", "Panel Hunt", RequiredHuntEntities, huntEntities.size());
+		Special::DrawSingleVerticalLine(0x03629);
+		memory->WritePanelData<float>(0x03629, MAX_BROADCAST_DISTANCE, -1);
+		Special::DrawSingleVerticalLine(0x03505);
+	}
+	else if (FinalPanel == 0x09F7F) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Box Short", MountainLasers, ChallengeLasers);
 	}
 	else if (FinalPanel == 0xFFF00) {
@@ -759,7 +765,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateVariety() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	Memory::get()->PowerNext(0x03629, 0x36);
