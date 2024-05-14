@@ -42,6 +42,7 @@ class APRandomizer {
 		void PostGeneration();
 
 		void GenerateNormal();
+		void GenerateVariety();
 		void GenerateHard();
 
 		void HighContrastMode();

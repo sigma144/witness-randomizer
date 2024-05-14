@@ -9,6 +9,7 @@ class Randomizer {
 public:
 
 	void GenerateNormal();
+	void GenerateVariety();
 	void GenerateHard();
 
 	void AdjustSpeed();

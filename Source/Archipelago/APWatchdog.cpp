@@ -823,7 +823,7 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 		// Puzzle is excluded on Hard.
 		return false;
 	}
-	else if ((PuzzleRandomization == SIGMA_NORMAL || PuzzleRandomization == NO_PUZZLE_RANDO) && skip_excludeOnNormal.count(puzzleId) != 0) {
+	else if ((PuzzleRandomization == SIGMA_NORMAL || PuzzleRandomization == NO_PUZZLE_RANDO || PuzzleRandomization == VARIETY) && skip_excludeOnNormal.count(puzzleId) != 0) {
 		// Puzzle is excluded on Normal.
 		return false;
 	}

@@ -758,6 +758,16 @@ void APRandomizer::GenerateNormal() {
 		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
 }
 
+void APRandomizer::GenerateVariety() {
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	SeverDoors();
+
+	Memory::get()->PowerNext(0x03629, 0x36);
+
+	if (DisableNonRandomizedPuzzles)
+		panelLocker->DisableNonRandomizedPuzzles(doorsActuallyInTheItemPool);
+}
+
 void APRandomizer::GenerateHard() {
 	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();

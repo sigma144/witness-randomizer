@@ -1590,13 +1590,13 @@ void Special::drawText(int id, std::vector<float>& intersections, std::vector<in
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
-void Special::drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options)
+void Special::drawSeedAndDifficulty(int id, int seed, std::string mode, bool setSeed, bool options)
 {
 	std::vector<float> intersections;
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;
 
-	createText(id, hard ? "expert" : "normal", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.25f, 0.4f);
+	createText(id, mode, intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.25f, 0.4f);
 	std::string seedStr = std::to_string(seed);
 	createText(id, seedStr, intersections, connectionsA, connectionsB, 0.5f - seedStr.size()*0.06f, 0.5f + seedStr.size()*0.06f, setSeed ? 0.6f : 0.65f, setSeed ? 0.75f : 0.8f);
 	if (setSeed) createText(id, "Archipelago", intersections, connectionsA, connectionsB, 0.05f, 0.95f, 0.86f, 0.96f);
