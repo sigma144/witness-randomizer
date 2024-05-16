@@ -328,9 +328,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				disabledEntities.erase(0x3352F);  // Don't disable Gate EP in panel hunt
 			}
 		}
-		else {
-			Memory::get()->turnOffEEE();
-		}
 
 		connected = true;
 		hasConnectionResult = true;
@@ -628,6 +625,13 @@ void APRandomizer::PostGeneration() {
 	}
 	else if (FinalPanel == 0x0356B) {
 		Special::writeGoalCondition(0x0042D, " Goal:", "Challenge", "Lasers:", MountainLasers, ChallengeLasers);
+	}
+
+	if (FinalPanel != 0x03629) {
+		Memory::get()->turnOffEEE();
+	}
+	if (FinalPanel != 0x3D9A9) {
+		Memory::get()->turnOffElevator();
 	}
 
 	for (int panel : desertPanels) {

@@ -378,6 +378,20 @@ void Memory::turnOffEEE() {
 	});
 }
 
+void Memory::turnOffElevator() {
+	// begin_endgame_1 - Prevent actually ending the game (Wonkavator)
+	executeSigScan({ 0x83, 0x7C, 0x01, 0xD0, 0x04 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x74 && data[index - 1] == 0xC0 && data[index - 2] == 0x84 && data[index - 7] == 0xE8) {
+				byte newByte = 0xEB;
+				WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index), &newByte, sizeof(newByte));
+				return true;
+			}
+		}
+		return false;
+	});
+}
+
 void Memory::doSecretThing() {
 	// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 

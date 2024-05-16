@@ -234,6 +234,8 @@ public:
 	void applyDestructivePatches();
 	void turnOffEEE();
 
+	void turnOffElevator();
+
 	void writeCursorColor(std::vector<float> color) {
 		float r = color[0];
 		float g = color[1];

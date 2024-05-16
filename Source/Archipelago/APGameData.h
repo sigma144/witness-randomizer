@@ -2160,7 +2160,18 @@ inline std::map<int, Vector3> rightOrange11To12RightThenRight = {
 	{ 0x17DA2, { 110.861343, 154.707047, 17.105455}}, // Treehouse Right Orange 12
 };
 
+inline std::map<int, Vector3> finalElevatorPanelPositions = {
+	{ 0x3D9a7 , {211.0157623, -48.44531631, 2.267941236}}, // Elevator Close Right
+	{ 0x3D9a7 , {211.0527344, -49.13837814, 2.267941236}}, // Elevator Close Left
 
+	{ 0x3c114 , {210.9108887, -47.65873718, 0.08744956553}}, // Elevator Open Right
+	{ 0x3c113 , {211.0372314, -49.94410324, 0.08744954318}}, // Elevator Open Left
+
+	{ 0x3d9aa , {212.4322968, -48.22860336, 1.175450087}}, // Elevator Inside Left
+	{ 0x3d9a8 , {212.4847107, -49.19897842, 1.175730228}}, // Elevator Open Left
+
+	{ 0x3d9a9 , {212.4577942, -48.71218109, 1.170690656}}, // Elevator Start
+};
 
 
 

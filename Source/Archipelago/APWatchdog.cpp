@@ -3121,6 +3121,10 @@ void APWatchdog::DoAprilFoolsEffects(float deltaSeconds) {
 }
 
 Vector3 APWatchdog::getHuntEntitySpherePosition(int huntEntity) {
+	if (finalElevatorPanelPositions.count(huntEntity) && !ReadPanelData<int>(0x3D9a7, SOLVED)) {
+		return finalElevatorPanelPositions[huntEntity];
+	}
+
 	if (!treehouseBridgePanels.count(huntEntity) || ReadPanelData<int>(huntEntity, SOLVED)) {
 		return Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
 	}
