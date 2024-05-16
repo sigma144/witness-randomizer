@@ -323,8 +323,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			ap->ConnectUpdate(false, 7, true, newTags);
 		}
 
-		if (RequiredHuntEntities > 0 && disabledEntities.count(0x3352F)) {
-			disabledEntities.erase(0x3352F);  // Don't disable Gate EP in panel hunt
+		if (RequiredHuntEntities > 0) {
+			if (disabledEntities.count(0x3352F)) {
+				disabledEntities.erase(0x3352F);  // Don't disable Gate EP in panel hunt
+			}
 		}
 		else {
 			Memory::get()->turnOffEEE();
