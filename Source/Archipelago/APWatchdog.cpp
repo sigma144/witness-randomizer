@@ -266,13 +266,13 @@ void APWatchdog::CheckSolvedPanels() {
 			if (!currentSolveStatus) {
 				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
 					huntEntityToSolveStatus[huntEntity] = true;
-					huntEntityKeepActive[huntEntity] = 10.0f;
+					huntEntityKeepActive[huntEntity] = 7.0f;
 					newSolved = true;
 					continue;
 				}
 				else if (huntEntity == 0xFFF00 && ReadPanelData<float>(0x1800F, CABLE_POWER) > 0.0f) {
 					huntEntityToSolveStatus[huntEntity] = true;
-					huntEntityKeepActive[huntEntity] = 10.0f;
+					huntEntityKeepActive[huntEntity] = 7.0f;
 					newSolved = true;
 					continue;
 				}
@@ -3241,7 +3241,7 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 				if (targetOpacity < 0) targetOpacity = 0;
 			}
 			else {
-				workingDistance += 2;
+				workingDistance += 1;
 				targetOpacity = workingDistance / 8 * 0.6;
 
 				if (targetOpacity > 0.6) targetOpacity = 0.6;
@@ -3249,7 +3249,7 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 			}
 
 			if (huntEntityKeepActive[huntEntity] > 0) {
-				float potentialHigherTargetOpacity = huntEntityKeepActive[huntEntity] / 20.0f;
+				float potentialHigherTargetOpacity = huntEntityKeepActive[huntEntity] / 15.0f;
 				if (potentialHigherTargetOpacity > targetOpacity) targetOpacity = potentialHigherTargetOpacity;
 				huntEntityKeepActive[huntEntity] -= deltaSeconds;
 			}
