@@ -3245,8 +3245,8 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 				if (targetOpacity < 0) targetOpacity = 0;
 			}
 			else {
-				workingDistance += 1;
-				targetOpacity = workingDistance / 8 * 0.6;
+				workingDistance += 2;
+				targetOpacity = workingDistance / 10 * 0.6;
 
 				if (targetOpacity > 0.6) targetOpacity = 0.6;
 				// if (targetOpacity < 0) targetOpacity = 0; impossible
