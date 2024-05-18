@@ -823,7 +823,7 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 		// Puzzle is excluded on Hard.
 		return false;
 	}
-	else if ((PuzzleRandomization == SIGMA_NORMAL || PuzzleRandomization == NO_PUZZLE_RANDO || PuzzleRandomization == VARIETY) && skip_excludeOnNormal.count(puzzleId) != 0) {
+	else if ((PuzzleRandomization == SIGMA_NORMAL || PuzzleRandomization == NO_PUZZLE_RANDO || PuzzleRandomization == UMBRA_VARIETY) && skip_excludeOnNormal.count(puzzleId) != 0) {
 		// Puzzle is excluded on Normal.
 		return false;
 	}
@@ -2443,7 +2443,7 @@ void APWatchdog::SetStatusMessages() {
 
 			if (DeathLinkAmnesty != -1) {
 				if (activePanelId != -1 && allPanels.count(activePanelId)) {
-					if (deathlinkExcludeList.count(activePanelId) || PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(activePanelId)) {
+					if (deathlinkExcludeList.count(activePanelId) || PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(activePanelId) || PuzzleRandomization == UMBRA_VARIETY && deathlinkVarietyExcludeList.count(activePanelId)) {
 						skipMessage = "This panel is excluded from DeathLink.\n" + skipMessage;
 					}
 					else {
@@ -2840,7 +2840,7 @@ void APWatchdog::CheckDeathLink() {
 
 	if (panelIdToConsider == -1 || !allPanels.count(panelIdToConsider)) return;
 	if (deathlinkExcludeList.count(panelIdToConsider)) return;
-	if (PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(panelIdToConsider)) return;
+	if (PuzzleRandomization == SIGMA_EXPERT && deathlinkExpertExcludeList.count(panelIdToConsider) || PuzzleRandomization == UMBRA_VARIETY && deathlinkVarietyExcludeList.count(panelIdToConsider)) return;
 
 	int newState = ReadPanelData<int>(panelIdToConsider, FLASH_MODE, 1, movingMemoryPanels.count(panelIdToConsider))[0];
 

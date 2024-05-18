@@ -797,6 +797,11 @@ const inline std::set<int> deathlinkExpertExcludeList = {
 	0x288EA, 0x288FC, 0x289E7, 0x288AA, // Caves Wooden Beams
 };
 
+const inline std::set<int> deathlinkVarietyExcludeList = {
+	0x17FB9, // Left Upstairs Singls
+	0x0A16B, 0x0A2CE, 0x0A2D7, 0x0A2DD, 0x0A2EA, // Left Upstairs Left
+};
+
 const inline std::vector<int> alwaysDeathLinkPanels = {
 	0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Same Solution Set
 	0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Keep Pressure Plates
