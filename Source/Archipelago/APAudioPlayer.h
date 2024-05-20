@@ -36,6 +36,7 @@ enum APJingle
 	UnderstatedUseful,
 
 	PanelHunt,
+	UnderstatedEntityHunt,
 
 	Victory,
 	FirstJingle,
@@ -124,6 +125,7 @@ private:
 		{UnderstatedProgression, {IDR_WAVE2}},
 		{UnderstatedTrap, {IDR_WAVE3}},
 		{UnderstatedUseful, {IDR_WAVE4}},
+		{UnderstatedEntityHunt, {IDR_WAVE60}},
 
 		{IncomingFiller, {IDR_WAVE24}},
 		{IncomingProgression, {IDR_WAVE25}},
@@ -195,7 +197,8 @@ private:
 		UnderstatedFiller,
 		UnderstatedProgression,
 		UnderstatedTrap,
-		UnderstatedUseful
+		UnderstatedUseful,
+		UnderstatedEntityHunt,
 	};
 
 	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());

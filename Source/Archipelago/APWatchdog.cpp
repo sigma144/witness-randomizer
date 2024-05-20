@@ -2220,11 +2220,16 @@ void APWatchdog::PlayFirstJingle() {
 void APWatchdog::PlayEntityHuntJingle(const int& huntEntity) {
 	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
 
-	if (ClientWindow::get()->getJinglesSettingSafe() != "Full") return; // Make understated panel hunt jingle?
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return; // Make understated panel hunt jingle?
 
 	if (panelIdToLocationId_READ_ONLY.count(huntEntity) && !CheckPanelHasBeenSolved(huntEntity)) return;
 
-	APAudioPlayer::get()->PlayAudio(APJingle::PanelHunt, APJingleBehavior::Queue);
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
+		APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedEntityHunt, APJingleBehavior::Queue);
+	}
+	else {
+		APAudioPlayer::get()->PlayAudio(APJingle::EntityHunt, APJingleBehavior::Queue);
+	}
 }
 
 void APWatchdog::CheckEPSkips() {

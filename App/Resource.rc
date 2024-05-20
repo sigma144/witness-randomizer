@@ -168,6 +168,8 @@ IDR_WAVE58              WAVE                    "..\\Music\\Panel Hunt 7.wav"
 
 IDR_WAVE59              WAVE                    "..\\Music\\Panel Useful 5.wav"
 
+IDR_WAVE60              WAVE                    "..\\Music\\Panel Hunt Understated.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
