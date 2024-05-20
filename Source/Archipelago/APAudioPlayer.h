@@ -84,7 +84,7 @@ inline const std::map<std::string, std::map<std::string, int>> pillarJingles = {
 };
 
 inline const std::vector<int> entityHuntJingles = {
-	IDR_WAVE52, IDR_WAVE53, IDR_WAVE54, IDR_WAVE55, IDR_WAVE56,
+	IDR_WAVE52, IDR_WAVE53, IDR_WAVE54, IDR_WAVE55, IDR_WAVE56, IDR_WAVE57, IDR_WAVE58,
 };
 
 class APAudioPlayer : public Watchdog
@@ -111,7 +111,7 @@ private:
 
 	std::map<APJingle, std::vector<int>> jingleVersions = {
 		{PanelFiller, {IDR_WAVE5, IDR_WAVE6, IDR_WAVE22, IDR_WAVE23}},
-		{PanelUseful, {IDR_WAVE15, IDR_WAVE16, IDR_WAVE32, IDR_WAVE33}},
+		{PanelUseful, {IDR_WAVE15, IDR_WAVE16, IDR_WAVE32, IDR_WAVE33, IDR_WAVE59}},
 		{PanelProgression, {IDR_WAVE8, IDR_WAVE9, IDR_WAVE10, IDR_WAVE28, IDR_WAVE29}},
 		{PanelTrap, {IDR_WAVE12, IDR_WAVE13, IDR_WAVE31}},
 
