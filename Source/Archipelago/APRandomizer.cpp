@@ -609,7 +609,7 @@ void APRandomizer::PostGeneration() {
 	}
 
 	if (FinalPanel == 0x03629) {
-		Special::writeGoalCondition(0x0042D, " Goal:", "Panel Hunt", "Needed - Total:", RequiredHuntEntities, huntEntities.size());
+		Special::writeGoalCondition(0x0042D, " Goal:", "Panel Hunt", " Lasers:", MountainLasers, ChallengeLasers);
 		Special::DrawSingleVerticalLine(0x03629);
 		memory->WritePanelData<float>(0x03629, MAX_BROADCAST_DISTANCE, -1);
 		Special::DrawSingleVerticalLine(0x03505);
