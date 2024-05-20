@@ -725,7 +725,7 @@ void LockablePanel::UpdateLock(APState state) {
 		createText(huntText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - huntText2.size() * 0.029f, 0.515f + huntText2.size() * 0.029f, 0.305f, 0.395f);
 		createText(huntText3, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - huntText3.size() * 0.029f, 0.515f + huntText3.size() * 0.029f, 0.455f, 0.545f);
 		createText(huntText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - huntText.size() * 0.029f, 0.5f + huntText.size() * 0.029f, 0.605f, 0.695f);
-		createText(huntText4, intersections, intersectionFlags, connectionsA, connectionsB, 0.5 - huntText4.size() * 0.0193f, 0.5f + huntText4.size() * 0.0193f, 0.910f, 0.970f);
+		createText(huntText4, intersections, intersectionFlags, connectionsA, connectionsB, 0.5 - huntText4.size() * 0.0225f, 0.5f + huntText4.size() * 0.0225f, 0.900f, 0.970f);
 	}
 	else if (id == 0x09D9B) { // Monastery Shutters
 		std::string text1 = "Needs Dots   Needs Dots   Needs Dots";
