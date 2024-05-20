@@ -267,12 +267,14 @@ void APWatchdog::CheckSolvedPanels() {
 				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
 					huntEntityToSolveStatus[huntEntity] = true;
 					huntEntityKeepActive[huntEntity] = 7.0f;
+					if (!newSolved) PlayEntityHuntJingle(huntEntity);
 					newSolved = true;
 					continue;
 				}
 				else if (huntEntity == 0xFFF00 && ReadPanelData<float>(0x1800F, CABLE_POWER) > 0.0f) {
 					huntEntityToSolveStatus[huntEntity] = true;
 					huntEntityKeepActive[huntEntity] = 7.0f;
+					if (!newSolved) PlayEntityHuntJingle(huntEntity);
 					newSolved = true;
 					continue;
 				}
@@ -2053,7 +2055,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 }
 
 bool APWatchdog::CheckPanelHasBeenSolved(int panelId) {
-	return panelIdToLocationId.count(panelId);
+	return !panelIdToLocationId.count(panelId);
 }
 
 void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
@@ -2213,6 +2215,16 @@ void APWatchdog::PlayFirstJingle() {
 		APAudioPlayer::get()->PlayAudio(APJingle::FirstJingle, APJingleBehavior::PlayImmediate);
 		firstJinglePlayed = true;
 	}
+}
+
+void APWatchdog::PlayEntityHuntJingle(const int& huntEntity) {
+	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
+
+	if (ClientWindow::get()->getJinglesSettingSafe() != "Full") return; // Make understated panel hunt jingle?
+
+	if (panelIdToLocationId_READ_ONLY.count(huntEntity) && !CheckPanelHasBeenSolved(huntEntity)) return;
+
+	APAudioPlayer::get()->PlayAudio(APJingle::PanelHunt, APJingleBehavior::Queue);
 }
 
 void APWatchdog::CheckEPSkips() {

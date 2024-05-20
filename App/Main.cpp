@@ -266,7 +266,7 @@ void Main::randomize() {
 		randomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL)
 		randomizer->GenerateNormal();
-	else if (puzzleRando == VARIETY)
+	else if (puzzleRando == UMBRA_VARIETY)
 		randomizer->GenerateVariety();
 	else
 		Random::seed(seed);
@@ -280,7 +280,7 @@ void Main::randomize() {
 		apRandomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
 		apRandomizer->GenerateNormal();
-	else if (puzzleRando == VARIETY)
+	else if (puzzleRando == UMBRA_VARIETY)
 		apRandomizer->GenerateVariety();
 
 	memory->WritePanelData(0x00064, VIDEO_STATUS_COLOR + 8, seed);

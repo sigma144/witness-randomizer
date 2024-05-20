@@ -65,6 +65,7 @@ public:
 	void PlaySentJingle(const int& id, const int& itemFlags);
 	void PlayReceivedJingle(const int& itemFlags);
 	void PlayFirstJingle();
+	void PlayEntityHuntJingle(const int& huntEntity);
 
 	bool CheckPanelHasBeenSolved(int panelId);
 

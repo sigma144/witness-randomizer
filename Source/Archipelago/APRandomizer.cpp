@@ -446,7 +446,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			bool panelSolved = false;
 			int panelId = panelIdToLocationIdReverse[location];
 
-			if (panelIdToLocationIdReverse.count(location) && async->CheckPanelHasBeenSolved(panelId)) {
+			if (panelIdToLocationIdReverse.count(location) && !async->CheckPanelHasBeenSolved(panelId)) {
 				async->getHudManager()->queueNotification("(Collect) Sent " + itemName + " to " + player + ".", getColorByItemFlag(item.flags));
 			}
 			else

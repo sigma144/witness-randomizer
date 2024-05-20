@@ -3,6 +3,7 @@
 #include <queue>
 #include <set>
 #include <utility>
+#include <random>
 #include "../../App/resource.h"
 
 enum APJingle
@@ -33,6 +34,8 @@ enum APJingle
 	UnderstatedProgression,
 	UnderstatedTrap,
 	UnderstatedUseful,
+
+	PanelHunt,
 
 	Victory,
 	FirstJingle,
@@ -80,6 +83,10 @@ inline const std::map<std::string, std::map<std::string, int>> pillarJingles = {
 	}},
 };
 
+inline const std::vector<int> entityHuntJingles = {
+	IDR_WAVE52, IDR_WAVE53, IDR_WAVE54, IDR_WAVE55, IDR_WAVE56,
+};
+
 class APAudioPlayer : public Watchdog
 {
 private:
@@ -97,6 +104,7 @@ private:
 	APJingle lastEPJinglePlayed;
 	int panelChain;
 	int epChain;
+	int lastEntityHuntIndex = -1;
 
 	void PlayJingle(int resource, bool async);
 	void PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async);
@@ -189,6 +197,8 @@ private:
 		UnderstatedTrap,
 		UnderstatedUseful
 	};
+
+	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
 
 public:
 

@@ -152,6 +152,16 @@ IDR_WAVE51              WAVE                    "..\\Music\\Bonk Sound Effect.wa
 
 IDR_WAVE50              WAVE                    "..\\Music\\Randomized.wav"
 
+IDR_WAVE52              WAVE                    "..\\Music\\Panel Hunt 1.wav"
+
+IDR_WAVE53              WAVE                    "..\\Music\\Panel Hunt 2.wav"
+
+IDR_WAVE54              WAVE                    "..\\Music\\Panel Hunt 3.wav"
+
+IDR_WAVE55              WAVE                    "..\\Music\\Panel Hunt 4.wav"
+
+IDR_WAVE56              WAVE                    "..\\Music\\Panel Hunt 5.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
