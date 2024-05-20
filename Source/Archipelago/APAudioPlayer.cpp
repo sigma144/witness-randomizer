@@ -55,7 +55,7 @@ void APAudioPlayer::PlayJingle(int resource, bool async) {
 void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async) {
 	auto now = std::chrono::system_clock::now();
 
-	if (jingle == APJingle::PanelHunt) {
+	if (jingle == APJingle::EntityHunt) {
 		std::vector<int> eligibleIndices = {};
 		for (int i = 0; i < entityHuntJingles.size(); i++) {
 			if (i != lastEntityHuntIndex) eligibleIndices.push_back(i);

@@ -35,7 +35,7 @@ enum APJingle
 	UnderstatedTrap,
 	UnderstatedUseful,
 
-	PanelHunt,
+	EntityHunt,
 	UnderstatedEntityHunt,
 
 	Victory,
