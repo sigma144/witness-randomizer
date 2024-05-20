@@ -42,7 +42,8 @@ public:
 
 	int requiredChallengeLasers = 11;
 	int requiredMountainLasers = 7;
-	int requiredHuntEntities = 30;
+	int requiredHuntEntities = 25;
+	int totalHuntEntities = 40;
 
 	std::set<int> keysReceived = {};
 	std::set<int> keysInTheGame = {};

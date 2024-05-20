@@ -113,9 +113,17 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			state.unlockedTriangles = true;
 		}
 
+		clientWindow->logLine("Connect: Getting hunt panels.");
+		if (slotData.contains("hunt_entities")) {
+			for (int key : slotData["hunt_entities"]) {
+				huntEntities.insert(key);
+			}
+		}
+
 		state.requiredChallengeLasers = ChallengeLasers;
 		state.requiredMountainLasers = MountainLasers;
 		state.requiredHuntEntities = RequiredHuntEntities;
+		state.totalHuntEntities = huntEntities.size();
 
 		clientWindow->logLine("Connect: Getting progressive items.");
 		if (slotData.contains("progressive_item_lists")) {
@@ -206,13 +214,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("door_hexes_in_the_pool")) {
 			for (int key : slotData["door_hexes_in_the_pool"]) {
 				doorsActuallyInTheItemPool.insert(key);
-			}
-		}
-
-		clientWindow->logLine("Connect: Getting hunt panels.");
-		if (slotData.contains("hunt_entities")) {
-			for (int key : slotData["hunt_entities"]) {
-				huntEntities.insert(key);
 			}
 		}
 
