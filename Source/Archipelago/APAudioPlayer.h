@@ -4,6 +4,7 @@
 #include <set>
 #include <utility>
 #include <random>
+#include <any>
 #include "../../App/resource.h"
 
 enum APJingle
@@ -85,7 +86,13 @@ inline const std::map<std::string, std::map<std::string, int>> pillarJingles = {
 };
 
 inline const std::vector<int> entityHuntJingles = {
-	IDR_WAVE52, IDR_WAVE53, IDR_WAVE54, IDR_WAVE55, IDR_WAVE56, IDR_WAVE57, IDR_WAVE58,
+	IDR_WAVE52, // 1
+	IDR_WAVE54, // 3
+	IDR_WAVE56, // 5
+	IDR_WAVE53, // 2
+	IDR_WAVE55, // 4
+	IDR_WAVE57, // 6
+	IDR_WAVE58, // 7
 };
 
 class APAudioPlayer : public Watchdog
@@ -97,7 +104,7 @@ private:
 
 	static APAudioPlayer* _singleton;
 
-	std::queue<std::pair<APJingle,bool>> QueuedAudio = {};
+	std::queue<std::pair<APJingle, std::any>> QueuedAudio = {};
 
 	std::chrono::system_clock::time_point lastPanelJinglePlayedTime;
 	std::chrono::system_clock::time_point lastEPJinglePlayedTime;
@@ -108,7 +115,7 @@ private:
 	int lastEntityHuntIndex = -1;
 
 	void PlayJingle(int resource, bool async);
-	void PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async);
+	void PlayAppropriateJingle(APJingle jingle, std::any extraInfo, bool async);
 
 	std::map<APJingle, std::vector<int>> jingleVersions = {
 		{PanelFiller, {IDR_WAVE5, IDR_WAVE6, IDR_WAVE22, IDR_WAVE23}},
@@ -207,7 +214,7 @@ public:
 
 	static void create();
 	static APAudioPlayer* get();
-	void PlayAudio(APJingle jingle, APJingleBehavior queue, bool epicVersion);
+	void PlayAudio(APJingle jingle, APJingleBehavior queue, std::any extraInfo);
 	void PlayAudio(APJingle jingle, APJingleBehavior queue) {
 		PlayAudio(jingle, queue, false);
 	}

@@ -2224,11 +2224,13 @@ void APWatchdog::PlayEntityHuntJingle(const int& huntEntity) {
 
 	if (panelIdToLocationId_READ_ONLY.count(huntEntity) && !CheckPanelHasBeenSolved(huntEntity)) return;
 
+	float percentage = (float) state->solvedHuntEntities / (float) state->requiredHuntEntities;
+
 	if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
 		APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedEntityHunt, APJingleBehavior::Queue);
 	}
 	else {
-		APAudioPlayer::get()->PlayAudio(APJingle::EntityHunt, APJingleBehavior::Queue);
+		APAudioPlayer::get()->PlayAudio(APJingle::EntityHunt, APJingleBehavior::Queue, percentage);
 	}
 }
 

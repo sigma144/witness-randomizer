@@ -14,7 +14,7 @@ APAudioPlayer::APAudioPlayer() : Watchdog(0.1f) {
 void APAudioPlayer::action() {
 	if (!QueuedAudio.size()) return;
 
-	std::pair<APJingle, bool> nextAudio = QueuedAudio.front();
+	std::pair<APJingle, std::any> nextAudio = QueuedAudio.front();
 
 	PlayAppropriateJingle(nextAudio.first, nextAudio.second, false);
 
@@ -33,17 +33,17 @@ APAudioPlayer* APAudioPlayer::get() {
 	return _singleton;
 }
 
-void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, bool epicVersion) {
+void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, std::any extraInfo) {
 	if (queue == APJingleBehavior::PlayImmediate) {
-		PlayAppropriateJingle(jingle, epicVersion, true);
+		PlayAppropriateJingle(jingle, extraInfo, true);
 	}
 
 	if (queue == APJingleBehavior::Queue){
-		QueuedAudio.push({ jingle, epicVersion });
+		QueuedAudio.push({ jingle, extraInfo });
 	}
 
 	if (queue == APJingleBehavior::DontQueue) {
-		if (!QueuedAudio.size()) QueuedAudio.push({ jingle, epicVersion });
+		if (!QueuedAudio.size()) QueuedAudio.push({ jingle, extraInfo });
 	}
 }
 
@@ -52,18 +52,21 @@ void APAudioPlayer::PlayJingle(int resource, bool async) {
 	else PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE);
 }
 
-void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async) {
+void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, bool async) {
 	auto now = std::chrono::system_clock::now();
 
 	if (jingle == APJingle::EntityHunt) {
-		std::vector<int> eligibleIndices = {};
-		for (int i = 0; i < entityHuntJingles.size(); i++) {
-			if (i != lastEntityHuntIndex) eligibleIndices.push_back(i);
-		}
+		float percentage = std::any_cast<float>(extraFlag);
+		double bestIndex = percentage * (entityHuntJingles.size() - 1);
 
-		int index = rng() % eligibleIndices.size();
-		lastEntityHuntIndex = eligibleIndices[index];
-		PlayJingle(entityHuntJingles[eligibleIndices[index]], async);
+		std::normal_distribution d{ bestIndex, (double) entityHuntJingles.size() / 4};
+
+		int index = -1;
+		while (index < 0 || index >= entityHuntJingles.size() || index == lastEntityHuntIndex) {
+			index = std::round(d(rng));
+		}
+		lastEntityHuntIndex = index;
+		PlayJingle(entityHuntJingles[index], async);
 		return;
 	}
 
@@ -84,6 +87,8 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 	}
 
 	int versionToPlay = 0;
+
+	bool epicVersion = std::any_cast<bool>(extraFlag);
 
 	if (panelJingles.count(jingle) || dogJingles.count(jingle)) {
 		panelChain++;
