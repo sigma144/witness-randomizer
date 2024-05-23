@@ -59,7 +59,7 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, b
 		float percentage = std::any_cast<float>(extraFlag);
 		double bestIndex = percentage * (entityHuntJingles.size() - 1);
 
-		std::normal_distribution d{ bestIndex, (double) entityHuntJingles.size() / 4};
+		std::normal_distribution d{ bestIndex, 1.5};
 
 		int index = -1;
 		while (index < 0 || index >= entityHuntJingles.size() || index == lastEntityHuntIndex) {
