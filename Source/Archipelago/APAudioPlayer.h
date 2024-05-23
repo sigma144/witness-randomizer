@@ -87,12 +87,16 @@ inline const std::map<std::string, std::map<std::string, int>> pillarJingles = {
 
 inline const std::vector<int> entityHuntJingles = {
 	IDR_WAVE52, // 1
+	IDR_WAVE61, // 8
+	IDR_WAVE62, // 9
 	IDR_WAVE54, // 3
 	IDR_WAVE56, // 5
 	IDR_WAVE53, // 2
 	IDR_WAVE55, // 4
 	IDR_WAVE57, // 6
+	IDR_WAVE64, // 11
 	IDR_WAVE58, // 7
+	IDR_WAVE63, // 10
 };
 
 class APAudioPlayer : public Watchdog
