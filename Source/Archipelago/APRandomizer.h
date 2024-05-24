@@ -58,6 +58,8 @@ class APRandomizer {
 		void RestoreOriginals();
 
 	private:
+		int unknownCounter = 10; //Try for 10 seconds to see if something else than "Unknown" shows up
+
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
 		std::map<int, int> doorToItemId;

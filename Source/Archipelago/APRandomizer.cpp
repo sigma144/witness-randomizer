@@ -401,16 +401,16 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 		const APClient::NetworkItem item = *jsonArgs.item;
 		const int receiver = *jsonArgs.receiving;
+		const int sender = item.player;
 		const auto msg = jsonArgs.data;
 
 		while (!randomizationFinished) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
-		int counter = 10; //Try for 10 seconds to see if something else than "Unknown" shows up
-		while (ap->get_item_name(item.item) == "Unknown" && counter > 0) {
+		while (ap->get_item_name(item.item, ap->get_player_game(receiver)) == "Unknown" && unknownCounter > 0) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-			counter--;
+			unknownCounter--;
 		}
 
 		auto findResult = std::find_if(std::begin(panelIdToLocationId), std::end(panelIdToLocationId), [&](const std::pair<int, int>& pair) {
@@ -422,8 +422,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		bool receiving = receiver == ap->get_player_number();
 
 		std::string player = ap->get_player_alias(receiver);
-		std::string itemName = ap->get_item_name(item.item);
-		std::string locationName = ap->get_location_name(item.location);
+		std::string itemName = ap->get_item_name(item.item, ap->get_player_game(receiver));
+		std::string locationName = ap->get_location_name(item.location, ap->get_player_game(sender));
 
 		bool hint = jsonArgs.type == "Hint";
 		bool found = (jsonArgs.found) ? *jsonArgs.found : false;

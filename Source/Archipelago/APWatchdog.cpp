@@ -370,7 +370,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 			if (EPSet.empty())
 			{
-				if(FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId) + " Completed!");
+				if(FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId, "The Witness") + " Completed!");
 
 				solvedLocations.push_back(locationId);
 
@@ -382,7 +382,7 @@ void APWatchdog::CheckSolvedPanels() {
 					int total = obeliskHexToAmountOfEPs[panelId];
 					int done = total - EPSet.size();
 
-					if (FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId) + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+					if (FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId, "The Witness") + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
 				}
 				it++;
 			}
@@ -1521,15 +1521,15 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		if (audioLogHint.areaHint == "") {
 			if (audioLogHint.playerNo != -1 && audioLogHint.playerNo != ap->get_player_number()) {
 				if (locationsThatContainedItemsFromOtherPlayers.count({ audioLogHint.playerNo, audioLogHint.locationID })) {
-					otherPeoplesDeadChecks.push_back(ap->get_location_name(audioLogHint.locationID) + " (" + ap->get_player_alias(audioLogHint.playerNo) + ")");
+					otherPeoplesDeadChecks.push_back(ap->get_location_name(audioLogHint.locationID, ap->get_player_game(audioLogHint.playerNo)) + " (" + ap->get_player_alias(audioLogHint.playerNo) + ")");
 
 					continue;
 				}
 			}
 
 			if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
-				if (checkedLocations.count(audioLogHint.locationID) || locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT) {
-					std::string name = ap->get_location_name(audioLogHint.locationID);
+				if (checkedLocations.count(audioLogHint.locationID) || (locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT && audioLogHint.allowScout)) {
+					std::string name = ap->get_location_name(audioLogHint.locationID, "The Witness");
 					if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) name += " (Useful)";
 					deadChecks.push_back(name);
 
@@ -1607,7 +1607,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 			else
 			{
 				if (unchecked == 0 || checkedLocations.count(audioLogHint.locationID)) {
-					deadChecks.push_back(ap->get_location_name(audioLogHint.locationID));
+					deadChecks.push_back(ap->get_location_name(audioLogHint.locationID, "The Witness"));
 					continue;
 				}
 				cleanedMessage += " (" + std::to_string(unchecked) + " unchecked)";
@@ -2311,15 +2311,15 @@ void APWatchdog::QueueItemMessages() {
 		__int64 flags = it->at(1);
 		__int64 realitem = it->at(2);
 
-		if (ap->get_item_name(realitem) == "Unknown" || ap->get_item_name(item) == "Unknown") {
+		if (ap->get_item_name(realitem, "The Witness") == "Unknown" || ap->get_item_name(item, "The Witness") == "Unknown") {
 			it++;
 			continue;
 		}
 
-		std::string name = ap->get_item_name(item);
+		std::string name = ap->get_item_name(item, "The Witness");
 
 		if (realitem != item && realitem > 0) {
-			name += " (" + ap->get_item_name(realitem) + ")";
+			name += " (" + ap->get_item_name(realitem, "The Witness") + ")";
 		}
 
 		// Track the quantity of this item received in this batch.
@@ -2394,7 +2394,7 @@ void APWatchdog::SetStatusMessages() {
 		std::string skipMessage = "Have " + std::to_string(availableSkips) + " Puzzle Skip" + (availableSkips != 1 ? "s" : "") + ".";
 
 		if (lookingAtLockedEntity != -1) {
-			std::string lockName = ap->get_item_name(doorToItemId[lookingAtLockedEntity]);
+			std::string lockName = ap->get_item_name(doorToItemId[lookingAtLockedEntity], "The Witness");
 			skipMessage = "Locked by: \"" + lockName + "\"\n" + skipMessage;
 		}
 
@@ -2436,7 +2436,7 @@ void APWatchdog::SetStatusMessages() {
 						if(panelLocker->PuzzleIsLocked(ep)){
 							hasLockedEPs = hasLockedEPs || !disabled;
 							if (doorToItemId.count(ep)) {
-								name = ap->get_item_name(doorToItemId[ep]);
+								name = ap->get_item_name(doorToItemId[ep], "The Witness");
 							}
 						}
 					}
@@ -2625,7 +2625,7 @@ void APWatchdog::LookingAtLockedEntity() {
 		if (epToObeliskSides.count(lookingAtEP)) {
 			int obeliskSideHex = epToObeliskSides[lookingAtEP];
 			if (panelIdToLocationId.count(obeliskSideHex)) {
-				epName += " (" + ap->get_location_name(panelIdToLocationId[obeliskSideHex]) + ")";
+				epName += " (" + ap->get_location_name(panelIdToLocationId[obeliskSideHex], "The Witness") + ")";
 			}
 
 			hudManager->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP] + " (" + + ")");
