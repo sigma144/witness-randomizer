@@ -742,7 +742,7 @@ void APRandomizer::setPuzzleLocks() {
 	const int puzzleCount = LockablePuzzles.size();
 	for (int i = 0; i < puzzleCount; i++)	{
 		clientWindow->setStatusMessage("Locking puzzles: " + std::to_string(i) + "/" + std::to_string(puzzleCount));
-		if (!(allPanels.count(LockablePuzzles[i]) && memory->ReadPanelData<int>(LockablePuzzles[i], SOLVED)))
+		if (!allPanels.count(LockablePuzzles[i]) || !memory->ReadPanelData<int>(LockablePuzzles[i], SOLVED) || lockEvenIfSolved.count(LockablePuzzles[i]))
 			panelLocker->UpdatePuzzleLock(state, LockablePuzzles[i]);
 	}
 }

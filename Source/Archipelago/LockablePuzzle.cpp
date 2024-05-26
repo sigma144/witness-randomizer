@@ -687,8 +687,7 @@ void LockablePanel::UpdateLock(APState state) {
 		|| (hasArrows && !state.unlockedArrows)
 		|| (hasSymmetry && !state.unlockedSymmetry)
 		|| (needsChallengeLasers && state.activeLasers < state.requiredChallengeLasers)
-		|| (needsMountainLasers && state.activeLasers < state.requiredMountainLasers))
-		|| (needsHuntEntities && state.solvedHuntEntities < state.requiredHuntEntities);
+		|| (needsMountainLasers && state.activeLasers < state.requiredMountainLasers));
 
 	bool puzzleIsMissingKey = state.keysInTheGame.count(id) && !state.keysReceived.count(id);
 
@@ -712,7 +711,7 @@ void LockablePanel::UpdateLock(APState state) {
 		createText(laserText2, intersections, intersectionFlags, connectionsA, connectionsB, 0.515f - laserText2.size() * 0.029f, 0.515f + laserText2.size() * 0.029f, 0.38f, 0.47f);
 		createText(laserText, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - laserText.size() * 0.029f, 0.5f + laserText.size() * 0.029f, 0.53f, 0.62f);
 	}
-	else if (id == 0x03629) {
+	else if (id == 0x03629 && (needsHuntEntities && state.solvedHuntEntities < state.requiredHuntEntities)) {
 		std::string huntText = std::to_string(state.solvedHuntEntities);
 		huntText += "/";
 		huntText += std::to_string(state.requiredHuntEntities);

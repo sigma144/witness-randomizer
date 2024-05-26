@@ -92,6 +92,13 @@ inline const std::set<int> dont_power = {
 	0x17E52, // Treehouse Green 4
 };
 
+inline const std::set<int> lockEvenIfSolved = {
+	0x03678,
+	0x03676,
+	0x03679,
+	0x03675,
+};
+
 inline const std::set<int> skip_noLine = {
 	0x03629, // Tutorial Gate Open
 
@@ -290,6 +297,7 @@ inline const std::set<int> very_thin_panels = {
 inline const std::set<int> fairly_thin_panels = {
 	0x335AB,0x335AC,0x3369D, // Mountain & Caves Elevators
 	0x03612, // Quarry Laser Panel
+	0x03629, // Tutorial Gate Open
 };
 
 inline const std::set<int> wide_panels = {
