@@ -2928,6 +2928,9 @@ void PuzzleList::GenerateVaultsV()
 	generator->setSymbol(Decoration::Start, 8, 8);
 	generator->setGridSize(7, 7);
 	generator->generate(0x033D4, Decoration::Stone | Decoration::Color::Magenta, 7, Decoration::Stone | Decoration::Color::Black, 7, Decoration::Dot, 6);
+	// Sorry Umbra, this invis symmetry is stupid imo lol
+	Memory::get()->WritePanelData<float>(0x033D4, REFLECTION_PATH_COLOR, Memory::get()->ReadPanelData<float>(0x033D4, PATH_COLOR, 4));
+	Memory::get()->WritePanelData<float>(0x033D4, SUCCESS_COLOR_B, Memory::get()->ReadPanelData<float>(0x033D4, SUCCESS_COLOR_A, 4));
 	//Desert Vault
 	generator->resetConfig();
 	generator->setFlagOnce(Generate::Config::RequireCancelShapes);
