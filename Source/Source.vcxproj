@@ -162,6 +162,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ASMPayloadManager.h" />
     <ClInclude Include="Generate.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
@@ -179,6 +180,7 @@
     <ClInclude Include="wtx_tools.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ASMPayloadManager.cpp" />
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />

@@ -56,10 +56,6 @@ int find(const std::vector<T> &data, T search, size_t startIndex = 0) {
 
 void Randomizer::AdjustSpeed() {
 	Memory* memory = Memory::get();
-	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.15f });  // Desert Surface 3 Control, 1.5x
-	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
-	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
-	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x
 	memory->WritePanelData<float>(0x03839, OPEN_RATE, { 0.7f }); // Mill Ramp, 3x
 	memory->WritePanelData<float>(0x021BA, OPEN_RATE, { 1.5f }); // Mill Lift, 3x
 	memory->WritePanelData<float>(0x17CC1, OPEN_RATE, { 0.8f }); // Mill Elevator, 4x

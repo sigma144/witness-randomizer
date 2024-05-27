@@ -15,6 +15,7 @@
 #include "Watchdog.h"
 #include "Random.h"
 #include "Memory.h"
+#include "ASMPayloadManager.h"
 
 #define IDC_RANDOMIZE 0x401
 #define IDC_TOGGLESPEED 0x402
@@ -413,6 +414,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
 	Memory::create();
+	ASMPayloadManager::create();
 	Memory* memory = Memory::get();
 	int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
 	hard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);

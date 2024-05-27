@@ -180,6 +180,7 @@ void Panel::Resize(int width, int height)
 		miny = 0.5f - unitSize * (height - 1) / 2;
 		maxy = 0.5f + unitSize * (height - 1) / 2;
 	}
+	if (Point::pillarWidth) Point::pillarWidth = width;
 	_width = width;
 	_height = height;
 	_grid.resize(width);

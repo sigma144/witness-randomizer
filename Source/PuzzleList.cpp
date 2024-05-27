@@ -911,7 +911,77 @@ void PuzzleList::GenerateOrchardN()
 
 void PuzzleList::GenerateDesertN()
 {
-	Randomizer().RandomizeDesert();
+	Generate generate;
+	Memory* memory = Memory::get();
+	//Surface
+	specialCase->generateSpecularPuzzle(0x00698, HEXAGON_GRID);
+	specialCase->generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });
+	specialCase->generateSpecularPuzzle(0x09F92, { {0,1},{1,7},{0,4},{4,10} });
+	specialCase->generateSpecularPuzzle(0x0A036);
+	specialCase->setOrientation(0x0A036, -3 + 10 * (Random::rand() % 3 - 1), -40 + 10 * (Random::rand() % 3 - 1), 0);
+	specialCase->generateSpecularPuzzle(0x09DA6);
+	specialCase->setOrientation(0x09DA6, -3 + 10 * (Random::rand() % 3 - 1), -15 + 10 * (Random::rand() % 3 - 1), 0);
+	specialCase->generateSpecularPuzzle(0x0A049);
+	specialCase->setOrientation(0x0A049, -3 + 10 * (Random::rand() % 3 - 1), 10 + 10 * (Random::rand() % 3 - 1), 0);
+	specialCase->generateSpecularPuzzle(0x0A053);
+	std::vector<int> sol = memory->ReadArray<int>(0x0A053, SEQUENCE, memory->ReadPanelData<int>(0x0A053, SEQUENCE_LEN));
+	while (std::find(sol.begin(), sol.end(), 2) == sol.end() && std::find(sol.begin(), sol.end(), 3) == sol.end() ||
+		std::find(sol.begin(), sol.end(), 0) == sol.end() && std::find(sol.begin(), sol.end(), 1) == sol.end() && std::find(sol.begin(), sol.end(), 4) == sol.end() ||
+		std::find(sol.begin(), sol.end(), 5) == sol.end() && std::find(sol.begin(), sol.end(), 6) == sol.end()) {
+		specialCase->generateSpecularPuzzle(0x0A053);
+		sol = memory->ReadArray<int>(0x0A053, SEQUENCE, memory->ReadPanelData<int>(0x0A053, SEQUENCE_LEN));
+	}
+	specialCase->generateSpecularPuzzle(0x09F94);
+	//Light Room
+	specialCase->generateSpecularPuzzle(0x00422);
+	specialCase->generateSpecularPuzzle(0x006E3, { {0,1},{1,7},{0,4},{4,10} });
+	specialCase->generateSpecularPuzzle(0x0A02D, { {0,1},{0,4},{1,5},{4,5},{5,6},{5,19},{19,20},{9,20},{6,21},{21,22},{10,22},{9,10} });
+	//Pond Room
+	specialCase->generateSpecularPuzzle(0x00C72);
+	specialCase->generateSpecularPuzzle(0x0129D, HEXAGON_GRID);
+	specialCase->generateSpecularPuzzle(0x008BB);
+	specialCase->generateSpecularPuzzle(0x0078D);
+	specialCase->generateSpecularPuzzle(0x18313);
+	//Flood Room
+	specialCase->generateSpecularPuzzle(0x04D18);
+	specialCase->generateSpecularPuzzle(0x01205);
+	specialCase->generateSpecularPuzzle(0x181AB);
+	specialCase->generateSpecularPuzzle(0x0117A);
+	specialCase->generateSpecularPuzzle(0x17ECA);
+	std::vector<float> positions = memory->ReadArray<float>(0x18076, DOT_POSITIONS, 38);
+	if (positions[1] > 0.9f) {
+		for (int i = 1; i < positions.size() - 1; i += 2) {
+			positions[i] -= 0.03f;
+		}
+		memory->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
+	}
+	specialCase->generateSpecularPuzzle(0x18076); //Rectangular
+	//Final Room
+	specialCase->generateSpecularPuzzle(0x0A15C); //Concave
+	specialCase->generateSpecularPuzzle(0x09FFF); //Convex
+	generate.setSymbol(Decoration::Start, 0, 0);
+	generate.setSymbol(Decoration::Exit, 12, 6);
+	generate.setGridSize(6, 3);
+	generate.generate(0x0A15F);
+	generate.initPanel(0x0A15F);
+	generate._panel->minx = 0.05f;
+	generate._panel->maxx = 0.9f;
+	generate.generate(0x0A15F);
+	specialCase->generateSpecularPuzzle(0x0A15F); //Tall
+	specialCase->generateSpecularPuzzle(0x17C31); //Glass
+	specialCase->generateSpecularPuzzle(0x012D7); //Final
+
+	specialCase->setPower(0x09F94, false); // Turn off desert surface 8
+	specialCase->setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
+	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.15f });  // Desert Surface 3 Control, 1.5x
+	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
+	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
+	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
+	memory->LoadPackage("save_58392");
+	memory->LoadPackage("save_58473");
+	memory->LoadPackage("save_58413");
+	memory->LoadPackage("save_58440");
+	memory->LoadPackage("globals");
 }
 
 void PuzzleList::GenerateKeepN()
