@@ -102,6 +102,7 @@ private:
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	std::map<int64_t, unsigned int> locationIdToItemFlags;
 	std::set<int64_t> checkedLocations;
+	std::set<int> alreadyPlayedHuntEntityJingle;
 	std::set<std::pair<int, int64_t>> locationsThatContainedItemsFromOtherPlayers;
 	int finalPanel;
 	bool isCompleted = false;

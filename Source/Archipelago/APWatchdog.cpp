@@ -220,7 +220,8 @@ void APWatchdog::HandleInteractionState() {
 }
 
 void APWatchdog::CheckSolvedPanels() {
-	std::list<int64_t> solvedLocations;
+	std::list<int> solvedEntityIDs;
+	std::vector<int> completedHuntEntities = {};
 
 	if (finalPanel != 0x09F7F && finalPanel != 0xFFF00 && finalPanel != 0x03629 && ReadPanelData<int>(finalPanel, SOLVED) == 1 && !isCompleted) {
 		isCompleted = true;
@@ -260,22 +261,19 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 	if (finalPanel == 0x03629 && !isCompleted) {
 		bool done = true;
-		bool newSolved = false;
 
 		for (auto [huntEntity, currentSolveStatus] : huntEntityToSolveStatus) {
 			if (!currentSolveStatus) {
 				if (allPanels.count(huntEntity) && ReadPanelData<int>(huntEntity, SOLVED) == 1) {
 					huntEntityToSolveStatus[huntEntity] = true;
 					huntEntityKeepActive[huntEntity] = 7.0f;
-					if (!newSolved) PlayEntityHuntJingle(huntEntity);
-					newSolved = true;
+					completedHuntEntities.push_back(huntEntity);
 					continue;
 				}
 				else if (huntEntity == 0xFFF00 && ReadPanelData<float>(0x1800F, CABLE_POWER) > 0.0f) {
 					huntEntityToSolveStatus[huntEntity] = true;
 					huntEntityKeepActive[huntEntity] = 7.0f;
-					if (!newSolved) PlayEntityHuntJingle(huntEntity);
-					newSolved = true;
+					completedHuntEntities.push_back(huntEntity);
 					continue;
 				}
 
@@ -283,7 +281,7 @@ void APWatchdog::CheckSolvedPanels() {
 			}
 		}
 
-		if (newSolved) {
+		if (completedHuntEntities.size()) {
 			int huntSolveTotal = 0;
 			for (auto [huntEntity, currentSolveStatus] : huntEntityToSolveStatus) {
 				if (currentSolveStatus) huntSolveTotal++;
@@ -305,42 +303,26 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 	}
 
-	auto it = panelIdToLocationId.begin();
-	while (it != panelIdToLocationId.end())
+	for (auto [entityID, locationID] : panelIdToLocationId)
 	{
-		int panelId = it->first;
-		int locationId = it->second;
-
-		if (panelId == 0xFFF80) {
+		if (entityID == 0xFFF80) {
 			if(sentDog)
 			{
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
-			}
-			else
-			{
-				it++;
+				solvedEntityIDs.push_back(entityID);
 			}
 			continue;
 		}
 
-		if (allEPs.count(panelId)) {
-			if (ReadPanelData<int>(panelId, EP_SOLVED)) //TODO: Check EP solved
+		if (allEPs.count(entityID)) {
+			if (ReadPanelData<int>(entityID, EP_SOLVED)) //TODO: Check EP solved
 			{
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
-			}
-			else
-			{
-				it++;
+				solvedEntityIDs.push_back(entityID);
 			}
 			continue;
 		}
 
-		if (obeliskHexToEPHexes.count(panelId)) {
-			std::set<int> EPSet = obeliskHexToEPHexes[panelId];
+		if (obeliskHexToEPHexes.count(entityID)) {
+			std::set<int> EPSet = obeliskHexToEPHexes[entityID];
 
 			bool anyNew = false;
 
@@ -348,15 +330,7 @@ void APWatchdog::CheckSolvedPanels() {
 				if (ReadPanelData<int>(*it2, EP_SOLVED)) //TODO: Check EP solved
 				{
 					anyNew = true;
-
-					APClient::DataStorageOperation operation;
-					operation.operation = "replace";
-					operation.value = true;
-
-					std::list<APClient::DataStorageOperation> operations;
-					operations.push_back(operation);
-
-					ap->Set("WitnessEP" + std::to_string(ap->get_player_number()) + "-" + std::to_string(*it2), NULL, false, operations);
+					ap->Set("WitnessEP" + std::to_string(ap->get_player_number()) + "-" + std::to_string(*it2), NULL, false, { {"replace", true} });
 
 					it2 = EPSet.erase(it2);
 				}
@@ -366,107 +340,100 @@ void APWatchdog::CheckSolvedPanels() {
 				}
 			}
 
-			obeliskHexToEPHexes[panelId] = EPSet;
+			obeliskHexToEPHexes[entityID] = EPSet;
 
 			if (EPSet.empty())
 			{
-				if(FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId, "The Witness") + " Completed!");
-
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
+				if(FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationID, "The Witness") + " Completed!");
+				solvedEntityIDs.push_back(entityID);
 			}
 			else
 			{
 				if (anyNew) {
-					int total = obeliskHexToAmountOfEPs[panelId];
+					int total = obeliskHexToAmountOfEPs[entityID];
 					int done = total - EPSet.size();
 
-					if (FirstEverLocationCheckDone) hudManager->queueBannerMessage(ap->get_location_name(locationId, "The Witness") + " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")");
+					if (FirstEverLocationCheckDone) {
+						std::string message = ap->get_location_name(locationID, "The Witness");
+						message += " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")";
+						hudManager->queueBannerMessage(message);
+					}
 				}
-				it++;
 			}
 			continue;
 		}
 
-		if (panelId == 0x09FD2) {
+		if (entityID == 0x09FD2) {
 			int cableId = 0x09FCD;
 
 			if (ReadPanelData<int>(cableId, CABLE_POWER))
 			{
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
-			}
-			else
-			{
-				it++;
+				solvedEntityIDs.push_back(entityID);
 			}
 			continue;
 		}
 
-		if (panelId == 0x034E3) {
+		if (entityID == 0x034E3) {
 			int cableId = 0x034EB;
 
 			if (ReadPanelData<int>(cableId, CABLE_POWER))
 			{
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
-			}
-			else
-			{
-				it++;
+				solvedEntityIDs.push_back(entityID);
 			}
 			continue;
 		}
 
-		if (panelId == 0x014D1) {
+		if (entityID == 0x014D1) {
 			int cableId = 0x00BED;
 
 			if (ReadPanelData<int>(cableId, CABLE_POWER))
 			{
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
-			}
-			else
-			{
-				it++;
+				solvedEntityIDs.push_back(entityID);
 			}
 			continue;
 		}
 
-		if (panelId == 0x17C34) {
+		if (entityID == 0x17C34) {
 			if (ReadPanelData<int>(0x2FAD4, DOOR_OPEN) && ReadPanelData<int>(0x2FAD6, DOOR_OPEN) && ReadPanelData<int>(0x2FAD7, DOOR_OPEN))
 			{
-				solvedLocations.push_back(locationId);
-
-				it = panelIdToLocationId.erase(it);
-			}
-			else
-			{
-				it++;
+				solvedEntityIDs.push_back(entityID);
 			}
 			continue;
 		}
 
-		else if (ReadPanelData<int>(panelId, SOLVED))
+		else if (ReadPanelData<int>(entityID, SOLVED))
 		{
-			solvedLocations.push_back(locationId);
-
-			it = panelIdToLocationId.erase(it);
-		}
-		else
-		{
-			it++;
+			solvedEntityIDs.push_back(entityID);
 		}
 	}
 
-	if (!solvedLocations.empty())
+	std::list<int64_t> solvedLocations = {};
+	for (int solvedEntityID : solvedEntityIDs) {
+		solvedLocations.push_back(panelIdToLocationId[solvedEntityID]);
+		panelIdToLocationId.erase(solvedEntityID);
+	}
+
+	if (!solvedLocations.empty()) {
 		ap->LocationChecks(solvedLocations);
+	}
 
 	FirstEverLocationCheckDone = true;
+
+	// Maybe play panel hunt jingle
+	if (completedHuntEntities.size()) {
+		// Don't play if we're about to play a panel completion jingle for a progression or useful item
+		for (int solvedLocation : solvedLocations) {
+			// If we don't know flags yet, don't play a jingle
+			if (!locationIdToItemFlags.count(solvedLocation)) {
+				return;
+			}
+			// Play panel hunt jingle when the item is filler, otherwise don't
+			if (locationIdToItemFlags[solvedLocation] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				return;
+			}
+		}
+		PlayEntityHuntJingle(completedHuntEntities.front());
+	}
 }
 
 void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost) {
@@ -2087,6 +2054,9 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 
 void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return;
+	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
+
+	if (alreadyPlayedHuntEntityJingle.count(id)) return;
 
 	bool isEP = allEPs.count(id);
 
@@ -2220,7 +2190,9 @@ void APWatchdog::PlayFirstJingle() {
 void APWatchdog::PlayEntityHuntJingle(const int& huntEntity) {
 	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
 
-	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return; // Make understated panel hunt jingle?
+	alreadyPlayedHuntEntityJingle.insert(huntEntity);
+
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return;
 
 	if (panelIdToLocationId_READ_ONLY.count(huntEntity) && !CheckPanelHasBeenSolved(huntEntity)) return;
 
