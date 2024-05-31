@@ -117,7 +117,7 @@ void ClientWindow::loadSettings()
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
-			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Off");
+			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Understated");
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
@@ -142,7 +142,7 @@ void ClientWindow::loadSettings()
 
 	if (!loadedSettings) {
 		// Set defaults.
-		setSetting(ClientDropdownSetting::Jingles, "Off");
+		setSetting(ClientDropdownSetting::Jingles, "Understated");
 		setSetting(ClientToggleSetting::ChallengeTimer, false);
 
 		setSetting(ClientToggleSetting::SyncProgress, false);
