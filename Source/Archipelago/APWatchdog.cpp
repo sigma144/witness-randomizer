@@ -2060,8 +2060,8 @@ bool APWatchdog::PanelShouldPlayEpicVersion(const int& id) {
 	// No such thing as an epic version on Understated
 	if (ClientWindow::get()->getJinglesSettingSafe() != "Full") return false;
 
-	if (!hardPanels.count(id)) {
-		return false;
+	if (hardPanels.count(id)) {
+		return true;
 	}
 	
 	if (id == 0x0360D || id == 0x03616 || id == 0x03608 || id == 0x17CA4 || id == 0x032F5 || id == 0x09DE0 || id == 0x03613) { // Symmetry, Jungle, Desert, Monastery, Town, Bunker, Treehouse Laser Panel
