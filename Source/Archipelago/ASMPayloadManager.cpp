@@ -219,7 +219,7 @@ uint64_t ASMPayloadManager::FindSoundByName(std::string name) {
 
 	while (true) {
 		uint64_t blockedState = 1;
-		memory->ReadAbsolute(reinterpret_cast<LPVOID>(payloadBlocked), &blockedState, 8);
+		if (!memory->ReadAbsolute(reinterpret_cast<LPVOID>(payloadBlocked), &blockedState, 8)) throw std::exception("ASM Payload no longer findable. Was the game closed?");
 		if (blockedState == 0) break;
 	}
 
