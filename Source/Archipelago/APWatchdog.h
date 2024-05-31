@@ -62,6 +62,7 @@ public:
 	void DoubleDoorTargetHack(int id);
 
 	void SetItemRewardColor(const int& id, const int& itemFlags);
+	bool PanelShouldPlayEpicVersion(const int& id);
 	void PlaySentJingle(const int& id, const int& itemFlags);
 	void PlayReceivedJingle(const int& itemFlags);
 	void PlayFirstJingle();

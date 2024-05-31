@@ -431,6 +431,10 @@ void APWatchdog::CheckSolvedPanels() {
 			if (locationIdToItemFlags[solvedLocation] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 				return;
 			}
+			// Prefer epic filler over panel hunt
+			if (PanelShouldPlayEpicVersion(locationIdToPanelId_READ_ONLY[solvedLocation])) {
+				return;
+			}
 		}
 		PlayEntityHuntJingle(completedHuntEntities.front());
 	}
@@ -2052,6 +2056,37 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 	WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
+bool APWatchdog::PanelShouldPlayEpicVersion(const int& id) {
+	// No such thing as an epic version on Understated
+	if (ClientWindow::get()->getJinglesSettingSafe() != "Full") return false;
+
+	if (!hardPanels.count(id)) {
+		return false;
+	}
+	
+	if (id == 0x0360D || id == 0x03616 || id == 0x03608 || id == 0x17CA4 || id == 0x032F5 || id == 0x09DE0 || id == 0x03613) { // Symmetry, Jungle, Desert, Monastery, Town, Bunker, Treehouse Laser Panel
+		return true;
+	}
+	if (id == 0x03612) { // Quarry Laser Panel: Make sure it wasn't skipped with neither Boathouse nor Stoneworks done
+		int skip = ReadPanelData<int>(id, VIDEO_STATUS_COLOR);
+
+		return !(skip >= PUZZLE_SKIPPED + 2 && skip <= PUZZLE_SKIPPED_MAX) || !severedDoorsList.count(id);
+	}
+	if (id == 0x19650) { // Shadows Laser Panel: In door shuffle, this is trivial
+		return !severedDoorsList.count(0x19665) || !severedDoorsList.count(0x194B2) || !severedDoorsList.count(id);
+	}
+	if (id == 0x0360E || id == 0x03317) { // Keep Panels: Make sure they weren't skipped in a doors mode
+		int skip = ReadPanelData<int>(id, VIDEO_STATUS_COLOR);
+
+		return !(skip >= PUZZLE_SKIPPED + 2 && skip <= PUZZLE_SKIPPED_MAX) || !severedDoorsList.count(0x01BEC) || !severedDoorsList.count(id);
+	}
+	if (id == 0x03615) { // Swamp Laser Panel: Make sure it wasn't acquired through the shortcut in a doors mode
+		return !(severedDoorsList.count(0x2D880) && ReadPanelData<int>(0x2D880, DOOR_OPEN)) || !severedDoorsList.count(id);
+	}
+
+	return false;
+}
+
 void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 	if (ClientWindow::get()->getJinglesSettingSafe() == "Off") return;
 	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
@@ -2060,27 +2095,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 
 	bool isEP = allEPs.count(id);
 
-	bool epicVersion = hardPanels.count(id);
-
-	if (id == 0x0360D || id == 0x03616 || id == 0x03608 || id == 0x17CA4 || id == 0x032F5 || id == 0x09DE0 || id == 0x03613) { // Symmetry, Jungle, Desert, Monastery, Town, Bunker, Treehouse Laser Panel
-		epicVersion = true;
-	}
-	else if (id == 0x03612) { // Quarry Laser Panel: Make sure it wasn't skipped with neither Boathouse nor Stoneworks done
-		int skip = ReadPanelData<int>(id, VIDEO_STATUS_COLOR);
-
-		epicVersion = !(skip >= PUZZLE_SKIPPED + 2 && skip <= PUZZLE_SKIPPED_MAX) || !severedDoorsList.count(id);
-	}
-	else if (id == 0x19650) { // Shadows Laser Panel: In door shuffle, this is trivial
-		epicVersion = !severedDoorsList.count(0x19665) || !severedDoorsList.count(0x194B2) || !severedDoorsList.count(id);
-	}
-	else if (id == 0x0360E || id == 0x03317) { // Keep Panels: Make sure they weren't skipped in a doors mode
-		int skip = ReadPanelData<int>(id, VIDEO_STATUS_COLOR);
-
-		epicVersion = !(skip >= PUZZLE_SKIPPED + 2 && skip <= PUZZLE_SKIPPED_MAX) || !severedDoorsList.count(0x01BEC) || !severedDoorsList.count(id);
-	}
-	else if (id == 0x03615) { // Swamp Laser Panel: Make sure it wasn't acquired through the shortcut in a doors mode
-		epicVersion = !(severedDoorsList.count(0x2D880) && ReadPanelData<int>(0x2D880, DOOR_OPEN)) || !severedDoorsList.count(id);
-	}
+	bool epicVersion = PanelShouldPlayEpicVersion(id);
 
 	if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
