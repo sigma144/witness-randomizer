@@ -428,7 +428,7 @@ void APWatchdog::CheckSolvedPanels() {
 				return;
 			}
 			// Play panel hunt jingle when the item is filler, otherwise don't
-			if (locationIdToItemFlags[solvedLocation] == APClient::ItemFlags::FLAG_NONE) {
+			if (locationIdToItemFlags[solvedLocation] != APClient::ItemFlags::FLAG_NONE) {
 				return;
 			}
 			// Prefer epic filler over panel hunt
