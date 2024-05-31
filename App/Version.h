@@ -10,7 +10,7 @@
 #define VERSION_STR     "6.0.0 Beta 4"
 #define VERSION			MAJOR, MINOR, PATCH
 
-#define AP_VERSION_STR	"0.4.7"
-#define AP_VERSION_STR_BACKCOMPAT  "0.4.4"
+#define AP_VERSION_STR	"0.5.0"
+#define AP_VERSION_STR_BACKCOMPAT  "0.4.5"
 
 #define PRODUCT_NAME L"Witness Random Puzzle Generator for Archipelago.gg"

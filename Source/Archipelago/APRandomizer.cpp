@@ -36,7 +36,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 4, 7});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 5, 0});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
