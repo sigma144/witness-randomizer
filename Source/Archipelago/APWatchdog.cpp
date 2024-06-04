@@ -327,7 +327,7 @@ void APWatchdog::CheckSolvedPanels() {
 			bool anyNew = false;
 
 			for (auto it2 = EPSet.begin(); it2 != EPSet.end();) {
-				if (ReadPanelData<int>(*it2, EP_SOLVED)) //TODO: Check EP solved
+				if (ReadPanelData<int>(*it2, EP_SOLVED))
 				{
 					anyNew = true;
 					ap->Set("WitnessEP" + std::to_string(ap->get_player_number()) + "-" + std::to_string(*it2), NULL, false, { {"replace", true} });
@@ -2405,7 +2405,7 @@ void APWatchdog::SetStatusMessages() {
 				skipMessage = puzzleSkipInfoMessage + "\n" + skipMessage;
 			}
 
-			if (solvingPressurePlateStartPoint || startPointToEPs.count(activePanelId)) {
+			if (solvingPressurePlateStartPoint || (startPointToEPs.count(activePanelId) && !(activePanelId == EPtoStartPoint.find(0x3352F)->second && finalPanel == 0x03629))) {
 				bool allDisabled = true;
 				bool someDisabled = false;
 
@@ -3035,6 +3035,11 @@ void APWatchdog::DisablePuzzle(int id) {
 
 	if (allEPs.count(id)) {
 		memory->SolveEP(id);
+
+		if (id == 0x3352F && finalPanel == 0x03629) { // Gate EP in Panel Hunt: Be normal challenge difficulty impossible
+			panelLocker->PermanentlyUnlockPuzzle(id, *state);
+			return;
+		}
 		if ((DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve") && precompletableEpToName.count(id) && precompletableEpToPatternPointBytes.count(id)) {
 			memory->MakeEPGlow(precompletableEpToName.at(id), precompletableEpToPatternPointBytes.at(id));
 		}
