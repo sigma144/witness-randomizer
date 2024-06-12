@@ -12,6 +12,9 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+#config
+WRPGconfig.txt
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -332,3 +335,5 @@ ASALocalRun/
 # Misc
 enc_temp_folder/
 /Witness Save Data.lnk
+
+*datapackage.json

@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -77,13 +77,15 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um;$(IncludePath)</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -91,10 +93,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT=0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -106,13 +110,16 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT=0x0A00;WSWRAP_NO_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,10 +134,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,12 +155,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;Archipelago\Client\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,7 +172,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Archipelago\APAudioPlayer.h" />
+    <ClInclude Include="Archipelago\APState.h" />
+    <ClInclude Include="Archipelago\APRandomizer.h" />
+    <ClInclude Include="Archipelago\APGameData.h" />
+    <ClInclude Include="Archipelago\ASMPayloadManager.h" />
+    <ClInclude Include="Archipelago\OriginalPanelData.h" />
+    <ClInclude Include="Archipelago\PanelRestore.h" />
+    <ClInclude Include="Archipelago\LockablePuzzle.h" />
+    <ClInclude Include="Archipelago\PanelLocker.h" />
+    <ClInclude Include="Archipelago\APWatchdog.h" />
+    <ClInclude Include="Archipelago\Client\json.hpp" />
+    <ClInclude Include="Archipelago\Client\json\include\nlohmann\json.hpp" />
+    <ClInclude Include="Archipelago\SkipSpecialCases.h" />
+    <ClInclude Include="ASMBuilder.h" />
+    <ClInclude Include="ClientWindow.h" />
+    <ClInclude Include="Converty.h" />
+    <ClInclude Include="DataTypes.h" />
+    <ClInclude Include="DateTime.h" />
     <ClInclude Include="Generate.h" />
+    <ClInclude Include="HUDManager.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
     <ClInclude Include="Panel.h" />
@@ -172,13 +203,29 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="Randomizer.h" />
     <ClInclude Include="Special.h" />
+    <ClInclude Include="StringSplitter.h" />
+    <ClInclude Include="Utilities.h" />
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Archipelago\APAudioPlayer.cpp" />
+    <ClCompile Include="Archipelago\APGameData.cpp" />
+    <ClCompile Include="Archipelago\APRandomizer.cpp" />
+    <ClCompile Include="Archipelago\APWatchdog.cpp" />
+    <ClCompile Include="Archipelago\ASMPayloadManager.cpp" />
+    <ClCompile Include="Archipelago\PanelRestore.cpp" />
+    <ClCompile Include="ASMBuilder.cpp" />
+    <ClCompile Include="ClientWindow.cpp" />
+    <ClCompile Include="DataTypes.cpp" />
     <ClCompile Include="Generate.cpp" />
+    <ClCompile Include="HUDManager.cpp" />
+    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="InputStrings.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
     <ClCompile Include="Panel.cpp" />
+    <ClCompile Include="Archipelago\LockablePuzzle.cpp" />
+    <ClCompile Include="Archipelago\PanelLocker.cpp" />
     <ClCompile Include="PuzzleList.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Random.cpp" />

@@ -6,6 +6,7 @@
 #include "Randomizer.h"
 #include "MultiGenerate.h"
 #include "Special.h"
+#include "ClientWindow.h"
 
 void Generate::generate(int id, int symbol, int amount) {
 	PuzzleSymbols symbols({ std::make_pair(symbol, amount) });
@@ -224,6 +225,8 @@ void Generate::write(int id)
 
 	incrementProgress();
 
+	Memory* memory = Memory::get();
+
 	if (hasFlag(Config::ResetColors)) {
 		_panel->colorMode = Panel::ColorMode::Reset;
 	}
@@ -237,34 +240,34 @@ void Generate::write(int id)
 		_panel->colorMode = colorblind ? Panel::ColorMode::TreehouseAlternate : Panel::ColorMode::Treehouse;
 	}
 	if (hasFlag(Config::Write2Color)) {
-		Special::WritePanelData(id, PATTERN_POINT_COLOR_A, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
-		Special::WritePanelData(id, PATTERN_POINT_COLOR_B, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
-		Special::WritePanelData(id, REFLECTION_PATH_COLOR, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
-		Special::WritePanelData(id, ACTIVE_COLOR, _panel->_memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
+		memory->WritePanelData(id, PATTERN_POINT_COLOR_A, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
+		memory->WritePanelData(id, PATTERN_POINT_COLOR_B, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
+		memory->WritePanelData(id, REFLECTION_PATH_COLOR, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
+		memory->WritePanelData(id, ACTIVE_COLOR, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
 	}
 	if (hasFlag(Config::WriteInvisible)) {
-		Special::WritePanelData(id, REFLECTION_PATH_COLOR, _panel->_memory->ReadPanelData<Color>(0x00076, REFLECTION_PATH_COLOR));
+		memory->WritePanelData(id, REFLECTION_PATH_COLOR, memory->ReadPanelData<Color>(0x00076, REFLECTION_PATH_COLOR));
 	}
 	if (hasFlag(Config::WriteDotColor))
-		Special::WritePanelData(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
+		memory->WritePanelData<float>(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
 	if (hasFlag(Config::WriteDotColor2)) {
-		Color color = _panel->_memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
-		Special::WritePanelData(id, PATTERN_POINT_COLOR, color);
+		Color color = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
+		memory->WritePanelData(id, PATTERN_POINT_COLOR, color);
 	}
 	if (arrowColor.a > 0 || backgroundColor.a > 0 || successColor.a > 0) {
-		Special::WritePanelData(id, OUTER_BACKGROUND, { backgroundColor });
+		memory->WritePanelData<Color>(id, OUTER_BACKGROUND, { backgroundColor });
 		if (arrowColor.a == 0)
-			Special::WritePanelData(id, BACKGROUND_REGION_COLOR, { _panel->_memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
-		Special::WritePanelData(id, BACKGROUND_REGION_COLOR, { arrowColor });
-		Special::WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
-		if (successColor.a == 0) Special::WritePanelData(id, SUCCESS_COLOR_A, _panel->_memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
-		else Special::WritePanelData(id, SUCCESS_COLOR_A, successColor);
-		Special::WritePanelData(id, SUCCESS_COLOR_B, _panel->_memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
-		Special::WritePanelData(id, ACTIVE_COLOR, { 1, 1, 1, 1 });
-		Special::WritePanelData(id, REFLECTION_PATH_COLOR, { 1, 1, 1, 1 });
+			memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
+		memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { arrowColor });
+		memory->WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
+		if (successColor.a == 0) memory->WritePanelData(id, SUCCESS_COLOR_A, memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
+		else memory->WritePanelData(id, SUCCESS_COLOR_A, successColor);
+		memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
+		memory->WritePanelData<float>(id, ACTIVE_COLOR, { 1, 1, 1, 1 });
+		memory->WritePanelData<float>(id, REFLECTION_PATH_COLOR, { 1, 1, 1, 1 });
 	}
 	if (hasFlag(Config::TreehouseLayout)) {
-		Special::WritePanelData(id, SPECULAR_ADD, 0.001f);
+		memory->WritePanelData(id, SPECULAR_ADD, 0.001f);
 	}
 
 	_panel->decorationsOnly = hasFlag(Config::DecorationsOnly);
@@ -308,11 +311,15 @@ void Generate::incrementProgress()
 {
 	_areaTotal++;
 	_genTotal++;
-	if (_handle) {
-		int total = (_totalPuzzles == 0 ? _areaPuzzles : _totalPuzzles);
-		if (total == 0) return;
-		std::wstring text = _areaName + L": " + std::to_wstring(_areaTotal) + L"/" + std::to_wstring(_areaPuzzles) + L" (" + std::to_wstring(_genTotal * 100 / total) + L"%)";
-		SetWindowText(_handle, text.c_str());
+
+	int total = (_totalPuzzles == 0 ? _areaPuzzles : _totalPuzzles);
+	if (total > 0) {
+		std::stringstream statusStream;
+		statusStream << "Randomizing " << _areaName << ": " << _areaTotal << "/" << _areaPuzzles << " (" << (_genTotal * 100 / total) << "%)";
+		ClientWindow::get()->setStatusMessage(statusStream.str());
+	}
+	else {
+		ClientWindow::get()->setStatusMessage("Randomizing " + _areaName);
 	}
 }
 
@@ -401,10 +408,10 @@ bool Generate::generate_maze(int id, int numStarts, int numExits)
 		clear();
 		if (hasFlag(Generate::Config::ShortPath)) {
 			while (!generate_path_length((_panel->_width + _panel->_height),
-				min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 1 / 2))) clear();
+				std::min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 1 / 2))) clear();
 		}
 		while (!generate_path_length((_panel->_width + _panel->_height),
-			min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
+			std::min((_panel->_width + _panel->_height) * 2, (_panel->_width / 2 + 1) * (_panel->_height / 2 + 1) * 4 / 5))) clear();
 	}
 	
 	std::set<Point> path = _path; //Backup
@@ -664,7 +671,7 @@ bool Generate::generate_path(PuzzleSymbols & symbols)
 
 	//For stone puzzles, the path must have a certain number of regions
 	if (symbols.style == Panel::Style::HAS_STONES && _splitPoints.size() == 0)
-		return generate_path_regions(min(symbols.getNum(Decoration::Stone), (_panel->_width / 2 + _panel->_height / 2) / 2 + 1));
+		return generate_path_regions(std::min(symbols.getNum(Decoration::Stone), (_panel->_width / 2 + _panel->_height / 2) / 2 + 1));
 
 	if (symbols.style == Panel::Style::HAS_SHAPERS) {
 		if (hasFlag(Config::SplitShapes)) {
@@ -1192,7 +1199,7 @@ bool Generate::place_stones(int color, int amount) {
 	while (amount > 0) {
 		if (open.size() == 0) {
 			//Make sure there is room for the remaining stones and enough partitions have been made (based on the grid size)
-			if (open2.size() < amount || _bisect && passCount < min(originalAmount, (_panel->_width / 2 + _panel->_height / 2 + 2) / 4))
+			if (open2.size() < amount || _bisect && passCount < std::min(originalAmount, (_panel->_width / 2 + _panel->_height / 2 + 2) / 4))
 				return false;
 			//Put remaining stones wherever they will fit
 			Point pos = pick_random(open2);
@@ -1356,7 +1363,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			targetArea != _panel->get_num_grid_blocks()) continue; //To prevent shapes from filling every grid point
 		std::vector<Shape> shapes;
 		std::vector<Shape> shapesN;
-		int numShapesN = min(Random::rand() % (numNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
+		int numShapesN = std::min(Random::rand() % (numNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
 		if (amount == 1) numShapesN = numNegative;
 		if (numShapesN) {
 			std::set<Point> regionN = _gridpos;
@@ -1373,7 +1380,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 					}
 				}
 				if (!regionN.count(pos)) return false;
-				Shape shape = generate_shape(regionN, pos, min(Random::rand() % 3 + 1, maxSize));
+				Shape shape = generate_shape(regionN, pos, std::min(Random::rand() % 3 + 1, maxSize));
 				shapesN.push_back(shape);
 				for (Point p : shape) {
 					if (region.count(p)) bufferRegion.insert(p); //Buffer region stores overlap between shapes
@@ -1400,15 +1407,15 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			//Make balancing shapes - Positive and negative will be switched so that code can be reused
 			balance = true;
 			std::set<Point> regionN = _gridpos;
-			numShapes = max(2, Random::rand() % numNegative + 1);			//Actually the negative shapes
-			numShapesN = min(amount, 1);		//Actually the positive shapes
+			numShapes = std::max(2, Random::rand() % numNegative + 1);			//Actually the negative shapes
+			numShapesN = std::min(amount, 1);		//Actually the positive shapes
 			if (numShapesN >= numShapes * 3 || numShapesN * 5 <= numShapes) continue;
 			shapes.clear();
 			shapesN.clear();
 			region.clear();
 			bufferRegion.clear();
 			for (int i = 0; i < numShapesN; i++) {
-				Shape shape = generate_shape(regionN, pick_random(regionN), min(shapeSize + 1, numShapes * 2 / numShapesN + Random::rand() % 3 - 1));
+				Shape shape = generate_shape(regionN, pick_random(regionN), std::min(shapeSize + 1, numShapes * 2 / numShapesN + Random::rand() % 3 - 1));
 				shapesN.push_back(shape);
 				for (Point p : shape) {
 					region.insert(p);

@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -72,21 +72,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>WitnessRandomizer</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>WitnessRandomizer</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago</TargetName>
     <IncludePath>C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\um;$(IncludePath)</IncludePath>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>WitnessRandomizer</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago (32)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>WitnessRPG</TargetName>
+    <TargetName>The Witness Randomizer for Archipelago</TargetName>
     <OutDir>..\GithubPackage\</OutDir>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -94,11 +96,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -111,17 +114,20 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;WSWRAP_NO_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -132,11 +138,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -154,12 +161,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -167,15 +175,19 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalDependencies>winmm.lib;..\Source\Archipelago\Client\openssl\libcrypto_static.lib;crypt32.lib;..\Source\Archipelago\Client\openssl\libssl_static.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Main.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
     <ResourceCompile Include="Version.rc" />
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +197,71 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="changes.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\..\..\Music\Pillars Filler Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Filler EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Filler Emaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Progression Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Progression EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Progression Emaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Trap Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Trap EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Trap Emaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Useful Bmaj.wav" />
+    <Media Include="..\..\..\Music\Pillars Useful EbMin.wav" />
+    <Media Include="..\..\..\Music\Pillars Useful Emaj.wav" />
+    <Media Include="..\Music\Bonk Sound Effect.wav" />
+    <Media Include="..\Music\Dog Filler.wav" />
+    <Media Include="..\Music\Dog Progression.wav" />
+    <Media Include="..\Music\Dog Trap.wav" />
+    <Media Include="..\Music\Dog Useful.wav" />
+    <Media Include="..\Music\EP Filler 2.wav" />
+    <Media Include="..\Music\EP Filler.wav" />
+    <Media Include="..\Music\EP Progression 2.wav" />
+    <Media Include="..\Music\EP Progression.wav" />
+    <Media Include="..\Music\EP Trap 2.wav" />
+    <Media Include="..\Music\EP Trap.wav" />
+    <Media Include="..\Music\EP Useful 2.wav" />
+    <Media Include="..\Music\EP Useful.wav" />
+    <Media Include="..\Music\Incoming Filler.wav" />
+    <Media Include="..\Music\Incoming Progression.wav" />
+    <Media Include="..\Music\Incoming Trap.wav" />
+    <Media Include="..\Music\Incoming Useful.wav" />
+    <Media Include="..\Music\Panel Filler 1.wav" />
+    <Media Include="..\Music\Panel Filler 2.wav" />
+    <Media Include="..\Music\Panel Filler 3.wav" />
+    <Media Include="..\Music\Panel Filler 4.wav" />
+    <Media Include="..\Music\Panel Filler Epic.wav" />
+    <Media Include="..\Music\Panel Progression 1.wav" />
+    <Media Include="..\Music\Panel Progression 2.wav" />
+    <Media Include="..\Music\Panel Progression 3.wav" />
+    <Media Include="..\Music\Panel Progression 4.wav" />
+    <Media Include="..\Music\Panel Progression 5.wav" />
+    <Media Include="..\Music\Panel Progression Epic.wav" />
+    <Media Include="..\Music\Panel Trap 1.wav" />
+    <Media Include="..\Music\Panel Trap 2.wav" />
+    <Media Include="..\Music\Panel Trap 3.wav" />
+    <Media Include="..\Music\Panel Trap Epic.wav" />
+    <Media Include="..\Music\Panel Useful 1.wav" />
+    <Media Include="..\Music\Panel Useful 2.wav" />
+    <Media Include="..\Music\Panel Useful 3.wav" />
+    <Media Include="..\Music\Panel Useful 4.wav" />
+    <Media Include="..\Music\Panel Useful Epic.wav" />
+    <Media Include="..\Music\Pillars Filler Bmaj.wav" />
+    <Media Include="..\Music\Pillars Filler EbMin.wav" />
+    <Media Include="..\Music\Pillars Filler Emaj.wav" />
+    <Media Include="..\Music\Pillars Progression Bmaj.wav" />
+    <Media Include="..\Music\Pillars Progression EbMin.wav" />
+    <Media Include="..\Music\Pillars Progression Emaj.wav" />
+    <Media Include="..\Music\Pillars Trap Bmaj.wav" />
+    <Media Include="..\Music\Pillars Trap EbMin.wav" />
+    <Media Include="..\Music\Pillars Trap Emaj.wav" />
+    <Media Include="..\Music\Pillars Useful Bmaj.wav" />
+    <Media Include="..\Music\Pillars Useful EbMin.wav" />
+    <Media Include="..\Music\Pillars Useful Emaj.wav" />
+    <Media Include="..\Music\Randomized.wav" />
+    <Media Include="..\Music\Victory.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

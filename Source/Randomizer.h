@@ -1,17 +1,17 @@
 #pragma once
-#include "Memory.h"
+
+#include <map>
 #include <memory>
 #include <set>
-#include <map>
+#include <vector>
 
 class Randomizer {
 public:
-	void GenerateNormal(HWND loadingHandle);
-	void GenerateHard(HWND loadingHandle);
+
+	void GenerateNormal();
+	void GenerateHard();
 
 	void AdjustSpeed();
-
-	void ClearOffsets() {_memory->ClearOffsets();}
 
 	enum SWAP {
 		NONE = 0,
@@ -38,16 +38,22 @@ private:
 	void ShuffleRange(std::vector<int>& order, size_t startIndex, size_t endIndex);
 	void ShufflePanels(bool hard);
 
-	std::shared_ptr<Memory> _memory = std::make_shared<Memory>("witness64_d3d11.exe");
 	std::set<int> _alreadySwapped;
 	std::map<int, int> _shuffleMapping;
 
 	friend class Panel;
 	friend class PuzzleList;
 	friend class Special;
+
+	friend class APRandomizer;
 };
 
+#define BOAT_DELTA_SPEED 0xD4
+#define POSITION 0x24
+#define SCALE 0x30
 #define ORIENTATION 0x34
+#define BOUNDING_RADIUS 0x44
+#define MESH 0x60
 #define PATH_COLOR 0xC0 
 #define REFLECTION_PATH_COLOR 0xD0 
 #define DOT_COLOR 0xF0 
@@ -58,6 +64,7 @@ private:
 #define STROBE_COLOR_A 0x140 
 #define STROBE_COLOR_B 0x150 
 #define ERROR_COLOR 0x160 
+#define VIDEO_STATUS_COLOR 0x170
 #define PATTERN_POINT_COLOR 0x180 
 #define PATTERN_POINT_COLOR_A 0x190 
 #define PATTERN_POINT_COLOR_B 0x1A0 
@@ -71,7 +78,8 @@ private:
 #define OUTER_BACKGROUND_MODE 0x214 
 #define TRACED_EDGES 0x228 
 #define TRACED_EDGE_DATA 0x230 
-#define AUDIO_PREFIX 0x270 
+#define AUDIO_PREFIX 0x270
+#define FLASH_MODE 0x280
 #define SOLVED 0x298
 #define POWER 0x2A0 
 #define TARGET 0x2B4 
@@ -80,6 +88,7 @@ private:
 #define CYLINDER_Z0 0x2F8
 #define CYLINDER_Z1 0x2FC
 #define CYLINDER_RADIUS 0x300
+#define PATTERN_SCALE 0x338
 #define CURSOR_SPEED_SCALE 0x350 
 #define NEEDS_REDRAW 0x37C
 #define SPECULAR_ADD 0x38C
@@ -117,3 +126,11 @@ private:
 #define OPEN_RATE 0xE0
 #define METADATA 0x13A // sizeof(short)
 #define HOTEL_EP_NAME 0x51E340
+
+
+
+#define PUZZLE_SKIPPED 762251259
+#define PUZZLE_SKIPPED_MAX 762251269
+#define COLLECTED 342198657
+#define DISABLED 1513879663
+#define EXCLUDED 182357892

@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 struct Quaternion {
 	float x;
@@ -13,4 +14,5 @@ struct Quaternion {
     // Complex operations
     Quaternion Mul(const Quaternion& other) const;
     Quaternion Rotate90();
+    void RotateVector(std::vector<float>& vector);
 };

@@ -1,0 +1,22 @@
+RESEARCH:
+  110010011100000000 = Some arrow
+        011000000000 = triangles
+        011100000000 = Arrows
+    1111000000000000 = target count mask
+11110000000000000000 = directions mask
+
+00000000011000000000 == Triangle0 --requires exactly 0 lines touching, symbol is invisiable
+00010000011000000000 == Triangle1
+00100000011000000000 == Triangle2
+00110000011000000000 == Triangle3
+01000000011000000000 == Triangle4
+01110000000000000000 == Triangle count mask
+
+Poly shapes
+0000-0000-0000-0000-0000-0111-0000-0000 = Decoration (0100 = poly)
+0000-0000-0000-0000-0000-0000-0000-1111 = Color
+0000-0000-0000-0000-0011-0000-0000-0000 = Rotation (left bit), Negative (right bit)
+1111-0000-0000-0000-0000-0000-0000-0000 = blocks from left to right, top row
+0000-1111-0000-0000-0000-0000-0000-0000 = blocks from left to right, 2nd row
+0000-0000-1111-0000-0000-0000-0000-0000 = blocks from left to right, 3rd row
+0000-0000-0000-1111-0000-0000-0000-0000 = blocks from left to right, bottom row
