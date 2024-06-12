@@ -1,0 +1,9 @@
+/* 
+  Localizable.strings
+  Witness Randomizer
+
+  Created by Marquis Kurt on 10/15/22.
+  
+*/
+"difficulty.normal.text" = "Puzzles that should be reasonably challenging for most players. Puzzle mechanics are mostly identical to those in the original game.";
+"difficulty.expert.text" = "Very difficult puzzles with complex mechanics and mind-boggling new tricks. For brave players seeking the ultimate challenge.";
