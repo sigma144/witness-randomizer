@@ -436,6 +436,9 @@ void APWatchdog::CheckSolvedPanels() {
 				return;
 			}
 		}
+		// Don't interrupt panel ramping chain
+		APAudioPlayer::get()->ResetRampingCooldownPanel();
+		// but play panel hunt jingle instead of normal
 		PlayEntityHuntJingle(completedHuntEntities.front());
 	}
 }

@@ -97,7 +97,7 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, b
 		lastPanelJinglePlayed = epicVersion ? APJingle::None : jingle;
 
 		versionToPlay = panelChain / 2;
-		lastPanelJinglePlayedTime = now;
+		ResetRampingCooldownPanel();
 	}
 	else if (epJingles.count(jingle)) {
 		epChain++;
@@ -106,11 +106,11 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, b
 		lastEPJinglePlayed = epicVersion ? APJingle::None : jingle;
 
 		versionToPlay = epChain / 2;
-		lastEPJinglePlayedTime = now;
+		ResetRampingCooldownEP();
 	}
 
 	if (epicVersion) {
-		lastPanelJinglePlayedTime = now; // Epic doesn't interrupt a panel chain. Also, Epic should still advance the counter by one.
+		ResetRampingCooldownPanel(); // Epic doesn't interrupt a panel chain. Also, Epic should still advance the counter by one.
 
 		int resource = jingleEpicVersions[jingle];
 		PlayJingle(resource, async);
@@ -137,4 +137,14 @@ void APAudioPlayer::PlayFinalRoomJingle(std::string type, APJingleBehavior queue
 	int resource = pillarJingles.find(key)->second.find(type)->second;
 
 	PlayJingle(resource, SND_RESOURCE | SND_ASYNC);
+}
+
+void APAudioPlayer::ResetRampingCooldownPanel()
+{
+	lastPanelJinglePlayedTime = std::chrono::system_clock::now();
+}
+
+void APAudioPlayer::ResetRampingCooldownEP()
+{
+	lastEPJinglePlayedTime = std::chrono::system_clock::now();
 }

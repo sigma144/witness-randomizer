@@ -223,4 +223,6 @@ public:
 		PlayAudio(jingle, queue, false);
 	}
 	void PlayFinalRoomJingle(std::string type, APJingleBehavior queue, double finalRoomMusicTimer);
+	void ResetRampingCooldownPanel();
+	void ResetRampingCooldownEP();
 };
