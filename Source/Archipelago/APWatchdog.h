@@ -76,6 +76,7 @@ public:
 	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
 	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value, bool syncprogress);
 	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
+	void HandleHuntEntityResponse(nlohmann::json value, bool syncProgress);
 	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
 
@@ -229,6 +230,7 @@ private:
 	void CheckLasers();
 	void CheckEPs();
 	void CheckPanels();
+	void CheckHuntEntities();
 	void CheckDoors();
 
 	void CheckImportantCollisionCubes();
@@ -261,6 +263,7 @@ private:
 
 	std::set<int> solvedPanels;
 	std::set<int> openedDoors;
+	std::set<int> solvedHuntEntitiesDataStorage;
 	std::map<std::string, bool> lastDeadChecks;
 
 	std::map<std::string, int> EPIDsToEPs;

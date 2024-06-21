@@ -183,6 +183,7 @@ void APWatchdog::action() {
 			CheckEPs();
 			CheckPanels();
 			CheckDoors();
+			CheckHuntEntities();
 
 			firstStorageCheckDone = true;
 
@@ -1714,7 +1715,7 @@ void APWatchdog::CheckLasers() {
 void APWatchdog::CheckPanels() {
 	int pNO = ap->get_player_number();
 
-	if (solvedPanels.empty()) {
+	if (!firstStorageCheckDone) {
 		ap->SetNotify({ "WitnessSolvedPanels" + std::to_string(pNO) });
 		ap->Set("WitnessSolvedPanels" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
 	}
@@ -1742,6 +1743,40 @@ void APWatchdog::CheckPanels() {
 
 	if (newlySolvedPanels.size()) {
 		ap->Set("WitnessSolvedPanels" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newlySolvedPanels } });
+	}
+}
+
+void APWatchdog::CheckHuntEntities() {
+	if (!FirstEverLocationCheckDone) return;
+
+	int pNO = ap->get_player_number();
+
+	if (!firstStorageCheckDone) {
+		ap->SetNotify({ "WitnessHuntEntityStatus" + std::to_string(pNO) });
+		ap->Set("WitnessHuntEntityStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+	}
+
+	std::map<std::string, bool> newlySolvedHuntEntities = {};
+	
+	for (auto [huntEntity, solveStatus] : huntEntityToSolveStatus) {
+		if (!solveStatus) continue;
+		if (solvedHuntEntitiesDataStorage.count(huntEntity)) continue;
+		
+		std::stringstream stream;
+		stream << std::hex << huntEntity;
+		std::string panel_str(stream.str());
+
+		while (panel_str.size() < 5) {
+			panel_str = "0" + panel_str;
+		}
+
+		panel_str = "0x" + panel_str;
+
+		newlySolvedHuntEntities[panel_str] = true;
+	}
+
+	if (newlySolvedHuntEntities.size()) {
+		ap->Set("WitnessHuntEntityStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newlySolvedHuntEntities } });
 	}
 }
 
@@ -1802,6 +1837,56 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 		Memory::get()->ActivateLaser(laserNo);
 		hudManager->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
+}
+
+void APWatchdog::HandleHuntEntityResponse(nlohmann::json value, bool syncprogress) {
+	std::map<std::string, bool> entitiesSolvedAccordingToDataStorage = value;
+	
+	std::set<int> remotelySolvedHuntEntities;
+	
+	for (auto [entityString, dataStorageSolveStatus] : entitiesSolvedAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
+
+		int entityID = std::stoul(entityString, nullptr, 16);
+
+		if (!huntEntityToSolveStatus.count(entityID)) {
+			hudManager->queueBannerMessage("Got faulty EntityHunt response for entity " + entityString);
+			continue;
+		}
+
+		solvedHuntEntitiesDataStorage.insert(entityID);
+
+		if (!syncprogress) continue;
+
+		if (huntEntityToSolveStatus[entityID]) continue;
+
+		huntEntityToSolveStatus[entityID] = true;
+		remotelySolvedHuntEntities.insert(entityID);
+	}
+
+	if (remotelySolvedHuntEntities.empty()) return;
+
+	int huntSolveTotal = 0;
+	for (auto [huntEntity, currentSolveStatus] : huntEntityToSolveStatus) {
+		if (currentSolveStatus) huntSolveTotal++;
+	}
+
+	state->solvedHuntEntities = huntSolveTotal;
+	panelLocker->UpdatePuzzleLock(*state, 0x03629);
+
+	std::string message = "Hunt Panels were ";
+	if (remotelySolvedHuntEntities.size() == 1) {
+		int entityID = *(remotelySolvedHuntEntities.begin());
+		message = "Hunt Panel ";
+		if (entityToName.count(entityID)) {
+			message += entityToName[entityID];
+		}
+		message += " was ";
+	}
+	message += "solved remotely (Coop). New total: ";
+	message += std::to_string(huntSolveTotal) + "/" + std::to_string(state->requiredHuntEntities);
+
+	hudManager->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 }
 
 void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool syncprogress) {
