@@ -29,7 +29,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -46,7 +46,6 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	state = s;
 	EPShuffle = ep;
 	obeliskHexToEPHexes = o;
-	entityToName = epn;
 	solveModeSpeedFactor = smsf;
 	CollectText = col;
 	Collect = col;

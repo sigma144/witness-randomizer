@@ -155,24 +155,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
-		clientWindow->logLine("Connect: Getting EP to name.");
-		if (slotData.contains("ep_to_name")) {
-			for (auto& [key, val] : slotData["ep_to_name"].items()) {
-				int sideId = std::stoul(key, nullptr, 16);
-
-				entityToName.insert({ sideId, val });
-			}
-		}
-
-		clientWindow->logLine("Connect: Getting Entity to Name.");
-		if (slotData.contains("entity_to_name")) {
-			for (auto& [key, val] : slotData["entity_to_name"].items()) {
-				int sideId = std::stoul(key, nullptr, 16);
-
-				entityToName.insert({ sideId, val });
-			}
-		}
-
 		clientWindow->logLine("Connect: Getting Precompleted Puzzles.");
 		if (slotData.contains("precompleted_puzzles")) {
 			for (int key : slotData["precompleted_puzzles"]) {
@@ -767,7 +749,7 @@ void APRandomizer::RestoreOriginals() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -775,7 +757,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateVariety() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	Memory::get()->PowerNext(0x03629, 0x36);
@@ -785,7 +767,7 @@ void APRandomizer::GenerateVariety() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, entityToName, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
 	SeverDoors();
 
 	//Mess with Town targets
