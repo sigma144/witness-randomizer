@@ -185,7 +185,7 @@ private:
 
 	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
 	int tutorialCableFlashState = 0;
-	bool tutorialCableStateChangedLastFrame = false;
+	int tutorialCableStateChangedRecently = 0;
 
 	void HandleKeyTaps();
 

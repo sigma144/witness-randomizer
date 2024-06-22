@@ -3390,21 +3390,21 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 
 void APWatchdog::FlickerCable() {
 	if (PuzzleRandomization != SIGMA_EXPERT) return;
-	if (tutorialCableStateChangedLastFrame) {
-		tutorialCableStateChangedLastFrame = false;
+	if (tutorialCableStateChangedRecently > 0) {
+		tutorialCableStateChangedRecently -= 1;
 		return;
 	}
 
 	if (tutorialCableFlashState == 0) {
-		std::uniform_int_distribution<std::mt19937::result_type> dist10(0, 10);
-		if (dist10(rng) != 0) return;
+		std::uniform_int_distribution<std::mt19937::result_type> dist13(0, 13);
+		if (dist13(rng) != 0) return;
 	}
 	else {
 		std::uniform_int_distribution<std::mt19937::result_type> dist4(0, 4);
 		if (dist4(rng) != 0) return;
 	}
 
-	tutorialCableStateChangedLastFrame = true;
+	tutorialCableStateChangedRecently = 2;
 
 	std::uniform_int_distribution<std::mt19937::result_type> dist3(0, 3);
 	tutorialCableFlashState += dist3(rng);
@@ -3412,11 +3412,11 @@ void APWatchdog::FlickerCable() {
 
 	float cableColor = 0;
 	if (tutorialCableFlashState == 1 || tutorialCableFlashState == 3) {
-		cableColor = 0.1;
+		cableColor = 0.05;
 	}
 
 	if (tutorialCableFlashState == 2) {
-		cableColor = 0.25;
+		cableColor = 0.15;
 	}
 
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
