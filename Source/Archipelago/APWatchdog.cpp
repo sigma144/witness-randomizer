@@ -3412,11 +3412,11 @@ void APWatchdog::FlickerCable() {
 
 	float cableColor = 0;
 	if (tutorialCableFlashState == 1 || tutorialCableFlashState == 3) {
-		cableColor = 0.05;
+		cableColor = 0.027;
 	}
 
 	if (tutorialCableFlashState == 2) {
-		cableColor = 0.15;
+		cableColor = 0.1;
 	}
 
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
