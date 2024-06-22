@@ -149,6 +149,8 @@ void APWatchdog::action() {
 
 	DrawHuntPanelSpheres(frameDuration);
 
+	FlickerCable();
+
 	if (Utilities::isAprilFools()) {
 		DoAprilFoolsEffects(frameDuration);
 	}
@@ -3384,4 +3386,43 @@ void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
 	}
 
 	drawManager->drawSpheres(spheresToDraw);
+}
+
+void APWatchdog::FlickerCable() {
+	if (PuzzleRandomization != SIGMA_EXPERT) return;
+	if (tutorialCableStateChangedLastFrame) {
+		tutorialCableStateChangedLastFrame = false;
+		return;
+	}
+
+	if (tutorialCableFlashState == 0) {
+		std::uniform_int_distribution<std::mt19937::result_type> dist10(0, 10);
+		if (dist10(rng) != 0) return;
+	}
+	else {
+		std::uniform_int_distribution<std::mt19937::result_type> dist4(0, 4);
+		if (dist4(rng) != 0) return;
+	}
+
+	tutorialCableStateChangedLastFrame = true;
+
+	std::uniform_int_distribution<std::mt19937::result_type> dist3(0, 3);
+	tutorialCableFlashState += dist3(rng);
+	if (tutorialCableFlashState > 3) tutorialCableFlashState = 0;
+
+	float cableColor = 0;
+	if (tutorialCableFlashState == 1 || tutorialCableFlashState == 3) {
+		cableColor = 0.15;
+	}
+
+	if (tutorialCableFlashState == 2) {
+		cableColor = 0.35;
+	}
+
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
+		cableColor *= 0.5;
+	}
+
+	Memory::get()->WritePanelData<float>(0x51, 0x158, { cableColor });
 }

@@ -183,6 +183,10 @@ private:
 	bool symmetryMessageDelivered = false;
 	bool ppMessageDelivered = false;
 
+	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
+	int tutorialCableFlashState = 0;
+	bool tutorialCableStateChangedLastFrame = false;
+
 	void HandleKeyTaps();
 
 	void HandleInteractionState();
@@ -251,6 +255,8 @@ private:
 	Vector3 getHuntEntitySpherePosition(int huntEntity);
 
 	void DrawHuntPanelSpheres(float deltaSeconds);
+
+	void FlickerCable();
 
 	Vector3 getCachedEntityPosition(int id);
 
