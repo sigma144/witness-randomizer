@@ -1094,6 +1094,14 @@ void PuzzleList::GenerateTutorialH()
 	generator->setSymbol(Decoration::Start, 0, 0);
 	generator->setFlagOnce(Generate::Config::DisableWrite);
 	generator->generate(0x0A3B5, Decoration::Dot_Intersection, 36, Decoration::Gap, 12);
+
+	// AP INSERT: Make this obviously unsolvable to the bottom //
+	generator->_panel->_endpoints.pop_back();
+	Memory::get()->WritePanelData<float>(0x51, 0x158, { 0.04, 0, 0, 1 });
+	Memory::get()->WritePanelData<float>(0x51, 0xC4, { 1, 1 });
+	Special::setTarget(0x0A3B5, 0x3BA7);
+	Memory::get()->WritePanelData<uint64_t>(0x0A3B5, 0x58, 0);
+	
 	generator->set(9, 0, 0); generator->set(10, 1, 0); generator->set(9, 10, 0); generator->set(10, 9, 0);
 	generator->write(0x0A3B5);
 	generator->resetConfig();
