@@ -263,8 +263,6 @@ inline const std::set<int> skip_multisolvePuzzles = {
 inline const std::set<int> skip_specialCase = {
 	0x09E86, 0x09ED8,
 
-	0x00A52, 0x00A57, 0x00A5B, 0x00A61, 0x00A64, 0x00A68, //Symmetry Laser Panels
-
 	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate reset lines
 
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle
