@@ -2810,6 +2810,7 @@ void APWatchdog::LookingAtLockedEntity() {
 		lookingAtLockedEntity = lookingAtLockedEntityCandidate;
 	}
 	else {
+		if (doorToItemId.empty()) return;
 		std::stringstream s;
 		s << std::hex << lookingAtLockedEntityCandidate;
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "Locked entity with unknown name: " + s.str());

@@ -179,13 +179,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
-		clientWindow->logLine("Connect: Getting door hexes in the pool.");
-		if (slotData.contains("door_hexes_in_the_pool")) {
-			for (int key : slotData["door_hexes_in_the_pool"]) {
-				doorsActuallyInTheItemPool.insert(key);
-			}
-		}
-
 		clientWindow->logLine("Connect: Getting item id to door hexes.");
 		if (slotData.contains("item_id_to_door_hexes")) {
 			for (auto& [key, val] : slotData["item_id_to_door_hexes"].items()) {
@@ -193,11 +186,26 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 				std::set<int> v = val;
 
 				itemIdToDoorSet.insert({ itemId, v });
+			}
+		}
 
-				for (int door : v) {
-					if (doorsActuallyInTheItemPool.count(door)) {
-						doorToItemId.insert({ door, itemId });
-					}
+		// Backcompat to 0.4.5
+		clientWindow->logLine("Connect: Getting door hexes in the pool.");
+		if (slotData.contains("door_hexes_in_the_pool")) {
+			for (int key : slotData["door_hexes_in_the_pool"]) {
+				doorsActuallyInTheItemPool.insert(key);
+			}
+		}
+
+		clientWindow->logLine("Connect: Getting item id to door hexes (actually in the pool.");
+		if (slotData.contains("door_items_in_the_pool")) {
+			for (int doorItemId : slotData["door_items_in_the_pool"]) {
+				for (int associatedDoorHex : itemIdToDoorSet[doorItemId]) {
+					if (disabledEntities.count(associatedDoorHex)) continue;
+
+					doorsActuallyInTheItemPool.insert(associatedDoorHex);
+
+					doorToItemId.insert({ associatedDoorHex, doorItemId });
 				}
 			}
 		}
