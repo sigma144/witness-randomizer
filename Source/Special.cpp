@@ -1777,26 +1777,6 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
-	//Symmetry Blue/Yellow panels before laser
-
-	if (id == 0x00A52 || id == 0x00A61) {
-		DrawSimplePanel(0x00A52, text, kickOut);
-		DrawSimplePanel(0x00A61, text, kickOut);
-		return;
-	}
-
-	if (id == 0x00A57 || id == 0x00A64) {
-		DrawSimplePanel(0x00A57, text, kickOut);
-		DrawSimplePanel(0x00A64, text, kickOut);
-		return;
-	}
-
-	if (id == 0x00A5B || id == 0x00A68) {
-		DrawSimplePanel(0x00A5B, text, kickOut);
-		DrawSimplePanel(0x00A68, text, kickOut);
-		return;
-	}
-
 	//Keep Pressure Plates
 
 	if (id == 0x0A3A8) {
@@ -1813,12 +1793,6 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 	if (id == 0x0A3AD) {
 		DrawSimplePanel(0x01D3F, text, kickOut);
-		return;
-	}
-
-	if (id == 0x09E86 || id == 0x09ED8) {
-		DrawSimplePanel(0x09E86, text, kickOut);
-		DrawSimplePanel(0x09ED8, text, kickOut);
 		return;
 	}
 
@@ -1861,19 +1835,8 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 
 	if (skip_dontRandomize.count(id)) {
-		std::vector<int> ids = { id };
-		if (id == 0x00CB9 || id == 0x00CA1 || id == 0x00C80) {
-			ids = { 0x00CB9, 0x00CA1, 0x00C80 };
-		}
-
-		if (id == 0x00C68 || id == 0x00C59 || id == 0x00C22) {
-			ids = { 0x00C68, 0x00C59, 0x00C22 };
-		}
-
-		for (int id : ids) {
-			memory->WritePanelData<int>(id, RANDOMIZE_ON_POWER_ON, { 0 });
-			DrawSimplePanel(id, text, kickOut);
-		}
+		memory->WritePanelData<int>(id, RANDOMIZE_ON_POWER_ON, { 0 });
+		DrawSimplePanel(id, text, kickOut);
 		return;
 	}
 }
