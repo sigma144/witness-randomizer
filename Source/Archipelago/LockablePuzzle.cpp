@@ -807,7 +807,14 @@ void LockablePanel::UpdateLock(APState state) {
 		else
 		{
 			std::string text = "Locked";
-			createText(text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - text.size() * 0.037f, 0.5f + text.size() * 0.037f, 0.455f, 0.545f);
+
+			if (id == 0x09E86) {
+				createText(text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f + text.size() * 0.037f,  0.5f - text.size() * 0.037f, 0.545f, 0.455f);
+			}
+			else
+			{
+				createText(text, intersections, intersectionFlags, connectionsA, connectionsB, 0.5f - text.size() * 0.037f, 0.5f + text.size() * 0.037f, 0.455f, 0.545f);
+			}
 
 			std::vector<int> decorations(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
 			std::vector<int> decorationsFlags(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
