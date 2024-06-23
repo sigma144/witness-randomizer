@@ -2095,12 +2095,6 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
 			"Most Bunker panels need Black/White Squares and Colored Squares.");
 	}
-	else if (symmetryUpperPanel->containsPoint(playerPosition) && panelLocker->PuzzleIsLocked(0x1C349)) {
-		if (PuzzleRandomization == SIGMA_EXPERT) hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"Needs Symmetry and Triangles.");
-		else hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,
-			"Needs Symmetry and Dots.");
-	}
 	else if (ReadPanelData<int>(0x0C179, 0x1D4) && panelLocker->PuzzleIsLocked(0x01983)) {
 		if (ReadPanelData<int>(0x0C19D, 0x1D4) && panelLocker->PuzzleIsLocked(0x01987)) {
 			hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol,

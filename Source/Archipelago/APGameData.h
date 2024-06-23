@@ -2277,7 +2277,6 @@ inline CollisionVolume* riverVaultLowerCube = new CollisionCube(40, -56, 16, 46,
 inline CollisionVolume* bunkerPuzzlesCube = new CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
 inline CollisionVolume* tutorialPillarCube = new CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
 inline CollisionVolume* quarryLaserPanel = new CollisionCube(-59, 90, 17, -67, 100, 21);
-inline CollisionVolume* symmetryUpperPanel = new CollisionCube(-180, 31, 12.6f, -185, 37, 17);
 inline CollisionVolume* challengeTimer = new CollisionCube(-27, -40, -20, -50, -20, -4);
 inline CollisionVolume* EEEGate = new ExactCollisionCube({ -502.157, -174.301, 167 }, { -502.157, -174.301, 172 }, { -510, -168, 167 }, { -508, -187.7, 167 });
 
