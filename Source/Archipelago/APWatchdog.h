@@ -55,7 +55,7 @@ public:
 	void SkipPanel(int id, std::string reason, bool kickOut) {
 		SkipPanel(id, reason, kickOut, 0);
 	}
-	void SkipPanel(int id, std::string reason, bool kickOut, int cost);
+	void SkipPanel(int id, std::string reason, bool kickOut, int cost, bool allowRecursion = true);
 
 	void DisablePuzzle(int id);
 
