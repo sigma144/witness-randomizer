@@ -261,8 +261,6 @@ inline const std::set<int> skip_multisolvePuzzles = {
 };
 
 inline const std::set<int> skip_specialCase = {
-	0x09E86, 0x09ED8,
-
 	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate reset lines
 
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle
@@ -293,6 +291,9 @@ inline const std::map<int, std::vector<int>> skipTogether = {
 	{ 0x00C68, { 0x00C59, 0x00C22 } }, // Challenge triplets
 	{ 0x00C59, { 0x00C68, 0x00C22 } },
 	{ 0x00C22, { 0x00C68, 0x00C59 } },
+
+	{ 0x17C0A, {0x17E07} }, // Swamp Maze control
+	{ 0x17E07, {0x17C0A} },
 };
 
 inline const std::set<int> skip_dontRandomize = {
