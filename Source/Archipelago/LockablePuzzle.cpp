@@ -272,6 +272,7 @@ int LockablePanel::addPuzzleSymbols(const APState& state,
 	if (hasErasers && !state.unlockedErasers && i < gridDecorations.size()) {
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);
 		gridDecorations[position] = Decoration::Eraser;
+		i++;
 		if (oneRow) i++;
 	}
 
@@ -305,7 +306,7 @@ int LockablePanel::addPuzzleSymbols(const APState& state,
 		if (oneRow) i++;
 	}
 
-	if (hasSymmetry && !state.unlockedSymmetry && i != gridDecorations.size()) {
+	if (hasSymmetry && !state.unlockedSymmetry && i < gridDecorations.size()) {
 		int intersectionOffset = intersectionFlags.size();
 
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);
@@ -356,9 +357,10 @@ int LockablePanel::addPuzzleSymbols(const APState& state,
 		connectionsB.insert(connectionsB.end(), symmetryConnectionsB.begin(), symmetryConnectionsB.end());
 
 		i++;
+		if (oneRow) i++;
 	}
 
-	if (hasArrows && !state.unlockedArrows && i != gridDecorations.size()) {
+	if (hasArrows && !state.unlockedArrows && i < gridDecorations.size()) {
 		int intersectionOffset = intersectionFlags.size();
 
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);
@@ -387,9 +389,10 @@ int LockablePanel::addPuzzleSymbols(const APState& state,
 		connectionsB.insert(connectionsB.end(), arrowConnectionsB.begin(), arrowConnectionsB.end());
 
 		i++;
+		if (oneRow) i++;
 	}
 
-	if (state.keysInTheGame.count(id) && !state.keysReceived.count(id)) {
+	if (state.keysInTheGame.count(id) && !state.keysReceived.count(id) && i < gridDecorations.size()) {
 		int intersectionOffset = intersectionFlags.size();
 
 		position = (1 - (i % 2)) * 4 + ((int)i / 2);
@@ -423,6 +426,7 @@ int LockablePanel::addPuzzleSymbols(const APState& state,
 		connectionsB.insert(connectionsB.end(), keyConnectionsB.begin(), keyConnectionsB.end());
 
 		i++;
+		if (oneRow) i++;
 	}
 
 	if (hasColoredDots && !state.unlockedColoredDots) {
