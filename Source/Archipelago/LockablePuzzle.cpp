@@ -67,8 +67,8 @@ void LockablePanel::addMissingSymbolsDisplay(std::vector<float>& intersections, 
 	}
 	else if (id == 0x1C349) {
 		gridIntersections = {
-			0.1f, 0.1f, 0.3f, 0.1f, 0.5f, 0.1f, 0.7f, 0.1f, 0.9f, 0.1f, //bottom row
-			0.1f, 0.3f, 0.3f, 0.3f, 0.5f, 0.3f, 0.7f, 0.3f, 0.9f, 0.3f, //middle row
+			0.1f, 0.11f, 0.3f, 0.11f, 0.5f, 0.11f, 0.7f, 0.11f, 0.9f, 0.11f, //bottom row
+			0.1f, 0.31f, 0.3f, 0.31f, 0.5f, 0.31f, 0.7f, 0.31f, 0.9f, 0.31f, //middle row
 		};
 
 		gridIntersectionFlags = {
@@ -893,7 +893,7 @@ void LockablePanel::UpdateLock(APState state) {
 		else
 		{
 			if (id == 0x1C349) {
-				createText(text, intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.05f, 0.35f);
+				createText(text, intersections, intersectionFlags, connectionsA, connectionsB, 0.12f, 0.88f, 0.07f, 0.33f);
 			}
 			else {
 				createText(text, intersections, intersectionFlags, connectionsA, connectionsB, 0.1f, 0.9f, 0.1f, 0.4f);
