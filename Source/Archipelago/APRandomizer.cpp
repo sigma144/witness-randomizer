@@ -197,11 +197,18 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
-		clientWindow->logLine("Connect: Getting item id to door hexes (actually in the pool.");
+		clientWindow->logLine("Connect: Getting door hexes in the pool.");
+		if (slotData.contains("doors_that_shouldnt_be_locked")) {
+			for (int key : slotData["doors_that_shouldnt_be_locked"]) {
+				doorsToSkipLocking.insert(key);
+			}
+		}
+
+		clientWindow->logLine("Connect: Getting item id to door hexes actually in the pool.");
 		if (slotData.contains("door_items_in_the_pool")) {
 			for (int doorItemId : slotData["door_items_in_the_pool"]) {
 				for (int associatedDoorHex : itemIdToDoorSet[doorItemId]) {
-					if (disabledEntities.count(associatedDoorHex)) continue;
+					if (disabledEntities.count(associatedDoorHex) || doorsToSkipLocking.count(associatedDoorHex)) continue;
 
 					doorsActuallyInTheItemPool.insert(associatedDoorHex);
 

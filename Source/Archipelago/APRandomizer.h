@@ -72,6 +72,7 @@ class APRandomizer {
 		std::map<int, inGameHint> inGameHints;
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> disabledEntities;
+		std::set<int> doorsToSkipLocking;
 
 		std::set<int> huntEntities;
 
