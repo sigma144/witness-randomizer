@@ -192,6 +192,15 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		// Backcompat to 0.4.5
 		clientWindow->logLine("Connect: Getting door hexes in the pool.");
 		if (slotData.contains("door_hexes_in_the_pool")) {
+			// Backcompat for Obelisk Keys
+			for (auto [id, doorSet] : itemIdToDoorSet) {
+				for (int door : doorSet) {
+					if (allEPs.contains(door)) {
+						doorToItemId[door] = id;
+					}
+				}
+			}
+
 			for (int key : slotData["door_hexes_in_the_pool"]) {
 				doorsActuallyInTheItemPool.insert(key);
 			}
