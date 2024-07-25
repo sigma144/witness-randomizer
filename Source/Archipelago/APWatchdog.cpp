@@ -3303,7 +3303,10 @@ Vector3 APWatchdog::getHuntEntitySpherePosition(int huntEntity) {
 	}
 
 	if (!treehouseBridgePanels.count(huntEntity) || ReadPanelData<int>(huntEntity, SOLVED)) {
-		return Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
+		Vector3 panelPosition = Vector3(ReadPanelData<float>(huntEntity, POSITION, 3));
+		if (huntEntity == 0x34BC5) panelPosition.Y += 0.15f;
+		else if (huntEntity == 0x34BC6) panelPosition.Y -= 0.15f;
+		return panelPosition;
 	}
 
 	if (treehousePanelPreSolvePositions.count(huntEntity)) {
