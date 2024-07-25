@@ -221,7 +221,7 @@ void APWatchdog::HandleInteractionState() {
 	}
 
 	if (timePassedSinceRandomisation > 6.0f) {
-		if (!(stateChanged || firstTimeActiveEntity)) return;
+		if (!stateChanged && firstTimeActiveEntity) return;
 		firstTimeActiveEntity = true;
 
 		if (mostRecentActivePanelId == -1) {
@@ -229,7 +229,7 @@ void APWatchdog::HandleInteractionState() {
 		}
 
 		std::string entity = "";
-		if (entityToName.count(mostRecentActivePanelId)) {
+		if (entityToName.contains(mostRecentActivePanelId)) {
 			entity = entityToName[mostRecentActivePanelId];
 		}
 		else {
@@ -244,17 +244,16 @@ void APWatchdog::HandleInteractionState() {
 				}
 			}
 
-			if (startPointToEPs.count(realEntityID)) {
+			if (startPointToEPs.contains(realEntityID)) {
 				std::vector<int> associatedEPs = startPointToEPs.find(realEntityID)->second;
 				int representativeEP = associatedEPs[0];
 
-				if (entityToName.count(representativeEP)) {
-					entity = entityToName[mostRecentActivePanelId];
+				if (entityToName.contains(representativeEP)) {
+					entity = entityToName[representativeEP];
 				}
 				else {
 					entity = "Unknown EP";
 				}
-				entity = entityToName[mostRecentActivePanelId];
 				if (associatedEPs.size() > 1) {
 					entity += " (" + std::to_string(associatedEPs.size()) + ")";
 				}
