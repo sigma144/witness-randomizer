@@ -113,7 +113,7 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT=0x0A00;WSWRAP_NO_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
@@ -179,6 +179,7 @@
     <ClInclude Include="Archipelago\APRandomizer.h" />
     <ClInclude Include="Archipelago\APWitnessData.h" />
     <ClInclude Include="Archipelago\ASMPayloadManager.h" />
+    <ClInclude Include="Archipelago\CanonicalAudioFileNames.h" />
     <ClInclude Include="Archipelago\DrawIngameManager.h" />
     <ClInclude Include="Archipelago\Hints.h" />
     <ClInclude Include="Archipelago\OriginalPanelData.h" />

@@ -108,6 +108,8 @@ private:
 
 	static APAudioPlayer* _singleton;
 
+	std::map<std::string, char*> preloadedAudioFiles = {};
+
 	std::queue<std::pair<APJingle, std::any>> QueuedAudio = {};
 
 	std::chrono::system_clock::time_point lastPanelJinglePlayedTime;

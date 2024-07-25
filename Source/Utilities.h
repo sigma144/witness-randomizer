@@ -1,6 +1,8 @@
 #pragma once
 
+#include <set>
 #include <vector>
+#include <filesystem>
 
 inline int isAprilFoolsValue = -1;
 
@@ -77,5 +79,21 @@ public:
 		else isAprilFoolsValue = 0;
 
 		return isAprilFoolsValue == 1;
+	}
+
+	static std::set<std::string> get_all_files_with_extension(std::string path, std::string ext)
+	{
+		if (!std::filesystem::is_directory(path)) return {};
+
+		std::set<std::string> out = {};
+		std::filesystem::path canonical = std::filesystem::canonical(path);
+		for (auto& p : std::filesystem::directory_iterator(canonical))
+		{
+			if (p.path().extension() == ext) {
+				out.insert(p.path().filename().string());
+			}
+				
+		}
+		return out;
 	}
 };

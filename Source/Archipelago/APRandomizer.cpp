@@ -24,6 +24,9 @@ APRandomizer::APRandomizer() {
 
 bool APRandomizer::Connect(std::string& server, std::string& user, std::string& password) {
 	ClientWindow* clientWindow = ClientWindow::get();
+	clientWindow->logLine("Loading custom audio files.");
+	APAudioPlayer::get();
+
 	clientWindow->logLine("Connecting");
 	std::string uri = buildUri(server);
 

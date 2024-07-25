@@ -4,11 +4,46 @@
 #include "mmsystem.h"
 
 #include "../../App/resource.h"
+#include "CanonicalAudioFileNames.h"
+#include "../Utilities.h"
+
+#include <iostream>
+#include <fstream>
 
 APAudioPlayer* APAudioPlayer::_singleton = nullptr;
 
 APAudioPlayer::APAudioPlayer() : Watchdog(0.1f) {
+	std::set<std::string> recognizedFiles = {};
+	for (auto [k, v] : canonicalAudioFileNames) {
+		for (std::string recognizedFile : v) {
+			recognizedFiles.insert(recognizedFile);
+		}
+	}
+	std::set<std::string> audioFiles = Utilities::get_all_files_with_extension(".\\Jingles\\", ".wav");
 
+	for (std::string file : audioFiles) {
+		if (!recognizedFiles.contains(file)) continue;
+
+		std::string filename = "./Jingles/" + file;
+
+		std::ifstream infile(filename, std::ios::binary);
+
+		if (!infile)
+		{
+			OutputDebugStringW(L"File error");
+			continue;
+		}
+
+		infile.seekg(0, std::ios::end);   // get length of file
+		int length = infile.tellg();
+		char* buffer = new char[length];    // allocate memory
+		infile.seekg(0, std::ios::beg);   // position to start of file
+		infile.read(buffer, length);  // read entire file
+
+		infile.close();
+
+		preloadedAudioFiles[file] = buffer;
+	}
 }
 
 void APAudioPlayer::action() {
@@ -48,8 +83,21 @@ void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, std::any 
 }
 
 void APAudioPlayer::PlayJingle(int resource, bool async) {
+	if (canonicalAudioFileNames.contains(resource)) {
+		std::vector<std::string> possibilities = canonicalAudioFileNames[resource];
+		for (std::string possibility : possibilities) {
+			if (preloadedAudioFiles.contains(possibility)) {
+				char* buffer = preloadedAudioFiles[possibility];
+				if (async) PlaySoundA(buffer, NULL, SND_MEMORY | SND_ASYNC);
+				else PlaySoundA(buffer, NULL, SND_MEMORY);
+
+				return;
+			}
+		}
+	}
+
 	if (async) PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE | SND_ASYNC);
-	else PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE);
+	else PlaySound(MAKEINTRESOURCEW(resource), NULL, SND_RESOURCE);
 }
 
 void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, bool async) {

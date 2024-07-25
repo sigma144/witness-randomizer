@@ -116,7 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;WSWRAP_NO_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -211,7 +211,7 @@
     <Media Include="..\..\..\Music\Pillars Useful Bmaj.wav" />
     <Media Include="..\..\..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\..\..\Music\Pillars Useful Emaj.wav" />
-    <Media Include="..\Music\Bonk Sound Effect.wav" />
+    <Media Include="..\Music\Bonk.wav" />
     <Media Include="..\Music\Dog Filler.wav" />
     <Media Include="..\Music\Dog Progression.wav" />
     <Media Include="..\Music\Dog Trap.wav" />
