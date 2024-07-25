@@ -893,6 +893,24 @@ bool APWatchdog::PuzzleIsSkippable(int puzzleId) const {
 
 int APWatchdog::CalculatePuzzleSkipCost(int puzzleId, std::string& specialMessage) const {
 	// Check for special cases.
+	
+	if (puzzleId == 0x17C34) {
+		// Mountain Entry
+		int unopenedLatches = 0;
+		unopenedLatches += ReadPanelData<int>(0x2fad4, DOOR_OPEN) == 0;
+		unopenedLatches += ReadPanelData<int>(0x2fad7, DOOR_OPEN) == 0;
+		unopenedLatches += ReadPanelData<int>(0x2fad6, DOOR_OPEN) == 0;
+
+		if (unopenedLatches) {
+			specialMessage = "Skipping this panel costs 1 Puzzle Skip per unopened latch.";
+			return unopenedLatches;
+		}
+		else {
+			specialMessage = "";
+			return -1;
+		}
+	}
+
 	if (puzzleId == 0x03612) {
 		// Quarry laser panel. Check for latches.
 		bool leftLatchOpen = ReadPanelData<int>(0x288E9, DOOR_OPEN) != 0;

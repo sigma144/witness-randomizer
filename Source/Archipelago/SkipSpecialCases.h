@@ -231,6 +231,8 @@ inline const std::set<int> skip_multisolvePuzzles = {
 	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate resets (needed for EPs)
 
 	// Mountain
+	0x17C34, // Mountain Entry
+
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle small panels <-- TODO: These are fully "solved" once the big puzzle has been solved.
 	0x09E39, 0x09E86, 0x09ED8, // Light Bridge Controls
 	0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Same solution set
