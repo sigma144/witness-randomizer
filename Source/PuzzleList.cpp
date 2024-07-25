@@ -2521,6 +2521,8 @@ void PuzzleList::GenerateSymmetryV()
 
 void PuzzleList::GenerateQuarryV()
 {
+	Memory* memory = Memory::get();
+
 	generator->setLoadingData("Quarry", 39);
 	generator->resetConfig();
 	//Entry Gates
@@ -2590,6 +2592,12 @@ void PuzzleList::GenerateQuarryV()
 	generator->setFlagOnce(Generate::Config::DisconnectShapes);
 	generator->generate(0x021AE, Decoration::Poly, 4, Decoration::Eraser | Decoration::Color::White, 2);
 	generator->removeFlag(Generate::Config::ResetColors);
+
+	memory->WritePanelData(0x021B4, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021B0, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AF, POWER_OFF_ON_FAIL, 0);
+	memory->WritePanelData(0x021AE, POWER_OFF_ON_FAIL, 0);
+
 	//Eraser + Stars
 	generator->setGridSize(4, 4);
 	generator->generate(0x021B5, Decoration::Eraser | Decoration::Color::White, 2, Decoration::Poly | Decoration::Color::Green, 2, Decoration::Poly | Decoration::Negative | Decoration::Color::Magenta, 2);
