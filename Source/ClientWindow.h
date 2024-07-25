@@ -70,7 +70,10 @@ public:
 	void refreshKeybind(const CustomKey& customKey) const;
 
 	// Sets the status message field.
-	void setStatusMessage(std::string statusMessage) const;
+	void setStatusMessage(std::string statusMessage);
+
+	// Display active entity name.
+	void setActiveEntityString(std::string activeEntityString) const;
 
 	// Display seen Audio Logs.
 	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks);
@@ -139,6 +142,7 @@ private:
 	std::string lastHintText = "";
 	std::string lastDeadAreasText = "";
 	std::string lastDeadChecksText = "";
+	std::string normalStatusMessage = "";
 
 	// HACK: Due to things like menu bar thickness, the working area of the root window won't
 	//   actually be whatever we request. As such, we need to store the delta between the requested

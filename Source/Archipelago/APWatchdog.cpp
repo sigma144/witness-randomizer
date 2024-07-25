@@ -219,6 +219,54 @@ void APWatchdog::HandleInteractionState() {
 		// We're not in a puzzle-solving state. Clear the active panel, if any.
 		activePanelId = -1;
 	}
+
+	if (timePassedSinceRandomisation > 6.0f) {
+		if (!(stateChanged || firstTimeActiveEntity)) return;
+		firstTimeActiveEntity = true;
+
+		if (mostRecentActivePanelId == -1) {
+			return;
+		}
+
+		std::string entity = "";
+		if (entityToName.count(mostRecentActivePanelId)) {
+			entity = entityToName[mostRecentActivePanelId];
+		}
+		else {
+			int realEntityID = mostRecentActivePanelId;
+
+			// Weird PP allocation stuff
+			for (int ppEP : {0x1AE8, 0x01C0D, 0x01DC7, 0x01E12, 0x01E52}) {
+				int ppStartPointID = Memory::get()->ReadPanelData<int>(ppEP, PRESSURE_PLATE_PATTERN_POINT_ID) - 1;
+
+				if (ppStartPointID > 0 && activePanelId == ppStartPointID) {
+					realEntityID = ppEP;
+				}
+			}
+
+			if (startPointToEPs.count(realEntityID)) {
+				std::vector<int> associatedEPs = startPointToEPs.find(realEntityID)->second;
+				int representativeEP = associatedEPs[0];
+
+				if (entityToName.count(representativeEP)) {
+					entity = entityToName[mostRecentActivePanelId];
+				}
+				else {
+					entity = "Unknown EP";
+				}
+				entity = entityToName[mostRecentActivePanelId];
+				if (associatedEPs.size() > 1) {
+					entity += " (" + std::to_string(associatedEPs.size()) + ")";
+				}
+			}
+		}
+
+		if (!entity.empty() && activePanelId == -1) {
+			entity += " (previous)";
+		}
+
+		ClientWindow::get()->setActiveEntityString(entity);
+	}
 }
 
 void APWatchdog::CheckSolvedPanels() {

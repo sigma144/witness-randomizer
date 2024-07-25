@@ -119,6 +119,8 @@ private:
 	float timePassedSinceRandomisation = 0.0f;
 	float timePassedSinceFirstJinglePlayed = 0.0f;
 
+	bool firstTimeActiveEntity = false;
+
 	int halfSecondCounter = 0;
 
 	int mostRecentItemId = -1;

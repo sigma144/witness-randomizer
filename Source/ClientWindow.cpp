@@ -221,10 +221,20 @@ void ClientWindow::refreshKeybind(const CustomKey& customKey) const {
 	writeStringToTextBox(input->getNameForInputButton(input->getCustomKeybind(customKey)), label);
 }
 
-void ClientWindow::setStatusMessage(std::string statusMessage) const
+void ClientWindow::setStatusMessage(std::string statusMessage)
 {
 	logLine("Dialog prompt: " + statusMessage);
+	normalStatusMessage = statusMessage;
 	writeStringToTextBox(statusMessage, hwndStatusText);
+}
+
+void ClientWindow::setActiveEntityString(std::string activeEntityString) const
+{
+	if (activeEntityString.empty()) {
+		writeStringToTextBox(normalStatusMessage, hwndStatusText);
+		return;
+	}
+	writeStringToTextBox("Active: " + activeEntityString + ".", hwndStatusText);
 }
 
 void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks) {
