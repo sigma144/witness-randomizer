@@ -2573,6 +2573,11 @@ void PuzzleList::GenerateQuarryV()
 	generator->setGridSize(7, 7);
 	generator->setSymmetry(Panel::Symmetry::Rotational);
 	generator->generate(0x3C125, Decoration::Eraser | Decoration::Color::White, 1, Decoration::Stone | Decoration::Color::White, 9, Decoration::Stone | Decoration::Color::Black, 9, Decoration::Dot, 5, Decoration::Start, 1, Decoration::Exit, 2);
+	
+	// Sorry Umbra, this invis symmetry is stupid imo lol
+	Memory::get()->WritePanelData<float>(0x3C125, REFLECTION_PATH_COLOR, Memory::get()->ReadPanelData<float>(0x3C125, PATH_COLOR, 4));
+	Memory::get()->WritePanelData<float>(0x3C125, SUCCESS_COLOR_B, Memory::get()->ReadPanelData<float>(0x3C125, SUCCESS_COLOR_A, 4));
+	
 	//Boathouse Ramp Activation
 	generator->resetConfig();
 	generator->setGridSize(5, 5);
