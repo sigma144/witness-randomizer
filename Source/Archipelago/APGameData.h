@@ -2167,7 +2167,7 @@ inline std::map<int, Vector3> rightOrange11To12RightThenRight = {
 
 inline std::map<int, Vector3> finalElevatorPanelPositions = {
 	{ 0x3D9a7 , {211.0157623, -48.44531631, 2.267941236}}, // Elevator Close Right
-	{ 0x3D9a7 , {211.0527344, -49.13837814, 2.267941236}}, // Elevator Close Left
+	{ 0x3D9A6 , {211.0527344, -49.13837814, 2.267941236}}, // Elevator Close Left
 
 	{ 0x3c114 , {210.9108887, -47.65873718, 0.08744956553}}, // Elevator Open Right
 	{ 0x3c113 , {211.0372314, -49.94410324, 0.08744954318}}, // Elevator Open Left
