@@ -1586,9 +1586,11 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 			}
 
 			if (audioLogHint.playerNo == ap->get_player_number() && locationIdToItemFlags.count(audioLogHint.locationID)) {
-				if (checkedLocations.count(audioLogHint.locationID) || (locationIdToItemFlags[audioLogHint.locationID] != APClient::ItemFlags::FLAG_ADVANCEMENT && audioLogHint.allowScout)) {
+				if (checkedLocations.count(audioLogHint.locationID) || (!(locationIdToItemFlags[audioLogHint.locationID] & APClient::ItemFlags::FLAG_ADVANCEMENT) && audioLogHint.allowScout)) {
 					std::string name = ap->get_location_name(audioLogHint.locationID, "The Witness");
-					if (locationIdToItemFlags[audioLogHint.locationID] == APClient::ItemFlags::FLAG_NEVER_EXCLUDE) name += " (Useful)";
+					if (locationIdToItemFlags[audioLogHint.locationID] & APClient::ItemFlags::FLAG_NEVER_EXCLUDE && !(locationIdToItemFlags[audioLogHint.locationID] & APClient::ItemFlags::FLAG_ADVANCEMENT)) {
+						name += " (Useful)";
+					}
 					deadChecks.push_back(name);
 
 					implicitlyClearedLocations[std::to_string(audioLogHint.locationID)] = true;
@@ -1610,7 +1612,7 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 					associatedChecks.insert(locationID);
 
 					if (checkedLocations.count(locationID)) {
-						if (locationIdToItemFlags[locationID] == APClient::ItemFlags::FLAG_ADVANCEMENT) {
+						if (locationIdToItemFlags[locationID] & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 							foundProgression += 1;
 						}
 					}
