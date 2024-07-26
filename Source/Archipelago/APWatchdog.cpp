@@ -1899,10 +1899,37 @@ void APWatchdog::CheckDoors() {
 
 void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 	if (key.find("WitnessDeathLink") != std::string::npos) {
+		if (DeathLinkAmnesty == -1) return;
 		if (DeathLinkCount != value) {
 			DeathLinkCount = value;
 			hudManager->queueNotification("Updated Death Link Amnesty from Server. Remaining: " + std::to_string(DeathLinkAmnesty - DeathLinkCount) + ".");
 		}
+	}
+
+	if (key.find("WitnessDisabledDeathLink") != std::string::npos) {
+		bool disableDeathLink = value == true;
+
+		if (DeathLinkAmnesty == -1) return;
+
+		if (disableDeathLink) {
+			DeathLinkAmnesty = -1;
+
+			if (deathLinkFirstResponse) {
+				std::list<std::string> newTags = { };
+				ap->ConnectUpdate(false, 7, true, newTags);
+			}
+			hudManager->queueNotification("Death Link has been permanently disabled on this device for this slot.");
+		}
+		else {
+			if (!deathLinkFirstResponse) {
+				std::list<std::string> newTags = { "DeathLink" };
+				ap->ConnectUpdate(false, 7, true, newTags);
+			}
+		}
+		
+
+		deathLinkFirstResponse = true;
+		ClientWindow::get()->EnableDeathLinkDisablingButton(!disableDeathLink);
 	}
 }
 
@@ -3062,7 +3089,7 @@ void APWatchdog::SendDeathLink(int panelId)
 }
 
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
-	if (eee) return;
+	if (eee || DeathLinkAmnesty == -1) return;
 
 	TriggerBonk();
 

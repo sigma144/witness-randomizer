@@ -152,7 +152,7 @@ void Memory::findGlobals() {
 
 		_singleton->showMsg = showMsgTemp;
 
-		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)")) {
+		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)", "Unknown Version")) {
 			return;
 		}
 

@@ -120,6 +120,7 @@ private:
 	float timePassedSinceFirstJinglePlayed = 0.0f;
 
 	bool firstTimeActiveEntity = false;
+	bool deathLinkFirstResponse = false;
 
 	int halfSecondCounter = 0;
 

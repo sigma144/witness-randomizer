@@ -163,6 +163,8 @@ void focusEdit(HWND hwnd) {
 //			//}
 
 void Main::randomize() {
+	Memory::get()->resetComputedAddresses();
+
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
 
@@ -172,7 +174,7 @@ void Main::randomize() {
 
 	bool rerandomize = false;
 	if (memory->ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
-		if (clientWindow->showDialogPrompt("Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)") == true) {
+		if (clientWindow->showDialogPrompt("Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", "Already Randomized") == true) {
 			rerandomize = true;
 		}
 		else {
@@ -213,7 +215,7 @@ void Main::randomize() {
 	int lastSeed = memory->ReadPanelData<int>(0x00064, VIDEO_STATUS_COLOR + 8);
 	if (lastSeed != 1041865114 && !rerandomize && !DEBUG) {
 		if (seed != lastSeed) {
-			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?") == false) {
+			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?", "Previously Randomized") == false) {
 				return;
 			}
 
@@ -224,7 +226,7 @@ void Main::randomize() {
 
 	//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
 	else if (Special::hasBeenPlayed() && !rerandomize && !DEBUG) {
-		if (clientWindow->showDialogPrompt("Warning: It is recommended that you start a new game for the randomizer, to prevent corruption of your save file. Randomize on the current save file anyway?") == true) {
+		if (clientWindow->showDialogPrompt("Warning: It is recommended that you start a new game for the randomizer, to prevent corruption of your save file. Randomize on the current save file anyway?", "Already Played") == true) {
 			randomizer->seedIsRNG = false;
 		}
 		else return;
@@ -302,11 +304,13 @@ void Main::randomize() {
 }
 
 void Main::loadCredentials() {
+	Memory::get()->resetComputedAddresses();
+
 	ClientWindow* clientWindow = ClientWindow::get();
 
 	std::string apAddress = Special::readStringFromPanels(addressPanels);
 	if (apAddress.length() == 0) {
-		clientWindow->showMessageBox("This save has not previously been randomized with Archipelago and has no stored credentials.");
+		clientWindow->showMessageBox("This save has not previously been randomized with Archipelago and has no stored credentials.", "Not previously randomized");
 		return;
 	}
 

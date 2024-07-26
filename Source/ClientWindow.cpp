@@ -12,6 +12,8 @@
 #include "../App/Version.h"
 #include "../App/Main.h"
 #include "Input.h"
+#include "Utilities.h"
+#include "Archipelago/Client/apclientpp/apclient.hpp"
 
 using json = nlohmann::json;
 
@@ -47,6 +49,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 
 #define IDC_BUTTON_RANDOMIZE 0x440
 #define IDC_BUTTON_LOADCREDENTIALS 0x441
+#define IDC_BUTTON_DISABLEDEATHLINK 0x442
 
 // Root index for keybind controls.
 #define IDC_BUTTON_KEYBIND 0x480
@@ -173,14 +176,14 @@ void ClientWindow::loadSettings()
 	setSetting(ClientStringSetting::ApPassword, "");
 }
 
-void ClientWindow::showMessageBox(std::string message) const {
+void ClientWindow::showMessageBox(std::string message, std::string caption) const {
 	logLine("Message box: " + message);
-	MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), NULL, MB_OK);
+	MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), Converty::Utf8ToWide(caption).c_str(), MB_OK);
 }
 
-bool ClientWindow::showDialogPrompt(std::string message) const {
+bool ClientWindow::showDialogPrompt(std::string message, std::string caption) const {
 	logLine("Dialog prompt: " + message);
-	return MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), NULL, MB_YESNO) == IDYES;
+	return MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), Converty::Utf8ToWide(caption).c_str(), MB_YESNO) == IDYES;
 }
 
 bool ClientWindow::getSetting(ClientToggleSetting setting) const {
@@ -293,6 +296,11 @@ std::string ClientWindow::getJinglesSettingSafe()
 	return currentJingles;
 }
 
+void ClientWindow::EnableDeathLinkDisablingButton(bool enable)
+{
+	EnableWindow(hwndDisableDeathlink, enable);
+}
+
 void ClientWindow::setWindowMode(ClientWindowMode mode)
 {
 	currentWindowMode = mode;
@@ -305,6 +313,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApPassword)->second, false);
 		EnableWindow(hwndApLoadCredentials, false);
 		EnableWindow(hwndApConnect, false);
+		EnableWindow(hwndDisableDeathlink, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
@@ -330,6 +339,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApPassword)->second, true);
 		EnableWindow(hwndApLoadCredentials, true);
 		EnableWindow(hwndApConnect, true);
+		EnableWindow(hwndDisableDeathlink, false);
 
 		// Enable randomization settings.
 
@@ -740,6 +750,13 @@ void ClientWindow::addGameOptions(int& currentY) {
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Full");
 	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Understated");
 
+	// Connect button. In line with the load credentials button.
+	hwndDisableDeathlink = CreateWindow(L"BUTTON", L"Disable DeathLink",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		CLIENT_WINDOW_WIDTH - CONTROL_MARGIN - 180, currentY,
+		180, CONTROL_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_BUTTON_DISABLEDEATHLINK, hAppInstance, NULL);
+
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 }
 
@@ -1015,6 +1032,18 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_BUTTON_LOADCREDENTIALS: {
 			Main::loadCredentials();
+			break;
+		}
+		case IDC_BUTTON_DISABLEDEATHLINK: {
+			if (ap == NULL) break;
+
+			if (!showDialogPrompt("Do you want to disable Death Link permanently on for this slot? This only applies to the device you are playing on. Cannot be reverted, even by making a new save.", "Disable DeathLink")) break;
+
+			std::string deathLinkDisabledKey = "WitnessDisabledDeathLink" + std::to_string(ap->get_player_number()) + Utilities::wstring_to_utf8(Utilities::GetUUID());
+			ap->SetNotify({ deathLinkDisabledKey });
+			ap->Set(deathLinkDisabledKey, NULL, true, { {"replace", true} });
+			EnableDeathLinkDisablingButton(false);
+
 			break;
 		}
 // Keybindings.

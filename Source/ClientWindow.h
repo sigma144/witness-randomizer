@@ -35,6 +35,8 @@ enum ClientWindowMode {
 	Randomized			// Connected to AP and randomized.
 };
 
+class APClient;
+
 class ClientWindow {
 
 public:
@@ -52,11 +54,11 @@ public:
 	void loadSettings();
 
 	// Shows an informational dialog box and blocks execution until it is dismissed.
-	void showMessageBox(std::string message) const;
+	void showMessageBox(std::string message, std::string caption) const;
 
 	// Shows a yes/no dialog and blocks execution until it is dismissed. Returns whether or not
 	//   the user clicked yes.
-	bool showDialogPrompt(std::string message) const;
+	bool showDialogPrompt(std::string message, std::string caption) const;
 
 	bool getSetting(ClientToggleSetting setting) const;
 	void setSetting(ClientToggleSetting setting, bool value) const;
@@ -78,6 +80,12 @@ public:
 	// Display seen Audio Logs.
 	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks);
 	std::string getJinglesSettingSafe();
+
+	void EnableDeathLinkDisablingButton(bool enable);
+
+	void passAPClient(APClient* ap) {
+		this->ap = ap;
+	}
 
 	void setWindowMode(ClientWindowMode mode);
 
@@ -124,7 +132,7 @@ private:
 
 	HINSTANCE hAppInstance;
 	HWND hwndRootWindow;
-	HWND hwndApLoadCredentials, hwndApConnect;
+	HWND hwndApLoadCredentials, hwndApConnect, hwndDisableDeathlink;
 	HWND hwndStatusText, hwndHintsView, hwndHintsSeparator1, hwndClearedAreasView, hwndHintsSeparator2, hwndClearedChecksView;
 
 	HWND hwndTEMPfocusWindow;
@@ -156,6 +164,8 @@ private:
 
 	int currentWidth;
 	int currentHeight;
+
+	APClient* ap = NULL;
 
 	std::string currentJingles = "Understated";
 };

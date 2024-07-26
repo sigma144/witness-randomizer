@@ -2360,6 +2360,8 @@ std::string Special::readStringFromPanels(std::vector<int> panelIDs) {
 		}
 	}
 
+	if (output == "333?š™?š™>") return "";
+
 	return output;
 }
 

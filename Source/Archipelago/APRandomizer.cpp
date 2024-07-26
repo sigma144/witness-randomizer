@@ -1,5 +1,8 @@
 #include "APRandomizer.h"
 
+#include <locale>
+#include <codecvt>
+
 #include "../ClientWindow.h"
 #include "../HUDManager.h"
 #include "../Panels.h"
@@ -31,7 +34,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	std::string uri = buildUri(server);
 
 	if (ap) ap->reset();
-	ap = new APClient("uuid", "The Witness", uri);
+	std::wstring uuid = Utilities::GetUUID();
+	ap = new APClient(Utilities::wstring_to_utf8(uuid), "The Witness", uri);
+
+	ClientWindow::get()->passAPClient(ap);
 
 	bool connected = false;
 	bool hasConnectionResult = false;
@@ -336,13 +342,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 		}
 
-		if (DeathLink) {
-			clientWindow->logLine("Connect: Setting DeathLink.");
-			std::list<std::string> newTags = { "DeathLink" };
-
-			ap->ConnectUpdate(false, 7, true, newTags);
-		}
-
 		connected = true;
 		hasConnectionResult = true;
 	});
@@ -356,7 +355,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		connected = false;
 		hasConnectionResult = true;
 
-		ClientWindow::get()->showMessageBox("Connection failed: " + errorString);
+		ClientWindow::get()->showMessageBox("Connection failed: " + errorString, "Error");
 	});
 
 	ap->set_bounced_handler([&](nlohmann::json packet) {
@@ -396,6 +395,11 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
 		if (key.find("WitnessDeathLink") != std::string::npos) {
+			async->SetValueFromServer(key, value);
+			return;
+		}
+		
+		if (key.find("WitnessDisabledDeathLink") != std::string::npos) {
 			async->SetValueFromServer(key, value);
 			return;
 		}
@@ -492,7 +496,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			hasConnectionResult = true;
 
 			std::string errorMessage = "Timeout while connecting to server: " + uri;
-			ClientWindow::get()->showMessageBox(errorMessage);
+			ClientWindow::get()->showMessageBox(errorMessage, "Error");
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -571,6 +575,10 @@ void APRandomizer::PostGeneration() {
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-Collect", NULL, false, {{"replace", CollectedPuzzlesBehavior}});
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-Disabled", NULL, false, {{"replace", DisabledPuzzlesBehavior} });
 	ap->Set("WitnessSetting" + std::to_string(ap->get_player_number()) + "-SyncProgress", NULL, false, { {"replace", SyncProgress} });
+
+	std::string deathLinkDisabledKey = "WitnessDisabledDeathLink" + std::to_string(ap->get_player_number()) + Utilities::wstring_to_utf8(Utilities::GetUUID());
+	ap->SetNotify({ deathLinkDisabledKey });
+	ap->Set(deathLinkDisabledKey, false, true, { {"default", false} });
 
 	ap->SetNotify({ "WitnessDeathLink" + std::to_string(ap->get_player_number()) });
 	ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, true, { {"default", 0} });
