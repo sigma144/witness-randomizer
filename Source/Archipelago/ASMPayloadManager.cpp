@@ -346,6 +346,28 @@ int ASMPayloadManager::FindEntityByName(std::string name) {
 	return entityHex;
 }
 
+void ASMPayloadManager::ExitSolveMode() {
+	char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	uint64_t exitSolveModeFunction = Memory::get()->exitSolveModeFunction;
+
+	buffer[2] = exitSolveModeFunction & 0xff; //address of laser activation function
+	buffer[3] = (exitSolveModeFunction >> 8) & 0xff;
+	buffer[4] = (exitSolveModeFunction >> 16) & 0xff;
+	buffer[5] = (exitSolveModeFunction >> 24) & 0xff;
+	buffer[6] = (exitSolveModeFunction >> 32) & 0xff;
+	buffer[7] = (exitSolveModeFunction >> 40) & 0xff;
+	buffer[8] = (exitSolveModeFunction >> 48) & 0xff;
+	buffer[9] = (exitSolveModeFunction >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
+}
+
 void ASMPayloadManager::BridgeToggle(int associatedPanel, bool extend) {
 	Memory* memory = Memory::get();
 

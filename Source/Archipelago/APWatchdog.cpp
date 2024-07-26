@@ -754,7 +754,7 @@ void APWatchdog::HandleVision(float deltaSeconds) {
 
 		InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 		if (interactionState == InteractionState::Solving || interactionState == InteractionState::Focusing) {
-			Memory::get()->ExitSolveMode();
+			ASMPayloadManager::get()->ExitSolveMode();
 		}
 	}
 	else {
@@ -765,10 +765,10 @@ void APWatchdog::HandleVision(float deltaSeconds) {
 }
 
 void APWatchdog::ResetDeathLink() {
-	hasDeathLink = false;
-
 	Memory::get()->EnableMovement(true);
 	Memory::get()->EnableSolveMode(true);
+
+	hasDeathLink = false;
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)

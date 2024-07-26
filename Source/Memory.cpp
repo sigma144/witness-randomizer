@@ -1591,10 +1591,10 @@ void Memory::EnableVision(bool enable) {
 	char enabledByte = 0x48;
 	ReadProcessMemory(_handle, addressPointer, &currentByte, sizeof(currentByte), NULL);
 
-	if (enable && currentByte == disabledByte) {
+	if (enable && currentByte != enabledByte) {
 		WriteProcessMemory(_handle, addressPointer, &enabledByte, sizeof(enabledByte), NULL);
 	}
-	else if (!enable && currentByte == enabledByte) {
+	else if (!enable && currentByte != disabledByte) {
 		WriteProcessMemory(_handle, addressPointer, &disabledByte, sizeof(disabledByte), NULL);
 	}
 }
@@ -1640,32 +1640,6 @@ void Memory::EnableSolveMode(bool enable) {
 	else if (!enable && currentByte == enabledByte) {
 		WriteProcessMemory(_handle, addressPointer, &disabledByte, sizeof(disabledByte), NULL);
 	}
-}
-
-void Memory::ExitSolveMode() {
-	unsigned char buffer[] =
-		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
-		"\x48\x83\xEC\x48" // sub rsp,48
-		"\xFF\xD0" //call rax
-		"\x48\x83\xC4\x48" // add rsp,48
-		"\xC3"; //ret
-
-	buffer[2] = this->exitSolveModeFunction & 0xff; //address of laser activation function
-	buffer[3] = (this->exitSolveModeFunction >> 8) & 0xff;
-	buffer[4] = (this->exitSolveModeFunction >> 16) & 0xff;
-	buffer[5] = (this->exitSolveModeFunction >> 24) & 0xff;
-	buffer[6] = (this->exitSolveModeFunction >> 32) & 0xff;
-	buffer[7] = (this->exitSolveModeFunction >> 40) & 0xff;
-	buffer[8] = (this->exitSolveModeFunction >> 48) & 0xff;
-	buffer[9] = (this->exitSolveModeFunction >> 56) & 0xff;
-
-	SIZE_T allocation_size = sizeof(buffer);
-
-	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
-	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
-
-	WaitForSingleObject(thread, INFINITE);
 }
 
 void Memory::WriteMovementSpeed(float speed) {
