@@ -348,22 +348,34 @@ int ASMPayloadManager::FindEntityByName(std::string name) {
 
 void ASMPayloadManager::ExitSolveMode() {
 	char buffer[] =
-		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
-		"\x48\x83\xEC\x48" // sub rsp,48
-		"\xFF\xD0" //call rax
-		"\x48\x83\xC4\x48" // add rsp,48
-		"\xC3"; //ret
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00"
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59";  // pop rcx
 
 	uint64_t exitSolveModeFunction = Memory::get()->exitSolveModeFunction;
 
-	buffer[2] = exitSolveModeFunction & 0xff; //address of laser activation function
-	buffer[3] = (exitSolveModeFunction >> 8) & 0xff;
-	buffer[4] = (exitSolveModeFunction >> 16) & 0xff;
-	buffer[5] = (exitSolveModeFunction >> 24) & 0xff;
-	buffer[6] = (exitSolveModeFunction >> 32) & 0xff;
-	buffer[7] = (exitSolveModeFunction >> 40) & 0xff;
-	buffer[8] = (exitSolveModeFunction >> 48) & 0xff;
-	buffer[9] = (exitSolveModeFunction >> 56) & 0xff;
+	buffer[16] = exitSolveModeFunction & 0xff; //address of laser activation function
+	buffer[17] = (exitSolveModeFunction >> 8) & 0xff;
+	buffer[18] = (exitSolveModeFunction >> 16) & 0xff;
+	buffer[19] = (exitSolveModeFunction >> 24) & 0xff;
+	buffer[20] = (exitSolveModeFunction >> 32) & 0xff;
+	buffer[21] = (exitSolveModeFunction >> 40) & 0xff;
+	buffer[22] = (exitSolveModeFunction >> 48) & 0xff;
+	buffer[23] = (exitSolveModeFunction >> 56) & 0xff;
 
 	ExecuteASM(buffer, sizeof(buffer));
 }

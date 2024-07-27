@@ -22,7 +22,7 @@ class APWatchdog : public Watchdog {
 public:
 	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
 
-	int DEATHLINK_DURATION = 4;
+	int DEATHLINK_DURATION = 15;
 
 	int spentPuzzleSkips = 0;
 	int foundPuzzleSkips = 0;
