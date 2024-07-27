@@ -130,6 +130,8 @@ private:
 	SoLoud::Wav* currentlyPlayingSyncSound;
 	int currentlyPlayingSyncHandle = -1;
 
+	int challengeHandle = -1;
+
 	void PlayJingleMain(int resource);
 	void PlayJingleBlocking(int resource);
 
@@ -245,5 +247,12 @@ public:
 	void ResetRampingCooldownPanel();
 	void ResetRampingCooldownEP();
 
+	bool HasCustomChallengeSong();
+	void StartCustomChallengeSong();
+	void StopCustomChallengeSong();
+	bool ChallengeSongHasEnded();
+
 	SoLoud::Soloud* gSoloud; // SoLoud engine
+
+	bool challengeSongIsPlaying = false;
 };

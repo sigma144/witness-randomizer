@@ -262,6 +262,7 @@ public:
 
 	void StopDesertLaserPropagation();
 	void SetInfiniteChallenge(bool enable);
+	void ForceStopChallenge();
 
 	void RemoveMesh(int id);
 	void DoFullPositionUpdate();
@@ -313,7 +314,7 @@ public:
 	int zeroSpeedRelativeAddress;
 	uint64_t _recordPlayerUpdate;
 	uint64_t _getSoundFunction;
-	uint64_t _bytesLengthChallenge;
+	uint64_t _bytesLengthChallenge = 0;
 	uint64_t completeEPFunction;
 	uint64_t updateJunctionsFunction;
 	uint64_t powerGaugeFunction;
@@ -339,6 +340,7 @@ public:
 	uint64_t windmillCurrentlyTurning;
 	uint64_t windmillMaxTurnSpeed;
 	uint64_t windmillCurrentTurnSpeed;
+	uint64_t stopChallengeFunction;
 
 	uint64_t globalTextureCatalog;
 	uint64_t acquireByNameFunction;

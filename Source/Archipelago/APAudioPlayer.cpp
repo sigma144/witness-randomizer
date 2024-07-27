@@ -34,6 +34,9 @@ APAudioPlayer::APAudioPlayer() : Watchdog(0.1f) {
 
 		if (wav == NULL) {
 			auto hRes = FindResource(NULL, MAKEINTRESOURCE(resource), L"WAVE");
+
+			if (!hRes) continue;
+
 			auto hResLoad = LoadResource(NULL, hRes);
 			auto size = SizeofResource(NULL, hRes);
 			const unsigned char* buffer = reinterpret_cast<unsigned char*>(LockResource(hResLoad));
@@ -215,4 +218,29 @@ void APAudioPlayer::ResetRampingCooldownPanel()
 void APAudioPlayer::ResetRampingCooldownEP()
 {
 	lastEPJinglePlayedTime = std::chrono::system_clock::now();
+}
+
+bool APAudioPlayer::HasCustomChallengeSong()
+{
+	return preloadedAudioFiles.contains(-2);
+}
+
+void APAudioPlayer::StartCustomChallengeSong()
+{
+	if (gSoloud->isValidVoiceHandle(challengeHandle)) return;
+	SoLoud::Wav* sound = preloadedAudioFiles[-2];
+	challengeHandle = gSoloud->play(*sound);
+	challengeSongIsPlaying = true;
+}
+
+void APAudioPlayer::StopCustomChallengeSong()
+{
+	challengeSongIsPlaying = false;
+	if (!gSoloud->isValidVoiceHandle(challengeHandle)) return;
+	gSoloud->stop(challengeHandle);
+}
+
+bool APAudioPlayer::ChallengeSongHasEnded()
+{
+	return !gSoloud->isValidVoiceHandle(challengeHandle);
 }

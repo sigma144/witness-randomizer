@@ -71,4 +71,5 @@ inline std::map<int, std::vector<std::string>> canonicalAudioFileNames = {
 	{ IDR_WAVE62, { "Panel Hunt 9.wav", "Panel Hunt 8.wav", "Panel Hunt 7.wav", "Panel Hunt 6.wav", "Panel Hunt 5.wav", "Panel Hunt 4.wav", "Panel Hunt 3.wav", "Panel Hunt 2.wav", "Panel Hunt 1.wav", "Panel Hunt.wav", }},
 	{ IDR_WAVE63, { "Panel Hunt 10.wav", "Panel Hunt 9.wav", "Panel Hunt 8.wav", "Panel Hunt 7.wav", "Panel Hunt 6.wav", "Panel Hunt 5.wav", "Panel Hunt 4.wav", "Panel Hunt 3.wav", "Panel Hunt 2.wav", "Panel Hunt 1.wav", "Panel Hunt.wav", }},
 	{ IDR_WAVE64, { "Panel Hunt 11.wav", "Panel Hunt 10.wav", "Panel Hunt 9.wav", "Panel Hunt 8.wav", "Panel Hunt 7.wav", "Panel Hunt 6.wav", "Panel Hunt 5.wav", "Panel Hunt 4.wav", "Panel Hunt 3.wav", "Panel Hunt 2.wav", "Panel Hunt 1.wav", "Panel Hunt.wav", }},
+	{ -2, {"Challenge.wav"}},
 };

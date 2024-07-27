@@ -153,6 +153,7 @@ private:
 	std::map<int, int> doorToItemId;
 
 	bool FirstEverLocationCheckDone = false;
+	bool locationCheckInProgress = false;
 	bool firstStorageCheckDone = false;
 	bool firstJinglePlayed = false;
 

@@ -352,6 +352,7 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 	}
 
+	locationCheckInProgress = true;
 	for (auto [entityID, locationID] : panelIdToLocationId)
 	{
 		if (entityID == 0xFFF80) {
@@ -466,6 +467,7 @@ void APWatchdog::CheckSolvedPanels() {
 		ap->LocationChecks(solvedLocations);
 	}
 
+	locationCheckInProgress = false;
 	FirstEverLocationCheckDone = true;
 
 	// Maybe play panel hunt jingle
@@ -595,7 +597,12 @@ void APWatchdog::MarkLocationChecked(int64_t locationId)
 	if (allPanels.count(panelId)) {
 		if (!ReadPanelData<int>(panelId, SOLVED)) {
 			if (PuzzlesSkippedThisGame.count(panelId)) {
-				if(panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
+				while (locationCheckInProgress) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(10)));
+				}
+				if (panelIdToLocationId.count(panelId)) {
+					panelIdToLocationId.erase(panelId);
+				}
 				return;
 			}
 
@@ -615,7 +622,12 @@ void APWatchdog::MarkLocationChecked(int64_t locationId)
 		}
 	}
 
-	if (panelIdToLocationId.count(panelId)) panelIdToLocationId.erase(panelId);
+	while (locationCheckInProgress) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(10)));
+	}
+	if (panelIdToLocationId.count(panelId)) {
+		panelIdToLocationId.erase(panelId);
+	}
 
 	if (obeliskHexToEPHexes.count(panelId) && Collect != "Unchanged") {
 		for (int epHex : obeliskHexToEPHexes[panelId]) {
@@ -3124,21 +3136,46 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 }
 
 void APWatchdog::UpdateInfiniteChallenge() {
-	if (!insideChallengeBoxRange || ReadPanelData<float>(0x00BFF, 0xC8) > 0.0f) {
+	int recordPlayerState = ReadPanelData<int>(0x00BFF, 0xE8);
+	bool challengeIsGoing = recordPlayerState > 0 && recordPlayerState <= 4;
+
+	APAudioPlayer* player = APAudioPlayer::get();
+
+	bool isChecked = ClientWindow::get()->getSetting(ClientToggleSetting::ChallengeTimer);
+
+	bool customChallenge = APAudioPlayer::get()->HasCustomChallengeSong();
+	if (customChallenge) {
+		bool challengeIsGoingReal = challengeIsGoing && ReadPanelData<float>(0x0088E, POWER + 4) > 0;
+
+		if (!player->challengeSongIsPlaying && challengeIsGoingReal) {
+			player->StartCustomChallengeSong();
+		}
+
+		if (!challengeIsGoingReal && player->challengeSongIsPlaying) {
+			player->StopCustomChallengeSong();
+		}
+
+		if (challengeIsGoingReal && player->challengeSongIsPlaying && player->ChallengeSongHasEnded() && !isChecked) {
+			Memory::get()->ForceStopChallenge();
+		}
+	}
+
+	if (!insideChallengeBoxRange || challengeIsGoing) {
 		infiniteChallenge = false;
 		return;
 	}
 
-	bool isChecked = ClientWindow::get()->getSetting(ClientToggleSetting::ChallengeTimer);
-	if (isChecked != infiniteChallenge) {
-		if (isChecked) {
+	bool shouldDisableVanillaSound = isChecked || customChallenge;
+
+	if (shouldDisableVanillaSound != infiniteChallenge) {
+		if (shouldDisableVanillaSound) {
 			Memory::get()->SetInfiniteChallenge(true);
 		}
 		else {
 			Memory::get()->SetInfiniteChallenge(false);
 		}
 
-		infiniteChallenge = isChecked;
+		infiniteChallenge = shouldDisableVanillaSound;
 	}
 }
 

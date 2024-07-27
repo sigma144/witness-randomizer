@@ -354,6 +354,45 @@ void Memory::SetInfiniteChallenge(bool enable) {
 	}
 }
 
+void Memory::ForceStopChallenge()
+{
+	uint64_t entityManager;
+	ReadAbsolute(reinterpret_cast<LPCVOID>(getBaseAddress() + GLOBALS), &entityManager, sizeof(uint64_t));
+
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer[2] = stopChallengeFunction & 0xff; //address of laser activation function
+	buffer[3] = (stopChallengeFunction >> 8) & 0xff;
+	buffer[4] = (stopChallengeFunction >> 16) & 0xff;
+	buffer[5] = (stopChallengeFunction >> 24) & 0xff;
+	buffer[6] = (stopChallengeFunction >> 32) & 0xff;
+	buffer[7] = (stopChallengeFunction >> 40) & 0xff;
+	buffer[8] = (stopChallengeFunction >> 48) & 0xff;
+	buffer[9] = (stopChallengeFunction >> 56) & 0xff;
+	buffer[12] = entityManager & 0xff; //address of laser
+	buffer[13] = (entityManager >> 8) & 0xff;
+	buffer[14] = (entityManager >> 16) & 0xff;
+	buffer[15] = (entityManager >> 24) & 0xff;
+	buffer[16] = (entityManager >> 32) & 0xff;
+	buffer[17] = (entityManager >> 40) & 0xff;
+	buffer[18] = (entityManager >> 48) & 0xff;
+	buffer[19] = (entityManager >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+}
+
 void Memory::applyDestructivePatches() {
 	//Cursor size
 	char asmBuff[] = "\xBB\x00\x00\x80\x3F\x66\x44\x0F\x6E\xCB\x90\x90\x90";
@@ -433,6 +472,11 @@ void Memory::findImportantFunctionAddresses(){
 		doSecretThing();
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
+
+	executeSigScan({ 0x40, 0x56, 0x48, 0x83, 0xEC, 0x30, 0x48, 0x89, 0x5C, 0x24, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->stopChallengeFunction = _baseAddress + offset + index;
+		return true;
+		});
 
 	executeSigScan({ 0x44, 0x89, 0x4C, 0x24, 0x20, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->loadPackageFunction = _baseAddress + offset + index;
