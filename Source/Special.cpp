@@ -2360,7 +2360,7 @@ std::string Special::readStringFromPanels(std::vector<int> panelIDs) {
 		}
 	}
 
-	if (output.find("\x33\x33\x33\x3f\x9a\x99\x19\x3f\x9a\x99\x19\x3e") != std::string::npos) return "";
+	if (output.rfind("\x33\x33\x33\x3f\x9a\x99\x19\x3f\x9a\x99\x19\x3e", 0) == 0) return "";
 
 	return output;
 }
