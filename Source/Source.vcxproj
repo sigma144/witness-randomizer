@@ -246,8 +246,6 @@
     <ClCompile Include="soloud20200207\src\audiosource\wav\soloud_wav.cpp" />
     <ClCompile Include="soloud20200207\src\audiosource\wav\soloud_wavstream.cpp" />
     <ClCompile Include="soloud20200207\src\audiosource\wav\stb_vorbis.c" />
-    <ClCompile Include="soloud20200207\src\backend\miniaudio\soloud_miniaudio.cpp" />
-    <ClCompile Include="soloud20200207\src\backend\sdl2_static\soloud_sdl2_static.cpp" />
     <ClCompile Include="soloud20200207\src\backend\winmm\soloud_winmm.cpp" />
     <ClCompile Include="soloud20200207\src\core\soloud.cpp" />
     <ClCompile Include="soloud20200207\src\core\soloud_audiosource.cpp" />

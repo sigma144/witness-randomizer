@@ -80,7 +80,7 @@ void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, std::any 
 	if (queue == APJingleBehavior::PlayImmediate) {
 		QueuedAsyncAudio.push({ jingle, extraInfo });
 	}
-	return;
+
 	if (queue == APJingleBehavior::Queue){
 		QueuedAudio.push({ jingle, extraInfo });
 	}
