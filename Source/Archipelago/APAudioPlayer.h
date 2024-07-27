@@ -99,6 +99,11 @@ inline const std::vector<int> entityHuntJingles = {
 	IDR_WAVE63, // 10
 };
 
+namespace SoLoud {
+	class Soloud;
+	class Wav;
+}
+
 class APAudioPlayer : public Watchdog
 {
 private:
@@ -108,9 +113,11 @@ private:
 
 	static APAudioPlayer* _singleton;
 
-	std::map<std::string, char*> preloadedAudioFiles = {};
+	std::map<std::string, SoLoud::Wav*> preloadedAudioFiles = {};
 
 	std::queue<std::pair<APJingle, std::any>> QueuedAudio = {};
+	std::queue<std::pair<APJingle, std::any>> QueuedAsyncAudio = {};
+	std::queue<int> QueueDirectAsyncAudio = {};
 
 	std::chrono::system_clock::time_point lastPanelJinglePlayedTime;
 	std::chrono::system_clock::time_point lastEPJinglePlayedTime;
@@ -120,7 +127,17 @@ private:
 	int epChain;
 	int lastEntityHuntIndex = -1;
 
-	void PlayJingle(int resource, bool async);
+	SoLoud::Wav* currentlyPlayingSyncSound;
+	int currentlyPlayingSyncHandle = -1;
+
+	void PlayJingleMain(int resource);
+	void PlayJingleBlocking(int resource);
+
+	void PlayJingle(int resource, bool async) {
+		if (async) PlayJingleBlocking(resource);
+		else PlayJingleMain(resource);
+	}
+
 	void PlayAppropriateJingle(APJingle jingle, std::any extraInfo, bool async);
 
 	std::map<APJingle, std::vector<int>> jingleVersions = {
@@ -227,4 +244,6 @@ public:
 	void PlayFinalRoomJingle(std::string type, APJingleBehavior queue, double finalRoomMusicTimer);
 	void ResetRampingCooldownPanel();
 	void ResetRampingCooldownEP();
+
+	SoLoud::Soloud* gSoloud; // SoLoud engine
 };
