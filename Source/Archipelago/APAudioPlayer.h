@@ -113,7 +113,7 @@ private:
 
 	static APAudioPlayer* _singleton;
 
-	std::map<std::string, SoLoud::Wav*> preloadedAudioFiles = {};
+	std::map<int, SoLoud::Wav*> preloadedAudioFiles = {};
 
 	std::queue<std::pair<APJingle, std::any>> QueuedAudio = {};
 	std::queue<std::pair<APJingle, std::any>> QueuedAsyncAudio = {};

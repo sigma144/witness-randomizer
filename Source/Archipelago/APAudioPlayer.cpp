@@ -19,22 +19,29 @@ APAudioPlayer::APAudioPlayer() : Watchdog(0.1f) {
 	gSoloud = new SoLoud::Soloud();
 	gSoloud->init();
 
-	std::set<std::string> recognizedFiles = {};
-	for (auto [k, v] : canonicalAudioFileNames) {
-		for (std::string recognizedFile : v) {
-			recognizedFiles.insert(recognizedFile);
-		}
-	}
 	std::set<std::string> audioFiles = Utilities::get_all_files_with_extension(".\\Jingles\\", ".wav");
+	
+	for (auto [resource, possibilities] : canonicalAudioFileNames) {
+		SoLoud::Wav* wav = NULL;
 
-	for (std::string file : audioFiles) {
-		if (!recognizedFiles.contains(file)) continue;
+		for (std::string possibility : possibilities) {
+			if (audioFiles.contains(possibility)) {
+				wav = new SoLoud::Wav;
+				wav->load(("./Jingles/" + possibility).c_str());
+				break;
+			}
+		}
 
-		std::string filename = "./Jingles/" + file;
+		if (wav == NULL) {
+			auto hRes = FindResource(NULL, MAKEINTRESOURCE(resource), L"WAVE");
+			auto hResLoad = LoadResource(NULL, hRes);
+			auto size = SizeofResource(NULL, hRes);
+			const unsigned char* buffer = reinterpret_cast<unsigned char*>(LockResource(hResLoad));
+			wav = new SoLoud::Wav;
+			wav->loadMem(buffer, size, false, false);
+		}
 
-		SoLoud::Wav* wav = new SoLoud::Wav;
-		wav->load(filename.c_str());
-		preloadedAudioFiles[file] = wav;
+		preloadedAudioFiles[resource] = wav;
 	}
 }
 
@@ -91,54 +98,20 @@ void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, std::any 
 }
 
 void APAudioPlayer::PlayJingleMain(int resource) {
-	currentlyPlayingSyncSound = NULL;
-
-	if (canonicalAudioFileNames.contains(resource)) {
-		std::vector<std::string> possibilities = canonicalAudioFileNames[resource];
-		for (std::string possibility : possibilities) {
-			if (preloadedAudioFiles.contains(possibility)) {
-				currentlyPlayingSyncSound = preloadedAudioFiles[possibility];
-
-				break;
-			}
-		}
+	if (!preloadedAudioFiles.contains(resource)) {
+		return;
 	}
 
-	if (currentlyPlayingSyncSound == NULL) {
-		auto hRes = FindResource(NULL, MAKEINTRESOURCE(resource), L"WAVE");
-		auto hResLoad = LoadResource(NULL, hRes);
-		auto size = SizeofResource(NULL, hRes);
-		const unsigned char* buffer = reinterpret_cast<unsigned char*>(LockResource(hResLoad));
-		currentlyPlayingSyncSound = new SoLoud::Wav;
-		currentlyPlayingSyncSound->loadMem(buffer, size, false, false);
-	}
-
+	currentlyPlayingSyncSound = preloadedAudioFiles[resource];
 	currentlyPlayingSyncHandle = gSoloud->play(*currentlyPlayingSyncSound);
 }
 
 void APAudioPlayer::PlayJingleBlocking(int resource) {
-	SoLoud::Wav* sound = NULL;
-
-	if (canonicalAudioFileNames.contains(resource)) {
-		std::vector<std::string> possibilities = canonicalAudioFileNames[resource];
-		for (std::string possibility : possibilities) {
-			if (preloadedAudioFiles.contains(possibility)) {
-				sound = preloadedAudioFiles[possibility];
-
-				break;
-			}
-		}
+	if (!preloadedAudioFiles.contains(resource)) {
+		return;
 	}
 
-	if (sound == NULL) {
-		auto hRes = FindResource(NULL, MAKEINTRESOURCE(resource), L"WAVE");
-		auto hResLoad = LoadResource(NULL, hRes);
-		auto size = SizeofResource(NULL, hRes);
-		const unsigned char* buffer = reinterpret_cast<unsigned char*>(LockResource(hResLoad));
-		sound = new SoLoud::Wav;
-		sound->loadMem(buffer, size, false, false);
-	}
-
+	SoLoud::Wav* sound = preloadedAudioFiles[resource];
 	int handle = gSoloud->play(*sound);
 
 	while (gSoloud->isValidVoiceHandle(handle)) {
