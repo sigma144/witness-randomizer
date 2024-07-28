@@ -1064,13 +1064,6 @@ void APWatchdog::UnlockDoor(int id) {
 		disableCollisionList.erase(id);
 	}
 
-	if (ReadPanelData<int>(id, DOOR_OPEN)) {
-		std::wstringstream s;
-		s << std::hex << id << " is already open.\n";
-		OutputDebugStringW(s.str().c_str());
-		return;
-	}
-
 	if (id == 0x0C310) {
 		WritePanelData<float>(0x02886, POSITION + 8, { 12.8f });
 
@@ -1086,6 +1079,13 @@ void APWatchdog::UnlockDoor(int id) {
 	// Un-distance-gate Shadows Laser Panel
 	if (id == 0x19665 || id == 0x194B2) {
 		Memory::get()->WritePanelData<float>(0x19650, MAX_BROADCAST_DISTANCE, { -1 });
+	}
+
+	if (ReadPanelData<int>(id, DOOR_OPEN)) {
+		std::wstringstream s;
+		s << std::hex << id << " is already open.\n";
+		OutputDebugStringW(s.str().c_str());
+		return;
 	}
 
 	ASMPayloadManager::get()->OpenDoor(id);
