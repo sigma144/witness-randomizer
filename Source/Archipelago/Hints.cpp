@@ -10,9 +10,12 @@ const std::string& GetCreditsHint() {
 const std::vector<std::string>& GetJokeHints() {
   static const std::vector<std::string> jokeHints = {
     "Have you tried Adventure?\n...Holy crud, that game is 17 years older than me.",
+    reinterpret_cast < const char*>(u8"Have you tried Aquaria?\nAdmittedly, singing is a much cooler interaction mechanic than \"drawing lines on stuff\"™."),
+    "Have you tried A Hat in Time?\nThere's an actual metro in that game, not just one on the tracker."
     "Have you tried A Link to the Past?\nThe Archipelago game that started it all!",
     "Waiting to get your items?\nTry BK Sudoku! Make progress even while stuck.",
     "Have you tried Blasphemous?\nYou haven't? Blasphemy!\n...Sorry. You should try it, though!",
+    "Have you tried Bomb Rush Cyberfunk?\nYou may try to strike it down, but the spirit of Jet Set Radio lives on.",
     "Have you tried Bumper Stickers?\nDecades after its inception, people are still inventing unique twists on the match-3 genre.",
     "Have you tried Bumper Stickers?\nMaybe after spending so much time on this island, you are longing for a simpler puzzle game.",
     "Have you tried Celeste 64?\nYou need smol low-poly Madeline in your life. TRUST ME.",
@@ -37,6 +40,7 @@ const std::vector<std::string>& GetJokeHints() {
     "Have you tried Lingo?\nIt's an open world puzzle game. It features puzzle panels with non-verbally explained mechanics.\nIf you like this game, you'll like Lingo too.",
     "(Middle Yellow)\nYOU AILED OVERNIGHT\nH--- --- ----- -----?",
     "Have you tried Lufia II?\nRoguelites are not just a 2010s phenomenon, turns out.",
+    "Have you tried Mario & Luigi: Superstar Saga?\nSurely you're curious what all those \"Chuckle Beans\" you're collecting actually do.",
     "Have you tried Meritous?\nYou should know that obscure games are often groundbreaking!",
     "Have you tried The Messenger?\nOld ideas made new again. It's how all art is made.",
     "Have you tried Minecraft?\nI have recently learned this is a question that needs to be asked.",
@@ -72,6 +76,7 @@ const std::vector<std::string>& GetJokeHints() {
     "Have you tried Wargroove?\nI'm glad that for every abandoned series, enough people are yearning for its return that one of them will know how to code.",
     "Have you tried The Witness?\nOh. I guess you already have. Thanks for playing!",
     "Have you tried Yoshi's Island?\nSome might say it's the best 2D platformer ever made.\nBy which I mean me. I'm saying that. Go play it >:(((",
+    "Have you tried Yu-Gi-Oh 2006?\nTry playing Pot of Greed; it will let you activate two additional junk hints.",
     "Have you tried Zillion?\nMe neither. But it looks fun. So, let's try something new together?",
     "Have you tried Zork: Grand Inquisitor?\nThis 1997 game uses Z-Vision technology to simulate 3D environments.\nCome on, I know you wanna find out what \"Z-Vision\" is.",
 
@@ -211,7 +216,29 @@ const std::vector<std::string>& GetJokeHints() {
     "Just do the right check lol",
     "For the record, this is a completely separate game from \"The Wortness\".",
 
-    "Hints suggested by:\nIHNN, Beaker, MrPokemon11, Ember, TheM8, NewSoupVi, Jasper Bird, T1mshady, KF, Yoshi348, Berserker, BowlinJim, oddGarrett, Pink Switch, Rever, Ishigh, snolid, CodeGorilla, Quas NaArt, Scipio, Projectyl, ManyPinkHats, m4elstrom.",
+    "Obligatory \"Todo: Add Hint\" hint",
+    "The red eight goes on the black nine.",
+    "That's right, it goes in the square hole!",
+    "Where do the triangles go?\nThat's right!\nIn the square hole!",
+    "Has anyone seen the linking book off this island?",
+    "When the island is insightful",
+    "youtu.be/YgzrslSRdjI",
+    "Fun fact: Your player model's name is Carl!",
+    "Why is there no cat statue? Kitty deserves pets too!",
+    "Is The Witness is a Yume Nikki fangame?",
+    "Up Left Up Right Down Right\n*Fairy noises*",
+    "Have you referenced The Witness in an essay?\nIs the citation format Last Name, First Initial?\nI'm so sorry.",
+    "Sometimes, I dream about cheese... Wait, this is a \"junk\" hint? Rude.",
+    "No, I have NOT tried that. Stop telling me to try new things!",
+    "Wait. Hang on. I think I just figured out the answer to that one puzzle.",
+    "the lookerrrrrr",
+    "Have you tried submitting your own junk hints? Check the pinned messages in the Discord to find out how!",
+    "17 audio logs from now, there is going to be an untrue hint.\nThis carries over across multiworlds.\nYou've been warned.",
+    "Help, I'm trapped in a hint factory!",
+    "Legends say that there is an actual map on the island that keeps track of your progress.",
+    "Pro tip: Changing your FOV while solving puzzles can clip through obstruction.\nTry using it for Burnt Treehouse EP and Black Line Tower EP!",
+
+    "Hints suggested by:\nIHNN, Beaker, MrPokemon11, Ember, TheM8, NewSoupVi, Jasper Bird, T1mshady, KF, Yoshi348, Berserker, BowlinJim, oddGarrett, Pink Switch, Rever, Ishigh, snolid, CodeGorilla, Quas NaArt, Scipio, Projectyl, ManyPinkHats, m4elstrom, Kinrah, TG, transmothgirl, Aplle, Orsan.",
   };
 
   return jokeHints;
