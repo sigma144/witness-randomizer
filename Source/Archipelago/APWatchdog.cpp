@@ -153,8 +153,6 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
-	HandleVision(frameDuration);
-
 	DrawHuntPanelSpheres(frameDuration);
 
 	FlickerCable();
@@ -897,7 +895,7 @@ void APWatchdog::ResetDeathLink() {
 	Memory::get()->EnableMovement(true);
 	Memory::get()->EnableSolveMode(true);
 
-	hasDeathLink = false;
+	isKnockedOut = false;
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)
@@ -2708,8 +2706,8 @@ void APWatchdog::SetStatusMessages() {
 			HudManager::get()->clearWalkStatusMessage();
 		}
 		else {
-			if (hasDeathLink) {
-				int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(deathLinkStartTime).count() / 1000;
+			if (isKnockedOut) {
+				int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(knockOutStartTime).count() / 1000;
 
 				if (secondsRemainingDeathLink <= 0) {
 					HudManager::get()->clearWalkStatusMessage();
@@ -2726,7 +2724,7 @@ void APWatchdog::SetStatusMessages() {
 					HudManager::get()->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
 				}
 				else if (speedTime < 0) {
-					HudManager::get()setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
+					HudManager::get()->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
 				}
 				else {
 					HudManager::get()->clearWalkStatusMessage();
@@ -3748,8 +3746,6 @@ void APWatchdog::FlickerCable() {
 	}
 
 	Memory::get()->WritePanelData<float>(0x51, 0x158, { cableColor });
-}
-	return;
 }
 
 void APWatchdog::ToggleSleep() {
