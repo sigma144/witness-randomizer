@@ -345,7 +345,7 @@ void APWatchdog::CheckSolvedPanels() {
 			state->solvedHuntEntities = huntSolveTotal;
 			panelLocker->UpdatePuzzleLock(*state, 0x03629);
 
-			hudManager->queueNotification("Panel Hunt: " + std::to_string(huntSolveTotal) + "/" + std::to_string(state->requiredHuntEntities));
+			HudManager::get()->queueNotification("Panel Hunt: " + std::to_string(huntSolveTotal) + "/" + std::to_string(state->requiredHuntEntities));
 		}
 
 		std::vector<float> playerPosition = Memory::get()->ReadPlayerPosition();
@@ -353,7 +353,7 @@ void APWatchdog::CheckSolvedPanels() {
 		if (EEEGate->containsPoint(playerPosition)) {
 			isCompleted = true;
 			eee = true;
-			hudManager->queueBannerMessage("Victory!");
+			HudManager::get()->queueBannerMessage("Victory!");
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
@@ -1676,17 +1676,17 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 
 	// If we're solving, don't show hint anymore if it's a laser hint
 	if (interactionState != InteractionState::Walking && !audioLogs.count(lastRealHintEntity)) {
-		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 	else if (currentHintEntity != -1) {
 		// We're playing an audio log or near a laser. Show its hint, unless it's already been on screen for a while.
 		if (currentHintEntityDuration <= 0.f) {
-			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+			HudManager::get()->clearInformationalMessage(InfoMessageCategory::ApHint);
 		}
 		else
 		{
 			std::string message = inGameHints[currentHintEntity].message;
-			hudManager->showInformationalMessage(InfoMessageCategory::ApHint, message);
+			HudManager::get()->showInformationalMessage(InfoMessageCategory::ApHint, message);
 		}
 
 		currentHintEntityDuration -= deltaSeconds;
@@ -1695,11 +1695,11 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		// We don't have an audio log playing and aren't near a laser. Run out the timer on any hint that may still be playing.
 		currentHintEntityDuration -= deltaSeconds;
 		if (currentHintEntityDuration <= 0.f) {
-			hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+			HudManager::get()->clearInformationalMessage(InfoMessageCategory::ApHint);
 		}
 	}
 	else {
-		hudManager->clearInformationalMessage(InfoMessageCategory::ApHint);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::ApHint);
 	}
 	std::vector<inGameHint> seenMessagesVec(seenMessages.begin(), seenMessages.end());
 	std::sort(seenMessagesVec.begin(), seenMessagesVec.end(), [pNO](inGameHint a, inGameHint b) {
@@ -2085,7 +2085,7 @@ void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 				std::list<std::string> newTags = { };
 				ap->ConnectUpdate(false, 7, true, newTags);
 			}
-			hudManager->queueNotification("Death Link has been permanently disabled on this device for this slot.");
+			HudManager::get()->queueNotification("Death Link has been permanently disabled on this device for this slot.");
 		}
 		else {
 			if (!deathLinkFirstResponse) {
@@ -2127,7 +2127,7 @@ void APWatchdog::HandleHuntEntityResponse(nlohmann::json value, bool syncprogres
 		int entityID = std::stoul(entityString, nullptr, 16);
 
 		if (!huntEntityToSolveStatus.count(entityID)) {
-			hudManager->queueBannerMessage("Got faulty EntityHunt response for entity " + entityString);
+			HudManager::get()->queueBannerMessage("Got faulty EntityHunt response for entity " + entityString);
 			continue;
 		}
 
@@ -2163,7 +2163,7 @@ void APWatchdog::HandleHuntEntityResponse(nlohmann::json value, bool syncprogres
 	message += "solved remotely (Coop). New total: ";
 	message += std::to_string(huntSolveTotal) + "/" + std::to_string(state->requiredHuntEntities);
 
-	hudManager->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 }
 
 void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool syncprogress) {
@@ -2375,12 +2375,12 @@ void APWatchdog::CheckImportantCollisionCubes() {
 	}
 
 	if (bunkerLaserPlatform->containsPoint(playerPosition) && Utilities::isAprilFools()) {
-		hudManager->showInformationalMessage(InfoMessageCategory::FlavorText,
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::FlavorText,
 			"what if we kissed,,, on the Bunker Laser Platform,,,\nhaha jk,,,, unless??");
 	}
 	else
 	{
-		hudManager->clearInformationalMessage(InfoMessageCategory::FlavorText);
+		HudManager::get()->clearInformationalMessage(InfoMessageCategory::FlavorText);
 	}
 }
 
@@ -2791,14 +2791,14 @@ void APWatchdog::SetStatusMessages() {
 				if (interactionState == InteractionState::Solving) {
 					if (allDisabled) {
 						if (DisabledPuzzlesBehavior == "Prevent Solve") {
-							hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP is disabled.");
+							HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP is disabled.");
 						}
 						else {
 							skipMessage = "This EP is disabled.\n" + skipMessage;
 						}
 					}
 					else if (hasLockedEPs) {
-						hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
+						HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol, "This EP cannot be solved until you receive the " + name + ".");
 					}
 					else if (someDisabled) {
 						skipMessage = "Some EPs for this start point are disabled.\n" + skipMessage;
@@ -3091,7 +3091,7 @@ void APWatchdog::LookingAtLockedEntity() {
 		/*
 		std::stringstream s;
 		s << std::hex << lookingAtLockedEntityCandidate;
-		hudManager->showInformationalMessage(InfoMessageCategory::MissingSymbol, "Locked entity with unknown name: " + s.str());
+		HudManager::get()->showInformationalMessage(InfoMessageCategory::MissingSymbol, "Locked entity with unknown name: " + s.str());
 		*/
 	}
 }
