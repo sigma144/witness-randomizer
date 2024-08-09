@@ -11,6 +11,7 @@
 #define SIGMA_NORMAL 0
 #define SIGMA_EXPERT 1
 #define NO_PUZZLE_RANDO 2
+#define UMBRA_VARIETY 3
 
 #define TARGET 0x2B4
 
@@ -42,19 +43,22 @@
 #define MULTIPANEL_TARGET 0xD4
 #define MOUNT_PARENT_ID 0x80
 
+#define PRESSURE_PLATE_PATTERN_POINT_ID 0x144
 #define PRESSURE_PLATE_TARGET 0x170
 
 #define ENTITY_NAME 0x58
 #define LIGHTMAP_TABLE 0x68
 
 #define AUDIO_LOG_IS_PLAYING 0xE4
+#define AUDIO_LOG_PLAYED 0xE8
 #define AUDIO_LOG_LILYPAD_SIZE 0x128
 
-#define ep_items 0x240
-#define ep_num_items 0x238
-#define ep_particle_size_scale 0x208
-#define ep_trail_rgba0 0x128 
-#define ep_pattern_point_size 0xE8
+#define EP_ITEMS 0x240
+#define EP_NUM_ITEMS 0x238
+#define EP_PARTICLE_SIZE_SCALE 0x208
+#define EP_TRAIL_COLORS 0x128 
+#define EP_PATTERN_POINT_SIZE 0xE8
+#define EP_PATTERN_POINT_IS_ENDPOINT 0x108
 
 struct Connection
 {
@@ -665,161 +669,6 @@ inline std::map<int, std::string> laserNames = {
 	{0x17C65, "Monastery"},
 };
 
-const inline int LockablePuzzles[]{
-		0x01983, 0x01987, //Peekaboos
-
-		0x00293, 0x00295, 0x002C2, 0x0A3B5, 0x0A3B2, 0x03629, // Tutorial
-		0x0C373, // Tutorial Patio Floor
-		0x0C335, // Tutorial Pillar??
-		0x0A171, 0x04CA4, // Tutorial Secret back area
-		0x0005D, 0x0005E, 0x0005F, 0x00060, 0x00061, // Tutorial Dots Tutorial
-		0x018AF, 0x0001B, 0x012C9, 0x0001C, 0x0001D, 0x0001E, 0x0001F, 0x00020, 0x00021,	// Tutorial Stones Tutorial
-		0x00086, 0x00087, 0x00059, 0x00062, 0x0005C, // Symmetry Vertical Symmetry Mazes
-		0x0008D, 0x00081, 0x00083, 0x00084, 0x00082, 0x0343A, // Symmetry Rotational Symmetry Mazes
-		0x00022, 0x00023, 0x00024, 0x00025, 0x00026, // Symmetry Black Dots
-		0x0007C, 0x0007E, 0x00075, 0x00073, 0x00077, 0x00079, // Symmetry Colored Dots
-		0x00065, 0x0006D, 0x00072, 0x0006F, 0x00070, 0x00071, 0x00076, // Symmetry Fading Lines
-		0x009B8, 0x009B8, 0x003E8, 0x00A15, 0x00B8D, // Symmetry Environmental Set
-		0x00A52, 0x00A61, 0x00A57, 0x00A64, 0x00A5B, 0x00A68, // Symmetry Dot Reflection Dual Panels (before laser)
-
-		0x17C09, // Quarry Entry Gates
-		0x01E59, // Quarry Mill Entry Door
-		0x00E0C, 0x01489, 0x0148A, 0x014D9, 0x014E7, 0x014E8, // Quarry Dots
-		0x00557, 0x005F1, 0x00620, 0x009F5, 0x0146C, 0x3C12D,0x03686, 0x014E9, // Quarry Stones
-		0x0367C, 0x3C125, // Quarry Dots + Stones
-		0x034D4, 0x021D5, // Quarry Boathouse Ramp Activation
-		0x03852, // Quarry Ramp Height Control
-		0x03858, // Quarry Boathouse Horizontal Ramp Control
-		0x275FA, // Ramp Hook Control
-		0x021B3, 0x021B4, 0x021B0, 0x021AF, 0x021AE, // Quarry Eraser + Shapes
-		0x021B5, 0x021B6, 0x021B7, 0x021BB, 0x09DB5, 0x09DB1, 0x3C124, // Quarry + Stars
-		0x09DB3, 0x09DB4, 0x0A3CB, 0x0A3CC, 0x0A3D0, // Quarry Eraser + Stars + Shapes
-		0x03612, // Quarry Laser
-		0x00469, 0x00472, 0x00262, 0x00474, 0x00553, 0x0056F, // Swamp First row
-		0x00390, 0x010CA, 0x00983, 0x00984, 0x00986, 0x00985, 0x00987, 0x181A9, // Swamp Second Row
-		0x00609, // Swamp Bridge controll
-		0x00982, 0x0097F, 0x0098F, 0x00990, 0x17C0D, 0x17C0E, // Swamp Red Panels
-		0x00999, 0x0099D, 0x009A0, 0x009A1, // Swamp Disconnected Shapes
-		0x00007, 0x00008, 0x00009, 0x0000A, 0x003B2, 0x00A1E, 0x00C2E, 0x00E3A, // Swamp Rotating Shapes
-		0x009A6, // Swamp Optional Tetris
-		0x009AB, 0x009AD, 0x009AE, 0x009AF, 0x00006, // Swamp Negative Shapes 1
-		0x00002, 0x00004, 0x00005, 0x013E6, 0x00596, // Swamp Negative Shapes 2
-		0x00001, 0x014D2, 0x014D4, 0x014D1, // Swamp Negative Shapes 3
-		0x17C05, 0x17C02, // Swamp Exit Shortcut
-		0x02886, // Treehouse Entry door
-		0x17D72, 0x17D8F, 0x17D74, 0x17DAC, 0x17D9E, 0x17DB9, 0x17D9C, 0x17DC2, 0x17DC4, // Treehouse Yellow Bridge
-		0x17DC8, 0x17DC7, 0x17CE4, 0x17D2D, 0x17D6C, // Treehouse Pink Bridge 1
-		0x17D9B, 0x17D99, 0x17DAA, 0x17D97, 0x17BDF, 0x17D91, 0x17DC6, // Treehouse Pink Bridge 2
-		0x17DB3, 0x17DB5, 0x17DB6, 0x17DC0, 0x17DD7, 0x17DD9, 0x17DB8, 0x17DDC, 0x17DD1, 0x17DDE, 0x17DE3, 0x17DEC, 0x17DAE, 0x17DB0, 0x17DDB, // Treehouse Orange Bridge 1
-		0x17D88, 0x17DB4, 0x17D8C, 0x17CE3, 0x17DCD, 0x17DB2, 0x17DCC, 0x17DCA, 0x17D8E, 0x17DB7, 0x17DB1, 0x17DA2, // Treehouse Orange Bridge 2
-		0x17E3C, 0x17E4D, 0x17E4F, 0x17E52, 0x17E5B, 0x17E5F, 0x17E61, // Treehouse Green Bridge
-		0x037FF, // Treehouse Shortcut Bridge to Keep
-		0x2899C, 0x28A33, 0x28ABF, 0x28AC0, 0x28AC1, 0x28AD9, // Town Full Dots + Shapes
-		0x2896A, // Town Rooftop Bridge
-		0x28AC7, 0x28AC8, 0x28ACA, 0x28ACB, 0x28ACC, // Town Blue Symmetry
-		0x18590, // Town Symmetry start
-		0x28A69, // Town Church Star Door
-		0x034E3, // Town Soundproof Room
-		0x334D8, 0x03C0C, 0x03C08, // Town 3-color Room
-		0x0A0C8, // Town Orange
-		0x09F98, // Town Redirect
-		0x17F89, 0x0A168, 0x33AB2, //Windmill Puzzles
-		0x033D4, 0x0CC7B, 0x002A6, 0x00AFB, 0x15ADD, // Vaults
-		0x17C34, // Mountain
-		0x09E73, 0x09E75, 0x09E78, 0x09E79, 0x09E6C, 0x09E6F, 0x09E6B, // Mountain Orange Row
-		0x09E7A, 0x09E71, 0x09E72, 0x09E69, 0x09E7B, // Mountain Green Row
-		0x09EAD, 0x09EAF, 0x33AF5, 0x33AF7, 0x09F6E, // Mountain Purple Panels
-		0x09FD3, 0x09FD4, 0x09FD6, 0x09FD7, 0x09FD8, // Mountain Rainbow Row
-		0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Mountain multi puzzle
-		0x09E86, 0x09E39, 0x09ED8, // Mountain double bridge //might need to be disable if we cant fix the scaling
-		0x09EEB, // Mountain Elevator to Giant Puzzle
-		0x09EFF, 0x09F01, 0x09FC1, 0x09F8E, 0x09FDA, // Mountain floor
-		0x0383D, 0x0383A, 0x0383F, 0x09E56, 0x03859, 0x09E5A, 0x339BB, 0x33961, // Mountain pillar puzzles
-
-		0x17FA2, 0x00FF8, // Caves
-		0x01A0D, 0x018A0, 0x009A4, 0x00A72, // Caves Blue Symmetry/Tetris
-		0x00190, 0x00558, 0x00567, 0x006FE, 0x008B8, 0x00973, 0x0097B, 0x0097D, 0x0097E, 0x00994, 0x334D5, 0x00995, 0x00996, 0x00998, // Caves riangle Puzzles
-		0x32962, 0x32966, 0x01A31, 0x00B71, // Caves First alcove
-		0x288EA, 0x288FC, 0x289E7, 0x288AA, // Caves Perspective
-		0x0A16B, 0x0A2CE, 0x0A2D7, 0x0A2DD, 0x0A2EA, 0x17FB9, // Caves Full Dots
-		0x0008F, 0x0006B, 0x0008B, 0x0008C, 0x0008A, 0x00089, 0x0006A, 0x0006C, 0x00027, 0x00028, 0x00029,	// Caves Invisible Dots
-		0x17CF2, 0x021D7, // Caves Exit
-		0x09DD5, 0x0A16E, 0x039B4, 0x09E85, // Caves Deep challenge caves
-		0x335AB, 0x335AC, 0x3369D, // Caves Elevator
-
-		//0x032FF, //Why a single apple tree?
-		/*
-		0x00698,	0x0048F, 0x09F92,	0x0A036,	0x09DA6,	0x0A049, 0x0A053, 0x09F94, // Desert Surface
-		0x00422, 0x006E3, 0x0A02D, // Desert Light
-		0x00C72, 0x0129D,	0x008BB, 0x0078D, 0x18313, // Desert Pond
-		0x04D18,	0x01205, 0x181AB, 0x0117A, 0x17ECA, // Desert Flood
-		0x18076, 0x0A15C, 0x09FFF, 0x0A15F, 0x012D7 // Desert Final and exit
-		*/
-		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, 0x03317, 0x0360E, // Keep PP
-		0x01A0F, 0x019E7, 0x019DC, 0x00139, // Keep Hedges
-		//0x17F9B,	0x002C4,	0x00767,	0x002C6,	0x0070E,	0x0070F,	0x0087D,	0x002C7, // Jungle Sound waves //Does not contain dots so isnt locked
-		0x0026D,	0x0026E,	0x0026F,	0x00C3F,	0x00C41,	0x014B2, // Jungle Dots
-		//Doors
-		0x01A54, // Glass Factory Entry
-		0x000B0, // Symmetry Island Door 1
-		0x1C349, // Symmetry Island Door 2.
-		0x01E5A, // Mill Entry Door Left
-		0x09E57, // Quarry Entry Gate 1
-
-		0x03678, 0x03679, 0x03675, 0x03676, 0x03677, // Mill Controls
-
-		0x0288C, // Treehouse Door 1&2
-		0x0A182, // Treehouse Door 3
-		0x2700B, // Treehouse Exterior Door Control
-		0x334DB, // Shadows Outer Door Control
-		0x334DC, // Shadows Inner Door Control
-		0x00B10, // Monastery Left Door
-		0x00C92, // Monastery Right Door
-		0x09D9B, // Monastery Overhead Door Control
-		0x0056E, // Swamp Entry
-		0x17C2E, // Bunker Entry Door
-		0x09F7D, 0x09FDC, 0x09FF7, 0x09F82, 0x09FF8, 0x09D9F , 0x09DA1, 0x09DA2, 0x09DAF, 0x0A099, 0x0A010, 0x0A01B, 0x0A01F, 0x17E63, 0x17E67, 0x0A079, // Bunker
-		0x17CAB, // Jungle Pop-up Wall
-		0x0C339, // Desert Surface Door
-		0x0A249, // Desert Pond Exit Door
-		0x28998, // Town Yellow Door
-		0x28A0D, // Town Church Stars
-		0x17F5F, // Windmill door
-		0x17D02, // Windmill Turn Control
-		//Discards
-		0x17F93, // Mountain 2 Discard
-		0x17CFB, // Outside Tutorial Discard
-		0x3C12B, // Glass Factory Discard
-		0x17CE7, // Desert Discard
-		0x17CF0, // Mill Discard
-		0x17FA9, // Treehouse Green Bridge Discard
-		0x17FA0, // Treehouse Laser Discard
-		0x17D27, // Keep Discard
-		0x17D28, // Shipwreck Discard
-		0x17D01, // Town Orange Crate Discard
-		0x17C71, // Town Rooftop Discard
-		0x17F9B, // Jungle Discard
-		0x17C42, // Mountainside Discard
-		0x17CF7, // Theater Discard
-		0x386FA,	0x1C33F,	0x196E2,	0x1972A,	0x19809,	0x19806,	0x196F8,	0x1972F, //shadows avoid
-		0x19797,	0x1979A,	0x197E0,	0x197E8,	0x197E5, //Shadow follow
-		0x09F7F, // Quary lazer panel
-		0x181F5, 0x18488, 0x17E2B, 0x17C0A, 0x17E07, // Swamp bridge controlls
-
-		0x0A332, // Challenge Timer
-		0x3D9A9,
-
-		0x09FAA, 0x1C2DF, 0x1831E, 0x1C260, 0x1831C, 0x1C2F3, 0x1831D, 0x1C2B1, 0x1831B, 0x09FA0, 0x09F86, 0x0A015, // Desert Controls
-		0x17CC4, // Quarry Elevator
-		0x28A79, // Town Maze Panel
-		0x00815, // Theater Video Input
-		0x17CBC, // Treehouse Door Timer
-		0x037FF, // Treehouse Drawbridge
-		0x34BC5, 0x34BC6, // Bunker Controls
-
-		0x17CDF, 0x17CC8, 0x17CA6, 0x09DB8, 0x17C95, 0x0A054, // Boats
-};
-
 const inline int UnlockableDoors[]{
 	0x2D73F, // Caves Mountain Shortcut
 	0x03BA2, // Outside Tutorial Outpost Path
@@ -948,6 +797,11 @@ const inline std::set<int> deathlinkExpertExcludeList = {
 	0x288EA, 0x288FC, 0x289E7, 0x288AA, // Caves Wooden Beams
 };
 
+const inline std::set<int> deathlinkVarietyExcludeList = {
+	0x17FB9, // Left Upstairs Singls
+	0x0A16B, 0x0A2CE, 0x0A2D7, 0x0A2DD, 0x0A2EA, // Left Upstairs Left
+};
+
 const inline std::vector<int> alwaysDeathLinkPanels = {
 	0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Same Solution Set
 	0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Keep Pressure Plates
@@ -976,6 +830,14 @@ const inline std::set<int> allEPs = {
 	, 0x28B30, 0x035C9, 0x03335, 0x03412, 0x038A6, 0x038AA, 0x03E3F
 	, 0x03E40, 0x28B8E, 0x28B91, 0x03BCE, 0x03BCF, 0x03BD1, 0x339B6, 0x33A20
 	, 0x33A29, 0x33A2A, 0x33B06, 0x00614
+};
+
+const inline std::set<int> allObelisks = {
+	0x00367, 0x0A16C, 0x00097, 0x00263, 0x00359, 0x22073,
+};
+
+const inline std::set<int> omniDirectionalEntities = {
+	0x09D9B,
 };
 
 const inline std::set<int> swampLowContrastPanels = {
@@ -1226,11 +1088,11 @@ const inline std::map<int, int> EPtoStartPoint = {
 
 	{ 0x28AE9, 0x28a7c }, //Path
 	{ 0x3348F, 0x3344f }, //Hedges
-	{ 0x033BE, 0x1f76c }, //PP1
-	{ 0x033BF, 0x1f803 }, //PP2
-	{ 0x033DD, 0x1f887 }, //PP3
-	{ 0x033E5, 0x1f904 }, //PP4
-	{ 0x018B6, 0x1f905 }, //PP4b - These actually depend on end point, so this is not 100% accurate
+	{ 0x033BE, 0x1AE8 }, // PP1 - THIS IS THE ID OF THE PRESSURE PLATE. THE PATTERN POINT GETS REALLOCATED
+	{ 0x033BF, 0x01C0D }, //PP2 - THIS IS THE ID OF THE PRESSURE PLATE. THE PATTERN POINT GETS REALLOCATED
+	{ 0x033DD, 0x01DC7 }, //PP3 - THIS IS THE ID OF THE PRESSURE PLATE. THE PATTERN POINT GETS REALLOCATED
+	{ 0x033E5, 0x01E12 }, //PP4 - THIS IS THE ID OF THE PRESSURE PLATE. THE PATTERN POINT GETS REALLOCATED
+	{ 0x018B6, 0x01E52 }, //PP4b - THIS IS THE ID OF THE PRESSURE PLATE. THE PATTERN POINT GETS REALLOCATED
 
 	{ 0x006E5, 0x0c138 }, //Facade Left Near
 	{ 0x006E6, 0x0c138 }, //Facade Left Far Short
@@ -1323,126 +1185,395 @@ const inline std::map<int, int> EPtoStartPoint = {
 	{ 0x035C9, 0x183f6 }, //Cargo
 };
 
-const inline std::map<int, std::vector<int>> EPStartpointsToEndpoints = {
-	{ 0x35d , { 0x364, }},
-	{ 0x17d90 , { 0x184e0, 0x181dc, 0x18486, }},
-	{ 0x245 , { 0x34de, }},
-	{ 0x73f , { 0x741, 0x73f, }},
-	{ 0x52d , { 0x196b8, }},
-	{ 0x54d , { 0x56a, }},
-	{ 0x1a96 , { 0x1a98, }},
-	{ 0x16e6 , { 0x184f, 0x16e5, }},
-	{ 0xc138 , { 0x3d18, 0x3d58, 0x3bf1, 0xcb47, 0xcb36, 0x3ab2, }},
-	{ 0x579 , { 0xb88, }},
-	{ 0x73f , { 0x741, 0x73f, }},
-	{ 0xa2d9 , { 0x2c3cc, 0x1a79, }},
-	{ 0x15f4 , { 0x16db, }},
-	{ 0x791 , { 0xa1af, 0xa1b4, }},
-	{ 0x17ed , { 0x17ff, }},
-	{ 0x1f905 , { 0x1f945, 0x1f947, }},
-	{ 0x33dc , { 0x342e, }},
-	{ 0x27907 , { 0x27913, }},
-	{ 0x3386 , { 0x1989, }},
-	{ 0x1f76c , { 0x1f7c4, }},
-	{ 0x1f803 , { 0x1f84f, }},
-	{ 0x1f887 , { 0x1f8d5, }},
-	{ 0x1f904 , { 0x1f945, 0x1f947, }},
-	{ 0x27885 , { 0x278bf, }},
-	{ 0x39cc , { 0x3cf0, }},
-	{ 0x35b9 , { 0x3d4f, }},
-	{ 0x2894e , { 0x28970, }},
-	{ 0x186a1 , { 0x186a4, }},
-	{ 0x183f6 , { 0x1841a, }},
-	{ 0x19c9a , { 0x19ca8, 0x19c97, }},
-	{ 0xa1bf , { 0xa1c2, }},
-	{ 0x35f1, { 0x3c5f, }},
-	{ 0xa0b2 , { 0xa0d8, }},
-	{ 0xa0e6 , { 0xa0e8, }},
-	{ 0x791 , { 0xa1af, 0xa1b4, }},
-	{ 0x372b , { 0x37d5, }},
-	{ 0x17d90 , { 0x184e0, 0x181dc, 0x18486, }},
-	{ 0x3064b , { 0x30660, }},
-	{ 0x278d3 , { 0x278e8, }},
-	{ 0x278f7 , { 0x27903, }},
-	{ 0x3655 , { 0x3a13, }},
-	{ 0x379f , { 0x37a2, }},
-	{ 0x37a2 , { 0x37a7, }},
-	{ 0x3799 , { 0x379c, }},
-	{ 0x35c2 , { 0x3cab, 0x3aea, 0x34d7, 0x3a8d, 0x3570, }},
-	{ 0x3a8d , { 0x3cab, 0x3aea, 0x34d7, 0x3a8d, 0x3570, }},
-	{ 0x3ac9 , { 0x3cab, 0x3aea, 0x34d7, 0x3a8d, 0x3570, }},
-	{ 0x3b09 , { 0x3cab, 0x3aea, 0x34d7, 0x3a8d, 0x3570, }},
-	{ 0x3c81 , { 0x3cab, 0x3aea, 0x34d7, 0x3a8d, 0x3570, }},
-	{ 0x3380 , { 0x3a81, }},
-	{ 0x3500 , { 0x350d, }},
-	{ 0x350d , { 0x3513, }},
-	{ 0x3aa0 , { 0x3aa3, }},
-	{ 0x3924 , { 0x3bd5, 0x39a0, 0x3baf, }},
-	{ 0x3a24 , { 0x3be2, 0x3a48, }},
-	{ 0x32f6 , { 0x36d6, }},
-	{ 0x3c46 , { 0x3c54, }},
-	{ 0x3cf7 , { 0x3cff, }},
-	{ 0x3333 , { 0x3d0d, }},
-	{ 0xc138 , { 0x3d18, 0x3d58, 0x3bf1, 0xcb47, 0xcb36, 0x3ab2, }},
-	{ 0x32f8 , { 0x38fd, }},
-	{ 0x33732 , { 0x33744, }},
-	{ 0x33748 , { 0x33759, }},
-	{ 0x3e03 , { 0x3e4b, }},
-	{ 0x3e3d , { 0x3e51, }},
-	{ 0x2c4b1 , { 0x2c4d7, 0x2c4da, 0x2c4df, 0x2c4d8, 0x2c4d6, 0x2c4d9, }},
-	{ 0x2c05d , { 0x2c069, 0x2c067, 0x2c06a, 0x2c06f, 0x2c068, 0x2c066, }},
-	{ 0x2c630 , { 0x2c65d, 0x2c660, 0x2c65c, }},
-	{ 0xa09f , { 0xa14a, 0xa0e0, }},
-	{ 0xa3c3 , { 0x16db, }},
-	{ 0xa7e7 , { 0xa7f3, }},
-	{ 0x17dd3 , { 0x17e23, }},
-	{ 0x22094 , { 0x220a5, }},
-	{ 0x220ba , { 0x220a5, }},
-	{ 0x220b1 , { 0x220c1, 0x220e4, }},
-	{ 0x220e6 , { 0x220e9, }},
-	{ 0x288d0 , { 0x2893f, 0x28995, }},
-	{ 0x288f2 , { 0x288f6, }},
-	{ 0x146d5 , { 0x149ea, }},
-	{ 0x289ce , { 0x28a3f, 0x289e4, }},
-	{ 0x3067a , { 0x306c2, }},
-	{ 0x3063f , { 0x30668, }},
-	{ 0x30670 , { 0x27b60, }},
-	{ 0x2898b , { 0x2898f, }},
-	{ 0x28a86 , { 0x28a89, }},
-	{ 0x28a7c , { 0x28a80, }},
-	{ 0x35b2 , { 0x3d8b, }},
-	{ 0x28887 , { 0x28b5d, }},
-	{ 0x288c7 , { 0x28b19, }},
-	{ 0x3379a , { 0x3379a, }},
-	{ 0x28b8f , { 0x28b94, }},
-	{ 0x28b9a , { 0x28ba1, }},
-	{ 0x3344f , { 0x33462, }},
-	{ 0x33490 , { 0x33493, }},
-	{ 0x334a6 , { 0x334b2, }},
-	{ 0x27557 , { 0x27562, }},
-	{ 0x27af4 , { 0x27538, }},
-	{ 0x334ef , { 0x334f2, }},
-	{ 0x33506 , { 0x33509, }},
-	{ 0x18ae , { 0x33cb, }},
-	{ 0x33524 , { 0x33526, }},
-	{ 0x3359c , { 0x335a2, }},
-	{ 0x274f5 , { 0x2751b, }},
-	{ 0x9f65 , { 0x9fe2, }},
-	{ 0x3365c , { 0x33659, }},
-	{ 0x33683 , { 0x3368a, }},
-	{ 0x3368a , { 0x336ba, 0x336bd, }},
-	{ 0x336e6 , { 0x336fb, }},
-	{ 0x3365a , { 0x337b4, }},
-	{ 0x337f4 , { 0x337de, }},
-	{ 0x336f7 , { 0x33850, }},
-	{ 0x33865 , { 0x3371b, }},
-	{ 0x33886 , { 0x33899, }},
-	{ 0x33970 , { 0x33973, }},
-	{ 0x339b8 , { 0x339ba, }},
-	{ 0x33a35 , { 0x33a20, }},
-	{ 0x33a10 , { 0x33a27, }},
-	{ 0x33a0c , { 0x33a17, }},
-	{ 0x33b07 , { 0x33b09, }},
+const inline std::map<int, std::vector<int>> startPointToEPs = {
+	{ 0x017ed, { 0x01848 }},
+{ 0x33524, { 0x33530 }},
+{ 0x09f65, { 0x33600 }},
+{ 0x018ae, { 0x3352F }},
+{ 0x03cf7, { 0x03D06 }},
+{ 0x289ce, { 0x28A2F, 0x28A37 }},
+{ 0x33490, { 0x334A3 }},
+{ 0x186a1, { 0x035C7 }},
+{ 0x28b9a, { 0x28B91 }},
+{ 0x3379a, { 0x28B8A }},
+{ 0x033dc, { 0x0332B }},
+{ 0x03386, { 0x03367 }},
+{ 0x33506, { 0x3351D }},
+{ 0x0073f, { 0x0053C, 0x00771 }},
+{ 0x274f5, { 0x335C8, 0x335C9 }},
+{ 0x220b1, { 0x220E4, 0x220E5 }},
+{ 0x27557, { 0x334B9 }},
+{ 0x27af4, { 0x334BC }},
+{ 0x0a09f, { 0x0A14C, 0x0A14D }},
+{ 0x337f4, { 0x337F8 }},
+{ 0x3064b, { 0x037BB }},
+{ 0x3067a, { 0x28A4A }},
+{ 0x334a6, { 0x334B6 }},
+{ 0x3063f, { 0x28A4C }},
+{ 0x288d0, { 0x289CF, 0x289D1 }},
+{ 0x17dd3, { 0x17CB9 }},
+{ 0x016e6, { 0x0069D, 0x00614 }},
+{ 0x0a2d9, { 0x00859 }},
+{ 0x01a96, { 0x005F6 }},
+{ 0x30670, { 0x28A7B }},
+{ 0x0052d, { 0x0053D }},
+{ 0x0054d, { 0x0053E }},
+{ 0x220ba, { 0x220BD }},
+{ 0x03e03, { 0x03E77 }},
+{ 0x03e3d, { 0x03E7C }},
+{ 0x0350d, { 0x03B24 }},
+{ 0x03500, { 0x03B23 }},
+{ 0x03380, { 0x03B22 }},
+{ 0x03655, { 0x03A79 }},
+{ 0x2898b, { 0x28ABD }},
+{ 0x28a86, { 0x28ABE }},
+{ 0x33886, { 0x3388F }},
+{ 0x28a7c, { 0x28AE9 }},
+{ 0x3344f, { 0x3348F }},
+{ 0x1AE8 , { 0x033BE }},
+{ 0x01C0D, { 0x033BF }},
+{ 0x01DC7, { 0x033DD }},
+{ 0x01E12, { 0x033E5 }},
+{ 0x01E52, { 0x018B6 }},
+{ 0x0c138, { 0x006E5, 0x006E6, 0x006E7, 0x03DAB, 0x03DAC, 0x03DAD }},
+{ 0x032f8, { 0x03E01 }},
+{ 0x039cc, { 0x034A7 }},
+{ 0x035b9, { 0x034AD }},
+{ 0x2894e, { 0x034AF }},
+{ 0x17d90, { 0x037B6, 0x037B2, 0x000F7 }},
+{ 0x27907, { 0x03335 }},
+{ 0x27885, { 0x03412 }},
+{ 0x278d3, { 0x038A6 }},
+{ 0x278f7, { 0x038AA }},
+{ 0x33748, { 0x03E40 }},
+{ 0x28b8f, { 0x28B8E }},
+{ 0x03924, { 0x03BCF, 0x03BD1, 0x03BCE }},
+{ 0x33732, { 0x03E3F }},
+{ 0x33683, { 0x33692 }},
+{ 0x339b8, { 0x339B6 }},
+{ 0x33a10, { 0x33A29 }},
+{ 0x33a0c, { 0x33A2A }},
+{ 0x33b07, { 0x33B06 }},
+{ 0x33a35, { 0x33A20 }},
+{ 0x035c2, { 0x03ABC }},
+{ 0x03a8d, { 0x03ABE }},
+{ 0x03ac9, { 0x03AC0 }},
+{ 0x03b09, { 0x03AC4 }},
+{ 0x288f2, { 0x289F4 }},
+{ 0x146d5, { 0x289F5 }},
+{ 0x19c9a, { 0x035CB, 0x035CF }},
+{ 0x03c81, { 0x03AC5 }},
+{ 0x03a24, { 0x03BE2, 0x03BE3 }},
+{ 0x0a7e7, { 0x0A409 }},
+{ 0x035f1, { 0x035F5 }},
+{ 0x0035d, { 0x000D3 }},
+{ 0x0a1bf, { 0x035DE }},
+{ 0x0a0b2, { 0x03601 }},
+{ 0x0a0e6, { 0x03603 }},
+{ 0x0a3c3, { 0x0A304 }},
+{ 0x015f4, { 0x0105D }},
+{ 0x03799, { 0x03AA6 }},
+{ 0x00791, { 0x016B2, 0x036CE }},
+{ 0x3365c, { 0x3365F }},
+{ 0x0372b, { 0x03731 }},
+{ 0x037a2, { 0x03A9E }},
+{ 0x0379f, { 0x03A93 }},
+{ 0x3365a, { 0x33721 }},
+{ 0x22094, { 0x220A7 }},
+{ 0x00579, { 0x00769 }},
+{ 0x334ef, { 0x33505 }},
+{ 0x032f6, { 0x03C07 }},
+{ 0x00245, { 0x001A3 }},
+{ 0x336e6, { 0x3370E }},
+{ 0x3368a, { 0x336C8, 0x3369A }},
+{ 0x3359c, { 0x335AE }},
+{ 0x288c7, { 0x28B30 }},
+{ 0x33970, { 0x3397C }},
+{ 0x2c630, { 0x09D63 }},
+{ 0x2c4b1, { 0x09D5D }},
+{ 0x2c05d, { 0x09D5E }},
+{ 0x035b2, { 0x28B29 }},
+{ 0x336f7, { 0x33857 }},
+{ 0x33865, { 0x33879 }},
+{ 0x220e6, { 0x22106 }},
+{ 0x28887, { 0x28B2A }},
+{ 0x03aa0, { 0x03B25 }},
+{ 0x03333, { 0x03D0D }},
+{ 0x03c46, { 0x03C19 }},
+{ 0x183f6, { 0x035C9 }},
+};
+
+const inline std::map<int, int> EPtoEndPoint= {
+	{ 0xd3, 0x363},
+{ 0xf7, 0x18485},
+{ 0x1a3, 0x34dd},
+{ 0x53c, 0x740},
+{ 0x53d, 0x196b7},
+{ 0x53e, 0x569},
+{ 0x5f6, 0x1a97},
+{ 0x614, 0x184e},
+{ 0x69d, 0x16e4},
+{ 0x6e5, 0xcb35},
+{ 0x6e6, 0x3ab1},
+{ 0x6e7, 0x3bf0},
+{ 0x769, 0xb87},
+{ 0x771, 0x73e},
+{ 0x859, 0x1a78},
+{ 0x105d, 0x16da},
+{ 0x16b2, 0xa1ae},
+{ 0x1848, 0x17fe},
+{ 0x18b6, 0x18DA}, // PP4b: This is a Pressure Plate
+{ 0x332b, 0x342d},
+{ 0x3335, 0x27912},
+{ 0x3367, 0x1988},
+{ 0x33be, 0x17DF}, // PP1: This is a Pressure Plate
+{ 0x33bf, 0x1786}, // PP2: This is a Pressure Plate
+{ 0x33dd, 0x18E7}, // PP3: This is a Pressure Plate
+{ 0x33e5, 0x18f4}, // PP4 Left Exit (Hopefully)
+{ 0x3412, 0x278be},
+{ 0x34a7, 0x3cef},
+{ 0x34ad, 0x3d4e},
+{ 0x34af, 0x2896f},
+{ 0x35c7, 0x186a3},
+{ 0x35c9, 0x18419},
+{ 0x35cb, 0x19ca7},
+{ 0x35cf, 0x19c96},
+{ 0x35de, 0xa1c1},
+{ 0x35f5, 0x3c5e},
+{ 0x3601, 0xa0d7},
+{ 0x3603, 0xa0e7},
+{ 0x36ce, 0xa1b3},
+{ 0x3731, 0x37d4},
+{ 0x37b2, 0x181db},
+{ 0x37b6, 0x184df},
+{ 0x37bb, 0x3065f},
+{ 0x38a6, 0x278e7},
+{ 0x38aa, 0x27902},
+{ 0x3a79, 0x3a12},
+{ 0x3a93, 0x37a1},
+{ 0x3a9e, 0x37a6},
+{ 0x3aa6, 0x379b},
+{ 0x3abc, 0x3a8c},
+{ 0x3abe, 0x34d6},
+{ 0x3ac0, 0x3ae9},
+{ 0x3ac4, 0x356f},
+{ 0x3ac5, 0x3caa},
+{ 0x3b22, 0x3a80},
+{ 0x3b23, 0x350c},
+{ 0x3b24, 0x3512},
+{ 0x3b25, 0x3aa2},
+{ 0x3bce, 0x399f},
+{ 0x3bcf, 0x3bae},
+{ 0x3bd1, 0x3bd4},
+{ 0x3be2, 0x3a47},
+{ 0x3be3, 0x3be1},
+{ 0x3c07, 0x36d5},
+{ 0x3c19, 0x3c53},
+{ 0x3d06, 0x3cfe},
+{ 0x3d0d, 0x3d0c},
+{ 0x3dab, 0xcb46},
+{ 0x3dac, 0x3d17},
+{ 0x3dad, 0x3d57},
+{ 0x3e01, 0x38fc},
+{ 0x3e3f, 0x33743},
+{ 0x3e40, 0x33758},
+{ 0x3e77, 0x3e4a},
+{ 0x3e7c, 0x3e50},
+{ 0x9d5d, 0x2c4d5},
+{ 0x9d5e, 0x2c065},
+{ 0x9d63, 0x2c65b},
+{ 0xa14c, 0xa0df},
+{ 0xa14d, 0xa149},
+{ 0xa304, 0x16da},
+{ 0xa409, 0xa7f2},
+{ 0x17cb9, 0x17e22},
+{ 0x220a7, 0x220a4},
+{ 0x220bd, 0x220a4},
+{ 0x220e4, 0x220c0},
+{ 0x220e5, 0x220e3},
+{ 0x22106, 0x220e8},
+{ 0x289cf, 0x2893e},
+{ 0x289d1, 0x28994},
+{ 0x289f4, 0x288f5},
+{ 0x289f5, 0x149e9},
+{ 0x28a2f, 0x289e3},
+{ 0x28a37, 0x28a3e},
+{ 0x28a4a, 0x306c1},
+{ 0x28a4c, 0x30667},
+{ 0x28a7b, 0x27b5f},
+{ 0x28abd, 0x2898e},
+{ 0x28abe, 0x28a88},
+{ 0x28ae9, 0x28a7f},
+{ 0x28b29, 0x3d8a},
+{ 0x28b2a, 0x28b5c},
+{ 0x28b30, 0x28b18},
+{ 0x28b8a, 0x33799},
+{ 0x28b8e, 0x28b93},
+{ 0x28b91, 0x28ba0},
+{ 0x3348f, 0x33461},
+{ 0x334a3, 0x33492},
+{ 0x334b6, 0x334b1},
+{ 0x334b9, 0x27561},
+{ 0x334bc, 0x27537},
+{ 0x33505, 0x334f1},
+{ 0x3351d, 0x33508},
+{ 0x3352f, 0x33ca},
+{ 0x33530, 0x33525},
+{ 0x335ae, 0x335a1},
+{ 0x335c8, 0x2751a},
+{ 0x335c9, 0x2751a},
+{ 0x33600, 0x9fe1},
+{ 0x3365f, 0x33658},
+{ 0x33692, 0x33689},
+{ 0x3369a, 0x336b9},
+{ 0x336c8, 0x336bc},
+{ 0x3370e, 0x336fa},
+{ 0x33721, 0x337b3},
+{ 0x337f8, 0x337dd},
+{ 0x33857, 0x3384f},
+{ 0x33879, 0x3371a},
+{ 0x3388f, 0x33898},
+{ 0x3397c, 0x33972},
+{ 0x339b6, 0x339b9},
+{ 0x33a20, 0x33a1f},
+{ 0x33a29, 0x33a26},
+{ 0x33a2a, 0x33a16},
+{ 0x33b06, 0x33b08},
+};
+
+const inline std::map<int, std::vector<int>> endPointToEPs = {
+	{ 0x363, { 0xd3 }},
+{ 0x18485, { 0xf7 }},
+{ 0x34dd, { 0x1a3 }},
+{ 0x740, { 0x53c }},
+{ 0x196b7, { 0x53d }},
+{ 0x569, { 0x53e }},
+{ 0x1a97, { 0x5f6 }},
+{ 0x184e, { 0x614 }},
+{ 0x16e4, { 0x69d }},
+{ 0xcb35, { 0x6e5 }},
+{ 0x3ab1, { 0x6e6 }},
+{ 0x3bf0, { 0x6e7 }},
+{ 0xb87, { 0x769 }},
+{ 0x73e, { 0x771 }},
+{ 0x1a78, { 0x859 }},
+{ 0x16da, { 0x105d, 0xa304 }},
+{ 0xa1ae, { 0x16b2 }},
+{ 0x17fe, { 0x1848 }},
+{ 0x18DA, { 0x18b6 }},
+{ 0x342d, { 0x332b }},
+{ 0x27912, { 0x3335 }},
+{ 0x1988, { 0x3367 }},
+{ 0x17DF, { 0x33be }},
+{ 0x1786, { 0x33bf }},
+{ 0x18E7, { 0x33dd }},
+{ 0x18f4, { 0x33e5 }},
+{ 0x278be, { 0x3412 }},
+{ 0x3cef, { 0x34a7 }},
+{ 0x3d4e, { 0x34ad }},
+{ 0x2896f, { 0x34af }},
+{ 0x186a3, { 0x35c7 }},
+{ 0x18419, { 0x35c9 }},
+{ 0x19ca7, { 0x35cb }},
+{ 0x19c96, { 0x35cf }},
+{ 0xa1c1, { 0x35de }},
+{ 0x3c5e, { 0x35f5 }},
+{ 0xa0d7, { 0x3601 }},
+{ 0xa0e7, { 0x3603 }},
+{ 0xa1b3, { 0x36ce }},
+{ 0x37d4, { 0x3731 }},
+{ 0x181db, { 0x37b2 }},
+{ 0x184df, { 0x37b6 }},
+{ 0x3065f, { 0x37bb }},
+{ 0x278e7, { 0x38a6 }},
+{ 0x27902, { 0x38aa }},
+{ 0x3a12, { 0x3a79 }},
+{ 0x37a1, { 0x3a93 }},
+{ 0x37a6, { 0x3a9e }},
+{ 0x379b, { 0x3aa6 }},
+{ 0x3a8c, { 0x3abc }},
+{ 0x34d6, { 0x3abe }},
+{ 0x3ae9, { 0x3ac0 }},
+{ 0x356f, { 0x3ac4 }},
+{ 0x3caa, { 0x3ac5 }},
+{ 0x3a80, { 0x3b22 }},
+{ 0x350c, { 0x3b23 }},
+{ 0x3512, { 0x3b24 }},
+{ 0x3aa2, { 0x3b25 }},
+{ 0x399f, { 0x3bce }},
+{ 0x3bae, { 0x3bcf }},
+{ 0x3bd4, { 0x3bd1 }},
+{ 0x3a47, { 0x3be2 }},
+{ 0x3be1, { 0x3be3 }},
+{ 0x36d5, { 0x3c07 }},
+{ 0x3c53, { 0x3c19 }},
+{ 0x3cfe, { 0x3d06 }},
+{ 0x3d0c, { 0x3d0d }},
+{ 0xcb46, { 0x3dab }},
+{ 0x3d17, { 0x3dac }},
+{ 0x3d57, { 0x3dad }},
+{ 0x38fc, { 0x3e01 }},
+{ 0x33743, { 0x3e3f }},
+{ 0x33758, { 0x3e40 }},
+{ 0x3e4a, { 0x3e77 }},
+{ 0x3e50, { 0x3e7c }},
+{ 0x2c4d5, { 0x9d5d }},
+{ 0x2c065, { 0x9d5e }},
+{ 0x2c65b, { 0x9d63 }},
+{ 0xa0df, { 0xa14c }},
+{ 0xa149, { 0xa14d }},
+{ 0xa7f2, { 0xa409 }},
+{ 0x17e22, { 0x17cb9 }},
+{ 0x220a4, { 0x220a7, 0x220bd }},
+{ 0x220c0, { 0x220e4 }},
+{ 0x220e3, { 0x220e5 }},
+{ 0x220e8, { 0x22106 }},
+{ 0x2893e, { 0x289cf }},
+{ 0x28994, { 0x289d1 }},
+{ 0x288f5, { 0x289f4 }},
+{ 0x149e9, { 0x289f5 }},
+{ 0x289e3, { 0x28a2f }},
+{ 0x28a3e, { 0x28a37 }},
+{ 0x306c1, { 0x28a4a }},
+{ 0x30667, { 0x28a4c }},
+{ 0x27b5f, { 0x28a7b }},
+{ 0x2898e, { 0x28abd }},
+{ 0x28a88, { 0x28abe }},
+{ 0x28a7f, { 0x28ae9 }},
+{ 0x3d8a, { 0x28b29 }},
+{ 0x28b5c, { 0x28b2a }},
+{ 0x28b18, { 0x28b30 }},
+{ 0x33799, { 0x28b8a }},
+{ 0x28b93, { 0x28b8e }},
+{ 0x28ba0, { 0x28b91 }},
+{ 0x33461, { 0x3348f }},
+{ 0x33492, { 0x334a3 }},
+{ 0x334b1, { 0x334b6 }},
+{ 0x27561, { 0x334b9 }},
+{ 0x27537, { 0x334bc }},
+{ 0x334f1, { 0x33505 }},
+{ 0x33508, { 0x3351d }},
+{ 0x33ca, { 0x3352f }},
+{ 0x33525, { 0x33530 }},
+{ 0x335a1, { 0x335ae }},
+{ 0x2751a, { 0x335c8, 0x335c9 }},
+{ 0x9fe1, { 0x33600 }},
+{ 0x33658, { 0x3365f }},
+{ 0x33689, { 0x33692 }},
+{ 0x336b9, { 0x3369a }},
+{ 0x336bc, { 0x336c8 }},
+{ 0x336fa, { 0x3370e }},
+{ 0x337b3, { 0x33721 }},
+{ 0x337dd, { 0x337f8 }},
+{ 0x3384f, { 0x33857 }},
+{ 0x3371a, { 0x33879 }},
+{ 0x33898, { 0x3388f }},
+{ 0x33972, { 0x3397c }},
+{ 0x339b9, { 0x339b6 }},
+{ 0x33a1f, { 0x33a20 }},
+{ 0x33a26, { 0x33a29 }},
+{ 0x33a16, { 0x33a2a }},
+{ 0x33b08, { 0x33b06 }},
 };
 
 const inline std::map<int, std::vector<uint8_t>> precompletableEpToPatternPointBytes = {
@@ -1870,7 +2001,194 @@ const inline std::map<int, std::vector<uint8_t>> precompletableEpToPatternPointB
 	}, //Tutorial Wall Reflection
 };
 
-class CollisionCube
+inline std::map<int, Vector3> treehousePanelPreSolvePositions = {
+	{ 0x17D72, { 148.835312, 143.541061, 10.944015}}, // Treehouse Yellow 1
+	{ 0x17D8F, { 147.607086, 143.697037, 10.944004}}, // Treehouse Yellow 2
+	{ 0x17D74, { 146.378937, 143.853012, 10.943995}}, // Treehouse Yellow 3
+	{ 0x17DAC, { 145.150772, 144.008926, 10.944016}}, // Treehouse Yellow 4
+	{ 0x17D9E, { 143.922577, 144.164917, 10.944039}}, // Treehouse Yellow 5
+	{ 0x17DB9, { 142.694366, 144.320862, 10.944067}}, // Treehouse Yellow 6
+	{ 0x17D9C, { 141.466156, 144.476822, 10.944101}}, // Treehouse Yellow 7
+	{ 0x17DC2, { 140.237885, 144.632736, 10.944168}}, // Treehouse Yellow 8
+	{ 0x17DC4, { 139.009674, 144.788696, 10.944206}}, // Treehouse Yellow 9
+	{ 0x17DC8, { 131.435242, 140.491425, 10.881846}}, // Treehouse First Purple 1
+	{ 0x17DC7, { 131.417969, 139.253479, 10.881849}}, // Treehouse First Purple 2
+	{ 0x17CE4, { 131.400696, 138.015533, 10.881854}}, // Treehouse First Purple 3
+	{ 0x17D2D, { 131.383423, 136.777588, 10.881861}}, // Treehouse First Purple 4
+	{ 0x17D6C, { 131.366165, 135.539627, 10.881871}}, // Treehouse First Purple 5
+	{ 0x17D9B, { 128.053757, 123.863373, 15.532800}}, // Treehouse Second Purple 1
+	{ 0x17D99, { 127.549446, 124.993973, 15.532713}}, // Treehouse Second Purple 2
+	{ 0x17DAA, { 127.045052, 126.124748, 15.532825}}, // Treehouse Second Purple 3
+	{ 0x17D97, { 126.540756, 127.255440, 15.532815}}, // Treehouse Second Purple 4
+	{ 0x17BDF, { 126.036484, 128.386093, 15.532756}}, // Treehouse Second Purple 5
+	{ 0x17D91, { 125.532158, 129.516815, 15.532821}}, // Treehouse Second Purple 6
+	{ 0x17DC6, { 125.027832, 130.647522, 15.532855}}, // Treehouse Second Purple 7
+	{ 0x17DB3, { 121.664284, 134.389389, 17.506397}}, // Treehouse Left Orange 1
+	{ 0x17DB5, { 120.451157, 134.142059, 17.506420}}, // Treehouse Left Orange 2
+	{ 0x17DB6, { 119.238075, 133.894730, 17.506399}}, // Treehouse Left Orange 3
+	{ 0x17DC0, { 118.024979, 133.647369, 17.506409}}, // Treehouse Left Orange 4
+	{ 0x17DD7, { 116.811867, 133.400055, 17.506432}}, // Treehouse Left Orange 5
+	{ 0x17DD9, { 115.598763, 133.152756, 17.506433}}, // Treehouse Left Orange 6
+	{ 0x17DB8, { 114.385658, 132.905441, 17.506445}}, // Treehouse Left Orange 7
+	{ 0x17DDC, { 113.172562, 132.658096, 17.506468}}, // Treehouse Left Orange 8
+	{ 0x17DD1, { 111.959457, 132.410767, 17.506485}}, // Treehouse Left Orange 9 Directional
+	{ 0x17D88, { 113.897636, 147.744904, 17.105471}}, // Treehouse Right Orange 1
+	{ 0x17DB4, { 112.684540, 147.497574, 17.105476}}, // Treehouse Right Orange 2
+	{ 0x17D8C, { 111.471436, 147.250244, 17.105478}}, // Treehouse Right Orange 3
+	{ 0x17CE3, { 110.258331, 147.002914, 17.105488}}, // Treehouse Right Orange 4
+	{ 0x17E3C, { 120.450722, 150.494064, 17.067404}}, // Treehouse Green 1
+	{ 0x17E4D, { 121.301476, 151.393524, 17.067404}}, // Treehouse Green 2
+	{ 0x17E4F, { 122.152237, 152.292999, 17.067411}}, // Treehouse Green 3
+	{ 0x17E52, { 123.002968, 153.192459, 17.067423}}, // Treehouse Green 4
+};
+
+inline std::map<int, Vector3> greenBridge5to7Leftwards = {
+	{ 0x17E5B, { 122.348259, 154.050003, 17.067417}}, // Treehouse Green 5
+	{ 0x17E5F, { 121.448853, 154.900772, 17.067415}}, // Treehouse Green 6
+	{ 0x17E61, { 120.549362, 155.751511, 17.067446}}, // Treehouse Green 7
+};
+
+inline std::map<int, Vector3> greenBridge5to7Straight = {
+	{ 0x17E5B, { 123.853722, 154.091873, 17.067417}}, // Treehouse Green 5
+	{ 0x17E5F, { 124.704483, 154.991272, 17.067417}}, // Treehouse Green 6
+	{ 0x17E61, { 125.555229, 155.890778, 17.067446}}, // Treehouse Green 7
+};
+
+inline std::map<int, Vector3> greenBridge5to7Rightwards = {
+	{ 0x17E5B, { 123.895592, 152.586395, 17.067406}}, // Treehouse Green 5
+	{ 0x17E5F, { 124.794998, 151.735641, 17.067392}}, // Treehouse Green 6
+	{ 0x17E61, { 125.694489, 150.884888, 17.067404}}, // Treehouse Green 7
+};
+
+inline std::map<int, Vector3> leftOrange10to15Leftwards = {
+	{ 0x17DDE, { 112.002617, 131.332657, 17.506512}}, // Treehouse Left Orange 10
+	{ 0x17DE3, { 112.249931, 130.119568, 17.506527}}, // Treehouse Left Orange 11
+	{ 0x17DEC, { 112.497314, 128.906464, 17.506563}}, // Treehouse Left Orange 12
+	{ 0x17DAE, { 112.744614, 127.693352, 17.506561}}, // Treehouse Left Orange 13
+	{ 0x17DB0, { 112.991928, 126.480255, 17.506594}}, // Treehouse Left Orange 14
+	{ 0x17DDB, { 113.239281, 125.267136, 17.506615}}, // Treehouse Left Orange 15
+};
+
+inline std::map<int, Vector3> leftOrange10to15Straight = {
+	{ 0x17DDE, { 110.746346, 132.163391, 17.506514}}, // Treehouse Left Orange 10
+	{ 0x17DE3, { 109.533249, 131.916092, 17.506531}}, // Treehouse Left Orange 11
+	{ 0x17DEC, { 108.320145, 131.668716, 17.506567}}, // Treehouse Left Orange 12
+	{ 0x17DAE, { 107.107040, 131.421417, 17.506573}}, // Treehouse Left Orange 13
+	{ 0x17DB0, { 105.893936, 131.174118, 17.506603}}, // Treehouse Left Orange 14
+	{ 0x17DDB, { 104.680824, 130.926773, 17.506632}}, // Treehouse Left Orange 15
+};
+
+inline std::map<int, Vector3> leftOrange10to15Right = {
+	{ 0x17DDE, { 111.577087, 133.419662, 17.506479}}, // Treehouse Left Orange 10
+	{ 0x17DE3, { 111.329773, 134.632751, 17.506458}}, // Treehouse Left Orange 11
+	{ 0x17DEC, { 111.082397, 135.845856, 17.506451}}, // Treehouse Left Orange 12
+	{ 0x17DAE, { 110.835114, 137.058960, 17.506420}}, // Treehouse Left Orange 13
+	{ 0x17DB0, { 110.587807, 138.272064, 17.506407}}, // Treehouse Left Orange 14
+	{ 0x17DDB, { 110.340462, 139.485184, 17.506399}}, // Treehouse Left Orange 15
+};
+
+inline std::map<int, Vector3> rightOrange5To12Left = {
+	{ 0x17DCD, { 110.301468, 145.924850, 17.105497}}, // Treehouse Right Orange 5
+	{ 0x17DB2, { 110.548805, 144.711731, 17.105503}}, // Treehouse Right Orange 6
+	{ 0x17DCC, { 110.796158, 143.498611, 17.105524}}, // Treehouse Right Orange 7
+	{ 0x17DCA, { 111.043465, 142.285507, 17.105518}}, // Treehouse Right Orange 8
+	{ 0x17D8E, { 111.290810, 141.072418, 17.105526}}, // Treehouse Right Orange 9
+	{ 0x17DB7, { 111.538147, 139.859314, 17.105532}}, // Treehouse Right Orange 10
+	{ 0x17DB1, { 111.785484, 138.646210, 17.105541}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 112.032814, 137.433105, 17.105551}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12LeftThenLeft = {
+	{ 0x17DB1, { 112.616219, 139.902435, 17.105545}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 113.829330, 140.149765, 17.105564}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12LeftThenStraight = {
+	{ 0x17DB1, { 111.785484, 138.646210, 17.105541}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 112.032814, 137.433105, 17.105551}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12LeftThenRight = {
+	{ 0x17DB1, { 110.359634, 139.442352, 16.687616}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 109.316132, 139.229614, 17.105503}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange5To12Straight = {
+	{ 0x17DCD, { 109.045227, 146.755585, 17.105499}}, // Treehouse Right Orange 5
+	{ 0x17DB2, { 107.832100, 146.508255, 17.105507}}, // Treehouse Right Orange 6
+	{ 0x17DCC, { 106.618988, 146.260910, 17.105526}}, // Treehouse Right Orange 7
+	{ 0x17DCA, { 105.405891, 146.013611, 17.105526}}, // Treehouse Right Orange 8
+	{ 0x17D8E, { 104.192787, 145.766266, 17.105534}}, // Treehouse Right Orange 9
+	{ 0x17DB7, { 102.979683, 145.518936, 17.105543}}, // Treehouse Right Orange 10
+	{ 0x17DB1, { 101.766579, 145.271606, 17.105555}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 100.553474, 145.024292, 17.105568}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12StraightThenLeft = {
+	{ 0x17DB1, { 103.022827, 144.440872, 17.105572}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 103.270157, 143.227768, 17.105600}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12StraightThenStraight = {
+	{ 0x17DB1, { 101.766579, 145.271606, 17.105555}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 100.553474, 145.024292, 17.105568}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12StraightThenRight = {
+	{ 0x17DB1, { 102.597321, 146.527847, 17.105516}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 102.349998, 147.740952, 17.105494}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange5To12Right = {
+	{ 0x17DCD, { 109.875977, 148.011826, 17.105484}}, // Treehouse Right Orange 5
+	{ 0x17DB2, { 109.628647, 149.224945, 17.105482}}, // Treehouse Right Orange 6
+	{ 0x17DCC, { 109.381302, 150.438049, 17.105482}}, // Treehouse Right Orange 7
+	{ 0x17DCA, { 109.133995, 151.651154, 17.105469}}, // Treehouse Right Orange 8
+	{ 0x17D8E, { 108.886665, 152.864258, 17.105457}}, // Treehouse Right Orange 9
+	{ 0x17DB7, { 108.639336, 154.077362, 17.105455}}, // Treehouse Right Orange 10
+	{ 0x17DB1, { 108.392006, 155.290451, 17.105503}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 108.144684, 156.503571, 17.105513}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12RightThenLeft = {
+	{ 0x17DB1, { 107.561256, 154.034225, 17.105515}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 106.348152, 153.786896, 17.105539}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12RightThenStraight = {
+	{ 0x17DB1, { 108.392006, 155.290451, 17.105503}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 108.144684, 156.503571, 17.105513}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> rightOrange11To12RightThenRight = {
+	{ 0x17DB1, { 109.648239, 154.459717, 17.105474}}, // Treehouse Right Orange 11
+	{ 0x17DA2, { 110.861343, 154.707047, 17.105455}}, // Treehouse Right Orange 12
+};
+
+inline std::map<int, Vector3> finalElevatorPanelPositions = {
+	{ 0x3D9a7 , {211.0157623, -48.44531631, 2.267941236}}, // Elevator Close Right
+	{ 0x3D9A6 , {211.0527344, -49.13837814, 2.267941236}}, // Elevator Close Left
+
+	{ 0x3c114 , {210.9108887, -47.65873718, 0.08744956553}}, // Elevator Open Right
+	{ 0x3c113 , {211.0372314, -49.94410324, 0.08744954318}}, // Elevator Open Left
+
+	{ 0x3d9aa , {212.4322968, -48.22860336, 1.175450087}}, // Elevator Inside Left
+	{ 0x3d9a8 , {212.4847107, -49.19897842, 1.175730228}}, // Elevator Open Left
+
+	{ 0x3d9a9 , {212.4577942, -48.71218109, 1.170690656}}, // Elevator Start
+};
+
+
+
+class CollisionVolume
+{
+public:
+	CollisionVolume() {}
+	virtual bool containsPoint(std::vector<float> playerPos) = 0;
+	virtual bool containsPoint(float playerPosX, float playerPosY, float playerPosZ) = 0;
+};
+
+class CollisionCube : public CollisionVolume
 {
 public:
 	CollisionCube(float x1, float y1, float z1, float x2, float y2, float z2) {
@@ -1902,6 +2220,83 @@ private:
 	float y2;
 	float z2;
 };
+
+class ExactCollisionCube : public CollisionVolume
+{
+public:
+	ExactCollisionCube(std::vector<float> xyzBase, std::vector<float> xyz1, std::vector<float> xyz2, std::vector<float> xyz3) {
+		Vector3 xyz_piv(xyzBase);
+		Vector3 xyz_x(xyz1);
+		Vector3 xyz_y(xyz2);
+		Vector3 xyz_z(xyz3);
+
+		dx = xyz_x - xyz_piv;
+		dy = xyz_y - xyz_piv;
+		dz = xyz_z - xyz_piv;
+
+		dx = dx / 2;
+		dy = dy / 2;
+		dz = dz / 2;
+
+		center = xyz_piv + dx + dy + dz;
+
+		half = Vector3(dx.length(), dy.length(), dz.length());
+
+		dx = dx.normalized();
+		dy = dy.normalized();
+		dz = dz.normalized();
+	}
+
+	bool containsPoint(std::vector<float> playerPos) {
+		return containsPoint(playerPos[0], playerPos[1], playerPos[2]);
+	}
+
+	bool containsPoint(float playerPosX, float playerPosY, float playerPosZ) {
+		Vector3 point(playerPosX, playerPosY, playerPosZ);
+
+		Vector3 d = point - center;
+		return abs(d * dx) <= half.X && abs(d * dy) <= half.Y && abs(d * dz) <= half.Z;
+	}
+
+private:
+	Vector3 center;
+	Vector3 dx;
+	Vector3 dy;
+	Vector3 dz;
+	Vector3 half;
+};
+
+inline CollisionVolume* townRedRoof = new CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
+inline CollisionVolume* swampLongBridgeFar = new CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
+inline CollisionVolume* swampLongBridgeNear = new CollisionCube(200.75f, 14.5f, 0.5f, 207.7f, 18.15f, 2.85f);
+inline CollisionVolume* bunkerElevatorCube = new CollisionCube(161.9f, -86.2f, 28.0f, 158.1f, -91.0f, 29.2f);
+inline CollisionVolume* quarryElevatorUpper = new CollisionCube(-61.1f, 175.6f, 11.5f, -66.3f, 171.8f, 14.2f);
+inline CollisionVolume* quarryElevatorLower = new CollisionCube(-69.0f, 165.7f, 2.1f, -54.7f, 174.8f, 4.5f);
+inline CollisionVolume* riverVaultUpperCube = new CollisionCube(52, -51, 19, 44, -47, 23);
+inline CollisionVolume* riverVaultLowerCube = new CollisionCube(40, -56, 16, 46, -47, 20.5);
+inline CollisionVolume* bunkerPuzzlesCube = new CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
+inline CollisionVolume* tutorialPillarCube = new CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
+inline CollisionVolume* quarryLaserPanel = new CollisionCube(-59, 90, 17, -67, 100, 21);
+inline CollisionVolume* challengeTimer = new CollisionCube(-27, -40, -20, -50, -20, -4);
+inline CollisionVolume* EEEGate = new ExactCollisionCube({ -502.157, -174.301, 167 }, { -502.157, -174.301, 172 }, { -510, -168, 167 }, { -508, -187.7, 167 });
+
+inline CollisionVolume* bunkerLaserPlatform = new ExactCollisionCube({ 161.838, -86.685, 30.5 }, { 158.985, -86.927, 30.5 }, { 162.049, -89.407, 30.5 }, { 161.838, -86.685, 34 });
+
+inline std::map<int, CollisionVolume*> laserCollisions = {
+	{0x00509, new ExactCollisionCube({-197.783, 43.078, 16}, {-198.963, 33.558, 16},  {-207.646, 44.368, 16}, {-197.783, 43.078, 20})}, // Symmetry
+	{0x012FB, new ExactCollisionCube({-139.577, 120.460, -10}, {-138.074, 117.916, -10}, {-143.288, 118.357, -10}, {-139.577, 120.460, 21})}, // Desert
+	{0x01539, new ExactCollisionCube({-65.689, 100.040, 17.5}, {-56.964, 97.491, 17.5}, {-67.272, 94.522, 17.5}, {-65.689, 100.040, 20})}, // Quarry
+	{0x181B3, new ExactCollisionCube({ -3.264, 86.099, 14.0 }, { -8.329, 87.306, 14.0 }, { -2.048, 91.37, 14.0 }, { -3.264, 86.099, 18.0 })}, // Shadows
+	{0x014BB, new ExactCollisionCube({47.981, 135.773, 40.5}, {57.653, 133.734, 40.5}, {50.264, 148.514, 40.5}, {47.981, 135.773, 44})}, // Keep
+	{0x17C65, new ExactCollisionCube({31.289, -15.792, 16.4}, {28.5, -28.717, 16.4}, {13.644, -12.87, 16.4}, {31.289, -15.792, 18})}, // Monastery
+	{0x032F9, new ExactCollisionCube({-36.859, -11.220, 23}, {-37.813, -15.858, 23}, {-38.085, -10.73, 23}, {-36.859, -11.220, 30})}, // Town
+	{0x00274, new ExactCollisionCube({85.17, -55.891, 26}, {82.895, -50.217, 26}, {91.857, -51.481, 26}, {85.17, -55.891, 30})}, // Jungle
+	{0x00BF6, new ExactCollisionCube({153.334, -3.836, 7.8}, {142.850, -2.083, 7.8}, {152.526, -8.985, 7.8}, {152.526, -8.985, 14})}, // Swamp
+	{0x0C2B2, new ExactCollisionCube({163.029, -84.098, 26}, {175.137, -82.494, 26}, {164.033, -92.094, 26},{163.029, -84.098, 30})}, // Bunker
+	{0x028A4, new ExactCollisionCube({103.063, 131.681, 18}, {102.415, 134.121, 18}, {108.478, 132.748, 18}, {103.063, 131.681, 19})}, // Treehouse
+};
+
+// 0x012FB,
 
 RgbColor getColorByItemFlag(const __int64 flags);
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
@@ -2065,3 +2460,6 @@ inline std::vector<Warp> allPossibleWarps = {
 
 	{"Tunnels", {-63.066, -5.41, 5.01}, {-2.57802415, 0.0}, 0x38CCE, false},
 };
+
+RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
+std::string getStringFromFlag(unsigned int flags);

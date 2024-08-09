@@ -1,6 +1,9 @@
-[submodule "Source/Archipelago/Client/apclientpp"]
-	path = Source/Archipelago/Client/apclientpp
-	url = https://github.com/black-sliver/apclientpp
+[submodule "Variety-Randomiser"]
+	path = Variety-Randomiser
+	url = https://github.com/Penguin12335/Variety-Randomiser.git
 [submodule "Source/Archipelago/Client/wswrap"]
 	path = Source/Archipelago/Client/wswrap
-	url = https://github.com/black-sliver/wswrap
+	url = https://github.com/black-sliver/wswrap.git
+[submodule "Source/Archipelago/Client/apclientpp"]
+	path = Source/Archipelago/Client/apclientpp
+	url = https://github.com/black-sliver/apclientpp.git

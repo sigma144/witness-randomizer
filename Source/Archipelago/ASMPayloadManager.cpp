@@ -225,7 +225,7 @@ uint64_t ASMPayloadManager::FindSoundByName(std::string name) {
 
 	while (true) {
 		uint64_t blockedState = 1;
-		memory->ReadAbsolute(reinterpret_cast<LPVOID>(payloadBlocked), &blockedState, 8);
+		if (!memory->ReadAbsolute(reinterpret_cast<LPVOID>(payloadBlocked), &blockedState, 8)) throw std::exception("ASM Payload no longer findable. Was the game closed?");
 		if (blockedState == 0) break;
 	}
 
@@ -350,6 +350,40 @@ int ASMPayloadManager::FindEntityByName(std::string name) {
 	entityHex -= 1;
 
 	return entityHex;
+}
+
+void ASMPayloadManager::ExitSolveMode() {
+	char buffer[] =
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\x51" // push rcx
+		"\xFF\x15\x02\x00\x00\x00\xEB\x08\x00\x00\x00\x00\x00\x00\x00\x00"
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59"  // pop rcx
+		"\x59";  // pop rcx
+
+	uint64_t exitSolveModeFunction = Memory::get()->exitSolveModeFunction;
+
+	buffer[16] = exitSolveModeFunction & 0xff; //address of laser activation function
+	buffer[17] = (exitSolveModeFunction >> 8) & 0xff;
+	buffer[18] = (exitSolveModeFunction >> 16) & 0xff;
+	buffer[19] = (exitSolveModeFunction >> 24) & 0xff;
+	buffer[20] = (exitSolveModeFunction >> 32) & 0xff;
+	buffer[21] = (exitSolveModeFunction >> 40) & 0xff;
+	buffer[22] = (exitSolveModeFunction >> 48) & 0xff;
+	buffer[23] = (exitSolveModeFunction >> 56) & 0xff;
+
+	ExecuteASM(buffer, sizeof(buffer));
 }
 
 void ASMPayloadManager::BridgeToggle(int associatedPanel, bool extend) {

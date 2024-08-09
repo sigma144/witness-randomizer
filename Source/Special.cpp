@@ -11,6 +11,7 @@
 #include "Watchdog.h"
 
 #include <thread>
+#include "Utilities.h"
 
 void Special::generateSpecialSymMaze(std::shared_ptr<Generate> gen, int id) {
 	do {
@@ -1589,13 +1590,13 @@ void Special::drawText(int id, std::vector<float>& intersections, std::vector<in
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
-void Special::drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options)
+void Special::drawSeedAndDifficulty(int id, int seed, std::string mode, bool setSeed, bool options)
 {
 	std::vector<float> intersections;
 	std::vector<int> connectionsA;
 	std::vector<int> connectionsB;
 
-	createText(id, hard ? "expert" : "normal", intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.25f, 0.4f);
+	createText(id, mode, intersections, connectionsA, connectionsB, 0.1f, 0.9f, 0.25f, 0.4f);
 	std::string seedStr = std::to_string(seed);
 	createText(id, seedStr, intersections, connectionsA, connectionsB, 0.5f - seedStr.size()*0.06f, 0.5f + seedStr.size()*0.06f, setSeed ? 0.6f : 0.65f, setSeed ? 0.75f : 0.8f);
 	if (setSeed) createText(id, "Archipelago", intersections, connectionsA, connectionsB, 0.05f, 0.95f, 0.86f, 0.96f);
@@ -1776,26 +1777,6 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 		return;
 	}
 
-	//Symmetry Blue/Yellow panels before laser
-
-	if (id == 0x00A52 || id == 0x00A61) {
-		DrawSimplePanel(0x00A52, text, kickOut);
-		DrawSimplePanel(0x00A61, text, kickOut);
-		return;
-	}
-
-	if (id == 0x00A57 || id == 0x00A64) {
-		DrawSimplePanel(0x00A57, text, kickOut);
-		DrawSimplePanel(0x00A64, text, kickOut);
-		return;
-	}
-
-	if (id == 0x00A5B || id == 0x00A68) {
-		DrawSimplePanel(0x00A5B, text, kickOut);
-		DrawSimplePanel(0x00A68, text, kickOut);
-		return;
-	}
-
 	//Keep Pressure Plates
 
 	if (id == 0x0A3A8) {
@@ -1812,12 +1793,6 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 	if (id == 0x0A3AD) {
 		DrawSimplePanel(0x01D3F, text, kickOut);
-		return;
-	}
-
-	if (id == 0x09E86 || id == 0x09ED8) {
-		DrawSimplePanel(0x09E86, text, kickOut);
-		DrawSimplePanel(0x09ED8, text, kickOut);
 		return;
 	}
 
@@ -1860,19 +1835,8 @@ void Special::SkipPanel(int id, std::string text, bool kickOut) {
 	}
 
 	if (skip_dontRandomize.count(id)) {
-		std::vector<int> ids = { id };
-		if (id == 0x00CB9 || id == 0x00CA1 || id == 0x00C80) {
-			ids = { 0x00CB9, 0x00CA1, 0x00C80 };
-		}
-
-		if (id == 0x00C68 || id == 0x00C59 || id == 0x00C22) {
-			ids = { 0x00C68, 0x00C59, 0x00C22 };
-		}
-
-		for (int id : ids) {
-			memory->WritePanelData<int>(id, RANDOMIZE_ON_POWER_ON, { 0 });
-			DrawSimplePanel(id, text, kickOut);
-		}
+		memory->WritePanelData<int>(id, RANDOMIZE_ON_POWER_ON, { 0 });
+		DrawSimplePanel(id, text, kickOut);
 		return;
 	}
 }
@@ -2080,6 +2044,54 @@ void Special::ColorPanel(int id, std::string text) {
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
 
+void Special::DrawSingleVerticalLine(int id) {
+	Memory* memory = Memory::get();
+
+	std::vector<float> intersections = { 0.5f, 0.9f, 0.5f, 0.1f };
+
+	std::vector<int> intersectionFlags;
+	intersectionFlags = { Decoration::Start, Decoration::Exit };
+
+	std::vector<int> connectionsA = { 0 };
+	std::vector<int> connectionsB = { 1 };
+
+	std::vector<int> decorations(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+	std::vector<int> decorationsFlags(memory->ReadPanelData<int>(id, NUM_DECORATIONS), 0);
+
+	float path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+
+	memory->WritePanelData<float>(id, PATTERN_SCALE, { 1.0f / path_width_scale });
+	memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN_REFLECTION, { 0 });
+	memory->WritePanelData<INT64>(id, DOT_SEQUENCE_REFLECTION, { 0 });
+	memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { 0 });
+	memory->WritePanelData<INT64>(id, DOT_SEQUENCE, { 0 });
+
+	memory->WritePanelData<int>(id, TRACED_EDGES, { 0 });
+
+	memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
+	memory->WriteArray<int>(id, DECORATIONS, decorations);
+	memory->WriteArray<int>(id, DECORATION_FLAGS, decorationsFlags);
+
+	memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { 0 });
+	memory->WriteArray<int>(id, COLORED_REGIONS, { });
+
+	memory->WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+	memory->WritePanelData<INT64>(id, SEQUENCE, { 0 });
+
+	int style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
+	style &= ~Panel::Style::SYMMETRICAL;
+	memory->WritePanelData<int>(id, STYLE_FLAGS, { style });
+	memory->WritePanelData<INT64>(id, REFLECTION_DATA, { 0 });
+
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
 void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 {
 	ColorPanel(id, text == "Disabled Completely" ? "Disabled" : text);
@@ -2131,7 +2143,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	float width = 1.0f;
 
 	if (text == "Disabled Completely") {
-		if (false) { // Make this true for an Easter Egg :)
+		if (Utilities::isAprilFools()) { // Make this true for an Easter Egg :)
 			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f,
 				0.25f, 0.9f, 0.25f, 0.6f,
 				0.65f, 0.9f, 0.65f, 0.6f,     0.85f, 0.8f, 0.85f, 0.6f,
@@ -2293,7 +2305,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	//Not really necessary, actually, as you should never re-randomize while the game is already running with randomized panels. You should only re-randomize after the game was closed, and the vanilla panels were re-loaded.
 }
 
-void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, int mountain_lasers, int challenge_lasers)
+void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, std::string countInfo, int mountain_lasers, int challenge_lasers)
 {
 	std::vector<float> intersections;
 	std::vector<int> connectionsA;
@@ -2305,9 +2317,8 @@ void Special::writeGoalCondition(int id, std::string goal1, std::string goal2, i
 
 	createText(id, goal2, intersections, connectionsA, connectionsB, 0.5f - goal2.size() * 0.04f, 0.5f + goal2.size() * 0.04f, 0.25f, 0.4f);
 
-	std::string lasersString1 = " Lasers:";
 	std::string lasersString2 = std::to_string(mountain_lasers) + " - " + std::to_string(challenge_lasers);
-	createText(id, lasersString1, intersections, connectionsA, connectionsB, 0.5f - lasersString1.size() * 0.04f, 0.5f + lasersString1.size() * 0.04f, 0.6f, 0.75f);
+	createText(id, countInfo, intersections, connectionsA, connectionsB, std::max(0.5f - countInfo.size() * 0.04f, 0.03f), std::min(0.5f + countInfo.size() * 0.04f, 0.97f), 0.6f, 0.75f);
 	createText(id, lasersString2, intersections, connectionsA, connectionsB, 0.5f - lasersString2.size() * 0.04f, 0.5f + lasersString2.size() * 0.04f, 0.8f, 0.95f);
 
 	drawText(id, intersections, connectionsA, connectionsB, { 0.1f, 0.5f, 0.9f, 0.5f });
@@ -2349,6 +2360,8 @@ std::string Special::readStringFromPanels(std::vector<int> panelIDs) {
 		}
 	}
 
+	if (output.rfind("\x33\x33\x33\x3f\x9a\x99\x19\x3f\x9a\x99\x19\x3e", 0) == 0) return "";
+
 	return output;
 }
 
@@ -2377,6 +2390,37 @@ void Special::writeStringToPanels(std::string string, std::vector<int> panelIDs)
 			memory->WritePanelData(panelID, VIDEO_STATUS_COLOR + propertyOffset, intData);
 		}
 	}
+}
+
+void Special::swapStartAndEnd(int id) {
+	Memory* memory = Memory::get();
+	int num_intersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<int> intersection_flags = memory->ReadArray<int>(id, DOT_FLAGS, num_intersections);
+
+	for (int i = 0; i < intersection_flags.size(); i++) {
+		int flag = intersection_flags[i];
+		if ((flag & IntersectionFlags::STARTPOINT) == IntersectionFlags::STARTPOINT) {
+			intersection_flags[i] = (flag & !IntersectionFlags::STARTPOINT) | IntersectionFlags::ENDPOINT;
+		}
+		else if ((flag & IntersectionFlags::ENDPOINT) == IntersectionFlags::ENDPOINT) {
+			intersection_flags[i] = (flag & !IntersectionFlags::ENDPOINT) | IntersectionFlags::STARTPOINT;
+		}
+	}
+
+	memory->WriteArray<int>(id, DOT_FLAGS, intersection_flags);
+	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+}
+
+void Special::flipPanelHorizontally(int id) {
+	Memory* memory = Memory::get();
+	int num_intersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, num_intersections * 2);
+
+	for (int i = 0; i < intersections.size(); i += 2){
+		intersections[i] = 1 - intersections[i];
+	}
+
+	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
 }
 
 std::map<int, int> Special::correctShapesById = {};

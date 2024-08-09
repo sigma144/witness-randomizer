@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -111,13 +111,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT=0x0A00;WSWRAP_NO_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT=0x0A00;WSWRAP_NO_SSL;WITH_WINMM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
-      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;soloud20200207\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -156,12 +156,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;WITH_WINMM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;Archipelago\Client\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;Archipelago\Client\openssl\include;soloud20200207\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -172,14 +172,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Archipelago\worlds\witness\APWitnessData.h" />
     <ClInclude Include="Archipelago\APAudioPlayer.h" />
+    <ClInclude Include="Archipelago\APGameData.h" />
     <ClInclude Include="Archipelago\APState.h" />
     <ClInclude Include="Archipelago\APRandomizer.h" />
-    <ClInclude Include="Archipelago\APGameData.h" />
+    <ClInclude Include="Archipelago\APWitnessData.h" />
     <ClInclude Include="Archipelago\ASMPayloadManager.h" />
+    <ClInclude Include="Archipelago\CanonicalAudioFileNames.h" />
+    <ClInclude Include="Archipelago\DrawIngameManager.h" />
+    <ClInclude Include="Archipelago\Hints.h" />
     <ClInclude Include="Archipelago\OriginalPanelData.h" />
     <ClInclude Include="Archipelago\PanelRestore.h" />
-    <ClInclude Include="Archipelago\PuzzleData.h" />
+    <ClInclude Include="Archipelago\LockablePuzzle.h" />
     <ClInclude Include="Archipelago\PanelLocker.h" />
     <ClInclude Include="Archipelago\APWatchdog.h" />
     <ClInclude Include="Archipelago\Client\json.hpp" />
@@ -202,6 +207,11 @@
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="Randomizer.h" />
+    <ClInclude Include="soloud20200207\src\audiosource\wav\dr_flac.h" />
+    <ClInclude Include="soloud20200207\src\audiosource\wav\dr_mp3.h" />
+    <ClInclude Include="soloud20200207\src\audiosource\wav\dr_wav.h" />
+    <ClInclude Include="soloud20200207\src\audiosource\wav\stb_vorbis.h" />
+    <ClInclude Include="soloud20200207\src\backend\miniaudio\miniaudio.h" />
     <ClInclude Include="Special.h" />
     <ClInclude Include="StringSplitter.h" />
     <ClInclude Include="Utilities.h" />
@@ -213,6 +223,8 @@
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\ASMPayloadManager.cpp" />
+    <ClCompile Include="Archipelago\DrawIngameManager.cpp" />
+    <ClCompile Include="Archipelago\Hints.cpp" />
     <ClCompile Include="Archipelago\PanelRestore.cpp" />
     <ClCompile Include="ASMBuilder.cpp" />
     <ClCompile Include="ClientWindow.cpp" />
@@ -224,12 +236,36 @@
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
     <ClCompile Include="Panel.cpp" />
-    <ClCompile Include="Archipelago\PuzzleData.cpp" />
+    <ClCompile Include="Archipelago\LockablePuzzle.cpp" />
     <ClCompile Include="Archipelago\PanelLocker.cpp" />
     <ClCompile Include="PuzzleList.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Randomizer.cpp" />
+    <ClCompile Include="soloud20200207\src\audiosource\wav\dr_impl.cpp" />
+    <ClCompile Include="soloud20200207\src\audiosource\wav\soloud_wav.cpp" />
+    <ClCompile Include="soloud20200207\src\audiosource\wav\soloud_wavstream.cpp" />
+    <ClCompile Include="soloud20200207\src\audiosource\wav\stb_vorbis.c" />
+    <ClCompile Include="soloud20200207\src\backend\winmm\soloud_winmm.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_audiosource.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_bus.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_3d.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_basicops.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_faderops.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_filterops.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_getters.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_setters.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_voicegroup.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_core_voiceops.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_fader.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_fft.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_fft_lut.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_file.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_filter.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_misc.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_queue.cpp" />
+    <ClCompile Include="soloud20200207\src\core\soloud_thread.cpp" />
     <ClCompile Include="Special.cpp" />
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>

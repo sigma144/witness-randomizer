@@ -3,6 +3,7 @@
 
 #include "../Watchdog.h"
 #include "APGameData.h"
+#include "APWitnessData.h"
 #include "APState.h"
 #include "nlohmann/json.hpp"
 #include "Client/apclientpp/apclient.hpp"
@@ -12,12 +13,13 @@
 #include <queue>
 
 class Generate;
+class DrawIngameManager;
 class PanelLocker;
 
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, std::string> epn, std::map<int, std::pair<std::string, int64_t>> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -28,7 +30,7 @@ public:
 
 	virtual void action();
 
-	void MarkLocationChecked(int locationId);
+	void MarkLocationChecked(int64_t locationId);
 	void ApplyTemporarySpeedBoost();
 	void ApplyTemporarySlow();
 	void TriggerPowerSurge();
@@ -52,21 +54,32 @@ public:
 	void SkipPanel(int id, std::string reason, bool kickOut) {
 		SkipPanel(id, reason, kickOut, 0);
 	}
-	void SkipPanel(int id, std::string reason, bool kickOut, int cost);
+	void SkipPanel(int id, std::string reason, bool kickOut, int cost, bool allowRecursion = true);
+
+	void DisablePuzzle(int id);
 
 	void DoubleDoorTargetHack(int id);
 
 	void SetItemRewardColor(const int& id, const int& itemFlags);
+	bool PanelShouldPlayEpicVersion(const int& id);
 	void PlaySentJingle(const int& id, const int& itemFlags);
 	void PlayReceivedJingle(const int& itemFlags);
+	void PlayFirstJingle();
+	void PlayEntityHuntJingle(const int& huntEntity);
 
 	bool CheckPanelHasBeenSolved(int panelId);
 
 	void SetValueFromServer(std::string key, nlohmann::json value);
 	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncProgress);
 	void HandleEPResponse(std::string epID, nlohmann::json value, bool syncProgress);
+	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
+	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value, bool syncprogress);
 	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
+	void HandleHuntEntityResponse(nlohmann::json value, bool syncProgress);
 	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
+	void setLocationItemFlag(int64_t location, unsigned int flags);
+
+	void PotentiallyColorPanel(int64_t location);
 
 	void InfiniteChallenge(bool enable);
 
@@ -76,24 +89,35 @@ public:
 
 	void QueueReceivedItem(std::vector<__int64> item);
 
-	std::set<int> seenAudioMessages;
+	std::set<int> seenAudioLogs;
+	std::set<int> seenLasers;
 
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;
 	std::shared_ptr<Generate> generator;
 	std::map<int, int> panelIdToLocationId;
-	std::set<int> panelsThatAreLocations;
+	std::map<int, int> panelIdToLocationId_READ_ONLY;
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
+	std::map<int64_t, unsigned int> locationIdToItemFlags;
+	std::set<int64_t> checkedLocations;
+	std::set<int> alreadyPlayedHuntEntityJingle;
+	std::set<std::pair<int, int64_t>> locationsThatContainedItemsFromOtherPlayers;
 	int finalPanel;
 	bool isCompleted = false;
+	bool eee = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
+	int sphereOpacityModifier = 0;
 
 	std::queue<APClient::NetworkItem> queuedReceivedItems = {};
 
 	std::chrono::system_clock::time_point lastFrameTime;
 	float halfSecondCountdown = 0.f;
 	float timePassedSinceRandomisation = 0.0f;
+	float timePassedSinceFirstJinglePlayed = 0.0f;
+
+	bool firstTimeActiveEntity = false;
+	bool deathLinkFirstResponse = false;
 
 	int halfSecondCounter = 0;
 
@@ -115,7 +139,18 @@ private:
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
 	std::set<int> DisabledEntities;
 
+	std::map<int, bool> huntEntityToSolveStatus;
+	std::map<std::string, std::set<int>> huntEntitiesPerArea;
+	std::map<int, float> huntEntitySphereOpacities;
+	std::map<int, Vector3> huntEntityPositions;
+	std::map<int, float> huntEntityKeepActive;
+
+	std::map<int, int> doorToItemId;
+
 	bool FirstEverLocationCheckDone = false;
+	bool locationCheckInProgress = false;
+	bool firstStorageCheckDone = false;
+	bool firstJinglePlayed = false;
 
 	bool hasPowerSurge = false;
 	bool isKnockedOut = false;
@@ -129,8 +164,12 @@ private:
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
+	std::set<int> lockedDoors;
+	std::set<int> unlockedDoors;
 	std::map<int, std::vector<float>> collisionPositions;
 	std::set<int> alreadyTriedUpdatingNormally;
+
+	std::map<int, Vector3> recordedEntityPositions = {};
 
 	int storageCheckCounter = 6;
 
@@ -142,6 +181,10 @@ private:
 
 	bool symmetryMessageDelivered = false;
 	bool ppMessageDelivered = false;
+
+	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
+	int tutorialCableFlashState = 0;
+	int tutorialCableStateChangedRecently = 0;
 
 	void HandleKeyTaps();
 
@@ -156,7 +199,7 @@ private:
 
 	void DisableCollisions();
 
-	void AudioLogPlaying(float deltaSeconds);
+	void HandleInGameHints(float deltaSeconds);
 
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
@@ -166,7 +209,7 @@ private:
 	void HandleEncumberment(float deltaSeconds, bool doFunctions);
 	void HandleWarp(float deltaSeconds);
 
-	void LookingAtObelisk();
+	void LookingAtLockedEntity();
 
 	void PettingTheDog(float deltaSeconds);
 	bool LookingAtTheDog() const;
@@ -192,6 +235,7 @@ private:
 	void CheckLasers();
 	void CheckEPs();
 	void CheckPanels();
+	void CheckHuntEntities();
 	void CheckDoors();
 
 	void CheckImportantCollisionCubes();
@@ -218,12 +262,27 @@ private:
 	std::chrono::system_clock::time_point attemptedWarpCompletion;
 	float warpRetryTime = 0.0f;
 
+	void DoAprilFoolsEffects(float deltaSeconds);
+
+	Vector3 getHuntEntitySpherePosition(int huntEntity);
+
+	void DrawHuntPanelSpheres(float deltaSeconds);
+
+	void FlickerCable();
+
+	Vector3 getCachedEntityPosition(int id);
+
+	Vector3 getCameraDirection();
+
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
 	std::map<int, bool> laserStates;
+	std::map<int, std::string> laserMessages;
 
 	std::set<int> solvedPanels;
 	std::set<int> openedDoors;
+	std::set<int> solvedHuntEntitiesDataStorage;
+	std::map<std::string, bool> lastDeadChecks;
 
 	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;
@@ -231,12 +290,16 @@ private:
 
 	std::set<int> PuzzlesSkippedThisGame = {};
 
-	int currentAudioLog = -1;
-	float currentAudioLogDuration = 0.f;
+	int currentHintEntity = -1;
+	int lastRealHintEntity = -1;
+	int lastLaser = -1;
+	int lastAudioLog = -1;
+	float currentHintEntityDuration = 0.f;
 
 	int activePanelId = -1;
 	int mostRecentActivePanelId = -1;
 	int mostRecentPanelState = -1;
+	int lookingAtLockedEntity = -1;
 
 	std::string puzzleSkipInfoMessage;
 	float skipButtonHeldTime = 0.f; // Tracks how long the skip button has been held.
@@ -245,10 +308,10 @@ private:
 	//   skipped for whatever reason.
 	int puzzleSkipCost = -1;
 
-	std::map<int, std::pair<std::string, int64_t>> audioLogMessages = {};
+	std::map<int, inGameHint> inGameHints = {};
 	std::map<int, std::set<int>> obeliskHexToEPHexes = {};
+	std::map<int, int> epToObeliskSides = {};
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
-	std::map<int, std::string> entityToName = {};
 
 	Vector3 lastMouseDirection;
 	float dogPettingDuration = 0.f;
@@ -257,20 +320,6 @@ private:
 	bool letGoSinceInteractModeOpen = false;
 
 	double finalRoomMusicTimer = -1;
-
-	CollisionCube townRedRoof = CollisionCube(-23.53f, -22.34f, 14.95f, -27.8f, -19.9f, 17.34f);
-	CollisionCube swampLongBridgeFar = CollisionCube(189.75f, 5.86f, 3.5f, 194.2f, -1.6f, 1.2f);
-	CollisionCube swampLongBridgeNear = CollisionCube(200.75f, 14.5f, 0.5f, 207.7f, 18.15f, 2.85f);
-	CollisionCube bunkerElevatorCube = CollisionCube(161.9f, -86.2f, 28.0f, 158.1f, -91.0f, 29.2f);
-	CollisionCube quarryElevatorUpper = CollisionCube(-61.1f, 175.6f, 11.5f, -66.3f, 171.8f, 14.2f);
-	CollisionCube quarryElevatorLower = CollisionCube(-69.0f, 165.7f, 2.1f, -54.7f, 174.8f, 4.5f);
-	CollisionCube riverVaultUpperCube = CollisionCube(52, -51, 19, 44, -47, 23);
-	CollisionCube riverVaultLowerCube = CollisionCube(40, -56, 16, 46, -47, 20.5f);
-	CollisionCube bunkerPuzzlesCube = CollisionCube(161.2f, -96.3f, 5.8f, 172.3f, -101.1f, 11.5f);
-	CollisionCube tutorialPillarCube = CollisionCube(-152, -150.9f, 5, -148, -154.8f, 9);
-	CollisionCube quarryLaserPanel = CollisionCube(-59, 90, 17, -67, 100, 21);
-	CollisionCube symmetryUpperPanel = CollisionCube(-180, 31, 12.6f, -185, 37, 17);
-	CollisionCube challengeTimer = CollisionCube(-27, -40, -20, -50, -20, -4);
 
 	std::set<int> panelsThatHaveToBeSkippedForEPPurposes = {};
 

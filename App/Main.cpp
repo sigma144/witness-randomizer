@@ -164,14 +164,18 @@ void focusEdit(HWND hwnd) {
 //			//}
 
 void Main::randomize() {
+	Memory::get()->resetComputedAddresses();
+
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
+
+	clientWindow->logLine("Attempting randomization.");
 
 	Memory* memory = Memory::get();
 
 	bool rerandomize = false;
 	if (memory->ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
-		if (clientWindow->showDialogPrompt("Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)") == true) {
+		if (clientWindow->showDialogPrompt("Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", "Already Randomized") == true) {
 			rerandomize = true;
 		}
 		else {
@@ -180,10 +184,14 @@ void Main::randomize() {
 		}
 	}
 
+	clientWindow->logLine("Rerandomize: " + std::to_string(rerandomize));
+
 	// Retrieve AP credentials from the main window.
 	std::string apAddress = clientWindow->getSetting(ClientStringSetting::ApAddress);
 	std::string apSlotName = clientWindow->getSetting(ClientStringSetting::ApSlotName);
 	std::string apPassword = clientWindow->getSetting(ClientStringSetting::ApPassword);
+
+	clientWindow->logLine("Credentials: " + apAddress + " | " + apSlotName + " | " + apPassword);
 
 	randomizer->seedIsRNG = false;
 	apRandomizer->SyncProgress = clientWindow->getSetting(ClientToggleSetting::SyncProgress);
@@ -208,7 +216,7 @@ void Main::randomize() {
 	int lastSeed = memory->ReadPanelData<int>(0x00064, VIDEO_STATUS_COLOR + 8);
 	if (lastSeed != 1041865114 && !rerandomize && !DEBUG) {
 		if (seed != lastSeed) {
-			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?") == false) {
+			if (clientWindow->showDialogPrompt("This save file was previously randomized with a different seed, are you sure you want to randomize it with a new seed?", "Previously Randomized") == false) {
 				return;
 			}
 
@@ -219,57 +227,78 @@ void Main::randomize() {
 
 	//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
 	else if (Special::hasBeenPlayed() && !rerandomize && !DEBUG) {
-		if (clientWindow->showDialogPrompt("Warning: It is recommended that you start a new game for the randomizer, to prevent corruption of your save file. Randomize on the current save file anyway?") == true) {
+		if (clientWindow->showDialogPrompt("Warning: It is recommended that you start a new game for the randomizer, to prevent corruption of your save file. Randomize on the current save file anyway?", "Already Played") == true) {
 			randomizer->seedIsRNG = false;
 		}
 		else return;
 	}
 
+	clientWindow->logLine("Last seed: " + std::to_string(lastSeed));
+
 	if (lastSeed == 0) {
 		memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 8, { 0.0f });
 	}
 
-	// Store AP credentials to in-game data.
+	clientWindow->logLine("Store AP credentials to in-game data.");
 	Special::writeStringToPanels(apAddress, addressPanels);
 	Special::writeStringToPanels(apSlotName, slotNamePanels);
 	Special::writeStringToPanels(apPassword, passwordPanels);
 
-	// Store non-AP settings.
+	clientWindow->logLine("Store settings.");
 	clientWindow->saveSettings();
 
-	// Configure and run the base randomizer.
+	clientWindow->logLine("Configure base randomizer.");
 	randomizer->seed = seed;
 	randomizer->colorblind = clientWindow->getSetting(ClientToggleSetting::ColorblindMode);
 	randomizer->doubleMode = false;
 
+	clientWindow->logLine("Create ASMPayloadManager.");
 	ASMPayloadManager::create();
 	HudManager::create();
 
+	clientWindow->setStatusMessage("Initialising puzzles...");
+	apRandomizer->InitPanels();
+
+	clientWindow->logLine("Disabling/Enabling color cycle effects.");
+	apRandomizer->DisableColorCycle(!clientWindow->getSetting(ClientToggleSetting::PanelEffects));
+
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
-	apRandomizer->Init();
+	apRandomizer->RestoreOriginals();
 
 	clientWindow->setStatusMessage("Randomizing puzzles...");
 	if (puzzleRando == SIGMA_EXPERT)
 		randomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL)
 		randomizer->GenerateNormal();
+	else if (puzzleRando == UMBRA_VARIETY)
+		randomizer->GenerateVariety();
+	else
+		Random::seed(seed);
 
 	// Run the AP randomizer.
 	clientWindow->setStatusMessage("Setting up AP features...");
+	apRandomizer->PreGeneration();
+
+	clientWindow->logLine("Generating random puzzles.");
 	if (puzzleRando == SIGMA_EXPERT)
 		apRandomizer->GenerateHard();
 	else if (puzzleRando == SIGMA_NORMAL || puzzleRando == NO_PUZZLE_RANDO)
 		apRandomizer->GenerateNormal();
+	else if (puzzleRando == UMBRA_VARIETY)
+		apRandomizer->GenerateVariety();
 
 	memory->WritePanelData(0x00064, VIDEO_STATUS_COLOR + 8, seed);
 	memory->WritePanelData(0x00182, VIDEO_STATUS_COLOR + 8, puzzleRando);
 
 	if (clientWindow->getSetting(ClientToggleSetting::HighContrast)) {
+		clientWindow->logLine("Setting up High Contrast Mode.");
 		apRandomizer->HighContrastMode();
 	}
 
+	clientWindow->logLine("Start PostGeneration.");
 	apRandomizer->PostGeneration();
 
+	clientWindow->logLine("Start InputWatchdog.");
 	InputWatchdog::get()->start();
 
 	clientWindow->setStatusMessage("Connected.");
@@ -277,11 +306,13 @@ void Main::randomize() {
 }
 
 void Main::loadCredentials() {
+	Memory::get()->resetComputedAddresses();
+
 	ClientWindow* clientWindow = ClientWindow::get();
 
 	std::string apAddress = Special::readStringFromPanels(addressPanels);
 	if (apAddress.length() == 0) {
-		clientWindow->showMessageBox("This save has not previously been randomized with Archipelago and has no stored credentials.");
+		clientWindow->showMessageBox("This save has not previously been randomized with Archipelago and has no stored credentials.", "Not previously randomized");
 		return;
 	}
 

@@ -39,10 +39,6 @@ protected:
 		}
 	}
 
-	template <class T> T ReadPanelDataIntentionallyUnsafe(int panel, int offset) const {
-		return Memory::get()->ReadPanelData<T>(panel, offset);
-	}
-
 	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) const {
 		try {
 			return Memory::get()->ReadArray<T>(panel, offset, size);

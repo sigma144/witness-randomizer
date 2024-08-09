@@ -64,7 +64,7 @@ public:
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);
 	static void drawText(int id, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB, const std::vector<float>& finalLine);
-	static void drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options);
+	static void drawSeedAndDifficulty(int id, int seed, std::string mode, bool setSeed, bool options);
 	static void drawGoodLuckPanel(int id);
     static void SetRequiredLasers(int mountain, int challenge);
 
@@ -88,9 +88,11 @@ public:
 
 	static void ColorPanel(int id, std::string text);
 
+	static void DrawSingleVerticalLine(int id);
+
 	static void DrawSimplePanel(int id, std::string text, bool kickOut);
 
-	static void writeGoalCondition(int id, std::string goal1, std::string goal2, int mountain_lasers, int challenge_lasers);
+	static void writeGoalCondition(int id, std::string goal1, std::string goal2, std::string countInfo, int mountain_lasers, int challenge_lasers);
 
 	void test(); //For testing/debugging purposes only
 
@@ -137,6 +139,8 @@ public:
 
 	static std::string readStringFromPanels(std::vector<int> panelIDs);
 	static void writeStringToPanels(std::string string, std::vector<int> panelIDs);
+	static void swapStartAndEnd(int id);
+	static void flipPanelHorizontally(int id);
 
 	static void testSwap(int id1, int id2) {
 		Memory* memory = Memory::get();

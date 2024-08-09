@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 struct RgbColor {
 	RgbColor() : R(1.f), G(1.f), B(1.f), A(1.f) {}
 	RgbColor(float R, float G, float B) : R(R), G(G), B(B), A(1.f) {}
@@ -59,6 +61,7 @@ struct Vector2 {
 struct Vector3 {
 	Vector3() : X(0), Y(0), Z(0) {}
 	Vector3(float X, float Y, float Z) : X(X), Y(Y), Z(Z) {}
+	Vector3(std::vector<float> xyz) : X(xyz[0]), Y(xyz[1]), Z(xyz[2]) {}
 
 	float X;
 	float Y;
@@ -82,6 +85,10 @@ struct Vector3 {
 
 	friend Vector3 operator*(const Vector3& lhs, const float& rhs) {
 		return Vector3(lhs.X * rhs, lhs.Y * rhs, lhs.Z * rhs);
+	}
+
+	friend float operator*(const Vector3& lhs, const Vector3& rhs) {
+		return lhs.X * rhs.X + lhs.Y * rhs.Y + lhs.Z * rhs.Z;
 	}
 
 	friend Vector3 operator/(const Vector3& lhs, const float& rhs) {

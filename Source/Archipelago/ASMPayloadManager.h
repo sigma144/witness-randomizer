@@ -36,4 +36,5 @@ public:
 	void SendBunkerElevatorToFloor(int floor, bool force);
 	void ToggleFloodgate(std::string name, bool connect);
 	void BridgeToggle(int associatedPanel, bool disconnect);
+	void ExitSolveMode();
 };

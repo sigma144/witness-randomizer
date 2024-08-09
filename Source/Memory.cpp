@@ -29,26 +29,60 @@ Memory::Memory() {
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	bool supposedlyFound = false;
+	bool foundAnyProcesses = false;
+
+	std::ofstream outputStream = std::ofstream("FindProcessErrorLog.txt");
+	outputStream << "Found processes:";
+
 	while (Process32Next(snapshot, &entry)) {
+		outputStream << entry.szExeFile << "\n";
+
+		foundAnyProcesses = true;
 		if (entry.szExeFile == process64) {
+			supposedlyFound = true;
 			_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
-			break;
+
+			if (_handle) {
+				break;
+			}
+			else {
+				outputStream << "NOT ABLE TO RETRIEVE HANDLE TO THIS WITNESS INSTANCE.";
+			}
 		}
+	}
+
+	outputStream.close();
+
+	if (!foundAnyProcesses) {
+		MessageBox(GetActiveWindow(), L"Unable to see any processes at all. Is this program being quarantined by an antivirus?", NULL, MB_OK);
+		throw std::exception("Unable to see any processes at all.");
 	}
 
 	// If we didn't find the process, terminate.
 	if (!_handle) {
+		if (supposedlyFound) {
+			MessageBox(GetActiveWindow(), L"Found Witness exe but could not retrieve handle to it. Is this program being quarantined by an antivirus?", NULL, MB_OK);
+			throw std::exception("Found Witness exe but could not retrieve handle to it.");
+		}
+
 		PROCESSENTRY32 entry;
 		entry.dwSize = sizeof(entry);
 		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		bool found32 = false;
 		while (Process32Next(snapshot, &entry)) {
 			if (process32 == entry.szExeFile) {
-				MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
-				throw std::exception("Unable to find process!");
+				found32 = true;
+				break;
 			}
 		}
 
-		MessageBox(GetActiveWindow(), L"Process not found in RAM. Please open The Witness and then try again.", NULL, MB_OK);
+		if (found32) {
+			MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
+		}
+		else {
+			MessageBox(GetActiveWindow(), L"Process not found in RAM. Please open The Witness and then try again. See FindProcessErrorLog.txt for list of found processes.", NULL, MB_OK);
+		}
 		throw std::exception("Unable to find process!");
 	}
 
@@ -68,6 +102,7 @@ Memory::Memory() {
 	}
 
 	if (_baseAddress == 0) {
+		MessageBox(GetActiveWindow(), L"Was able to access the Witness .exe, but couldn't find the base process address!", NULL, MB_OK);
 		throw std::exception("Couldn't find the base process address!");
 	}
 }
@@ -117,7 +152,7 @@ void Memory::findGlobals() {
 
 		_singleton->showMsg = showMsgTemp;
 
-		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)")) {
+		if (!ClientWindow::get()->showDialogPrompt("This version of The Witness is not known to the randomizer. Proceed anyway? (May cause issues.)", "Unknown Version")) {
 			return;
 		}
 
@@ -319,6 +354,45 @@ void Memory::SetInfiniteChallenge(bool enable) {
 	}
 }
 
+void Memory::ForceStopChallenge()
+{
+	uint64_t entityManager;
+	ReadAbsolute(reinterpret_cast<LPCVOID>(getBaseAddress() + GLOBALS), &entityManager, sizeof(uint64_t));
+
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer[2] = stopChallengeFunction & 0xff; //address of laser activation function
+	buffer[3] = (stopChallengeFunction >> 8) & 0xff;
+	buffer[4] = (stopChallengeFunction >> 16) & 0xff;
+	buffer[5] = (stopChallengeFunction >> 24) & 0xff;
+	buffer[6] = (stopChallengeFunction >> 32) & 0xff;
+	buffer[7] = (stopChallengeFunction >> 40) & 0xff;
+	buffer[8] = (stopChallengeFunction >> 48) & 0xff;
+	buffer[9] = (stopChallengeFunction >> 56) & 0xff;
+	buffer[12] = entityManager & 0xff; //address of laser
+	buffer[13] = (entityManager >> 8) & 0xff;
+	buffer[14] = (entityManager >> 16) & 0xff;
+	buffer[15] = (entityManager >> 24) & 0xff;
+	buffer[16] = (entityManager >> 32) & 0xff;
+	buffer[17] = (entityManager >> 40) & 0xff;
+	buffer[18] = (entityManager >> 48) & 0xff;
+	buffer[19] = (entityManager >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+}
+
 void Memory::applyDestructivePatches() {
 	//Cursor size
 	char asmBuff[] = "\xBB\x00\x00\x80\x3F\x66\x44\x0F\x6E\xCB\x90\x90\x90";
@@ -331,6 +405,30 @@ void Memory::applyDestructivePatches() {
 	LPVOID addressPointer = reinterpret_cast<LPVOID>(cursorSize);
 
 	WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
+}
+
+void Memory::turnOffEEE() {
+	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		byte newByte = 0xEB;
+
+		WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
+
+		return true;
+	});
+}
+
+void Memory::turnOffElevator() {
+	// begin_endgame_1 - Prevent actually ending the game (Wonkavator)
+	executeSigScan({ 0x83, 0x7C, 0x01, 0xD0, 0x04 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x74 && data[index - 1] == 0xC0 && data[index - 2] == 0x84 && data[index - 7] == 0xE8) {
+				byte newByte = 0xEB;
+				WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index), &newByte, sizeof(newByte));
+				return true;
+			}
+		}
+		return false;
+	});
 }
 
 void Memory::doSecretThing() {
@@ -370,18 +468,105 @@ void Memory::doSecretThing() {
 }
 
 void Memory::findImportantFunctionAddresses(){
-	time_t rawtime;
-	time(&rawtime);
-	struct tm timeinfo;
-	localtime_s(&timeinfo, &rawtime);
-
-	int day = timeinfo.tm_mday;
-	int month = timeinfo.tm_mon + 1;
-
-	if (day == 1 && month == 4) {
+	if (Utilities::isAprilFools()) {
 		doSecretThing();
 		// If you find this, please don't talk about it publicly. DM Violet and they'll tell you what it does. :)
 	}
+
+	executeSigScan({ 0x40, 0x56, 0x48, 0x83, 0xEC, 0x30, 0x48, 0x89, 0x5C, 0x24, 0x40 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->stopChallengeFunction = _baseAddress + offset + index;
+		return true;
+		});
+
+	executeSigScan({ 0x44, 0x89, 0x4C, 0x24, 0x20, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->loadPackageFunction = _baseAddress + offset + index;
+		return true;
+	});
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xEA, 0x4C, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0x48 && data[index + 7] == 0x45 && data[index + 8] == 0x33 && data[index + 9] == 0xC9 && data[index + 10] == 0x41) {
+				index += 3;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->globalTextureCatalog = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x01 && data[index - 1] == 0xE8) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->acquireByNameFunction = addressOfRelativePointer + relativePointer + 4;
+
+				return true;
+			}
+		}
+		return false;
+	});
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x57, 0x48, 0x83, 0xEC, 0x50, 0x48, 0x8B, 0x41 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 7] == 0x48 && data[index - 6] == 0x8B && data[index - 5] == 0xD9 && data[index - 4] == 0x48 && data[index - 3] == 0x8B && data[index - 2] == 0x49 && data[index] == 0xE8) {
+				index++;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->loadTextureMapFunction = addressOfRelativePointer + relativePointer + 4;
+
+				return true;
+			}
+		}
+		return false;
+	});	
+
+	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x57, 0x48, 0x81, 0xEC, 0x10, 0x01, 0x00, 0x00, 0x48, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index] == 0xF3 && data[index + 1] == 0x44 && data[index + 2] == 0x0F && data[index + 3] == 0x10 && data[index + 4] == 0x35) {
+				index += 5;
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->windmillMaxTurnSpeed = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x80 && data[index - 1] == 0x3D && data[index + 4] == 0x00) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->windmillCurrentlyTurning = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		for (; index < data.size(); index++) {
+			if (data[index - 4] == 0xF3 && data[index - 3] == 0x0F && data[index - 2] == 0x10 && data[index - 1] == 0x05 && data[index - 9] == 0x0D) {
+				uint64_t addressOfRelativePointer = _baseAddress + offset + index;
+				int relativePointer;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(addressOfRelativePointer), &relativePointer, sizeof(int));
+
+				this->windmillCurrentTurnSpeed = addressOfRelativePointer + relativePointer + 4;
+
+				break;
+			}
+		}
+
+		return true;
+	});
 
 	//Activate Marker
 	executeSigScan({ 0x40, 0x55, 0x57, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24, 0xD0, 0x48, 0x81, 0xEC, 0x30, 0x01, 0x00, 0x00, 0x48, 0x8B, 0xF9, 0xE8 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
@@ -596,17 +781,22 @@ void Memory::findImportantFunctionAddresses(){
 	});
 
 	//open door
-	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		for (;; index--) {
-			if (data[index] == 0x40 && data[index + 1] == 0x53) { // This is the close door function. Could only find a sigscan for the middle of it, so we need to go backwards.
-				this->closeDoorFunction = _baseAddress + offset + index;
+	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {	
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) {
+				this->openDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
 		}
-		
+
+		return true;
+	});
+
+	//close door
+	executeSigScan({ 0x8B, 0x7B, 0x30, 0x4D, 0x8B, 0x63, 0x38, 0x49, 0x8B, 0xE3, 0x41, 0x5F, 0x41, 0x5E, 0x5D, 0xC3 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
-			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) { // The open door function comes after.
-				this->openDoorFunction = _baseAddress + offset + index - 2;
+			if (data[index - 2] == 0x40 && data[index - 1] == 0x53 && data[index] == 0x48) { // The open door function comes after.
+				this->closeDoorFunction = _baseAddress + offset + index - 2;
 				break;
 			}
 		}
@@ -953,14 +1143,6 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
-	executeSigScan({ 0x45, 0x8B, 0xF7, 0x48, 0x8B, 0x4D }, [this](__int64 offset, int index, const std::vector<byte>& data) {
-		byte newByte = 0xEB;
-
-		WriteAbsolute(reinterpret_cast<LPVOID>(_baseAddress + offset + index + 0x15), &newByte, sizeof(newByte));
-
-		return true;
-	});
-
 	executeSigScan({ 0x48, 0x8B, 0x51, 0x18, 0x2B, 0x42, 0x08, 0x78, 0x37 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index--) {
 			if (data[index] == 0x40 && data[index + 1] == 0x53 && data[index + 2] == 0x48) { // need to find function start (backwards)
@@ -1155,11 +1337,25 @@ uint64_t Memory::getBaseAddress() const
 	return _baseAddress;
 }
 
+bool Memory::isProcessStillRunning() {
+	DWORD exitCodeOut;
+
+	// GetExitCodeProcess returns zero on failure
+	if (GetExitCodeProcess(_handle, &exitCodeOut) == 0)
+	{
+		// Optionally get the error
+		// DWORD error = GetLastError();
+		return false;
+	}
+	// Return if the process is still active
+	return exitCodeOut == STILL_ACTIVE;
+}
+
 void Memory::ThrowError(std::string message) {
 	if (!showMsg) {
 		ClientWindow* clientWindow = ClientWindow::get();
 		if (clientWindow != nullptr) {
-			clientWindow->setErrorMessage("Most recent error: " + message);
+			// clientWindow->setErrorMessage("Most recent error: " + message);
 		}
 		throw std::exception(message.c_str());
 	}
@@ -1452,10 +1648,10 @@ void Memory::EnableVision(bool enable) {
 	char enabledByte = 0x48;
 	ReadProcessMemory(_handle, addressPointer, &currentByte, sizeof(currentByte), NULL);
 
-	if (enable && currentByte == disabledByte) {
+	if (enable && currentByte != enabledByte) {
 		WriteProcessMemory(_handle, addressPointer, &enabledByte, sizeof(enabledByte), NULL);
 	}
-	else if (!enable && currentByte == enabledByte) {
+	else if (!enable && currentByte != disabledByte) {
 		WriteProcessMemory(_handle, addressPointer, &disabledByte, sizeof(disabledByte), NULL);
 	}
 }
@@ -1511,32 +1707,6 @@ void Memory::EnableSolveMode(bool enable) {
 	else if (!enable && currentByte == enabledByte) {
 		WriteProcessMemory(_handle, addressPointer, &disabledByte, sizeof(disabledByte), NULL);
 	}
-}
-
-void Memory::ExitSolveMode() {
-	unsigned char buffer[] =
-		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
-		"\x48\x83\xEC\x48" // sub rsp,48
-		"\xFF\xD0" //call rax
-		"\x48\x83\xC4\x48" // add rsp,48
-		"\xC3"; //ret
-
-	buffer[2] = this->exitSolveModeFunction & 0xff; //address of laser activation function
-	buffer[3] = (this->exitSolveModeFunction >> 8) & 0xff;
-	buffer[4] = (this->exitSolveModeFunction >> 16) & 0xff;
-	buffer[5] = (this->exitSolveModeFunction >> 24) & 0xff;
-	buffer[6] = (this->exitSolveModeFunction >> 32) & 0xff;
-	buffer[7] = (this->exitSolveModeFunction >> 40) & 0xff;
-	buffer[8] = (this->exitSolveModeFunction >> 48) & 0xff;
-	buffer[9] = (this->exitSolveModeFunction >> 56) & 0xff;
-
-	SIZE_T allocation_size = sizeof(buffer);
-
-	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
-	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
-
-	WaitForSingleObject(thread, INFINITE);
 }
 
 void Memory::WriteMovementSpeed(float speed) {
@@ -1615,6 +1785,11 @@ void Memory::RemoveMesh(int id) {
 	buffer[0] = 0;
 
 	__int64 collisionMesh = WriteAbsolute(reinterpret_cast<LPVOID>(meshPointer + 0x98), buffer, sizeof(buffer)); //Collision Mesh
+}
+
+void Memory::DoFullPositionUpdate() {
+	this->WriteData<byte>({ GLOBALS, 0x278 + 0x39 }, { 1 });
+	return;
 }
 
 void Memory::MakeEPGlow(std::string name, std::vector<byte> patternPointBytes) {

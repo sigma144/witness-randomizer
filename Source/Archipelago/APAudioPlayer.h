@@ -3,6 +3,8 @@
 #include <queue>
 #include <set>
 #include <utility>
+#include <random>
+#include <any>
 #include "../../App/resource.h"
 
 enum APJingle
@@ -34,7 +36,11 @@ enum APJingle
 	UnderstatedTrap,
 	UnderstatedUseful,
 
+	EntityHunt,
+	UnderstatedEntityHunt,
+
 	Victory,
+	FirstJingle,
 	DeathLink,
 };
 
@@ -79,6 +85,25 @@ inline const std::map<std::string, std::map<std::string, int>> pillarJingles = {
 	}},
 };
 
+inline const std::vector<int> entityHuntJingles = {
+	IDR_WAVE52, // 1
+	IDR_WAVE61, // 8
+	IDR_WAVE62, // 9
+	IDR_WAVE54, // 3
+	IDR_WAVE56, // 5
+	IDR_WAVE53, // 2
+	IDR_WAVE55, // 4
+	IDR_WAVE57, // 6
+	IDR_WAVE64, // 11
+	IDR_WAVE58, // 7
+	IDR_WAVE63, // 10
+};
+
+namespace SoLoud {
+	class Soloud;
+	class Wav;
+}
+
 class APAudioPlayer : public Watchdog
 {
 private:
@@ -88,7 +113,11 @@ private:
 
 	static APAudioPlayer* _singleton;
 
-	std::queue<std::pair<APJingle,bool>> QueuedAudio = {};
+	std::map<int, SoLoud::Wav*> preloadedAudioFiles = {};
+
+	std::queue<std::pair<APJingle, std::any>> QueuedAudio = {};
+	std::queue<std::pair<APJingle, std::any>> QueuedAsyncAudio = {};
+	std::queue<int> QueueDirectAsyncAudio = {};
 
 	std::chrono::system_clock::time_point lastPanelJinglePlayedTime;
 	std::chrono::system_clock::time_point lastEPJinglePlayedTime;
@@ -96,13 +125,26 @@ private:
 	APJingle lastEPJinglePlayed;
 	int panelChain;
 	int epChain;
+	int lastEntityHuntIndex = -1;
 
-	void PlayJingle(int resource, bool async);
-	void PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async);
+	SoLoud::Wav* currentlyPlayingSyncSound;
+	int currentlyPlayingSyncHandle = -1;
+
+	int challengeHandle = -1;
+
+	void PlayJingleMain(int resource);
+	void PlayJingleBlocking(int resource);
+
+	void PlayJingle(int resource, bool async) {
+		if (async) PlayJingleBlocking(resource);
+		else PlayJingleMain(resource);
+	}
+
+	void PlayAppropriateJingle(APJingle jingle, std::any extraInfo, bool async);
 
 	std::map<APJingle, std::vector<int>> jingleVersions = {
 		{PanelFiller, {IDR_WAVE5, IDR_WAVE6, IDR_WAVE22, IDR_WAVE23}},
-		{PanelUseful, {IDR_WAVE15, IDR_WAVE16, IDR_WAVE32, IDR_WAVE33}},
+		{PanelUseful, {IDR_WAVE15, IDR_WAVE16, IDR_WAVE32, IDR_WAVE33, IDR_WAVE59}},
 		{PanelProgression, {IDR_WAVE8, IDR_WAVE9, IDR_WAVE10, IDR_WAVE28, IDR_WAVE29}},
 		{PanelTrap, {IDR_WAVE12, IDR_WAVE13, IDR_WAVE31}},
 
@@ -115,6 +157,7 @@ private:
 		{UnderstatedProgression, {IDR_WAVE2}},
 		{UnderstatedTrap, {IDR_WAVE3}},
 		{UnderstatedUseful, {IDR_WAVE4}},
+		{UnderstatedEntityHunt, {IDR_WAVE60}},
 
 		{IncomingFiller, {IDR_WAVE24}},
 		{IncomingProgression, {IDR_WAVE25}},
@@ -127,7 +170,7 @@ private:
 		{DogUseful, {IDR_WAVE37}},
 
 		{Victory, {IDR_WAVE30}},
-
+		{FirstJingle, {IDR_WAVE50}},
 		{DeathLink, {IDR_WAVE51}}
 	};
 
@@ -158,6 +201,7 @@ private:
 		{DogUseful, {IDR_WAVE37}},
 
 		{Victory, {IDR_WAVE30}},
+		{FirstJingle, {IDR_WAVE50}},
 	};
 
 	std::set<APJingle> epJingles = {
@@ -185,16 +229,30 @@ private:
 		UnderstatedFiller,
 		UnderstatedProgression,
 		UnderstatedTrap,
-		UnderstatedUseful
+		UnderstatedUseful,
+		UnderstatedEntityHunt,
 	};
+
+	std::mt19937 rng = std::mt19937(std::chrono::steady_clock::now().time_since_epoch().count());
 
 public:
 
 	static void create();
 	static APAudioPlayer* get();
-	void PlayAudio(APJingle jingle, APJingleBehavior queue, bool epicVersion);
+	void PlayAudio(APJingle jingle, APJingleBehavior queue, std::any extraInfo);
 	void PlayAudio(APJingle jingle, APJingleBehavior queue) {
 		PlayAudio(jingle, queue, false);
 	}
 	void PlayFinalRoomJingle(std::string type, APJingleBehavior queue, double finalRoomMusicTimer);
+	void ResetRampingCooldownPanel();
+	void ResetRampingCooldownEP();
+
+	bool HasCustomChallengeSong();
+	void StartCustomChallengeSong();
+	void StopCustomChallengeSong();
+	bool ChallengeSongHasEnded();
+
+	SoLoud::Soloud* gSoloud; // SoLoud engine
+
+	bool challengeSongIsPlaying = false;
 };

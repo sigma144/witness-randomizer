@@ -1,6 +1,22 @@
 #pragma once
 
 #include <set>
+#include <string>
+
+struct inGameHint {
+	std::string message;
+	int64_t locationID;
+	int32_t playerNo;
+	std::string areaHint;
+	int32_t areaProgression;
+	int32_t areaHuntEntities;
+	bool isLaserHint;
+	bool allowScout;
+};
+
+inline bool operator<(const inGameHint& lhs, const inGameHint& rhs) {
+	return lhs.message < rhs.message;
+}
 
 class APState
 {
@@ -20,9 +36,14 @@ public:
 	bool unlockedArrows = false;
 	bool unlockedSymmetry = false;
 	bool unlockedFullDots = false;
+
 	int activeLasers = 0;
+	int solvedHuntEntities = 0;
+
 	int requiredChallengeLasers = 11;
 	int requiredMountainLasers = 7;
+	int requiredHuntEntities = 25;
+	int totalHuntEntities = 40;
 
 	std::set<int> keysReceived = {};
 	std::set<int> keysInTheGame = {};
@@ -47,6 +68,7 @@ const int ITEM_B_W_SQUARES = ITEM_SQUARES + 1;
 const int ITEM_COLORED_SQUARES = ITEM_SQUARES + 2;
 const int ITEM_ARROWS = ITEM_OFFSET + 80;
 const int LASER_CHECK = 90832567;
+const int ENTITY_HUNT_CHECK = 90832954;
 
 //Powerups
 #define ITEM_POWERUP_OFFSET ITEM_OFFSET + 500

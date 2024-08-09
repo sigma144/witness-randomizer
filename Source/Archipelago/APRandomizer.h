@@ -24,6 +24,8 @@ class APRandomizer {
 		bool EPShuffle = false;
 		int MountainLasers = 7;
 		int ChallengeLasers = 11;
+		int RequiredHuntEntities = 0;
+		int PanelHuntPostgame = 0;
 		bool DeathLink;
 		int DeathLinkAmnesty = 0;
 		bool ElevatorsComeToYou = false;
@@ -36,12 +38,15 @@ class APRandomizer {
 		bool randomizationFinished = false;
 
 		bool Connect(std::string& server, std::string& user, std::string& password);
+		void PreGeneration();
 		void PostGeneration();
 
 		void GenerateNormal();
+		void GenerateVariety();
 		void GenerateHard();
 
 		void HighContrastMode();
+		void DisableColorCycle(bool revert);
 
 		void SkipPuzzle();
 
@@ -49,20 +54,27 @@ class APRandomizer {
 
 		bool InfiniteChallenge(bool enable);
 
-		void Init();
+		void InitPanels();
+		void RestoreOriginals();
 
 	private:
+		int unknownCounter = 10; //Try for 10 seconds to see if something else than "Unknown" shows up
+
 		std::map<int, int> panelIdToLocationId;
 		std::map<int, std::set<int>> itemIdToDoorSet;
+		std::map<int, int> doorToItemId;
 		std::set<int> doorsActuallyInTheItemPool;
 		std::map<int, std::vector<int>> progressiveItems = {
 			{ 158200, {158000, 158002}},
 			{ 158210, {158010, 158001}},
 			{ 158260, {158060, 158061}},
 		};
-		std::map<int, std::pair<std::string, int64_t>> audioLogMessages;
+		std::map<int, inGameHint> inGameHints;
 		std::map<int, int> panelIdToLocationIdReverse;
 		std::set<int> disabledEntities;
+		std::set<int> doorsToSkipLocking;
+
+		std::set<int> huntEntities;
 
 		std::map<int, std::set<int>> obeliskSideIDsToEPHexes;
 		std::set<int> precompletedLocations;

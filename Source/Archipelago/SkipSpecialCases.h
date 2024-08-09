@@ -92,6 +92,13 @@ inline const std::set<int> dont_power = {
 	0x17E52, // Treehouse Green 4
 };
 
+inline const std::set<int> lockEvenIfSolved = {
+	0x03678,
+	0x03676,
+	0x03679,
+	0x03675,
+};
+
 inline const std::set<int> skip_noLine = {
 	0x03629, // Tutorial Gate Open
 
@@ -126,7 +133,7 @@ inline const std::set<int> dont_touch_panel_at_all = {
 	0x00064, 0x00182, // Entry Panels
 
 	0x03505, // Gate Close
-
+	0x09F7F, // Mountaintop Box
 	0x00C09, // Challenge Maze
 	0x00CDB, 0x0051F, 0x00524, 0x00CD4, // Challenge reallocating
 };
@@ -179,6 +186,26 @@ inline const std::set<int> skip_completelyExclude = {
 	0x00CDB, 0x0051F, 0x00524, 0x00CD4, // Challenge reallocating
 };
 
+inline const std::set<int> trivial_panels = { // Not exhaustive probably
+	0x00064, 0x00182, // Entry Panels
+	0x03481, 0x0339E, 0x03535, 0x03702, 0x03542, 0x0356B, 0x2FAF6, //Vault Boxes
+	0x17CC8, 0x17CA6, 0x0A054, 0x17CDF, 0x09DB8, 0x17C95, //Boat Spawns
+	0x0360D, 0x03608, 0x032F5, 0x17CA4, 0x03616, 0x09DE0, 0x03615, 0x03613, //Lasers except Shadows & Keep
+
+	0x0042D, // Mountaintop River Shape
+
+	//Controls, e.g. Door Handles
+
+	0x0C339, 0x0A249, 0x1C2DF, 0x1831E, 0x1C260, 0x1831C, 0x1C2F3, 0x1831D, 0x1C2B1, 0x1831B,
+	0x275ED, 0x17CAC, 0x38663, 0x09E49,
+	0x0361B, 0x03713, 0x00B10, 0x00C92, 0x17CAB, 0x337FA, 0x0A099, 0x34BC5, 0x34BC6,
+	0x27732, 0x2773D, 0x3D9A6, 0x3D9A7, 0x3C113, 0x3C114, 0x3D9AA, 0x3D9A8, 0x3D9A9,
+};
+
+inline const std::set<int> door_timers = {
+	0x17CBC, 0x334DB, 0x334DC, 0x2700B, 0x17F33
+};
+
 // Puzzles that don't make sense to skip on Normal but are useful to skip on Hard.
 inline const std::set<int> skip_excludeOnNormal = {
 	0x181F5, // Swamp Rotating Bridge
@@ -204,6 +231,8 @@ inline const std::set<int> skip_multisolvePuzzles = {
 	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate resets (needed for EPs)
 
 	// Mountain
+	0x17C34, // Mountain Entry
+
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle small panels <-- TODO: These are fully "solved" once the big puzzle has been solved.
 	0x09E39, 0x09E86, 0x09ED8, // Light Bridge Controls
 	0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2, // Same solution set
@@ -234,10 +263,6 @@ inline const std::set<int> skip_multisolvePuzzles = {
 };
 
 inline const std::set<int> skip_specialCase = {
-	0x09E86, 0x09ED8,
-
-	0x00A52, 0x00A57, 0x00A5B, 0x00A61, 0x00A64, 0x00A68, //Symmetry Laser Panels
-
 	0x0A3A8, 0x0A3B9, 0x0A3BB, 0x0A3AD, // Pressure plate reset lines
 
 	0x09FC1, 0x09F8E, 0x09F01, 0x09EFF, // Metapuzzle
@@ -248,6 +273,29 @@ inline const std::set<int> skip_specialCase = {
 	// Challenge Puzzles
 	0x0A332, 0x0088E, 0x00BAF, 0x00BF3, 0x00CB9, 0x00CA1, 0x00C80, 0x00C68, 0x00C59, 0x00C22, 0x034F4, 0x034EC, 0x1C31A, 0x1C319,
 	0x01983, 0x01987, // Peekaboo
+};
+
+inline const std::map<int, std::vector<int>> skipTogether = {
+	{ 0x00A52, {0x00A61} }, // Symmetry Island Laser Panels
+	{ 0x00A61, {0x00A52} },
+	{ 0x00A57, {0x00A64} },
+	{ 0x00A64, {0x00A57} },
+	{ 0x00A5B, {0x00A68} },
+	{ 0x00A68, {0x00A5B} },
+
+	{ 0x09E86, {0x09ED8} }, // Mountain Floor 2 Light Bridge Cont
+	{ 0x09ED8, {0x09E86} },
+
+	{ 0x00CB9, { 0x00CA1, 0x00C80 } }, // Challenge triplets
+	{ 0x00CA1, { 0x00CB9, 0x00C80 } },
+	{ 0x00C80, { 0x00CB9, 0x00CA1 } },
+
+	{ 0x00C68, { 0x00C59, 0x00C22 } }, // Challenge triplets
+	{ 0x00C59, { 0x00C68, 0x00C22 } },
+	{ 0x00C22, { 0x00C68, 0x00C59 } },
+
+	{ 0x17C0A, {0x17E07} }, // Swamp Maze control
+	{ 0x17E07, {0x17C0A} },
 };
 
 inline const std::set<int> skip_dontRandomize = {
@@ -269,6 +317,8 @@ inline const std::set<int> very_thin_panels = {
 
 inline const std::set<int> fairly_thin_panels = {
 	0x335AB,0x335AC,0x3369D, // Mountain & Caves Elevators
+	0x03612, // Quarry Laser Panel
+	0x03629, // Tutorial Gate Open
 };
 
 inline const std::set<int> wide_panels = {

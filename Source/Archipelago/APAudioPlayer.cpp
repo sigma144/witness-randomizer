@@ -4,21 +4,74 @@
 #include "mmsystem.h"
 
 #include "../../App/resource.h"
+#include "CanonicalAudioFileNames.h"
+#include "../Utilities.h"
+
+#include "soloud.h"
+#include "soloud_wav.h"
+
+#include <iostream>
+#include <fstream>
 
 APAudioPlayer* APAudioPlayer::_singleton = nullptr;
 
 APAudioPlayer::APAudioPlayer() : Watchdog(0.1f) {
+	gSoloud = new SoLoud::Soloud();
+	gSoloud->init();
 
+	std::set<std::string> audioFiles = Utilities::get_all_files_with_extension(".\\Jingles\\", ".wav");
+	
+	for (auto [resource, possibilities] : canonicalAudioFileNames) {
+		SoLoud::Wav* wav = NULL;
+
+		for (std::string possibility : possibilities) {
+			if (audioFiles.contains(possibility)) {
+				wav = new SoLoud::Wav;
+				wav->load(("./Jingles/" + possibility).c_str());
+				break;
+			}
+		}
+
+		if (wav == NULL) {
+			auto hRes = FindResource(NULL, MAKEINTRESOURCE(resource), L"WAVE");
+
+			if (!hRes) continue;
+
+			auto hResLoad = LoadResource(NULL, hRes);
+			auto size = SizeofResource(NULL, hRes);
+			const unsigned char* buffer = reinterpret_cast<unsigned char*>(LockResource(hResLoad));
+			wav = new SoLoud::Wav;
+			wav->loadMem(buffer, size, false, false);
+		}
+
+		preloadedAudioFiles[resource] = wav;
+	}
 }
 
 void APAudioPlayer::action() {
-	if (!QueuedAudio.size()) return;
+	if (QueuedAudio.size() && !gSoloud->isValidVoiceHandle(currentlyPlayingSyncHandle)) {
+    	std::pair<APJingle, std::any> nextAudio = QueuedAudio.front();
 
-	std::pair<APJingle, bool> nextAudio = QueuedAudio.front();
+		PlayAppropriateJingle(nextAudio.first, nextAudio.second, false);
 
-	PlayAppropriateJingle(nextAudio.first, nextAudio.second, false);
+		QueuedAudio.pop();
+	}
 
-	QueuedAudio.pop();
+	if (QueuedAsyncAudio.size()) {
+		std::pair<APJingle, std::any> nextAudio = QueuedAsyncAudio.front();
+
+		std::thread([this, nextAudio] { this->PlayAppropriateJingle(nextAudio.first, nextAudio.second, true); }).detach();
+
+		QueuedAsyncAudio.pop();
+	}
+
+	if (QueueDirectAsyncAudio.size()) {
+		int resource = QueueDirectAsyncAudio.front();
+
+		std::thread([this, resource] { this->PlayJingleBlocking(resource); }).detach();
+
+		QueueDirectAsyncAudio.pop();
+	}
 }
 
 void APAudioPlayer::create() {
@@ -33,27 +86,60 @@ APAudioPlayer* APAudioPlayer::get() {
 	return _singleton;
 }
 
-void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, bool epicVersion) {
+void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, std::any extraInfo) {
 	if (queue == APJingleBehavior::PlayImmediate) {
-		PlayAppropriateJingle(jingle, epicVersion, true);
+		QueuedAsyncAudio.push({ jingle, extraInfo });
 	}
 
 	if (queue == APJingleBehavior::Queue){
-		QueuedAudio.push({ jingle, epicVersion });
+		QueuedAudio.push({ jingle, extraInfo });
 	}
 
 	if (queue == APJingleBehavior::DontQueue) {
-		if (!QueuedAudio.size()) QueuedAudio.push({ jingle, epicVersion });
+		if (!gSoloud->isValidVoiceHandle(currentlyPlayingSyncHandle)) QueuedAudio.push({ jingle, extraInfo });
 	}
 }
 
-void APAudioPlayer::PlayJingle(int resource, bool async) {
-	if (async) PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE | SND_ASYNC);
-	else PlaySound(MAKEINTRESOURCE(resource), NULL, SND_RESOURCE);
+void APAudioPlayer::PlayJingleMain(int resource) {
+	if (!preloadedAudioFiles.contains(resource)) {
+		return;
+	}
+
+	currentlyPlayingSyncSound = preloadedAudioFiles[resource];
+	currentlyPlayingSyncHandle = gSoloud->play(*currentlyPlayingSyncSound);
 }
 
-void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, bool async) {
+void APAudioPlayer::PlayJingleBlocking(int resource) {
+	if (!preloadedAudioFiles.contains(resource)) {
+		return;
+	}
+
+	SoLoud::Wav* sound = preloadedAudioFiles[resource];
+	int handle = gSoloud->play(*sound);
+
+	while (gSoloud->isValidVoiceHandle(handle)) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		continue;
+	}
+}
+
+void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, bool async) {
 	auto now = std::chrono::system_clock::now();
+
+	if (jingle == APJingle::EntityHunt) {
+		float percentage = std::any_cast<float>(extraFlag);
+		double bestIndex = percentage * (entityHuntJingles.size() - 1);
+
+		std::normal_distribution d{ bestIndex, 1.5};
+
+		int index = -1;
+		while (index < 0 || index >= entityHuntJingles.size() || index == lastEntityHuntIndex) {
+			index = std::round(d(rng));
+		}
+		lastEntityHuntIndex = index;
+		PlayJingle(entityHuntJingles[index], async);
+		return;
+	}
 
 	if (understatedJingles.count(jingle)) {
 		int resource = jingleVersions[jingle][0];
@@ -73,6 +159,8 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 
 	int versionToPlay = 0;
 
+	bool epicVersion = std::any_cast<bool>(extraFlag);
+
 	if (panelJingles.count(jingle) || dogJingles.count(jingle)) {
 		panelChain++;
 		if (lastPanelJinglePlayed == jingle && !epicVersion) panelChain++; // If the same jingle just played, advance the counter another time so the same jingle doesn't play twice.
@@ -80,7 +168,7 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 		lastPanelJinglePlayed = epicVersion ? APJingle::None : jingle;
 
 		versionToPlay = panelChain / 2;
-		lastPanelJinglePlayedTime = now;
+		ResetRampingCooldownPanel();
 	}
 	else if (epJingles.count(jingle)) {
 		epChain++;
@@ -89,11 +177,11 @@ void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, bool epicVersion, boo
 		lastEPJinglePlayed = epicVersion ? APJingle::None : jingle;
 
 		versionToPlay = epChain / 2;
-		lastEPJinglePlayedTime = now;
+		ResetRampingCooldownEP();
 	}
 
 	if (epicVersion) {
-		lastPanelJinglePlayedTime = now; // Epic doesn't interrupt a panel chain. Also, Epic should still advance the counter by one.
+		ResetRampingCooldownPanel(); // Epic doesn't interrupt a panel chain. Also, Epic should still advance the counter by one.
 
 		int resource = jingleEpicVersions[jingle];
 		PlayJingle(resource, async);
@@ -119,5 +207,40 @@ void APAudioPlayer::PlayFinalRoomJingle(std::string type, APJingleBehavior queue
 
 	int resource = pillarJingles.find(key)->second.find(type)->second;
 
-	PlayJingle(resource, SND_RESOURCE | SND_ASYNC);
+	QueueDirectAsyncAudio.push(resource);
+}
+
+void APAudioPlayer::ResetRampingCooldownPanel()
+{
+	lastPanelJinglePlayedTime = std::chrono::system_clock::now();
+}
+
+void APAudioPlayer::ResetRampingCooldownEP()
+{
+	lastEPJinglePlayedTime = std::chrono::system_clock::now();
+}
+
+bool APAudioPlayer::HasCustomChallengeSong()
+{
+	return preloadedAudioFiles.contains(-2);
+}
+
+void APAudioPlayer::StartCustomChallengeSong()
+{
+	if (gSoloud->isValidVoiceHandle(challengeHandle)) return;
+	SoLoud::Wav* sound = preloadedAudioFiles[-2];
+	challengeHandle = gSoloud->play(*sound);
+	challengeSongIsPlaying = true;
+}
+
+void APAudioPlayer::StopCustomChallengeSong()
+{
+	challengeSongIsPlaying = false;
+	if (!gSoloud->isValidVoiceHandle(challengeHandle)) return;
+	gSoloud->stop(challengeHandle);
+}
+
+bool APAudioPlayer::ChallengeSongHasEnded()
+{
+	return !gSoloud->isValidVoiceHandle(challengeHandle);
 }

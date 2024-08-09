@@ -57,6 +57,10 @@ public:
 
 	DWORD getProcessID();
 
+	void resetComputedAddresses() {
+		_computedAddresses = {};
+	};
+
 	// Reads data from program memory relative to the base address of the program.
 	bool ReadRelative(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
 		std::lock_guard<std::recursive_mutex> lock(mtx);
@@ -196,6 +200,10 @@ public:
 		return this->ReadData<float>({ CAMERAPOSITION }, 3);
 	}
 
+	std::vector<float> ReadCameraAngle() {
+		return this->ReadData<float>({ CAMERAANG }, 2);
+	}
+
 	void WritePlayerPosition(std::vector<float> playerPosition);
 	void WriteCameraAngle(std::vector<float> cameraAngle);
 
@@ -232,6 +240,9 @@ public:
 	}
 
 	void applyDestructivePatches();
+	void turnOffEEE();
+
+	void turnOffElevator();
 
 	void writeCursorColor(std::vector<float> color) {
 		float r = color[0];
@@ -255,8 +266,10 @@ public:
 
 	void StopDesertLaserPropagation();
 	void SetInfiniteChallenge(bool enable);
+	void ForceStopChallenge();
 
 	void RemoveMesh(int id);
+	void DoFullPositionUpdate();
 
 	void DisplayHudMessage(std::string message, std::array<float, 3> rgbColor);
 
@@ -305,7 +318,7 @@ public:
 	int zeroSpeedRelativeAddress;
 	uint64_t _recordPlayerUpdate;
 	uint64_t _getSoundFunction;
-	uint64_t _bytesLengthChallenge;
+	uint64_t _bytesLengthChallenge = 0;
 	uint64_t completeEPFunction;
 	uint64_t updateJunctionsFunction;
 	uint64_t powerGaugeFunction;
@@ -328,6 +341,15 @@ public:
 	uint64_t exitSolveModeFunction;
 	uint64_t setUserBrightnessFunction;
 	uint64_t deviceDisplay;
+	uint64_t windmillCurrentlyTurning;
+	uint64_t windmillMaxTurnSpeed;
+	uint64_t windmillCurrentTurnSpeed;
+	uint64_t stopChallengeFunction;
+
+	uint64_t globalTextureCatalog;
+	uint64_t acquireByNameFunction;
+	uint64_t loadTextureMapFunction;
+	uint64_t loadPackageFunction;
 	uint64_t activateMarkerFunction;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
@@ -367,6 +389,8 @@ public:
 	uint32_t scanForRelativeAddress(const std::vector<byte>& signatureBytes, uint32_t scanOffset = 0, uint32_t valueOffset = 0);
 
 	uint64_t getBaseAddress() const;
+
+	bool isProcessStillRunning();
 
 private:
 

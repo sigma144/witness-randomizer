@@ -3,20 +3,25 @@
 #include "Converty.h"
 #include "nlohmann/json.hpp"
 #include <Richedit.h>
+#include <numeric>
+#include <set>
+#include <vector>
 
 #include "ClientWindow.h"
 
 #include "../App/Version.h"
 #include "../App/Main.h"
 #include "Input.h"
+#include "Utilities.h"
+#include "Archipelago/Client/apclientpp/apclient.hpp"
 
 using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 6
+#define SAVE_VERSION 8
 
-#define CLIENT_WINDOW_WIDTH 600
+#define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
 #define CLIENT_WINDOW_CLASS_NAME L"WitnessRandomizer"
 
@@ -44,6 +49,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 
 #define IDC_BUTTON_RANDOMIZE 0x440
 #define IDC_BUTTON_LOADCREDENTIALS 0x441
+#define IDC_BUTTON_DISABLEDEATHLINK 0x442
 
 // Root index for keybind controls.
 #define IDC_BUTTON_KEYBIND 0x480
@@ -54,6 +60,8 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_SYNCPROGRESS 0x503
 #define IDC_SETTING_DISABLED 0x504
 #define IDC_SETTING_HIGHCONTRAST 0x505
+#define IDC_SETTING_PANELEFFECTS 0x506
+#define IDC_SETTING_EXTRAINFO 0x507
 #define IDC_SETTING_JINGLES 0x510
 
 
@@ -72,6 +80,8 @@ ClientWindow* ClientWindow::get() {
 
 void ClientWindow::saveSettings()
 {
+	currentJingles = getSetting(ClientDropdownSetting::Jingles);
+
 	json data;
 
 	data["saveVersion"] = SAVE_VERSION;
@@ -82,6 +92,8 @@ void ClientWindow::saveSettings()
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
+	data["paneleffects"] = getSetting(ClientToggleSetting::PanelEffects);
+	data["extrainfo"] = getSetting(ClientToggleSetting::ExtraInfo);
 	data["jingles"] = getSetting(ClientDropdownSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
@@ -109,11 +121,13 @@ void ClientWindow::loadSettings()
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
-			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Off");
+			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Understated");
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
 			setSetting(ClientToggleSetting::HighContrast, data.contains("highcontrast") ? data["highcontrast"].get<bool>() : false);
+			setSetting(ClientToggleSetting::PanelEffects, data.contains("paneleffects") ? data["paneleffects"].get<bool>() : false);
+			setSetting(ClientToggleSetting::ExtraInfo, data.contains("extrainfo") ? data["extrainfo"].get<bool>() : true);
 
 			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
 			setSetting(ClientDropdownSetting::DisabledPuzzles, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
@@ -135,11 +149,13 @@ void ClientWindow::loadSettings()
 
 	if (!loadedSettings) {
 		// Set defaults.
-		setSetting(ClientDropdownSetting::Jingles, "Off");
+		setSetting(ClientDropdownSetting::Jingles, "Understated");
 		setSetting(ClientToggleSetting::ChallengeTimer, false);
 
 		setSetting(ClientToggleSetting::SyncProgress, false);
 		setSetting(ClientToggleSetting::HighContrast, false);
+		setSetting(ClientToggleSetting::PanelEffects, false);
+		setSetting(ClientToggleSetting::ExtraInfo, true);
 
 		setSetting(ClientDropdownSetting::Collect, "Unchanged");
 		setSetting(ClientDropdownSetting::DisabledPuzzles, "Prevent Solve");
@@ -166,12 +182,14 @@ void ClientWindow::loadSettings()
 	setSetting(ClientStringSetting::ApPassword, "");
 }
 
-void ClientWindow::showMessageBox(std::string message) const {
-	MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), NULL, MB_OK);
+void ClientWindow::showMessageBox(std::string message, std::string caption) const {
+	logLine("Message box: " + message);
+	MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), Converty::Utf8ToWide(caption).c_str(), MB_OK);
 }
 
-bool ClientWindow::showDialogPrompt(std::string message) const {
-	return MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), NULL, MB_YESNO) == IDYES;
+bool ClientWindow::showDialogPrompt(std::string message, std::string caption) const {
+	logLine("Dialog prompt: " + message);
+	return MessageBox(hwndRootWindow, Converty::Utf8ToWide(message).c_str(), Converty::Utf8ToWide(caption).c_str(), MB_YESNO) == IDYES;
 }
 
 bool ClientWindow::getSetting(ClientToggleSetting setting) const {
@@ -212,14 +230,81 @@ void ClientWindow::refreshKeybind(const CustomKey& customKey) const {
 	writeStringToTextBox(input->getNameForInputButton(input->getCustomKeybind(customKey)), label);
 }
 
-void ClientWindow::setStatusMessage(std::string statusMessage) const
+void ClientWindow::setStatusMessage(std::string statusMessage)
 {
+	logLine("Dialog prompt: " + statusMessage);
+	normalStatusMessage = statusMessage;
 	writeStringToTextBox(statusMessage, hwndStatusText);
 }
 
-void ClientWindow::setErrorMessage(std::string errorMessage) const
+void ClientWindow::setActiveEntityString(std::string activeEntityString) const
 {
-	writeStringToTextBox(errorMessage, hwndErrorText);
+	if (activeEntityString.empty()) {
+		writeStringToTextBox(normalStatusMessage, hwndStatusText);
+		return;
+	}
+	writeStringToTextBox("Active: " + activeEntityString + ".", hwndStatusText);
+}
+
+void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks) {
+	std::string hintsText = "Audio Log Hints:\r\n";
+
+	for (std::string hint : hints) {
+		hintsText += hint + "\r\n";
+	}
+
+	hintsText.pop_back();
+	hintsText.pop_back();
+
+	if (hintsText != lastHintText) {
+		lastHintText = hintsText;
+		writeStringToTextBox(hintsText, hwndHintsView);
+		SendMessage(hwndHintsView, EM_LINESCROLL, 0, 0);
+	}
+
+	std::string deadAreasText = "Hinted areas with no more progression:\r\n";
+	
+	if (auto i = fullyClearedAreas.begin(), e = fullyClearedAreas.end(); i != e) {
+		deadAreasText += *i++;
+		for (; i != e; ++i) deadAreasText.append(", ").append(*i);
+	}
+
+
+	std::string deadChecksText = "Hinted locations that are cleared or have Filler/Traps:\r\n";
+
+	if (auto i = deadChecks.begin(), e = deadChecks.end(); i != e) {
+		deadChecksText += *i++;
+		for (; i != e; ++i) deadChecksText.append(", ").append(*i);
+	}
+
+	if (!deadChecks.empty()) deadChecksText += ",\r\n";
+
+	if (auto i = otherPeoplesDeadChecks.begin(), e = otherPeoplesDeadChecks.end(); i != e) {
+		deadChecksText += *i++;
+		for (; i != e; ++i) deadChecksText.append(", ").append(*i);
+	}
+
+	if (deadAreasText != lastDeadAreasText) {
+		writeStringToTextBox(deadAreasText, hwndClearedAreasView);
+		SendMessage(hwndClearedAreasView, EM_LINESCROLL, 0, 0);
+		lastDeadAreasText = deadAreasText;
+	}
+
+	if (deadChecksText != lastDeadChecksText) {
+		writeStringToTextBox(deadChecksText, hwndClearedChecksView);
+		SendMessage(hwndClearedChecksView, EM_LINESCROLL, 0, 0);
+		lastDeadChecksText = deadChecksText;
+	}
+}
+
+std::string ClientWindow::getJinglesSettingSafe()
+{
+	return currentJingles;
+}
+
+void ClientWindow::EnableDeathLinkDisablingButton(bool enable)
+{
+	EnableWindow(hwndDisableDeathlink, enable);
 }
 
 void ClientWindow::setWindowMode(ClientWindowMode mode)
@@ -234,15 +319,18 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApPassword)->second, false);
 		EnableWindow(hwndApLoadCredentials, false);
 		EnableWindow(hwndApConnect, false);
+		EnableWindow(hwndDisableDeathlink, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, false);
 
 		for (auto keybindButton : customKeybindButtons) {
 			EnableWindow(keybindButton.second, false);
@@ -257,6 +345,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(stringSettingTextBoxes.find(ClientStringSetting::ApPassword)->second, true);
 		EnableWindow(hwndApLoadCredentials, true);
 		EnableWindow(hwndApConnect, true);
+		EnableWindow(hwndDisableDeathlink, false);
 
 		// Enable randomization settings.
 
@@ -265,12 +354,14 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 
 		// Enable "any time" settings.
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, true);
 
 		// Disable keybinds until connected.
 		for (auto keybindButton : customKeybindButtons) {
@@ -299,12 +390,14 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
 
 		// Enable "any time" settings.
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, true);
 
 		// Enable keybinds.
 		for (auto keybindButton : customKeybindButtons) {
@@ -359,6 +452,12 @@ void ClientWindow::focusClientWindow()
 	SetForegroundWindow(hwndRootWindow);
 }
 
+void ClientWindow::logLine(std::string line) const
+{
+	clientLog << line << "\n";
+	clientLog.flush();
+}
+
 void ClientWindow::buildWindow() {
 
 	// Register a class for the root window.
@@ -377,7 +476,7 @@ void ClientWindow::buildWindow() {
 	RegisterClassW(&wndClass);
 
 	// Create the root window.
-	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_TABSTOP | WS_MINIMIZEBOX,
+	hwndRootWindow = CreateWindowEx(WS_EX_CONTROLPARENT, CLIENT_WINDOW_CLASS_NAME, PRODUCT_NAME, WS_THICKFRAME | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_TABSTOP | WS_MINIMIZEBOX,
 		650, 200, CLIENT_WINDOW_WIDTH, 100, nullptr, nullptr, hAppInstance, nullptr);
 
 	// HACK: Due to things like menu bar thickness, the root window won't actually be the requested size. Grab the actual size here for later comparison.
@@ -396,31 +495,42 @@ void ClientWindow::buildWindow() {
 	addHorizontalRule(currentY);
 	addKeybindings(currentY);
 	addHorizontalRule(currentY);
-	addErrorMessage(currentY);
+	addHintsView(currentY);
+
+	standardHeight = currentY;
+	currentWidth = CLIENT_WINDOW_WIDTH;
+	currentHeight = currentY;
 
 	// Resize the window to match its contents.
 	MoveWindow(hwndRootWindow, 650, 200,
 		CLIENT_WINDOW_WIDTH + windowWidthAdjustment, currentY + windowHeightAdjustment, true);
 }
 
-void ClientWindow::addHorizontalRule(int& currentY) {
+HWND ClientWindow::addHorizontalRule(int& currentY) {
 
 	currentY += LINE_SPACING + 4;
 
-	CreateWindow(L"STATIC", L"",
+	HWND hwnd = CreateWindow(L"STATIC", L"",
 		WS_VISIBLE | WS_CHILD | SS_ETCHEDHORZ,
 		8, currentY,
 		CLIENT_WINDOW_WIDTH - 16, 2,
 		hwndRootWindow, 0, hAppInstance, NULL);
 
 	currentY += 2 + LINE_SPACING + 4;
+
+	return hwnd;
 }
 
 void ClientWindow::addVersionDisplay(int& currentY) {
 	const int halfWidth = CLIENT_WINDOW_WIDTH / 2 - STATIC_TEXT_MARGIN;
 
+	LPCWSTR versionStr = L"Archipelago Version: " AP_VERSION_STR;
+	if (AP_VERSION_STR_BACKCOMPAT != "") {
+		versionStr = L"Compatible Archipelago Versions: " AP_VERSION_STR_BACKCOMPAT L" - " AP_VERSION_STR;
+	}
+
 	// AP version name. Left-justified.
-	CreateWindow(L"STATIC", L"Archipelago Version: " AP_VERSION_STR,
+	CreateWindow(L"STATIC", versionStr,
 		WS_VISIBLE | WS_CHILD | SS_LEFT,
 		STATIC_TEXT_MARGIN, currentY,
 		halfWidth, STATIC_TEXT_HEIGHT,
@@ -434,19 +544,6 @@ void ClientWindow::addVersionDisplay(int& currentY) {
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT;
-
-	if (AP_VERSION_STR_BACKCOMPAT != "") {
-		currentY += LINE_SPACING;
-
-		// AP version name. Left-justified.
-		CreateWindow(L"STATIC", L"Backwards Compatible with: " AP_VERSION_STR_BACKCOMPAT,
-			WS_VISIBLE | WS_CHILD | SS_LEFT,
-			STATIC_TEXT_MARGIN, currentY,
-			halfWidth, STATIC_TEXT_HEIGHT,
-			hwndRootWindow, NULL, hAppInstance, NULL);
-
-		currentY += STATIC_TEXT_HEIGHT;
-	}
 }
 
 void ClientWindow::addArchipelagoCredentials(int& currentY) {
@@ -526,18 +623,18 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 }
 
 void ClientWindow::addGameOptions(int& currentY) {
-	// Colorblind option. This is 3 lines tall.
-	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzles themselves are identical to those generated without colorblind mode enabled.",
+	// Colorblind option. This is 2 lines tall.
+	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzle contents will be identical apart from that.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 3,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 2,
 		hwndRootWindow, (HMENU)IDC_SETTING_COLORBLIND, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::ColorblindMode] = IDC_SETTING_COLORBLIND;
 	toggleSettingCheckboxes[ClientToggleSetting::ColorblindMode] = hwndOptionColorblind;
 
-	currentY += STATIC_TEXT_HEIGHT * 3 + LINE_SPACING;
+	currentY += STATIC_TEXT_HEIGHT * 2 + LINE_SPACING; // Idk it doesn't look good with 2 lines
 
-	// Challenge timer option.
+	// High contrast
 	HWND hwndOptionHighContrast = CreateWindow(L"BUTTON", L"High Contrast Mode",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
@@ -548,7 +645,7 @@ void ClientWindow::addGameOptions(int& currentY) {
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
-	// Challenge timer option.
+	// Sync Mode
 	HWND hwndOptionSyncProgress = CreateWindow(L"BUTTON", L"Coop: Sync Lasers and EPs",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		CONTROL_MARGIN, currentY,
@@ -556,6 +653,17 @@ void ClientWindow::addGameOptions(int& currentY) {
 		hwndRootWindow, (HMENU)IDC_SETTING_SYNCPROGRESS, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::SyncProgress] = IDC_SETTING_SYNCPROGRESS;
 	toggleSettingCheckboxes[ClientToggleSetting::SyncProgress] = hwndOptionSyncProgress;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
+	// Panel Effects
+	HWND hwndOptionTurnOffMountainEffects = CreateWindow(L"BUTTON", L"Disable color cycle effects",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_PANELEFFECTS, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::PanelEffects] = IDC_SETTING_PANELEFFECTS;
+	toggleSettingCheckboxes[ClientToggleSetting::PanelEffects] = hwndOptionTurnOffMountainEffects;
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
@@ -567,6 +675,17 @@ void ClientWindow::addGameOptions(int& currentY) {
 		hwndRootWindow, (HMENU)IDC_SETTING_CHALLENGE, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::ChallengeTimer] = IDC_SETTING_CHALLENGE;
 	toggleSettingCheckboxes[ClientToggleSetting::ChallengeTimer] = hwndOptionChallenge;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
+	// Extra Info
+	HWND hwndOptionExtraInfo = CreateWindow(L"BUTTON", L"Enable Extra Info (recommended for beginners)",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_EXTRAINFO, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::ExtraInfo] = IDC_SETTING_EXTRAINFO;
+	toggleSettingCheckboxes[ClientToggleSetting::ExtraInfo] = hwndOptionExtraInfo;
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
@@ -630,12 +749,19 @@ void ClientWindow::addGameOptions(int& currentY) {
 		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
 		hwndRootWindow, (HMENU)IDC_SETTING_JINGLES, hAppInstance, NULL);
 	dropdownBoxes[ClientDropdownSetting::Jingles] = hwndOptionJingles;
-	dropdownIds[ClientDropdownSetting::Jingles] = IDC_SETTING_COLLECT;
+	dropdownIds[ClientDropdownSetting::Jingles] = IDC_SETTING_JINGLES;
 
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Off");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Full");
 	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Understated");
+
+	// Connect button. In line with the load credentials button.
+	hwndDisableDeathlink = CreateWindow(L"BUTTON", L"Disable DeathLink",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		CLIENT_WINDOW_WIDTH - CONTROL_MARGIN - 180, currentY,
+		180, CONTROL_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_BUTTON_DISABLEDEATHLINK, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
 }
@@ -687,16 +813,145 @@ void ClientWindow::addPuzzleEditor(int& currentY) {
 	// TODO
 }
 
-void ClientWindow::addErrorMessage(int& currentY) {
+void ClientWindow::addHintsView(int& currentY) {
+	startingHeightOfHintsView = currentY;
 
-	// Most recent error.
-	hwndErrorText = CreateWindow(L"STATIC", L"Most Recent Error:",
-		WS_VISIBLE | WS_CHILD | SS_LEFT,
+	hwndHintsView = CreateWindow(L"Edit", L"Audio Log Hints:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
 		STATIC_TEXT_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT * 3,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 9,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	currentY += STATIC_TEXT_HEIGHT * 9;
+
+	hwndHintsSeparator1 = addHorizontalRule(currentY);
+
+	hwndClearedAreasView = CreateWindow(L"Edit", L"Hinted areas with no more progression:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
+		STATIC_TEXT_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 3,
 		hwndRootWindow, NULL, hAppInstance, NULL);
 
 	currentY += STATIC_TEXT_HEIGHT * 3;
+
+	hwndHintsSeparator2 = addHorizontalRule(currentY);
+
+	hwndClearedChecksView = CreateWindow(L"Edit", L"Hinted locations that are cleared or have Filler/Traps:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT | WS_VSCROLL | ES_MULTILINE | ES_READONLY,
+		STATIC_TEXT_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, STATIC_TEXT_HEIGHT * 4,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	currentY += STATIC_TEXT_HEIGHT * 4 + LINE_SPACING; // Idk
+
+	standardHeightOfHintsView = currentY - startingHeightOfHintsView;
+}
+
+void ClientWindow::resize(int width, int height) {
+	/*std::wstringstream s;
+	s << standardHeight << "\n";
+	s << height << "\n";
+	s << standardHeightOfHintsView << "\n";*/
+
+	if (height < startingHeightOfHintsView) {
+		height = startingHeightOfHintsView;
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, height + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+	}
+
+	if (width != currentWidth) {
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+		return;
+	}
+
+	int distributeHeight = (height - standardHeight);
+	std::vector<int> sizes = { 9, 3, 4 };
+	int total = 0;
+
+	std::vector<int> currentHeights = {};
+	std::set<int> distributableIndices = {};
+
+	for (int i = 0; i < sizes.size(); i++) {
+		currentHeights.push_back(STATIC_TEXT_HEIGHT * sizes[i]);
+		distributableIndices.insert(i);
+	}
+
+	while (distributeHeight < 0 || distributeHeight >= sizes.size()) {
+		if (distributableIndices.empty()) break;
+
+		total = 0;
+
+		for (int i = 0; i < sizes.size(); i++) {
+			if (distributableIndices.count(i) == 0) continue;
+			total += sizes[i];
+		}
+		int distributeHeightFixed = distributeHeight;
+		for (int i = 0; i < sizes.size(); i++) {
+			if (distributableIndices.count(i) == 0) continue;
+			int change = (distributeHeightFixed * sizes[i]) / total;
+			if (change == 0) change = distributeHeight > 0 ? 1 : -1;
+			currentHeights[i] += change;
+			distributeHeight -= change;
+		}
+
+		for (int i = 0; i < currentHeights.size(); i++) {
+			if (currentHeights[i] < STATIC_TEXT_HEIGHT * 3) {
+				distributeHeight -= STATIC_TEXT_HEIGHT * 3 - currentHeights[i];
+				currentHeights[i] = STATIC_TEXT_HEIGHT * 3;
+				distributableIndices.erase(i);
+			}
+		}
+	}
+	
+	if (distributeHeight < 0) {
+		return;
+	}
+
+	for (int i = 0; i < sizes.size(); i++) {
+		if (distributeHeight < 0) {
+			break;
+		}
+		currentHeights[i]++;
+		distributeHeight--;
+	}
+
+	
+
+	currentWidth = width;
+	currentHeight = height;
+
+	int currentY = startingHeightOfHintsView;
+
+	SetWindowPos(hwndHintsView, NULL,
+		STATIC_TEXT_MARGIN, currentY, CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, currentHeights[0], SWP_SHOWWINDOW);
+
+	currentY += currentHeights[0];
+
+	currentY += LINE_SPACING + 4;
+
+	SetWindowPos(hwndHintsSeparator1, NULL,
+		8, currentY, CLIENT_WINDOW_WIDTH - 16, 2, SWP_SHOWWINDOW);
+
+	currentY += 2 + LINE_SPACING + 4;
+
+
+	SetWindowPos(hwndClearedAreasView, NULL,
+		STATIC_TEXT_MARGIN, currentY, CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, currentHeights[1], SWP_SHOWWINDOW);
+
+	currentY += currentHeights[1];
+
+	currentY += LINE_SPACING + 4;
+
+	SetWindowPos(hwndHintsSeparator2, NULL,
+		8, currentY, CLIENT_WINDOW_WIDTH - 16, 2, SWP_SHOWWINDOW);
+
+	currentY += 2 + LINE_SPACING + 4;
+
+	SetWindowPos(hwndClearedChecksView, NULL,
+		STATIC_TEXT_MARGIN, currentY, CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN - 10, currentHeights[2], SWP_SHOWWINDOW);
+
+	if (distributeHeight < 0) {
+		SetWindowPos(hwndRootWindow, NULL, 0, 0, currentWidth + windowWidthAdjustment, currentHeight + windowHeightAdjustment, SWP_SHOWWINDOW | SWP_NOMOVE);
+	}
 }
 
 void ClientWindow::show(int nCmdShow) {
@@ -723,6 +978,12 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			DestroyWindow(hwnd);
 		return 0;
 	}
+	else if (message == WM_SIZE) {
+		int width = LOWORD(lParam);
+		int height = HIWORD(lParam);
+		
+		resize(width, height);
+	}
 	else if (message == WM_DESTROY) {
 		// The window was destroyed. Inform the OS that we want to terminate.
 		PostQuitMessage(0);
@@ -737,6 +998,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 				Main::randomize();
 				return 0;
 			}
+		}
+
+		if (HIWORD(wParam) == CBN_SELCHANGE && currentWindowMode == ClientWindowMode::Randomized) {
+			saveSettings();
 		}
 
 		switch (LOWORD(wParam)) {
@@ -757,8 +1022,13 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 			toggleCheckbox(IDC_SETTING_HIGHCONTRAST);
 			break;
 		}
-		case IDC_SETTING_JINGLES: {
-			toggleCheckbox(IDC_SETTING_JINGLES);
+		case IDC_SETTING_PANELEFFECTS: {
+			toggleCheckbox(IDC_SETTING_PANELEFFECTS);
+			break;
+		}
+		case IDC_SETTING_EXTRAINFO: {
+			toggleCheckbox(IDC_SETTING_EXTRAINFO);
+			saveSettings();
 			break;
 		}
 		// Buttons.
@@ -768,6 +1038,18 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_BUTTON_LOADCREDENTIALS: {
 			Main::loadCredentials();
+			break;
+		}
+		case IDC_BUTTON_DISABLEDEATHLINK: {
+			if (ap == NULL) break;
+
+			if (!showDialogPrompt("Do you want to disable Death Link permanently on for this slot? This only applies to the device you are playing on. Cannot be reverted, even by making a new save.", "Disable DeathLink")) break;
+
+			std::string deathLinkDisabledKey = "WitnessDisabledDeathLink" + std::to_string(ap->get_player_number()) + Utilities::wstring_to_utf8(Utilities::GetUUID());
+			ap->SetNotify({ deathLinkDisabledKey });
+			ap->Set(deathLinkDisabledKey, NULL, true, { {"replace", true} });
+			EnableDeathLinkDisablingButton(false);
+
 			break;
 		}
 // Keybindings.

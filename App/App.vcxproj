@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -114,9 +114,9 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;WSWRAP_NO_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;WSWRAP_NO_SSL;WITH_WINMM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -161,9 +161,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;ASIO_STANDALONE;ASIO_NO_WIN32_LEAN_AND_MEAN;WIN32_LEAN_AND_MEAN;NOMINMAX;_WIN32_WINNT#0x0A00;WITH_WINMM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -211,7 +211,7 @@
     <Media Include="..\..\..\Music\Pillars Useful Bmaj.wav" />
     <Media Include="..\..\..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\..\..\Music\Pillars Useful Emaj.wav" />
-    <Media Include="..\Music\Bonk Sound Effect.wav" />
+    <Media Include="..\Music\Bonk.wav" />
     <Media Include="..\Music\Dog Filler.wav" />
     <Media Include="..\Music\Dog Progression.wav" />
     <Media Include="..\Music\Dog Trap.wav" />
@@ -233,6 +233,18 @@
     <Media Include="..\Music\Panel Filler 3.wav" />
     <Media Include="..\Music\Panel Filler 4.wav" />
     <Media Include="..\Music\Panel Filler Epic.wav" />
+    <Media Include="..\Music\Panel Hunt 1.wav" />
+    <Media Include="..\Music\Panel Hunt 2.wav" />
+    <Media Include="..\Music\Panel Hunt 3.wav" />
+    <Media Include="..\Music\Panel Hunt 4.wav" />
+    <Media Include="..\Music\Panel Hunt 5.wav" />
+    <Media Include="..\Music\Panel Hunt 6.wav" />
+    <Media Include="..\Music\Panel Hunt 7.wav" />
+    <Media Include="..\Music\Panel Hunt 8.wav" />
+    <Media Include="..\Music\Panel Hunt 9.wav" />
+    <Media Include="..\Music\Panel Hunt 10.wav" />
+    <Media Include="..\Music\Panel Hunt 11.wav" />
+    <Media Include="..\Music\Panel Hunt Understated.wav" />
     <Media Include="..\Music\Panel Progression 1.wav" />
     <Media Include="..\Music\Panel Progression 2.wav" />
     <Media Include="..\Music\Panel Progression 3.wav" />
@@ -247,6 +259,7 @@
     <Media Include="..\Music\Panel Useful 2.wav" />
     <Media Include="..\Music\Panel Useful 3.wav" />
     <Media Include="..\Music\Panel Useful 4.wav" />
+    <Media Include="..\Music\Panel Useful 5.wav" />
     <Media Include="..\Music\Panel Useful Epic.wav" />
     <Media Include="..\Music\Pillars Filler Bmaj.wav" />
     <Media Include="..\Music\Pillars Filler EbMin.wav" />
@@ -260,6 +273,7 @@
     <Media Include="..\Music\Pillars Useful Bmaj.wav" />
     <Media Include="..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\Music\Pillars Useful Emaj.wav" />
+    <Media Include="..\Music\Randomized.wav" />
     <Media Include="..\Music\Victory.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
