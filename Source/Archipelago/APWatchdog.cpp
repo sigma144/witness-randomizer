@@ -3643,7 +3643,7 @@ void APWatchdog::DrawSpheres(float deltaSeconds) {
 
 		if (warpPositionUnlockPointOverrides.contains(warpname)) position = warpPositionUnlockPointOverrides[warpname];
 
-		position.Z -= 1.68f;
+		position.Z -= 1.6f;
 		RgbColor color = unlocked ? RgbColor(0.2f, 0.9f, 0.2f, 0.9f) : RgbColor(0.9f, 0.3f, 0.3f, 0.9f);
 
 		spheresToDraw.push_back(WitnessDrawnSphere({ position, WARP_SPHERE_RADIUS, color, true }));

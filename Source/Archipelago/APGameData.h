@@ -2301,7 +2301,7 @@ inline std::map<int, CollisionVolume*> laserCollisions = {
 RgbColor getColorByItemFlag(const __int64 flags);
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
 
-inline const float WARP_SPHERE_RADIUS = 1.3f;
+inline const float WARP_SPHERE_RADIUS = 1.4f;
 
 struct Warp {
 	std::string name;
