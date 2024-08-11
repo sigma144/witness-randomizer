@@ -19,7 +19,7 @@ class PanelLocker;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -70,13 +70,14 @@ public:
 	bool CheckPanelHasBeenSolved(int panelId);
 
 	void SetValueFromServer(std::string key, nlohmann::json value);
-	void HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncProgress);
-	void HandleEPResponse(std::string epID, nlohmann::json value, bool syncProgress);
-	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress);
-	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value, bool syncprogress);
-	void HandleSolvedPanelsResponse(nlohmann::json value, bool syncProgress);
-	void HandleHuntEntityResponse(nlohmann::json value, bool syncProgress);
-	void HandleOpenedDoorsResponse(nlohmann::json value, bool syncProgress);
+	void HandleLaserResponse(std::string laserID, nlohmann::json value);
+	void HandleWarpResponse(nlohmann::json value);
+	void HandleEPResponse(std::string epID, nlohmann::json value);
+	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value);
+	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value);
+	void HandleSolvedPanelsResponse(nlohmann::json value);
+	void HandleHuntEntityResponse(nlohmann::json value);
+	void HandleOpenedDoorsResponse(nlohmann::json value);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
 
 	void PotentiallyColorPanel(int64_t location);
@@ -138,6 +139,7 @@ private:
 	bool CollectUnlock = false;
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
 	std::set<int> DisabledEntities;
+	bool SyncProgress = false;
 
 	std::map<int, bool> huntEntityToSolveStatus;
 	std::map<std::string, std::set<int>> huntEntitiesPerArea;
@@ -150,6 +152,7 @@ private:
 	bool FirstEverLocationCheckDone = false;
 	bool locationCheckInProgress = false;
 	bool firstStorageCheckDone = false;
+	bool firstActionDone = false;
 	bool firstJinglePlayed = false;
 
 	bool hasPowerSurge = false;
@@ -254,6 +257,12 @@ private:
 	void ToggleSleep();
 	void TryWarp();
 
+	void CheckUnlockedWarps();
+
+	void UnlockWarps(std::vector<std::string> warps);
+
+	std::string startingWarp = "Tutorial First Hallway";
+	std::map<std::string, bool> unlockableWarps = {};
 	std::vector<Warp*> unlockedWarps = {};
 	Warp* selectedWarp = NULL;
 	bool hasTeleported = true;
@@ -266,7 +275,7 @@ private:
 
 	Vector3 getHuntEntitySpherePosition(int huntEntity);
 
-	void DrawHuntPanelSpheres(float deltaSeconds);
+	void DrawSpheres(float deltaSeconds);
 
 	void FlickerCable();
 
@@ -303,6 +312,8 @@ private:
 
 	std::string puzzleSkipInfoMessage;
 	float skipButtonHeldTime = 0.f; // Tracks how long the skip button has been held.
+
+	std::string DeathLinkDataStorageKey = "";
 
 	// The cost to skip the currently-selected puzzle. -1 if the puzzle cannot be
 	//   skipped for whatever reason.

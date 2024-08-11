@@ -2301,6 +2301,8 @@ inline std::map<int, CollisionVolume*> laserCollisions = {
 RgbColor getColorByItemFlag(const __int64 flags);
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
 
+inline const float WARP_SPHERE_RADIUS = 1.0f;
+
 struct Warp {
 	std::string name;
 	std::vector<float> playerPosition;
@@ -2324,92 +2326,92 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Orchard Beyond Second Gate", {-99.434, 21.863, 17.640}, {2.296, 0}, 0x17C75, false },
 
 	{"Outside Glass Factory", {-170.611, -34.887, 2.694}, {3.01785398, 0.0}, 0x1B232, false },
-	{"Inside Glass Factory", {-191.871, -38.314, 2.720}, {2.933, 0.0}, 0x14C28, false},
+	{"Inside Glass Factory", {-191.871, -38.314, 2.720}, {2.933, 0.0}, 0x14C28, false },
 
 	{"Outside Symmetry Island", {-160.390, 31.471, 11.394}, {3.03225493, 0.0}, 0x06A3C, false },
-	{"Symmetry Island Lower", {-174.229, 32.756, 11.828}, {2.793, -0.047}, 0x36577, false},
-	{"Symmetry Island Upper", {-192.211, 36.385, 17.130}, {2.931, 0.078}, 0x0D1BD, false},
+	{"Symmetry Island Lower", {-174.229, 32.756, 11.828}, {2.793, -0.047}, 0x36577, false },
+	{"Symmetry Island Upper", {-192.211, 36.385, 17.130}, {2.931, 0.078}, 0x0D1BD, false },
 	
-	{"Desert Outside", {-139.404, 157.708, 7.166}, {2.87715, 0}, 0x06221, false},
+	{"Desert Outside", {-139.404, 157.708, 7.166}, {2.87715, 0}, 0x06221, false },
 	{"Desert Vault", {-231.3, 197.655, 3.304}, {1.776, -0.1}, 0x351C3, false },
-	{"Desert Light Room", {-174.588, 167.4, 3.937}, {2.892, -0.025}, 0x0C852, false},
-	{"Desert Pond Room", {-173.792, 166.858, -2.456}, {2.818, -0.08}, 0x22C98, false},
-	{"Desert Flood Room", {-184.652, 167.168, -6.781}, {-0.458, -0.152}, 0x22CC1, false},
-	{"Desert Elevator Room", {-144.363, 129.63, -5.540}, {-1.765, -0.047}, 0x272B1, false},
-	{"Desert Behind Elevator", {-138.181, 113.782, -5.540}, {2.09, 0}, 0x272B8, false},
+	{"Desert Light Room", {-174.588, 167.4, 3.937}, {2.892, -0.025}, 0x0C852, false },
+	{"Desert Pond Room", {-173.792, 166.858, -2.456}, {2.818, -0.08}, 0x22C98, false },
+	{"Desert Flood Room", {-184.652, 167.168, -6.781}, {-0.458, -0.152}, 0x22CC1, false },
+	{"Desert Elevator Room", {-144.363, 129.63, -5.540}, {-1.765, -0.047}, 0x272B1, false },
+	{"Desert Behind Elevator", {-138.181, 113.782, -5.540}, {2.09, 0}, 0x272B8, false },
 
-	{"Outside Quarry", {-54.314, 85.340, 11.068}, {0.637, 0}, 0x31A1D, false},
-	{"Quarry Between Entry Doors", {-50.448, 92.804, 8.863}, {1.66, -0.165}, 0x31DE7, false},
-	{"Quarry", {-26.390, 140.466, 3.593}, {2.907, 0.038}, 0x30663, false},
+	{"Outside Quarry", {-54.314, 85.340, 11.068}, {0.637, 0}, 0x31A1D, false },
+	{"Quarry Between Entry Doors", {-50.448, 92.804, 8.863}, {1.66, -0.165}, 0x31DE7, false },
+	{"Quarry", {-26.390, 140.466, 3.593}, {2.907, 0.038}, 0x30663, false },
 
-	{"Quarry Stoneworks Ground Floor", {-62.301, 155.597, 3.538}, {-1.645, 0.042}, 0x276F8, false},
-	{"Quarry Stoneworks Middle Floor", {-60.933, 148.549, 5.034}, {2.860, -0.086}, 0x276C3, false},
+	{"Quarry Stoneworks Ground Floor", {-62.301, 155.597, 3.538}, {-1.645, 0.042}, 0x276F8, false },
+	{"Quarry Stoneworks Middle Floor", {-60.933, 148.549, 5.034}, {2.860, -0.086}, 0x276C3, false },
 	{"Quarry Stoneworks Upper Floor", {-64.938, 158.237, 6.975}, {-2.446, 0}, 0x276BB, false },
 
-	{"Quarry Boathouse", {-15.998, 181.732, 3.692}, {0.997, 0}, 0x275F3, false},
-	{"Quarry Boathouse Upper Front", {-10.918, 185.979, 5.888}, {1.047, 0}, 0x27600, false},
-	{"Quarry Boathouse Upper Middle", {-7.107, 195.324, 6.034}, {1.734, 0}, 0x27655, false},
+	{"Quarry Boathouse", {-15.998, 181.732, 3.692}, {0.997, 0}, 0x275F3, false },
+	{"Quarry Boathouse Upper Front", {-10.918, 185.979, 5.888}, {1.047, 0}, 0x27600, false },
+	{"Quarry Boathouse Upper Middle", {-7.107, 195.324, 6.034}, {1.734, 0}, 0x27655, false },
 	{"Quarry Boathouse Upper Back", {-10.729, 208.022, 6.774}, {-1.507, -0.01}, 0x38661, false },
 
-	{"Shadows", {5.099, 115.615, 15.268}, {2.293, -0.130}, 0x31A22, false},
-	{"Shadows Ledge", {-21.145, 119.759, 7.378}, {1.786, -0.045}, 0x19AF1, false},
-	{"Shadows Laser Room", {-2.551, 88.78, 15.529}, {2.875, -0.115}, 0x18318, false},
+	{"Shadows", {5.099, 115.615, 15.268}, {2.293, -0.130}, 0x31A22, false },
+	{"Shadows Ledge", {-21.145, 119.759, 7.378}, {1.786, -0.045}, 0x19AF1, false },
+	{"Shadows Laser Room", {-2.551, 88.78, 15.529}, {2.875, -0.115}, 0x18318, false },
 
-	{"Outside Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false},
-	{"Keep", {49.881, 131.068, 20.823}, {-0.2, 0}, 0x284BB, false},
-	{"Keep 2nd Maze", {65.726, 102.196, 20.885}, {-2.075, -0.082}, 0x3095B, false},
-	{"Keep 3rd Maze", {45.453, 89.383, 20.885}, {2.616, -0.032}, 0x3094A, false},
-	{"Keep 4th Maze", {27.957, 111.336, 20.885}, {1.008, -0.01}, 0x28006, false},
+	{"Outside Keep", {39.178, 64.462, 12.928}, {1.38, 0.17}, 0x14FD4, false },
+	{"Keep", {49.881, 131.068, 20.823}, {-0.2, 0}, 0x284BB, false },
+	{"Keep 2nd Maze", {65.726, 102.196, 20.885}, {-2.075, -0.082}, 0x3095B, false },
+	{"Keep 3rd Maze", {45.453, 89.383, 20.885}, {2.616, -0.032}, 0x3094A, false },
+	{"Keep 4th Maze", {27.957, 111.336, 20.885}, {1.008, -0.01}, 0x28006, false },
 
-	{"Keep 2nd Pressure Plate", {77.556, 164.533, 20.992}, {1.36812, 0}, 0x0791F, false},
-	{"Keep 3rd Pressure Plate", {56.958, 192.973, 20.997}, {2.951, 0}, 0x34EF2, false},
-	{"Keep 4th Pressure Plate", {52.552, 172.010, 21.021}, {-1.773, -0.07}, 0x28488, false},
+	{"Keep 2nd Pressure Plate", {77.556, 164.533, 20.992}, {1.36812, 0}, 0x0791F, false },
+	{"Keep 3rd Pressure Plate", {56.958, 192.973, 20.997}, {2.951, 0}, 0x34EF2, false },
+	{"Keep 4th Pressure Plate", {52.552, 172.010, 21.021}, {-1.773, -0.07}, 0x28488, false },
 
-	{"Keep Tower", {40.861, 145.121, 21.028}, {-0.372, 0.097}, 0x2873F, false},
+	{"Keep Tower", {40.861, 145.121, 21.028}, {-0.372, 0.097}, 0x2873F, false },
 
-	{"Shipwreck", {123.407, 214.291, 9.998}, {-0.3, -0.15}, 0x17D56, false},
-	{"Shipwreck Vault", {177.506, 219.689, 1.97}, {-0.644, -0.156}, 0x07955, false},
+	{"Shipwreck", {123.407, 214.291, 9.998}, {-0.3, -0.15}, 0x17D56, false },
+	{"Shipwreck Vault", {177.506, 219.689, 1.97}, {-0.644, -0.156}, 0x07955, false },
 
-	{"Outside Monastery", {11.151, -69.042, 10.059}, {1.36583734, 0.175}, 0x18321, false},
-	{"Inside Monastery", {22.997, -33.212, 16.83}, {2.66071, 0.0}, 0x0CD4B, false},
-	{"Monastery Garden", {36.31, -34.583, 16.723}, {-1.777, 0.0}, 0x27F16, false},
+	{"Outside Monastery", {11.151, -69.042, 10.059}, {1.36583734, 0.175}, 0x18321, false },
+	{"Inside Monastery", {22.997, -33.212, 16.83}, {2.66071, 0.0}, 0x0CD4B, false },
+	{"Monastery Garden", {36.31, -34.583, 16.723}, {-1.777, 0.0}, 0x27F16, false },
 
-	{"Town", {-38.275, -16.534, 11.054}, {0.70478326, 0.0}, 0x0D601, false},
-	{"Town Inside Cargo Box", {-45.829, -37.879, 6.328}, {-0.069, -0.114}, 0x09D7F, false},
-	{"Town Maze Rooftop", {-15.078, -13.697, 15.755}, {-2.5207, -0.1}, 0x18701, false},
-	{"Town Red Rooftop", {-29.879, -22.817, 16.501}, {2.168, -0.02}, 0x311E5, false},
-	{"Town Wooden Rooftop", {-54.302, -17.632, 15.502}, {0.179, 0.0}, 0x26FBA, false},
-	{"Town Church", {-39.109, 11.403, 11.267}, {0.019, 0.0}, 0x266CA, false},
-	{"Town RGB House", {-29.244, 2.384, 11.1116}, {0.56152, -0.02}, 0x26BA3, false},
-	{"Town RGB House Upstairs", {-20.863, 2.441, 14.412}, {-2.863, 0.0}, 0x387EE, false},
-	{"Town Tower After First Door", {-43.754, -15.419, 14.146}, {-0.178, 0.0}, 0x265FC, false},
-	{"Town Tower After Second Door", {-38.995, -14.638, 16.151}, {2.802, 0.11}, 0x277D0, false},
-	{"Town Tower After Third Door", {-38.288, -16.289, 21.161}, {2.912, -0.098}, 0x277C6, false},
-	{"Town Tower After Fourth Door", {-37.685, -11.318, 23.146}, {-1.766, 0.0}, 0x277C8, false},
+	{"Town", {-38.275, -16.534, 11.054}, {0.70478326, 0.0}, 0x0D601, false },
+	{"Town Inside Cargo Box", {-45.829, -37.879, 6.328}, {-0.069, -0.114}, 0x09D7F, false },
+	{"Town Maze Rooftop", {-15.078, -13.697, 15.755}, {-2.5207, -0.1}, 0x18701, false },
+	{"Town Red Rooftop", {-29.879, -22.817, 16.501}, {2.168, -0.02}, 0x311E5, false },
+	{"Town Wooden Rooftop", {-54.302, -17.632, 15.502}, {0.179, 0.0}, 0x26FBA, false },
+	{"Town Church", {-39.109, 11.403, 11.267}, {0.019, 0.0}, 0x266CA, false },
+	{"Town RGB House", {-29.244, 2.384, 11.1116}, {0.56152, -0.02}, 0x26BA3, false },
+	{"Town RGB House Upstairs", {-20.863, 2.441, 14.412}, {-2.863, 0.0}, 0x387EE, false },
+	{"Town Tower After First Door", {-43.754, -15.419, 14.146}, {-0.178, 0.0}, 0x265FC, false },
+	{"Town Tower After Second Door", {-38.995, -14.638, 16.151}, {2.802, 0.11}, 0x277D0, false },
+	{"Town Tower After Third Door", {-38.288, -16.289, 21.161}, {2.912, -0.098}, 0x277C6, false },
+	{"Town Tower After Fourth Door", {-37.685, -11.318, 23.146}, {-1.766, 0.0}, 0x277C8, false },
 
-	{"Outside Windmill", {-76.986, 27.816, 12.026}, {-3.055, 0.176}, 0x2DE6B, false},
-	{"Windmill Interior", {-93.528, 25.415, 14.38}, {2.094, -0.03}, 0x17C80, false},
-	{"Theater", {-68.699, -1.014, -1.282}, {-0.997, 0.03}, 0x343FC, false},
+	{"Outside Windmill", {-76.986, 27.816, 12.026}, {-3.055, 0.176}, 0x2DE6B, false },
+	{"Windmill Interior", {-93.528, 25.415, 14.38}, {2.094, -0.03}, 0x17C80, false },
+	{"Theater", {-68.699, -1.014, -1.282}, {-0.997, 0.03}, 0x343FC, false },
 
-	{"Jungle", {14.414, -91.009, 7.453}, {-0.183, 0.219}, 0x1B21F, false},
-	{"Outside Jungle River", {77.528, -45.431, 22.434}, {3.042, -0.077}, 0x0C76F, false},
-	{"Jungle Vault", {49.278, -74.481, 10.68}, {2.387, 0.0}, 0x1527E, false},
+	{"Jungle", {14.414, -91.009, 7.453}, {-0.183, 0.219}, 0x1B21F, false },
+	{"Outside Jungle River", {77.528, -45.431, 22.434}, {3.042, -0.077}, 0x0C76F, false },
+	{"Jungle Vault", {49.278, -74.481, 10.68}, {2.387, 0.0}, 0x1527E, false },
 
-	{"Outside Bunker", {148.9, -96.764, 8.811}, {-0.39739844, 0.0}, 0x34D90, false},
-	{"Bunker", {164.047, -99.107, 8.871}, {0.107, 0.0}, 0x2734F, false},
-	{"Bunker Glass Room", {171.764, -102.629, 8.871}, {-3.042, -0.06}, 0x2D70F, false},
-	{"Bunker Ultraviolet Room", {170.664, -101.789, 12.565}, {-1.109, -0.046}, 0x2737E, false},
-	{"Bunker Elevator Section", {167.3, -89.573, 8.881}, {2.987, 0.0}, 0x27392, false},
-	{"Bunker Cyan Room", {164.211, -87.692, 19.46}, {-3.032, -0.04}, 0x06C91, false},
-	{"Bunker Green Room", {164.263, -87.852, 23.087}, {-3.039, -0.04}, 0x0C8CF, false},
-	{"Bunker Laser Platform", {159.722, -88.577, 32.132}, {0.471, -0.08}, 0x0BF8A, false},
+	{"Outside Bunker", {148.9, -96.764, 8.811}, {-0.39739844, 0.0}, 0x34D90, false },
+	{"Bunker", {164.047, -99.107, 8.871}, {0.107, 0.0}, 0x2734F, false },
+	{"Bunker Glass Room", {171.764, -102.629, 8.871}, {-3.042, -0.06}, 0x2D70F, false },
+	{"Bunker Ultraviolet Room", {170.664, -101.789, 12.565}, {-1.109, -0.046}, 0x2737E, false },
+	{"Bunker Elevator Section", {167.3, -89.573, 8.881}, {2.987, 0.0}, 0x27392, false },
+	{"Bunker Cyan Room", {164.211, -87.692, 19.46}, {-3.032, -0.04}, 0x06C91, false },
+	{"Bunker Green Room", {164.263, -87.852, 23.087}, {-3.039, -0.04}, 0x0C8CF, false },
+	{"Bunker Laser Platform", {159.722, -88.577, 32.132}, {0.471, -0.08}, 0x0BF8A, false },
 
-	{"Outside Swamp", {116.558, 19.614, 2.3}, {1.24171472, 0.0}, 0x267C5, false},
-	{"Swamp Entry Area", {121.917, 37.817, 2.281}, {-1.481, -0.04}, 0x26719, false},
-	{"Swamp Near Platform", {152.455, 50.036, 8.728}, {-2.435, 0.0}, 0x27840, false},
-	{"Swamp Cyan Underwater", {127.501, 51.452, -1.536}, {-0.344, -0.005}, 0x0D35E, false},
-	{"Swamp Between Bridges Near", {143.439, 43.565, 2.255}, {-1.271, 0.0}, 0x184B7, false},
-	{"Swamp Between Bridges Far", {157.229, 32.414, 2.255}, {2.572, -0.01}, 0x26851, false},
+	{"Outside Swamp", {116.558, 19.614, 2.3}, {1.24171472, 0.0}, 0x267C5, false },
+	{"Swamp Entry Area", {121.917, 37.817, 2.281}, {-1.481, -0.04}, 0x26719, false },
+	{"Swamp Near Platform", {152.455, 50.036, 8.728}, {-2.435, 0.0}, 0x27840, false },
+	{"Swamp Cyan Underwater", {127.501, 51.452, -1.536}, {-0.344, -0.005}, 0x0D35E, false },
+	{"Swamp Between Bridges Near", {143.439, 43.565, 2.255}, {-1.271, 0.0}, 0x184B7, false },
+	{"Swamp Between Bridges Far", {157.229, 32.414, 2.255}, {2.572, -0.01}, 0x26851, false },
 	{"Swamp Red Underwater", {143.304, 34.321, -1.526}, {-1.052, 0.005}, 0x0D2F5, false },
 	{"Swamp Near Boat", {219.478, 21.766, 2.255}, {-0.088, -0.009}, 0x26998, false },
 	{"Swamp Purple Area", {171.136, 3.953, 2.255}, {2.044, 0.002}, 0x38C28, false },
@@ -2420,7 +2422,7 @@ inline std::vector<Warp> allPossibleWarps = {
 
 	{"Treehouse Beach", {107.467, 120.145, 6.644}, {-1.387, 0.154}, 0x045D3, false },
 
-	{"Treehouse Entry Area", {196.476, 161.588, 2.167}, {-1.99352, 0}, 0x06474, false},
+	{"Treehouse Entry Area", {196.476, 161.588, 2.167}, {-1.99352, 0}, 0x06474, false },
 	{"Treehouse Between Doors", {163.775, 142.462, 11.694}, {-3.111, -0.01}, 0x2DDA7, false },
 	{"Treehouse Yellow Bridge", {152.911, 143.096, 12.041}, {3.022, -0.14}, 0x069A2, false },
 	{"Treehouse After Yellow Bridge", {137.168, 145.043, 12.202}, {-0.124, -0.072}, 0x0A181, false },
@@ -2435,31 +2437,40 @@ inline std::vector<Warp> allPossibleWarps = {
 	{"Treehouse Burned House", {112.821, 120.144, 18.624}, {1.354, -0.05}, 0x31D43, false },
 	{"Treehouse Laser Room", {102.754, 133.69, 18.914}, {-0.08, -0.074}, 0x2D75E, false },
 
-	{"Mountainside", {106.337, -17.439, 24.157}, {-0.72, 0.188}, 0x2D90C, false},
-	{"Mountainside Vault", {179.680, -53.101, 43.856}, {2.956, -0.055}, 0x2774A, false},
-	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false},
+	{"Mountainside", {106.337, -17.439, 24.157}, {-0.72, 0.188}, 0x2D90C, false },
+	{"Mountainside Vault", {179.680, -53.101, 43.856}, {2.956, -0.055}, 0x2774A, false },
+	{"Mountaintop", {148.772, -57.643, 68.552}, { 0.59146, -0.1 }, 0x38845, false },
 	
-	{"Mountain Floor 1", {154.062, -42.562, 53.141}, {-1.49050689, -0.2177794}, 0x0D407, false},
+	{"Mountain Floor 1", {154.062, -42.562, 53.141}, {-1.49050689, -0.2177794}, 0x0D407, false },
 
-	{"Mountain Floor 2", {159.934, -60.495, 27.304}, {-1.49372685, 0.0}, 0x26BB2, false},
-	{"Mountain Floor 2 Light Bridge Room Near", {155.732, -63.72, 30.879}, {1.64945543, 0.0}, 0x389A4, false},
-	{"Mountain Floor 2 Beyond Bridge", {150.14, -45.408, 27.303}, {1.64513314, 0.0}, 0x26BB0, false},
-	{"Mountain Floor 2 Light Bridge Room Far", {154.067, -42.593, 30.881}, {-1.49449492, 0.0}, 0x0CC7C, false},
-	{"Mountain Floor 2 Elevator Room", {142.662, -55.858, 27.196}, {-3.0530591, 0.0}, 0x387DF, false},
+	{"Mountain Floor 2", {159.934, -60.495, 27.304}, {-1.49372685, 0.0}, 0x26BB2, false },
+	{"Mountain Floor 2 Light Bridge Room Near", {155.732, -63.72, 30.879}, {1.64945543, 0.0}, 0x389A4, false },
+	{"Mountain Floor 2 Beyond Bridge", {150.14, -45.408, 27.303}, {1.64513314, 0.0}, 0x26BB0, false },
+	{"Mountain Floor 2 Light Bridge Room Far", {154.067, -42.593, 30.881}, {-1.49449492, 0.0}, 0x0CC7C, false },
+	{"Mountain Floor 2 Elevator Room", {142.662, -55.858, 27.196}, {-3.0530591, 0.0}, 0x387DF, false },
 
-	{"Mountain Floor 3", {146.337, -53.809, 4.796}, {0.07693315, -0.075}, 0x27985, false},
-	{"Mountain Bottom Floor", {173.599, -51.343, 2.337}, {0.05800205, -0.158}, 0x305F7, false},
-	{"Mountain Bottom Floor Pillars Room", {186.329, -50.508, 1.427}, {0.07368734, 0.0}, 0x35224, false},
-	{"Mountain Bottom Floor Path to Caves", {163.086, -42.92, 4.985}, {-3.07381296, 0.0}, 0x3CE3F, false},
+	{"Mountain Floor 3", {146.337, -53.809, 4.796}, {0.07693315, -0.075}, 0x27985, false },
+	{"Mountain Bottom Floor", {173.599, -51.343, 2.337}, {0.05800205, -0.158}, 0x305F7, false },
+	{"Mountain Bottom Floor Pillars Room", {186.329, -50.508, 1.427}, {0.07368734, 0.0}, 0x35224, false },
+	{"Mountain Bottom Floor Path to Caves", {163.086, -42.92, 4.985}, {-3.07381296, 0.0}, 0x3CE3F, false },
 
-	{"Caves", {117.457, -52.997, -1.76}, {2.09, 0}, 0x2D924, false},
-	{"Caves Path to Challenge", {86.643, -35.05, 0.628}, {3.14144945, 0.0}, 0x2D957, false},
+	{"Caves", {117.457, -52.997, -1.76}, {2.09, 0}, 0x2D924, false },
+	{"Caves Path to Challenge", {86.643, -35.05, 0.628}, {3.14144945, 0.0}, 0x2D957, false },
 
-	{"Challenge", {-42.622, -31.288, -9.823}, {-0.03665126, -0.075}, 0x314A6, false},
-	{"Challenge Vault", {64.031, -34.844, -0.246}, {-3.12983704, 0.0}, 0x17FE0, false},
+	{"Challenge", {-42.622, -31.288, -9.823}, {-0.03665126, -0.075}, 0x314A6, false },
+	{"Challenge Vault", {64.031, -34.844, -0.246}, {-3.12983704, 0.0}, 0x17FE0, false },
 
-	{"Tunnels", {-63.066, -5.41, 5.01}, {-2.57802415, 0.0}, 0x38CCE, false},
+	{"Tunnels", {-63.066, -5.41, 5.01}, {-2.57802415, 0.0}, 0x38CCE, false },
+};
+
+inline std::map<std::string, Warp> warpLookup = {};
+
+inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
+	{ "Town", { -42.628, -3.531, 11.054 }},
+	{ "Shipwreck", { -85.194, 202.015, 12.026}},
+	{ "Quarry", { -50.962, 131.744, 2.840 }}, 
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
 std::string getStringFromFlag(unsigned int flags);
+void populateWarpLookup();

@@ -29,7 +29,9 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
+	populateWarpLookup();
+	
 	generator = std::make_shared<Generate>();
 	ap = client;
 	panelIdToLocationId = mapping;
@@ -55,6 +57,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	doorToItemId = dToI;
 	progressiveItems = pI;
 	itemIdToDoorSet = iTD;
+	SyncProgress = sync;
 	
 	for (int huntEntity : hunt) {
 		huntEntityToSolveStatus[huntEntity] = false;
@@ -79,12 +82,10 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		}
 	}
 
-
-	 // TODO: Obviously not all warps should immediately be unlocked lol
-	for (int i = 0; i < allPossibleWarps.size(); i++) {
-		unlockedWarps.push_back(&allPossibleWarps[i]);
-	}
-
+	for (auto warpname : warps) {
+		unlockableWarps[warpname] = false;
+	};
+	
 	if (Collect == "Free Skip + Unlock") {
 		Collect = "Free Skip";
 		CollectUnlock = true;
@@ -122,6 +123,11 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x03629); // Tutorial Gate Open
 	}
 
+	DeathLinkDataStorageKey = "WitnessDeathLink" + std::to_string(ap->get_player_number());
+	if (SyncProgress) DeathLinkDataStorageKey += "_" + Utilities::wstring_to_utf8(Utilities::GetUUID());
+	ap->SetNotify({ "WitnessDeathLink" + std::to_string(ap->get_player_number()) });
+	ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, true, { {"default", 0} });
+
 	lastFrameTime = std::chrono::system_clock::now();
 	DrawIngameManager::create();
 }
@@ -153,7 +159,8 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
-	DrawHuntPanelSpheres(frameDuration);
+	CheckUnlockedWarps();
+	DrawSpheres(frameDuration);
 
 	FlickerCable();
 
@@ -207,6 +214,8 @@ void APWatchdog::action() {
 
 	SetStatusMessages();
 	HudManager::get()->update(frameDuration);
+
+	firstActionDone = true;
 }
 
 void APWatchdog::HandleInteractionState() {
@@ -2063,7 +2072,7 @@ void APWatchdog::CheckDoors() {
 }
 
 void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
-	if (key.find("WitnessDeathLink") != std::string::npos) {
+	if (key == DeathLinkDataStorageKey) {
 		if (DeathLinkAmnesty == -1) return;
 		if (DeathLinkCount != value) {
 			DeathLinkCount = value;
@@ -2098,7 +2107,7 @@ void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 	}
 }
 
-void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value) {
 	int laserNo = laserIDsToLasers[laserID];
 
 	bool laserActiveAccordingToDataStore = value == true;
@@ -2107,14 +2116,25 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value, 
 
 	if (laserActiveInGame == laserActiveAccordingToDataStore) return;
 
-	if(!laserActiveInGame && syncprogress)
+	if(!laserActiveInGame && SyncProgress)
 	{
 		Memory::get()->ActivateLaser(laserNo);
 		HudManager::get()->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 	}
 }
 
-void APWatchdog::HandleHuntEntityResponse(nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleWarpResponse(nlohmann::json value) {
+	std::map<std::string, bool> warpsAcquiredAccordingToDataStorage = value;
+	
+	std::vector<std::string> unlockedWarps = {};
+	for (auto [warp, val] : warpsAcquiredAccordingToDataStorage) {
+		unlockedWarps.push_back(warp);
+	}
+	
+	UnlockWarps(unlockedWarps);
+}
+
+void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
 	std::map<std::string, bool> entitiesSolvedAccordingToDataStorage = value;
 	
 	std::set<int> remotelySolvedHuntEntities;
@@ -2131,7 +2151,7 @@ void APWatchdog::HandleHuntEntityResponse(nlohmann::json value, bool syncprogres
 
 		solvedHuntEntitiesDataStorage.insert(entityID);
 
-		if (!syncprogress) continue;
+		if (!SyncProgress) continue;
 
 		if (huntEntityToSolveStatus[entityID]) continue;
 
@@ -2164,7 +2184,7 @@ void APWatchdog::HandleHuntEntityResponse(nlohmann::json value, bool syncprogres
 	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 }
 
-void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value) {
 	int epNo = EPIDsToEPs[epID];
 
 	bool epActiveAccordingToDataPackage = value == true;
@@ -2173,52 +2193,52 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value, bool s
 
 	if (epActiveInGame == epActiveAccordingToDataPackage) return;
 
-	if (!epActiveInGame && (syncprogress))
+	if (!epActiveInGame && (SyncProgress))
 	{
 		Memory::get()->SolveEP(epNo);
 		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
 			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
 		}
-		if (syncprogress){
+		if (SyncProgress){
 			HudManager::get()->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 		}
 	}
 }
 
-void APWatchdog::HandleAudioLogResponse(std::string logIDstr, nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleAudioLogResponse(std::string logIDstr, nlohmann::json value) {
 	bool audioLogSeen = value == true;
 	int logID = stoi(logIDstr.substr(logIDstr.find("-") + 1));
 
 	if (!audioLogSeen) return;
 
-	if (syncprogress)
+	if (SyncProgress)
 	{
 		WritePanelData<int>(logID, AUDIO_LOG_PLAYED, { 1 });
 		seenAudioLogs.insert(logID);
 	}
 }
 
-void APWatchdog::HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value) {
 	bool laserHintSeen = value == true;
 	int laserID = stoi(laserIDstr.substr(laserIDstr.find("-") + 1));
 
 	if (!laserHintSeen) return;
 
-	if (syncprogress)
+	if (SyncProgress)
 	{
 		WritePanelData<float>(laserID, 0x108, { 1.0001 });
 		seenLasers.insert(laserID);
 	}
 }
 
-void APWatchdog::HandleSolvedPanelsResponse(nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleSolvedPanelsResponse(nlohmann::json value) {
 	std::wstringstream s;
 	s << "Solved Panels: " << value.dump().c_str() << "\n";
 
 	OutputDebugStringW(s.str().c_str());
 }
 
-void APWatchdog::HandleOpenedDoorsResponse(nlohmann::json value, bool syncprogress) {
+void APWatchdog::HandleOpenedDoorsResponse(nlohmann::json value) {
 	std::wstringstream s;
 	s << "Solved Doors: " << value.dump().c_str() << "\n";
 
@@ -3247,7 +3267,7 @@ void APWatchdog::CheckDeathLink() {
 					HudManager::get()->queueNotification("Panel failed. Remaining DeathLink Amnesty: " + std::to_string(remain_amnesty) + ".", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 				}
 			}
-			ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, false, { {"replace", DeathLinkCount} });
+			ap->Set(DeathLinkDataStorageKey, NULL, false, { {"replace", DeathLinkCount} });
 		}
 	}
 }
@@ -3615,11 +3635,22 @@ Vector3 APWatchdog::getHuntEntitySpherePosition(int huntEntity) {
 	return { -1000, -1, -1 };
 }
 
-void APWatchdog::DrawHuntPanelSpheres(float deltaSeconds) {
+void APWatchdog::DrawSpheres(float deltaSeconds) {
+	std::vector<WitnessDrawnSphere> spheresToDraw = {};
+
+	for (auto [warpname, unlocked] : unlockableWarps) {
+		Vector3 position = warpLookup[warpname].playerPosition;
+
+		if (warpPositionUnlockPointOverrides.contains(warpname)) position = warpPositionUnlockPointOverrides[warpname];
+
+		position.Z -= 1.68f;
+		RgbColor color = unlocked ? RgbColor(0.0f, 0.5f, 0.0f, 0.7f) : RgbColor(0.9f, 0.3f, 0.3f, 0.7f);
+
+		spheresToDraw.push_back(WitnessDrawnSphere({ position, WARP_SPHERE_RADIUS, color, true }));
+	}
+
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 	DrawIngameManager* drawManager = DrawIngameManager::get();
-	
-	std::vector<WitnessDrawnSphere> spheresToDraw = {};
 
 	for (auto [huntEntity, previousOpacity] : huntEntitySphereOpacities) {
 		float positionEntity = huntEntity;
@@ -3783,4 +3814,82 @@ void APWatchdog::TryWarp() {
 	hasTriedExitingNoclip = false;
 	warpRetryTime = 0.0f;
 	ClientWindow::get()->focusGameWindow();
+}
+
+void APWatchdog::CheckUnlockedWarps() {
+	int pNO = ap->get_player_number();
+
+	if (!firstActionDone) {
+		ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) });
+
+		if (SyncProgress) {
+			ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()) });
+		}
+
+		std::map<std::string, bool> startwarp = { { startingWarp, true } };
+
+		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", startwarp } });
+		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), startwarp, true, { {"default", nlohmann::json::object()} });
+	}
+
+	Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
+	bool newunlocks = false;
+
+	for (auto [warpname, unlocked] : unlockableWarps) {
+		if (unlocked) continue;
+
+		Vector3 warpPosition = warpLookup[warpname].playerPosition;
+		if (warpPositionUnlockPointOverrides.contains(warpname)) warpPosition = warpPositionUnlockPointOverrides[warpname];
+		
+		if ((playerPosition - warpPosition).length() > WARP_SPHERE_RADIUS + 1.0f) continue;
+
+		UnlockWarps({ warpname });
+		return;
+	}
+}
+
+void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
+	std::vector<std::string> newWarps = {};
+	
+	for (auto warp : warps) {
+		if (!unlockableWarps.contains(warp)) {
+			HudManager::get()->queueNotification("Server reported unlocked warp \"" + warp + "\", but this is not an unlockable warp for this slot.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+			continue;
+		}
+
+		if (!unlockableWarps[warp]) {
+			newWarps.push_back(warp);
+			unlockableWarps[warp] = true;
+		}
+	}
+
+	if (newWarps.empty()) return;
+
+	std::string message = "Unlocked Warp";
+	if (newWarps.size() > 1) message += "s";
+	message += ":";
+	for (auto warp : newWarps) {
+		message += " " + warp + ",";
+	}
+	message.pop_back();
+	message += ".";
+
+	std::vector<Warp*> newUnlockedWarps = { };
+
+	for (auto warp : allPossibleWarps) {
+		if (unlockableWarps.contains(warp.name) && unlockableWarps[warp.name]) newUnlockedWarps.push_back(&warpLookup[warp.name]);
+	}
+
+	unlockedWarps = newUnlockedWarps;
+	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+
+	std::map<std::string, bool> warpsToSignalToDataStore;
+	for (std::string warp : newWarps) {
+		warpsToSignalToDataStore[warp] = true;
+	}
+
+	int pNO = ap->get_player_number();
+
+	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
+	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
 }

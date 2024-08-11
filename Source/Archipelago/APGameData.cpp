@@ -41,3 +41,9 @@ std::string getStringFromFlag(unsigned int flags) {
 		return "Filler";
 	}
 }
+
+void populateWarpLookup() {
+	for (Warp warp : allPossibleWarps) {
+		warpLookup[warp.name] = warp;
+	}
+}

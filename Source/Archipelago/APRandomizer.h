@@ -19,6 +19,7 @@ class APRandomizer {
 
 		int PuzzleRandomization = 2;
 		bool UnlockSymbols = false;
+		std::vector<std::string> UnlockableWarps = {};
 		bool EarlyUTM = false;
 		bool DisableNonRandomizedPuzzles = false;
 		bool EPShuffle = false;

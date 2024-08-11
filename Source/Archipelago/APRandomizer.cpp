@@ -93,6 +93,24 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		EarlyUTM = slotData.contains("early_secret_area") ? slotData["early_secret_area"] == true : false;
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
+		bool unlockableWarpsIsOn = slotData.contains("unlockable_warps") ? slotData["unlockable_warps"] == true : false;
+		UnlockableWarps = { 
+			"Tutorial First Hallway",
+			"Desert Outside",
+			"Outside Keep",
+			"Town",
+			"Mountaintop",
+			"Caves",
+			"Treehouse Entry Area",
+			"Quarry",
+			"Outside Symmetry Island",
+			"Shipwreck",
+			"Jungle",
+			"Outside Bunker",
+		};
+		if (!unlockableWarpsIsOn) {
+			UnlockableWarps = {};
+		}
 
 		if (slotData.contains("panel_hunt_required_absolute")) RequiredHuntEntities = slotData["panel_hunt_required_absolute"];
 		PanelHuntPostgame = slotData.contains("panel_hunt_postgame") ? (int) slotData["panel_hunt_postgame"] : 0;
@@ -388,8 +406,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
 		for (auto [key, value] : response) {
-			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress);
-			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
+			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value);
+			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value);
 		}
 	});
 
@@ -404,13 +422,14 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			return;
 		}
 
-		if (key.find("WitnessLaserHint") != std::string::npos) async->HandleLaserHintResponse(key, value, SyncProgress); // Do not flip
-		else if (key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value, SyncProgress); // Do not flip
-		else if (key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value, SyncProgress);
-		else if (key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value, SyncProgress);
-		else if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value, SyncProgress);
-		else if (key.find("WitnessHuntEntityStatus") != std::string::npos) async->HandleHuntEntityResponse(value, SyncProgress);
-		else if (key.find("WitnessOpenedDoors") != std::string::npos) async->HandleOpenedDoorsResponse(value, SyncProgress);
+		if (key.find("WitnessLaserHint") != std::string::npos) async->HandleLaserHintResponse(key, value); // Do not flip
+		else if (key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value); // Do not flip
+		else if (key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value);
+		else if (key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value);
+		else if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value);
+		else if (key.find("WitnessHuntEntityStatus") != std::string::npos) async->HandleHuntEntityResponse(value);
+		else if (key.find("WitnessOpenedDoors") != std::string::npos) async->HandleOpenedDoorsResponse(value);
+		else if (key.find("WitnessUnlockedWarps") != std::string::npos) async->HandleWarpResponse(value);
 	});
 
 	ap->set_print_json_handler([&](const APClient::PrintJSONArgs jsonArgs) {
@@ -579,9 +598,6 @@ void APRandomizer::PostGeneration() {
 	std::string deathLinkDisabledKey = "WitnessDisabledDeathLink" + std::to_string(ap->get_player_number()) + Utilities::wstring_to_utf8(Utilities::GetUUID());
 	ap->SetNotify({ deathLinkDisabledKey });
 	ap->Set(deathLinkDisabledKey, false, true, { {"default", false} });
-
-	ap->SetNotify({ "WitnessDeathLink" + std::to_string(ap->get_player_number()) });
-	ap->Set("WitnessDeathLink" + std::to_string(ap->get_player_number()), NULL, true, { {"default", 0} });
 
 	std::set<int64_t> allLocations;
 	std::set<int64_t> missingLocations = ap->get_missing_locations();
@@ -793,7 +809,7 @@ void APRandomizer::RestoreOriginals() {
 }
 
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId, UnlockableWarps, SyncProgress);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -801,7 +817,7 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateVariety() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId, UnlockableWarps, SyncProgress);
 	SeverDoors();
 
 	Memory::get()->PowerNext(0x03629, 0x36);
@@ -811,7 +827,7 @@ void APRandomizer::GenerateVariety() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId);
+	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPuzzlesBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId, UnlockableWarps, SyncProgress);
 	SeverDoors();
 
 	//Mess with Town targets
