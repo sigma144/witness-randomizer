@@ -3644,7 +3644,7 @@ void APWatchdog::DrawSpheres(float deltaSeconds) {
 		if (warpPositionUnlockPointOverrides.contains(warpname)) position = warpPositionUnlockPointOverrides[warpname];
 
 		position.Z -= 1.68f;
-		RgbColor color = unlocked ? RgbColor(0.0f, 0.5f, 0.0f, 0.7f) : RgbColor(0.9f, 0.3f, 0.3f, 0.7f);
+		RgbColor color = unlocked ? RgbColor(0.2f, 0.9f, 0.2f, 0.9f) : RgbColor(0.9f, 0.3f, 0.3f, 0.9f);
 
 		spheresToDraw.push_back(WitnessDrawnSphere({ position, WARP_SPHERE_RADIUS, color, true }));
 	}
@@ -3843,7 +3843,7 @@ void APWatchdog::CheckUnlockedWarps() {
 		Vector3 warpPosition = warpLookup[warpname].playerPosition;
 		if (warpPositionUnlockPointOverrides.contains(warpname)) warpPosition = warpPositionUnlockPointOverrides[warpname];
 		
-		if ((playerPosition - warpPosition).length() > WARP_SPHERE_RADIUS + 1.0f) continue;
+		if ((playerPosition - warpPosition).length() > WARP_SPHERE_RADIUS + 0.7f) continue;
 
 		UnlockWarps({ warpname });
 		return;
