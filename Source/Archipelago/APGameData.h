@@ -2467,7 +2467,7 @@ inline std::map<std::string, Warp> warpLookup = {};
 
 inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
 	{ "Town", { -42.628, -3.531, 11.054 }},
-	{ "Shipwreck", { -85.194, 202.015, 12.026}},
+	{ "Shipwreck", { 85.194, 202.015, 12.026}},
 	{ "Quarry", { -50.962, 131.744, 2.840 }}, 
 };
 
