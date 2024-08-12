@@ -2469,6 +2469,7 @@ inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
 	{ "Town", { -42.628, -3.531, 11.054 }},
 	{ "Shipwreck", { 85.194, 202.015, 12.026}},
 	{ "Quarry", { -50.962, 131.744, 2.840 }}, 
+	{ "Swamp Platform", { 152.052, 47.727, 8.728 }},
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
