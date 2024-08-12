@@ -2408,7 +2408,7 @@ inline std::vector<Warp> allPossibleWarps = {
 
 	{"Outside Swamp", {116.558, 19.614, 2.3}, {1.24171472, 0.0}, 0x267C5, false },
 	{"Swamp Entry Area", {121.917, 37.817, 2.281}, {-1.481, -0.04}, 0x26719, false },
-	{"Swamp Near Platform", {152.455, 50.036, 8.728}, {-2.435, 0.0}, 0x27840, false },
+	{"Swamp Platform", {152.455, 50.036, 8.728}, {-2.435, 0.0}, 0x27840, false },
 	{"Swamp Cyan Underwater", {127.501, 51.452, -1.536}, {-0.344, -0.005}, 0x0D35E, false },
 	{"Swamp Between Bridges Near", {143.439, 43.565, 2.255}, {-1.271, 0.0}, 0x184B7, false },
 	{"Swamp Between Bridges Far", {157.229, 32.414, 2.255}, {2.572, -0.01}, 0x26851, false },
