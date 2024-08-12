@@ -105,6 +105,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			"Quarry",
 			"Outside Symmetry Island",
 			"Shipwreck",
+			"Swamp Platform",
 			"Jungle",
 			"Outside Bunker",
 		};
