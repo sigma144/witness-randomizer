@@ -175,6 +175,7 @@ public:
 
 	template <class T>
 	void WritePanelData(int panel, int offset, const std::vector<T>& data, bool forceRecalculatePointer) {
+		_arraySizes.erase(std::make_pair(panel, offset)); // This might be an array pointer, in which case we need to invalidate
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data, forceRecalculatePointer);
 	}
 

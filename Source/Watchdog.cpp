@@ -74,13 +74,14 @@ void ArrowWatchdog::action() {
 			for (int y = 1; y < height; y++) {
 				if (!checkArrow(x, y)) {
 					//OutputDebugStringW(L"No");
-					WritePanelData<int>(id, STYLE_FLAGS, { style | Panel::Style::HAS_TRIANGLES });
+					Memory::get()->WriteArray<int>(id, SEQUENCE, { 69 }, true);
+					WritePanelData<int>(id, SEQUENCE_LEN, { 1 });
 					return;
 				}
 			}
 		}
-		//OutputDebugStringW(L"Yes");
-		WritePanelData<int>(id, STYLE_FLAGS, { style & ~Panel::Style::HAS_TRIANGLES });
+		WritePanelData<uint64_t>(id, SEQUENCE, { 0 });
+		WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	}
 }
 
@@ -143,14 +144,6 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 {
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
-	if ((symbol & 0x700) == Decoration::Triangle && (symbol & 0xf0000) != 0) {
-		int count = 0;
-		if (grid[x - 1][y] == PATH) count++;
-		if (grid[x + 1][y] == PATH) count++;
-		if (grid[x][y - 1] == PATH) count++;
-		if (grid[x][y + 1] == PATH) count++;
-		return count == (symbol >> 16);
-	}
 	if ((symbol & 0x700) != Decoration::Arrow)
 		return true;
 	int targetCount = (symbol & 0xf000) >> 12;
