@@ -298,6 +298,9 @@ void Panel::WriteDecorations() {
 			}
 		}
 	}
+	if (arrows) {
+		memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
+	}
 	if (!any) {
 		memory->WritePanelData<int>(id, NUM_DECORATIONS, { 0 });
 	}
