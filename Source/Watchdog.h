@@ -112,7 +112,9 @@ public:
 	int tracedLength;
 	bool complete;
 	int style;
-	int exitPos, exitPosSym, exitPoint;
+	std::vector<int> exits;
+	int exitPoint;
+	std::vector<int> symmetryData;
 	std::vector<struct Point> DIRECTIONS;
 };
 

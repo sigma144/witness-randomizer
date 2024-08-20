@@ -44,8 +44,10 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f) {
 	complete = false;
 	style = ReadPanelData<int>(id, STYLE_FLAGS);
 	DIRECTIONS = { Point(0, 2), Point(0, -2), Point(2, 0), Point(-2, 0), Point(2, 2), Point(2, -2), Point(-2, -2), Point(-2, 2) };
-	exitPos = panel.xy_to_loc(panel._endpoints[0].GetX(), panel._endpoints[0].GetY());
-	exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
+	symmetryData = ReadArray<int>(id, REFLECTION_DATA, ReadPanelData<int>(id, NUM_DOTS));
+	for (Endpoint& e : panel._endpoints) {
+		exits.emplace_back(panel.xy_to_loc(e.GetX(), e.GetY()));
+;	}
 	exitPoint = (width / 2 + 1) * (height / 2 + 1);
 }
 
@@ -90,13 +92,8 @@ void ArrowWatchdog::initPath()
 	if (style & Panel::Style::SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {
 			SolutionPoint sp;
-			if (traced[i].pointA >= exitPoint || traced[i].pointB >= exitPoint) {
-				sp.pointA = sp.pointB = exitPoint;
-			}
-			else {
-				sp.pointA = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointA;
-				sp.pointB = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointB;
-			}
+			sp.pointA = symmetryData[traced[i].pointA];
+			sp.pointB = symmetryData[traced[i].pointB];
 			traced.push_back(sp);
 		}
 	}
@@ -104,13 +101,19 @@ void ArrowWatchdog::initPath()
 	tracedLength = numTraced;
 	complete = false;
 	if (traced.size() == 0) return;
+	int lastp1 = 0;
 	for (const SolutionPoint& p : traced) {
 		int p1 = p.pointA, p2 = p.pointB;
-		if (p1 == exitPoint || p2 == exitPoint) {
+		if (std::find(exits.begin(), exits.end(), p2) != exits.end()) {
 			complete = true;
+		}
+		if (p1 >= exitPoint) {
+			p1 = lastp1;
+		}
+		lastp1 = p1;
+		if (p2 >= exitPoint) {
 			continue;
 		}
-		else if (p1 > exitPoint || p2 > exitPoint) continue;
 		if (p1 == 0 && p2 == 0 || p1 < 0 || p2 < 0) {
 			return;
 		}
@@ -129,10 +132,6 @@ void ArrowWatchdog::initPath()
 			grid[x2][y2] = PATH;
 			grid[(x1 + x2) / 2][(y1 + y2) / 2] = PATH;
 		}
-		if (p1 == exitPos || p2 == exitPos || (style & Panel::Style::SYMMETRICAL) && (p1 == exitPosSym || p2 == exitPosSym)) {
-			complete = !complete;
-		}
-		else complete = false;
 	}
 }
 
