@@ -293,7 +293,7 @@ bool APWatchdog::IsPanelSolved(int id, bool ensureSet) {
 		if (id == 0x034E3) return ReadPanelData<int>(0x034EB, CABLE_POWER) > 0.0f; // Sound Room
 		if (id == 0x014D1) return ReadPanelData<int>(0x00BED, CABLE_POWER) > 0.0f; // Red Underwater
 	}
-	return ReadPanelData<int>(finalPanel, SOLVED) == 1;
+	return ReadPanelData<int>(id, SOLVED) == 1;
 }
 
 std::vector<int> APWatchdog::CheckCompletedHuntEntities() {
