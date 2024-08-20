@@ -10,9 +10,11 @@ typedef std::set<Point> Shape;
 
 #define DEFAULT_GRID 0
 #define HEXAGON_GRID 1
-#define TRIANGLE_3x3_GRID 2
+#define TRIANGLE_GRID_3x3 2
 #define GRID_4x4 3
-#define GRID_4x4_4START 4
+#define TRIANGLE_GRID_4x4 4
+#define GRID_4x4_3START 5
+#define GRID_4x4_4START 6
 
 //Functions to handle special case puzzles
 
@@ -71,6 +73,7 @@ public:
 	void generateSpecularPuzzle(int id, std::vector<std::pair<int, int>> shadows) { generateSpecularPuzzle(id, DEFAULT_GRID, shadows); }
 	void setPosition(int id, float x, float y, float z);
 	void setOrientation(int id, float yaw, float pitch, float roll);
+	void setOrientation(int id, float x, float y, float z, float w);
 	void setScale(int id, float scale);
 	std::vector<int> generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags, std::vector<std::pair<int, int>> shadows);
 	bool isAmbiguous(std::vector<int>& path, std::vector<std::vector<int>>& solutions, std::vector<std::pair<int, int>> shadows);

@@ -6,8 +6,6 @@
 Quaternion::Quaternion(float X, float Y, float Z, float W)
 {
     x = X; y = Y; z = Z; w = W;
-    float length = Length();
-    w /= length; x /= length; y /= length; z /= length;
 }
 
 Quaternion::Quaternion(float pitch, float yaw, float roll)

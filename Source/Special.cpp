@@ -1507,22 +1507,27 @@ void Special::generateSpecularPuzzle(int id, int gridShape, std::vector<std::pai
 		//	0x400001, 0x000001, 0x000001, 0x400001, 0x000001, 0x000001 };
 		flags = { 2,2,2,2,2,2,2, 1,1,1,1,1,1 };
 	}
-	if (gridShape == TRIANGLE_3x3_GRID) {
+	if (gridShape == TRIANGLE_GRID_3x3) {
 		positions = { .1f, .1f, .1f, .366f, .1f, .633f, .1f, .9f, .366f, .1f, .366f, .366f, .366f, .633f, .366f, .9f,
-			.633f, .1f, .633f, .366f, .633f, .633f, .633f, .9f, .9f, .1f, .9f, .366f, .9f, .633f, .9f, .9f,
-			.05f, .05f, .05f, .95f, .95f, .05f, .95f, .95f };
-		connectionsA = { 0,1,2,4,5,6,8,9,10,12,13,14,0,4,8,1,5,9,2,6,10,3,7,11,1,2,3,5,6,7,9,10,11,0,3,12,15 };
-		connectionsB = { 1,2,3,5,6,7,9,10,11,13,14,15,4,8,12,5,9,13,6,10,14,7,11,15,4,5,6,8,9,10,12,13,14,16,17,18,19 };
-		flags = { 0x400002, 0x400000, 0x400000, 0x400002, 0x400000, 0x400000, 0x400000, 0x400000, 0x400000, 0x400000,
-			0x400000, 0x400000, 0x400002, 0x400000, 0x400000, 0x400002, 0x400001, 0x000001, 0x000001, 0x400001 };
+			.633f, .1f, .633f, .366f, .633f, .633f, .633f, .9f, .9f, .1f, .9f, .366f, .9f, .633f, .9f, .9f, .95f, .95f };
+		connectionsA = { 0,1,2,4,5,6,8,9,10,12,13,14,0,4,8,1,5,9,2,6,10,3,7,11,1,2,3,5,6,7,9,10,11,15 };
+		connectionsB = { 1,2,3,5,6,7,9,10,11,13,14,15,4,8,12,5,9,13,6,10,14,7,11,15,4,5,6,8,9,10,12,13,14,16 };
+		flags = { 2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 1 };
 	}
-	if (gridShape == GRID_4x4) {
+	if (gridShape == GRID_4x4 || gridShape == GRID_4x4_3START || gridShape == TRIANGLE_GRID_4x4) {
 		positions = { .1f, .1f, .1f, .3f, .1f, .5f, .1f, .7f, .1f, .9f, .3f, .1f, .3f, .3f, .3f, .5f, .3f, .7f, .3f, .9f,
 			.5f, .1f, .5f, .3f, .5f, .5f, .5f, .7f, .5f, .9f, .7f, .1f, .7f, .3f, .7f, .5f, .7f, .7f, .7f, .9f,
 			.9f, .1f, .9f, .3f, .9f, .5f, .9f, .7f, .9f, .9f, .95f, .95f, };
 		connectionsA = { 0,1,2,3,5,6,7,8,10,11,12,13,15,16,17,18,20,21,22,23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,24 };
 		connectionsB = { 1,2,3,4,6,7,8,9,11,12,13,14,16,17,18,19,21,22,23,24,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25 };
-		flags = { 2,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 1 };
+		if (gridShape == TRIANGLE_GRID_4x4) {
+			std::vector<int> newconnectionsA = { 1,2,3,4,6,7,8,9,11,12,13,14,16,17,18,19 };
+			std::vector<int> newconnectionsB = { 5,6,7,8,10,11,12,13,15,16,17,18,20,21,22,23 };
+			connectionsA.insert(connectionsA.end(), newconnectionsA.begin(), newconnectionsA.end());
+			connectionsB.insert(connectionsB.end(), newconnectionsB.begin(), newconnectionsB.end());
+		}
+		if (gridShape == GRID_4x4_3START) flags = { 2,0,0,0,2, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 2,0,0,0,0, 1 };
+		else flags = { 2,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 1 };
 	}
 	if (gridShape == GRID_4x4_4START) {
 		positions = { .1f, .1f, .1f, .3f, .1f, .5f, .1f, .7f, .1f, .9f, .3f, .1f, .3f, .3f, .3f, .5f, .3f, .7f, .3f, .9f,
@@ -1561,6 +1566,12 @@ void Special::setPosition(int id, float x, float y, float z)
 void Special::setOrientation(int id, float yaw, float pitch, float roll)
 {
 	Memory::get()->WritePanelData<Quaternion>(id, ORIENTATION, Quaternion(yaw, pitch, roll));
+	ASMPayloadManager::get()->UpdateEntityPosition(id);
+}
+
+void Special::setOrientation(int id, float x, float y, float z, float w)
+{
+	Memory::get()->WritePanelData<Quaternion>(id, ORIENTATION, { x, y, z, w });
 	ASMPayloadManager::get()->UpdateEntityPosition(id);
 }
 
@@ -1885,23 +1896,72 @@ int sed = 0;
 void Special::test() {
 	Random::seed(sed++);
 	Generate generate;
-	generate.setGridSize(6, 5);
-	generate.generate(0x09DD5, Decoration::Triangle | Decoration::Color::Orange, 7, Decoration::Dot, 7);
+	Memory* memory = Memory::get();
+
+	//Arrow Pillar
+	generator->resetConfig();
+	generator->setGridSize(6, 5);
+	//generator->setSymmetry(Panel::PillarParallel);
+	initPillarSymmetry(generator, 0x09DD5, Panel::Symmetry::PillarParallel);
+	//Memory::get()->WritePanelData(0x09DD5, PATH_COLOR, { 0.01f, 0, 0.02f, 1 });
+	generator->backgroundColor = { 0, 0, 0, 1 };
+	generator->arrowColor = { 0.6f, 0, 1, 1 };
+	generator->successColor = { 1, 1, 1, 1 };
+	generator->pathWidth = 0.5f;
+	generator->setFlag(Generate::DisableDotIntersection);
+	generator->generate(0x09DD5, Decoration::Arrow, 8, Decoration::Dot, 5);
+	generator->pathWidth = 1;
+	generator->successColor = { 0, 0, 0, 0 };
+
+	//generator->setGridSize(5, 5);
+	//generator->setSymmetry(Panel::PillarParallel);
+	//generator->generate(0x0CC7B, Decoration::Start, 2, Decoration::Exit, 1, Decoration::Arrow, 12, Decoration::Dot, 8, Decoration::Gap, 4);
+	//if (sed == 1) {
+	//ArrowWatchdog* watchdog = new ArrowWatchdog(0x0CC7B, 0);
+	ArrowWatchdog* watchdog = new ArrowWatchdog(0x09DD5, 12);
+	watchdog->start();
+	//}
+
 	return;
 
+	//generateSpecularPuzzle(0x09DA6, TRIANGLE_GRID_3x3);
+	
+	setOrientation(0x0A049, 20, 10, 0);
+	
+	//setOrientation(0x0A036, -22, -60, 0);
+	//setOrientation(0x0A036, -9, -55, 0);
+	//setOrientation(0x0A036, -7, -78, 0);
 
-	Memory* memory = Memory::get();
+	//setOrientation(0x09DA6, -17, -15, 0);
+	//setOrientation(0x09DA6, -20, -15, 0);
+	//setOrientation(0x09DA6, -30, -15, 0);
+
+	//setOrientation(0x0A049, -25, 5, 0);
+	//setOrientation(0x0A049, -17, 0, 0);
+	//setOrientation(0x0A049, 20, 10, 0);
+
+	return;
+
+	//Surface
+	setOrientation(0x00698, -20, -40, 0);
+	generateSpecularPuzzle(0x00698, TRIANGLE_GRID_3x3);
+	memory->WritePanelData<int>(0x00698, POWER_OFF_ON_FAIL, { 0 });
+
 	setPosition(0x2752B, -174.4f, 173.8f, 15.3f);
 	setPosition(0x2752F, -174.7f, 173.73f, 15.32f);
 	setPosition(0x27530, -174.7f, 173.4f, 15.34f);
 	setOrientation(0x0048F, -23, 5, 0);
 	generateSpecularPuzzle(0x0048F, GRID_4x4, { {0,5},{15,20},{1,6},{11,16},{16,21},{17,22},{3,8},{8,13},
 		{0,1},{1,2},{2,3},{3,4},{5,6},{10,11},{11,12},{12,13},{13,14},{15,16},{16,17},{20,21},{21,22},{22,23} });
-	return;
-	//Surface
-	generateSpecularPuzzle(0x00698, HEXAGON_GRID);
-	generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });
-	generateSpecularPuzzle(0x09F92, { {0,1},{1,7},{0,4},{4,10} });
+	memory->WritePanelData<int>(0x0048F, POWER_OFF_ON_FAIL, { 0 });
+
+	setPosition(0x274F8, -174.3, 163.12f, 18.2f);
+	Quaternion rot(10, 80, 90);
+	setOrientation(0x274F8, rot.x, rot.y, rot.z, rot.w * 3.0f);
+	generateSpecularPuzzle(0x09F92, TRIANGLE_GRID_4x4);
+	memory->WritePanelData<int>(0x09F92, POWER_OFF_ON_FAIL, { 0 });
+	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.2f });  // Desert Surface 3 Control, 2x
+
 	generateSpecularPuzzle(0x0A036);
 	setOrientation(0x0A036, -3 + 10 * (Random::rand() % 3 - 1), -40 + 10 * (Random::rand() % 3 - 1), 0);
 	generateSpecularPuzzle(0x09DA6);
@@ -1917,6 +1977,8 @@ void Special::test() {
 		sol = memory->ReadArray<int>(0x0A053, SEQUENCE, memory->ReadPanelData<int>(0x0A053, SEQUENCE_LEN));
 	}
 	generateSpecularPuzzle(0x09F94);
+	//setPower(0x09F94, false); // Turn off desert surface 8
+	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
 	//Light Room
 	generateSpecularPuzzle(0x00422);
 	generateSpecularPuzzle(0x006E3, { {0,1},{1,7},{0,4},{4,10} });
@@ -1928,6 +1990,7 @@ void Special::test() {
 	generateSpecularPuzzle(0x0078D);
 	generateSpecularPuzzle(0x18313);
 	//Flood Room
+	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
 	generateSpecularPuzzle(0x04D18);
 	generateSpecularPuzzle(0x01205);
 	generateSpecularPuzzle(0x181AB);
@@ -1941,6 +2004,7 @@ void Special::test() {
 		memory->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
 	}
 	generateSpecularPuzzle(0x18076); //Rectangular
+	//setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
 	//Final Room
 	generateSpecularPuzzle(0x0A15C); //Concave
 	generateSpecularPuzzle(0x09FFF); //Convex
@@ -1955,13 +2019,9 @@ void Special::test() {
 	generateSpecularPuzzle(0x0A15F); //Tall
 	generateSpecularPuzzle(0x17C31); //Glass
 	generateSpecularPuzzle(0x012D7); //Final
-
-	//setPower(0x09F94, false); // Turn off desert surface 8
-	//setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
-	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.15f });  // Desert Surface 3 Control, 1.5x
-	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
-	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
 	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
+
+	//Ensure textures are preserved
 	memory->LoadPackage("save_58392");
 	memory->LoadPackage("save_58473");
 	memory->LoadPackage("save_58413");

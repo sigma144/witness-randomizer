@@ -917,6 +917,7 @@ void PuzzleList::GenerateDesertN()
 	specialCase->generateSpecularPuzzle(0x00698, HEXAGON_GRID);
 	specialCase->generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });
 	specialCase->generateSpecularPuzzle(0x09F92, { {0,1},{1,7},{0,4},{4,10} });
+	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.2f });  // Desert Surface 3 Control, 2x
 	specialCase->generateSpecularPuzzle(0x0A036);
 	specialCase->setOrientation(0x0A036, -3 + 10 * (Random::rand() % 3 - 1), -40 + 10 * (Random::rand() % 3 - 1), 0);
 	specialCase->generateSpecularPuzzle(0x09DA6);
@@ -932,6 +933,8 @@ void PuzzleList::GenerateDesertN()
 		sol = memory->ReadArray<int>(0x0A053, SEQUENCE, memory->ReadPanelData<int>(0x0A053, SEQUENCE_LEN));
 	}
 	specialCase->generateSpecularPuzzle(0x09F94);
+	specialCase->setPower(0x09F94, false); // Turn off desert surface 8
+	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
 	//Light Room
 	specialCase->generateSpecularPuzzle(0x00422);
 	specialCase->generateSpecularPuzzle(0x006E3, { {0,1},{1,7},{0,4},{4,10} });
@@ -943,6 +946,7 @@ void PuzzleList::GenerateDesertN()
 	specialCase->generateSpecularPuzzle(0x0078D);
 	specialCase->generateSpecularPuzzle(0x18313);
 	//Flood Room
+	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
 	specialCase->generateSpecularPuzzle(0x04D18);
 	specialCase->generateSpecularPuzzle(0x01205);
 	specialCase->generateSpecularPuzzle(0x181AB);
@@ -956,6 +960,7 @@ void PuzzleList::GenerateDesertN()
 		memory->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
 	}
 	specialCase->generateSpecularPuzzle(0x18076); //Rectangular
+	specialCase->setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
 	//Final Room
 	specialCase->generateSpecularPuzzle(0x0A15C); //Concave
 	specialCase->generateSpecularPuzzle(0x09FFF); //Convex
@@ -970,13 +975,9 @@ void PuzzleList::GenerateDesertN()
 	specialCase->generateSpecularPuzzle(0x0A15F); //Tall
 	specialCase->generateSpecularPuzzle(0x17C31); //Glass
 	specialCase->generateSpecularPuzzle(0x012D7); //Final
-
-	specialCase->setPower(0x09F94, false); // Turn off desert surface 8
-	specialCase->setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
-	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.15f });  // Desert Surface 3 Control, 1.5x
-	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
-	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
 	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
+	
+	//Ensure textures are preserved
 	memory->LoadPackage("save_58392");
 	memory->LoadPackage("save_58473");
 	memory->LoadPackage("save_58413");
@@ -2291,7 +2292,12 @@ void PuzzleList::GenerateOrchardH()
 
 void PuzzleList::GenerateDesertH()
 {
-	Randomizer().RandomizeDesert();
+	specialCase->setPosition(0x2752B, -174.4f, 173.8f, 15.3f);
+	specialCase->setPosition(0x2752F, -174.7f, 173.73f, 15.32f);
+	specialCase->setPosition(0x27530, -174.7f, 173.4f, 15.34f);
+	specialCase->setOrientation(0x0048F, -23, 5, 0);
+	specialCase->generateSpecularPuzzle(0x0048F, GRID_4x4, { {0,5},{15,20},{1,6},{11,16},{16,21},{17,22},{3,8},{8,13},
+		{0,1},{1,2},{2,3},{3,4},{5,6},{10,11},{11,12},{12,13},{13,14},{15,16},{16,17},{20,21},{21,22},{22,23} });
 }
 
 void PuzzleList::GenerateKeepH()
