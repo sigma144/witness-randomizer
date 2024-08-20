@@ -192,6 +192,10 @@ private:
 	void HandleKeyTaps();
 
 	void HandleInteractionState();
+
+	bool IsPanelSolved(int id, bool ensureSet);
+
+	std::vector<int> CheckCompletedHuntEntities();
 	
 	void CheckEPSkips();
 
