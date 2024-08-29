@@ -2707,22 +2707,22 @@ void PuzzleList::GenerateSwampV()
 	generator->generate(0x00007, Decoration::Poly | Decoration::Can_Rotate, 1, Decoration::Dot, 3);
 	generator->generate(0x00008, Decoration::Poly | Decoration::Can_Rotate, 2, Decoration::Dot, 3);
 	generator->setGridSize(4, 4);
-	generator->generate(0x00009, Decoration::Poly | Decoration::Can_Rotate, 2, Decoration::Dot, 5);
+	generator->generate(0x00009, Decoration::Poly | Decoration::Can_Rotate, 2, Decoration::Dot, 3);
 	generator->setFlagOnce(Generate::Config::BigShapes);
-	generator->generate(0x0000A, Decoration::Poly | Decoration::Can_Rotate, 2, Decoration::Dot, 7);
+	generator->generate(0x0000A, Decoration::Poly | Decoration::Can_Rotate, 2, Decoration::Dot, 5);
 	//5x5 Rotating Shapes
 	generator->setGridSize(5, 5);
-	generator->generate(0x003B2, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Dot, 5);
-	generator->generate(0x00A1E, Decoration::Poly | Decoration::Can_Rotate, 4, Decoration::Dot, 5);
-	generator->generate(0x00C2E, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Dot, 7);
+	generator->generate(0x003B2, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Dot, 3);
+	generator->generate(0x00A1E, Decoration::Poly | Decoration::Can_Rotate, 4, Decoration::Dot, 3);
+	generator->generate(0x00C2E, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Dot, 5);
 	generator->setFlagOnce(Generate::Config::BigShapes);
-	generator->generate(0x00E3A, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Dot, 7);
+	generator->generate(0x00E3A, Decoration::Poly | Decoration::Can_Rotate, 3, Decoration::Dot, 5);
 	//Optional Tetris
 	generator->resetConfig();
 	generator->setGridSize(5, 6);
 	generator->setSymbol(Decoration::Start, 5, 0);
 	generator->setSymbol(Decoration::Exit, 5, 12);
-	generator->generate(0x009A6, Decoration::Poly, 5, Decoration::Dot, 5);
+	generator->generate(0x009A6, Decoration::Poly, 4, Decoration::Dot, 5);
 	//Negative Shapes 1
 	generator->resetConfig();
 	generator->setFlag(Generate::Config::RequireCombineShapes);
@@ -3019,7 +3019,7 @@ void PuzzleList::GenerateMountainV()
 	//Orange Row
 	generator->resetConfig();
 	generator->setGridSize(5, 5);
-	generator->generate(0x09E73, Decoration::Arrow, 2, Decoration::Dot, 13);
+	generator->generate(0x09E73, Decoration::Stone | Decoration::Color::Black, 5, Decoration::Stone | Decoration::Color::White, 7, Decoration::Dot_Intersection, 9);
 	generator->generate(0x09E75, Decoration::Arrow, 2, Decoration::Stone | Decoration::Color::Black, 5, Decoration::Stone | Decoration::Color::White, 5);
 	generator->generate(0x09E78, Decoration::Arrow, 2, Decoration::Star | Decoration::Color::Black, 4, Decoration::Star | Decoration::Color::White, 6);
 	generator->generate(0x09E79, Decoration::Arrow, 2, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Green, 2, Decoration::Poly | Decoration::Color::Green, 1, Decoration::Gap, 7);
@@ -3147,8 +3147,8 @@ void PuzzleList::GenerateCavesV()
 		Decoration::Stone | Decoration::Color::Magenta, 1, Decoration::Stone | Decoration::Color::Cyan, 2, Decoration::Triangle | Decoration::Color::Orange, 2, Decoration::Arrow, 2);
 	generator->generate(0x0097D, Decoration::Stone | Decoration::Color::Magenta, 2, Decoration::Stone | Decoration::Color::Cyan, 2,
 		Decoration::Star | Decoration::Color::Magenta, 2, Decoration::Star | Decoration::Color::Cyan, 2, Decoration::Triangle | Decoration::Color::Orange, 3, Decoration::Arrow, 2);
-	generator->generate(0x0097E, Decoration::Eraser | Decoration::Color::Cyan, 1, Decoration::Stone | Decoration::Color::Magenta, 2, Decoration::Stone | Decoration::Color::Cyan, 2,
-		Decoration::Star | Decoration::Color::Magenta, 3, Decoration::Star | Decoration::Color::Cyan, 3, Decoration::Triangle | Decoration::Color::Orange, 3, Decoration::Arrow, 2);
+	generator->generate(0x0097E, Decoration::Stone | Decoration::Color::Magenta, 2, Decoration::Stone | Decoration::Color::Cyan, 2,
+		Decoration::Star | Decoration::Color::Magenta, 3, Decoration::Star | Decoration::Color::Cyan, 3, Decoration::Triangle | Decoration::Color::Orange, 3, Decoration::Arrow, 3);
 
 	generator->setGridSize(4, 4);
 	generator->generate(0x00994, Decoration::Poly | Decoration::Can_Rotate, 2, Decoration::Triangle | Decoration::Color::Orange, 1);
