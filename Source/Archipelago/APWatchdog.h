@@ -15,6 +15,7 @@
 class Generate;
 class DrawIngameManager;
 class PanelLocker;
+class Color;
 
 
 class APWatchdog : public Watchdog {
@@ -61,6 +62,7 @@ public:
 	void DoubleDoorTargetHack(int id);
 
 	void SetItemRewardColor(const int& id, const int& itemFlags);
+	void WriteRewardColorToPanel(int id, Color color);
 	bool PanelShouldPlayEpicVersion(const int& id);
 	void PlaySentJingle(const int& id, const int& itemFlags);
 	void PlayReceivedJingle(const int& itemFlags);
@@ -80,7 +82,10 @@ public:
 	void HandleOpenedDoorsResponse(nlohmann::json value);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
 
-	void PotentiallyColorPanel(int64_t location);
+	void PotentiallyColorPanel(int64_t location) {
+		PotentiallyColorPanel(location, false);
+	}
+	void PotentiallyColorPanel(int64_t location, bool overrideRecolor);
 
 	void InfiniteChallenge(bool enable);
 
@@ -102,6 +107,8 @@ private:
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	std::map<int64_t, unsigned int> locationIdToItemFlags;
 	std::set<int64_t> checkedLocations;
+	std::set<int> recolorWhenSolved;
+	std::set<int> alreadyColored;
 	std::set<int> alreadyPlayedHuntEntityJingle;
 	std::set<std::pair<int, int64_t>> locationsThatContainedItemsFromOtherPlayers;
 	int finalPanel;

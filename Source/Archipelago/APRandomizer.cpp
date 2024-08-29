@@ -490,7 +490,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			}
 			else
 			{
-				async->SetItemRewardColor(findResult->first, item.flags);
 				if (item.item == ITEM_BONK_TRAP && receiving) {
 					// Bonk will be played on item receive, but we should not interrupt ramping
 					if (allEPs.count(panelId)) APAudioPlayer::get()->ResetRampingCooldownEP();

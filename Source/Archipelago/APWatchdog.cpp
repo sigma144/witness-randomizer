@@ -325,6 +325,17 @@ std::vector<int> APWatchdog::CheckCompletedHuntEntities() {
 }
 
 void APWatchdog::CheckSolvedPanels() {
+	for (int id : recolorWhenSolved) {
+		if (!panelIdToLocationId_READ_ONLY.contains(id)) recolorWhenSolved.erase(id);
+		if (!IsPanelSolved(id, true)) continue;
+
+		if (FirstEverLocationCheckDone) {
+			PotentiallyColorPanel(panelIdToLocationId_READ_ONLY[id], true);
+			HudManager::get()->queueNotification("This location was previously collected.", { 0.7f, 0.7f, 0.7f });
+		}
+		recolorWhenSolved.erase(id);
+	}
+
 	std::list<int> solvedEntityIDs;
 	std::vector<int> completedHuntEntities = {};
 
@@ -341,7 +352,7 @@ void APWatchdog::CheckSolvedPanels() {
 				ap->StatusUpdate(APClient::ClientStatus::GOAL);
 			}
 		}
-		else if (IsPanelSolved(finalPanel)){
+		else if (IsPanelSolved(finalPanel, false)){
 			isCompleted = true;
 			HudManager::get()->queueBannerMessage("Victory!");
 
@@ -481,7 +492,11 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost, b
 		}
 	}
 
-	if ((reason == "Collected" || reason == "Excluded") && Collect == "Unchanged") return;
+	if (reason == "Collected" && Collect == "Unchanged") {
+		if (!IsPanelSolved(id, false)) recolorWhenSolved.insert(id);
+		return;
+	}	
+	if (reason == "Excluded" && Collect == "Unchanged") return;
 	if (reason == "Disabled" && DisabledPuzzlesBehavior == "Unchanged") return;
 
 	if (reason != "Collected" && reason != "Excluded" || CollectUnlock) {
@@ -535,13 +550,16 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost, b
 
 void APWatchdog::MarkLocationChecked(int64_t locationId)
 {
+	while (!FirstEverLocationCheckDone) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(10)));
+	}
 	checkedLocations.insert(locationId);
 
 	if (!locationIdToPanelId_READ_ONLY.count(locationId)) return;
 	int panelId = locationIdToPanelId_READ_ONLY[locationId];
 
 	if (allPanels.count(panelId)) {
-		if (!ReadPanelData<int>(panelId, SOLVED)) {
+		if (!IsPanelSolved(panelId, false)) {
 			if (PuzzlesSkippedThisGame.count(panelId)) {
 				while (locationCheckInProgress) {
 					std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(10)));
@@ -2184,14 +2202,16 @@ void APWatchdog::setLocationItemFlag(int64_t location, unsigned int flags) {
 	PotentiallyColorPanel(location);
 }
 
-void APWatchdog::PotentiallyColorPanel(int64_t location) {
+void APWatchdog::PotentiallyColorPanel(int64_t location, bool overrideRecolor) {
 	if (!locationIdToPanelId_READ_ONLY.count(location)) return;
 	if (!checkedLocations.count(location)) return;
 	int panelId = locationIdToPanelId_READ_ONLY[location];
 
+	if (recolorWhenSolved.contains(panelId) && !overrideRecolor) return;
 	if (!allPanels.count(panelId) || PuzzlesSkippedThisGame.count(panelId)) return;
 	if (!locationIdToItemFlags.count(location)) return;
 
+	alreadyColored.insert(location);
 	APWatchdog::SetItemRewardColor(panelId, locationIdToItemFlags[location]);
 }
 
@@ -2343,7 +2363,11 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 	if (!allPanels.count(id)) return;
 
 	Color backgroundColor;
-	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT){
+
+	if (recolorWhenSolved.contains(id)) {
+		backgroundColor = { 0.07f, 0.07f, 0.07f, 1.0f };
+	}
+	else if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT){
 		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
@@ -2356,12 +2380,16 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 		backgroundColor = { 0.0f , 0.933f, 0.933f, 1.0f };
 	}
 
+	WriteRewardColorToPanel(id, backgroundColor);
+}
+
+void APWatchdog::WriteRewardColorToPanel(int id, Color color) {
 	if (id == 0x28998 || id == 0x28A69 || id == 0x17CAA || id == 0x00037 || id == 0x09FF8 || id == 0x09DAF || id == 0x0A01F || id == 0x17E67) {
-		WritePanelData<Color>(id, SUCCESS_COLOR_A, { backgroundColor });
+		WritePanelData<Color>(id, SUCCESS_COLOR_A, { color });
 	}
 	else
 	{
-		WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { backgroundColor });
+		WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { color });
 	}
 	WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 }
