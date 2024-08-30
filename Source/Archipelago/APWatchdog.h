@@ -187,6 +187,7 @@ private:
 	float solveModeSpeedFactor = 0.0f;
 
 	bool infiniteChallenge = false;
+	bool infiniteChallengeIsValid = false;
 	bool insideChallengeBoxRange = true;
 
 	bool symmetryMessageDelivered = false;

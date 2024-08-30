@@ -2216,8 +2216,6 @@ void APWatchdog::PotentiallyColorPanel(int64_t location, bool overrideRecolor) {
 }
 
 void APWatchdog::InfiniteChallenge(bool enable) {
-	Memory::get()->SetInfiniteChallenge(enable);
-
 	if (enable) HudManager::get()->queueBannerMessage("Challenge Timer disabled.");
 	if (!enable) HudManager::get()->queueBannerMessage("Challenge Timer reenabled.");
 }
@@ -3311,21 +3309,19 @@ void APWatchdog::UpdateInfiniteChallenge() {
 	}
 
 	if (!insideChallengeBoxRange || challengeIsGoing) {
-		infiniteChallenge = false;
+		infiniteChallengeIsValid = false;
 		return;
 	}
 
 	bool shouldDisableVanillaSound = isChecked || customChallenge;
 
-	if (shouldDisableVanillaSound != infiniteChallenge) {
-		if (shouldDisableVanillaSound) {
-			Memory::get()->SetInfiniteChallenge(true);
-		}
-		else {
-			Memory::get()->SetInfiniteChallenge(false);
-		}
+	if (shouldDisableVanillaSound != infiniteChallenge || !infiniteChallengeIsValid) {
+		bool success = Memory::get()->SetInfiniteChallenge(shouldDisableVanillaSound);
 
-		infiniteChallenge = shouldDisableVanillaSound;
+		if (success) {
+			infiniteChallenge = shouldDisableVanillaSound;
+			infiniteChallengeIsValid = true;
+		}
 	}
 }
 
