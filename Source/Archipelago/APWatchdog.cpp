@@ -361,7 +361,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 			std::vector<float> playerPosition = Memory::get()->ReadPlayerPosition();
 			if (playerPosition[2] > 8) Memory::get()->WritePanelData<float>(0x03629, MAX_BROADCAST_DISTANCE, 0.0001f);
-			else Memory::get()->WritePanelData<float>(0x03629, MAX_BROADCAST_DISTANCE, -1.f);
+			else Memory::get()->WritePanelData<float>(0x03629, MAX_BROADCAST_DISTANCE, 24.f);
 
 			if (EEEGate->containsPoint(playerPosition)) {
 				isCompleted = true;
