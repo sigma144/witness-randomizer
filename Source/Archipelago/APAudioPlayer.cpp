@@ -96,7 +96,7 @@ void APAudioPlayer::PlayAudio(APJingle jingle, APJingleBehavior queue, std::any 
 	}
 
 	if (queue == APJingleBehavior::DontQueue) {
-		if (!gSoloud->isValidVoiceHandle(currentlyPlayingSyncHandle)) QueuedAudio.push({ jingle, extraInfo });
+		if (!gSoloud->isValidVoiceHandle(currentlyPlayingSyncHandle) && QueuedAudio.empty()) QueuedAudio.push({ jingle, extraInfo });
 	}
 }
 

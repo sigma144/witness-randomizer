@@ -682,7 +682,7 @@ void APWatchdog::HandlePowerSurge() {
 
 				if (powerValues[1] > 0) {
 					//using -20f as offset to create a unique recogniseable value that is also stored in the save
-					WritePanelData<float>(panelId, POWER, { -20.0f + powerValues[0], -20.0f + powerValues[1] }, movingMemoryPanels.count(panelId));
+					WritePanelData<float>(panelId, POWER, { -19.0f, -19.0f }, movingMemoryPanels.count(panelId));
 				}
 			}
 		}
@@ -697,8 +697,8 @@ void APWatchdog::ResetPowerSurge() {
 
 		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
 		{
-			powerValues[0] -= -20.0f;
 			powerValues[1] -= -20.0f;
+			powerValues[0] -= powerValues[1];
 
 			WritePanelData<float>(panelId, POWER, powerValues);
 			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 });
