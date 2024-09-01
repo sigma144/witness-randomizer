@@ -344,6 +344,21 @@ void APWatchdog::CheckSolvedPanels() {
 		if (finalPanel == 0x03629) {
 			completedHuntEntities = CheckCompletedHuntEntities();
 
+			if (!eee && ReadPanelData<float>(0x338A4, POSITION + 8) < 45) { // Some random audio log that changes Z position when EEE happens
+				eee = true;
+
+				InputWatchdog* inputWatchdog = InputWatchdog::get();
+				InteractionState iState = inputWatchdog->getInteractionState();
+
+				if (isKnockedOut) {
+					return;
+				}
+
+				if (iState == InteractionState::Sleeping) {
+					inputWatchdog->setSleep(false);
+				}
+			}
+
 			std::vector<float> playerPosition = Memory::get()->ReadPlayerPosition();
 
 			if (EEEGate->containsPoint(playerPosition)) {
@@ -717,7 +732,7 @@ void APWatchdog::ResetPowerSurge() {
 }
 
 void APWatchdog::TriggerBonk() {
-	if (eee) return;
+	if (eee && isCompleted) return;
 
 	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
 
@@ -3045,7 +3060,7 @@ void APWatchdog::LookingAtLockedEntity() {
 		float t = v * cameraDirection;
 
 		// not facing it enough (camera)
-		if (t < 0.35) continue;
+		if (t < 0.35 && !omniDirectionalEntities.count(doorID)) continue;
 
 		candidateEntities.insert(doorID);
 	}
@@ -3750,7 +3765,7 @@ void APWatchdog::ToggleSleep() {
 	InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState iState = inputWatchdog->getInteractionState();
 
-	if (isKnockedOut || iState == InteractionState::Cutscene) {
+	if (isKnockedOut || iState == InteractionState::Cutscene || eee) {
 		HudManager::get()->queueBannerMessage("Can't go into sleep mode right now.");
 		return;
 	}
@@ -3770,6 +3785,9 @@ void APWatchdog::TryWarp() {
 
 	if (iState != InteractionState::Sleeping) return;
 	if (selectedWarp == NULL) return;
+	if (eee) {
+		return;
+	}
 
 	if (selectedWarp->tutorial) {
 		ASMPayloadManager::get()->ActivateMarker(0x034F6);
