@@ -288,6 +288,7 @@ bool APWatchdog::IsPanelSolved(int id, bool ensureSet) {
 	if (id == 0xFFF80) return sentDog; // Dog
 	if (allEPs.count(id)) return ReadPanelData<int>(id, EP_SOLVED) > 0;
 	if (id == 0x17C34) return ReadPanelData<int>(0x2FAD4, DOOR_OPEN) && ReadPanelData<int>(0x2FAD6, DOOR_OPEN) && ReadPanelData<int>(0x2FAD7, DOOR_OPEN); // Mountain Entry
+	if (id == 0x079DF) return ReadPanelData<float>(0x034F1, CABLE_POWER) > 0.0f; // Town Triple
 	if (ensureSet) {
 		if (id == 0x09FD2) return ReadPanelData<int>(0x09FCD, CABLE_POWER) > 0.0f; // Multipanel
 		if (id == 0x034E3) return ReadPanelData<int>(0x034EB, CABLE_POWER) > 0.0f; // Sound Room

@@ -2133,7 +2133,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	style &= ~Panel::Style::HAS_DOTS;
 	style &= ~Panel::Style::HAS_SHAPERS;
 
-	if (id == 0x79df) {
+	if (id == 0x079DF) {
 		style = 0;
 		memory->WritePanelData<int>(id, TARGET, { 0x34F1 });
 	}
