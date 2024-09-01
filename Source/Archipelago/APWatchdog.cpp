@@ -3766,7 +3766,7 @@ void APWatchdog::ToggleSleep() {
 	InteractionState iState = inputWatchdog->getInteractionState();
 
 	if (isKnockedOut || iState == InteractionState::Cutscene || eee) {
-		HudManager::get()->queueBannerMessage("Can't go into sleep mode right now.");
+		HudManager::get()->displayBannerMessageIfQueueEmpty("Can't go into sleep mode right now.");
 		return;
 	}
 	if (iState == InteractionState::Warping) return;

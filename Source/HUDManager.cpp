@@ -64,6 +64,11 @@ void HudManager::update(float deltaSeconds) {
 	}
 }
 
+void HudManager::displayBannerMessageIfQueueEmpty(const std::string& text, RgbColor color, float duration) {
+	if (bannerTimeRemaining > 0) return;
+	queueBannerMessage(text, color, duration);
+}
+
 void HudManager::queueBannerMessage(const std::string& text, RgbColor color, float duration) {
 	queuedBannerMessages.push(BannerMessage(text, color, duration));
 }

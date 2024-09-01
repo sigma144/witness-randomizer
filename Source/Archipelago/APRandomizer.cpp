@@ -598,15 +598,16 @@ void APRandomizer::PostGeneration() {
 		ASMPayloadManager::get()->UpdateEntityPosition(0x3C);
 		ASMPayloadManager::get()->UpdateEntityPosition(0x51);
 
-		// AP INSERT: Make this obviously unsolvable to the bottom //
+		// Make this obviously unsolvable to the bottom //
 		Panel panel = Panel(0x0A3B5);
 		std::vector<Endpoint> newEndpoints = {};
 		for (auto endpoint : panel._endpoints) {
-			if (endpoint.GetY() < 5) {
+			if (endpoint.GetY() < 3) {
 				newEndpoints.push_back(endpoint);
 			}
 		}
 		panel._endpoints = newEndpoints;
+		panel.Write();
 		Special::setTarget(0x0A3B5, 0x3BA7);
 	}
 
