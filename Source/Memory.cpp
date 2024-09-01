@@ -351,7 +351,7 @@ bool Memory::SetInfiniteChallenge(bool enable) {
 
 		WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
 
-		char asmBuff2[] = "\x67\xB1\x26"; // Length of song to original length
+		char asmBuff2[] = "\x26\xB1\x67"; // Length of song to original length
 
 		LPVOID addressPointer2 = reinterpret_cast<LPVOID>(_bytesLengthChallenge);
 
