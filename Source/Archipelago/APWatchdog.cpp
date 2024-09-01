@@ -691,18 +691,27 @@ void APWatchdog::HandlePowerSurge() {
 
 void APWatchdog::ResetPowerSurge() {
 	hasPowerSurge = false;
+	bool weirdStuff = false;
 
 	for (const auto& panelId : allPanels) {
-		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2);
+		std::vector<float> powerValues = ReadPanelData<float>(panelId, POWER, 2, movingMemoryPanels.count(panelId));
 
-		if (powerValues[0] < -18.0f && powerValues[0] > -22.0f && powerValues[1] < -18.0f && powerValues[1] > -22.0f)
+		if (powerValues[1] < -18.0f && powerValues[1] > -22.0f)
 		{
 			powerValues[1] -= -20.0f;
-			powerValues[0] -= powerValues[1];
+			powerValues[0] = powerValues[1];
 
-			WritePanelData<float>(panelId, POWER, powerValues);
-			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 });
+			WritePanelData<float>(panelId, POWER, powerValues, movingMemoryPanels.count(panelId));
+			WritePanelData<float>(panelId, NEEDS_REDRAW, { 1 }, movingMemoryPanels.count(panelId));
 		}
+		else if (powerValues[0] < 0) {
+			weirdStuff = true;
+			WritePanelData<float>(panelId, POWER, { 1.0f, 1.0f }, movingMemoryPanels.count(panelId));
+		}
+	}
+
+	if (weirdStuff) {
+		HudManager::get()->queueBannerMessage("Something strange happened when trying to reset a power surge.");
 	}
 }
 
