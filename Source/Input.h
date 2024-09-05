@@ -177,6 +177,14 @@ enum class InputButton : int {
 	NONE						= 0x0
 };
 
+enum MovementDirection {
+	NONE = 0,
+	LEFT = 1,
+	UP = 2,
+	RIGHT = 3,
+	DOWN = 4,
+};
+
 enum InteractionState {
 	Walking,	// Free look.
 	Focusing,	// Cursor shown, but no puzzle selected
@@ -216,6 +224,7 @@ public:
 
 	// Returns any key taps (quick presses and releases) generated since the last time this function was called.
 	std::vector<InputButton> consumeTapEvents();
+	std::vector<MovementDirection> consumeDirectionalEvents();
 
 	// Returns the most recently calculated direction of the mouse.
 	const Vector3& getMouseDirection() const;
@@ -279,6 +288,8 @@ private:
 	
 	std::map<InputButton, std::chrono::system_clock::time_point> pressTimes;
 	std::vector<InputButton> pendingTapEvents;
+	MovementDirection lastDirection;
+	std::vector<MovementDirection> pendingDirectionEvents;
 
 	bool isAsleep = false;
 	float warpTimer = -1.0f;

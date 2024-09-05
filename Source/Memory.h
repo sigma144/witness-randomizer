@@ -195,10 +195,12 @@ public:
 
 	void EnableSolveMode(bool enable);
 
-	void ExitSolveMode();
-
 	std::vector<float> ReadPlayerPosition() {
 		return this->ReadData<float>({ CAMERAPOSITION }, 3);
+	}
+
+	std::vector<float> ReadDesiredMovementDirection() {
+		return this->ReadData<float>({ DESIREDMOVEMENTDIRECTION }, 3);
 	}
 
 	std::vector<float> ReadCameraAngle() {
@@ -290,6 +292,7 @@ public:
 	int GAMELIB_RENDERER;
 	int RUNSPEED;
 	int CAMERAPOSITION;
+	int DESIREDMOVEMENTDIRECTION;
 
 	uint64_t powerNextFunction;
 	uint64_t initPanelFunction;

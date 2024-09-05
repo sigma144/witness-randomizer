@@ -101,6 +101,12 @@ std::vector<InputButton> InputWatchdog::consumeTapEvents() {
 	return output;
 }
 
+std::vector<MovementDirection> InputWatchdog::consumeDirectionalEvents() {
+	std::vector<MovementDirection> output = pendingDirectionEvents;
+	pendingDirectionEvents.clear();
+	return output;
+}
+
 const Vector3& InputWatchdog::getMouseDirection() const {
 	return mouseDirection;
 }
@@ -303,6 +309,26 @@ void InputWatchdog::updateKeyState() {
 			changedKeys.push_back(keyIndex);
 		}
 #endif
+	}
+
+	Vector3 desiredMovementDirection = Vector3(memory->ReadDesiredMovementDirection());
+
+	MovementDirection currentDirection = MovementDirection::NONE;
+
+	if (std::abs(desiredMovementDirection.X) >= std::abs(desiredMovementDirection.Y)) {
+		if (desiredMovementDirection.X > 0.5) currentDirection = MovementDirection::UP;
+		if (desiredMovementDirection.X < -0.5) currentDirection = MovementDirection::DOWN;
+	}
+	else {
+		if (desiredMovementDirection.Y > 0.5) currentDirection = MovementDirection::RIGHT;
+		if (desiredMovementDirection.Y < -0.5) currentDirection = MovementDirection::LEFT;
+	}
+
+	if (currentDirection != lastDirection) {
+		lastDirection = currentDirection;
+		if (currentDirection != MovementDirection::NONE) {
+			pendingDirectionEvents.push_back(currentDirection);
+		}
 	}
 
 #if PRINT_INPUT_DEBUG

@@ -1412,6 +1412,7 @@ void APWatchdog::HandleKeyTaps() {
 	InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
 	std::vector<InputButton> tapEvents = inputWatchdog->consumeTapEvents();
+	std::vector<MovementDirection> directionEvents = inputWatchdog->consumeDirectionalEvents();
 
 	for (const InputButton& tappedButton : tapEvents) {
 		if (interactionState == InteractionState::Keybinding) {
@@ -1436,45 +1437,12 @@ void APWatchdog::HandleKeyTaps() {
 				HudManager::get()->queueBannerMessage("Failed to bind [" + keyName + "] to " + bindName + ".", { 1.f, 0.25f, 0.25f }, 2.f);
 			}
 		}
+		else if (interactionState == InteractionState::Sleeping) {
+			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) {
+				TryWarp();
+			}
+		}
 		else {
-			if (interactionState == InteractionState::Sleeping) {
-				if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) {
-					TryWarp();
-					return;
-				}
-
-				if (selectedWarp == NULL) return;
-
-				auto i = distance(unlockedWarps.begin(), find(unlockedWarps.begin(), unlockedWarps.end(), selectedWarp));
-
-				if (tappedButton == InputButton::KEY_A || tappedButton == InputButton::KEY_ARROW_LEFT || tappedButton == InputButton::CONTROLLER_DPAD_LEFT || tappedButton == InputButton::CONTROLLER_LSTICK_LEFT) {
-					if (i >= unlockedWarps.size()) {
-						i = 1;
-					}
-
-					i--;
-
-					if (i < 0) i = unlockedWarps.size() - 1;
-
-					selectedWarp = unlockedWarps[i];
-				}
-
-				if (tappedButton == InputButton::KEY_D || tappedButton == InputButton::KEY_ARROW_RIGHT || tappedButton == InputButton::CONTROLLER_DPAD_RIGHT || tappedButton == InputButton::CONTROLLER_LSTICK_RIGHT) {
-					i++;
-					if (i >= unlockedWarps.size()) {
-						i = 0;
-					}
-
-					selectedWarp = unlockedWarps[i];
-				}
-			}
-			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SLEEP)) {
-				if (interactionState != InteractionState::Menu && interactionState != InteractionState::MenuAndSleeping) {
-					ToggleSleep();
-					return;
-				}
-			}
-
 			switch (tappedButton) {
 #if CHEAT_KEYS_ENABLED
 			case InputButton::KEY_MINUS:
@@ -1504,6 +1472,41 @@ void APWatchdog::HandleKeyTaps() {
 				HudManager::get()->queueNotification("sorry (not sorry)");
 #endif
 			};
+		}
+
+		if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SLEEP)) {
+			if (interactionState != InteractionState::Menu && interactionState != InteractionState::MenuAndSleeping) {
+				ToggleSleep();
+			}
+		}
+	}
+
+	for (const MovementDirection& directionEvent : directionEvents) {
+		if (interactionState == InteractionState::Sleeping) {
+			if (selectedWarp == NULL) continue;
+
+			auto i = distance(unlockedWarps.begin(), find(unlockedWarps.begin(), unlockedWarps.end(), selectedWarp));
+
+			if (directionEvent == MovementDirection::RIGHT) {
+				if (i >= unlockedWarps.size()) {
+					i = 1;
+				}
+
+				i--;
+
+				if (i < 0) i = unlockedWarps.size() - 1;
+
+				selectedWarp = unlockedWarps[i];
+			}
+
+			if (directionEvent == MovementDirection::LEFT) {
+				i++;
+				if (i >= unlockedWarps.size()) {
+					i = 0;
+				}
+
+				selectedWarp = unlockedWarps[i];
+			}
 		}
 	}
 }
@@ -2859,7 +2862,11 @@ void APWatchdog::SetStatusMessages() {
 		if (selectedWarp == NULL) {
 			HudManager::get()->setWalkStatusMessage("Sleeping.");
 		} else {
-			HudManager::get()->setWalkStatusMessage("Sleeping. Press [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to warp to: " + selectedWarp->name);
+			std::string message = "Sleeping. Press [" + inputWatchdog->getNameForInputButton(inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + "] to warp to: " + selectedWarp->name;
+			if (unlockedWarps.size() > 1 && ClientWindow::get()->getSetting(ClientToggleSetting::ExtraInfo)) {
+				message = "Use your left & right movement keys to cycle between warps.\n" + message;
+			}
+			HudManager::get()->setWalkStatusMessage(message);
 		}
 	}
 	else if (interactionState == InteractionState::Warping) {

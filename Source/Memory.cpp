@@ -222,6 +222,7 @@ void Memory::findGamelibRenderer()
 void Memory::findPlayerPosition() {
 	executeSigScan({ 0x84, 0xC0, 0x75, 0x59, 0xBA, 0x20, 0x00, 0x00, 0x00 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		// This int is actually desired_movement_direction, which immediately preceeds camera_position
+		this->DESIREDMOVEMENTDIRECTION = ReadStaticInt(offset, index + 0x19, data);
 		this->CAMERAPOSITION = ReadStaticInt(offset, index + 0x19, data) + 0x10;
 
 		return true;
