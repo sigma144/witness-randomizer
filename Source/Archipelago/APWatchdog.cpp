@@ -1443,6 +1443,8 @@ void APWatchdog::HandleKeyTaps() {
 					return;
 				}
 
+				if (selectedWarp == NULL) return;
+
 				auto i = distance(unlockedWarps.begin(), find(unlockedWarps.begin(), unlockedWarps.end(), selectedWarp));
 
 				if (tappedButton == InputButton::KEY_A || tappedButton == InputButton::KEY_ARROW_LEFT || tappedButton == InputButton::CONTROLLER_DPAD_LEFT || tappedButton == InputButton::CONTROLLER_LSTICK_LEFT) {
