@@ -224,4 +224,4 @@ The regular music will still play for the first 6½ minutes as normal, but you w
 This is a project is based off of [sigma144's](https://github.com/sigma144/witness-randomizer) and [jbzdarkid's](https://github.com/jbzdarkid/witness-randomizer) Witness randomizer projects.
 
 Most of the interesting code is currently in Source\Archipelago.
-This project was originally started by [NewSoupVi](https://github.com/newsoupvi) and continued by [Jarno](https://github.com/JarnoWesthof). Additional contributions have been made by [blastron](https://github.com/blastron), and [oddGarrett](https://github.com/gareth) wrote some words.
+This project was originally started by [NewSoupVi](https://github.com/newsoupvi) and continued by [Jarno](https://github.com/Jarno458). Additional contributions have been made by [blastron](https://github.com/blastron), and [oddGarrett](https://github.com/gareth) wrote some words.
