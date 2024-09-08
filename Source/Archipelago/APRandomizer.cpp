@@ -588,11 +588,11 @@ void APRandomizer::PostGeneration() {
 		memory->PowerGauge(0x003C4, 0x51, 1);
 
 		memory->WritePanelData(0x3F, MOUNT_PARENT_ID, 0);
-		memory->WritePanelData(0x3F, SCALE, 0.0f);
+		memory->WritePanelData<float>(0x3F, POSITION, { 0.0f, 0.0f, -200.0f });
 		memory->WritePanelData(0x3C, MOUNT_PARENT_ID, 0);
-		memory->WritePanelData(0x3C, SCALE, 0.0f);
+		memory->WritePanelData<float>(0x3C, POSITION, { 0.0f, 0.0f, -200.0f });
 		memory->WritePanelData(0x51, MOUNT_PARENT_ID, 0);
-		memory->WritePanelData(0x51, SCALE, 0.0f);
+		memory->WritePanelData<float>(0x51, POSITION, { 0.0f, 0.0f, -200.0f });
 
 		ASMPayloadManager::get()->UpdateEntityPosition(0x3F);
 		ASMPayloadManager::get()->UpdateEntityPosition(0x3C);
