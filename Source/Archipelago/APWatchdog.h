@@ -98,6 +98,10 @@ public:
 	std::set<int> seenAudioLogs;
 	std::set<int> seenLasers;
 
+	bool DoorWasLocked(int id) {
+		return lockedDoors.contains(id);
+	}
+
 private:
 	APClient* ap;
 	PanelLocker* panelLocker;

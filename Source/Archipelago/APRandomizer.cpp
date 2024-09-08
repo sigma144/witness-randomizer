@@ -608,7 +608,12 @@ void APRandomizer::PostGeneration() {
 		}
 		panel._endpoints = newEndpoints;
 		panel.Write();
-		Special::setTarget(0x0A3B5, 0x3BA7);
+		if (async->DoorWasLocked(0x03BA2)) {
+			Special::clearTarget(0x0A3B5);
+		}
+		else {
+			Special::setTarget(0x0A3B5, 0x3BA7);
+		}
 	}
 
 	// Write gameplay relevant client options into datastorage
