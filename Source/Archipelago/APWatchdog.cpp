@@ -2713,7 +2713,7 @@ void APWatchdog::SetStatusMessages() {
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
 	if (interactionState == InteractionState::Walking) {
-		if (eee) {
+		if (eee && isCompleted) {
 			HudManager::get()->clearWalkStatusMessage();
 		}
 		else {
