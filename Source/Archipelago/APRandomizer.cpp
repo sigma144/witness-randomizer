@@ -674,7 +674,7 @@ void APRandomizer::PostGeneration() {
 
 	clientWindow->logLine("Changing mounatain laser box and goal condition.");
 
-	bool rotateBox = MountainLasers > 7 || (RequiredHuntEntities && ChallengeLasers > 7 && (PanelHuntPostgame == 1 || PanelHuntPostgame == 3));
+	bool rotateBox = MountainLasers > 7 || (RequiredHuntEntities && ChallengeLasers > 7 && PanelHuntPostgame == 1);
 
 	if(rotateBox || MountainLasers != 7 || ChallengeLasers != 11) Special::SetRequiredLasers(MountainLasers, ChallengeLasers);
 	if (rotateBox) {
