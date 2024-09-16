@@ -326,6 +326,7 @@ std::vector<int> APWatchdog::CheckCompletedHuntEntities() {
 }
 
 void APWatchdog::CheckSolvedPanels() {
+	std::vector<int> toRemove = {};
 	for (int id : recolorWhenSolved) {
 		if (!panelIdToLocationId_READ_ONLY.contains(id)) recolorWhenSolved.erase(id);
 		if (!IsPanelSolved(id, true)) continue;
@@ -334,6 +335,9 @@ void APWatchdog::CheckSolvedPanels() {
 			PotentiallyColorPanel(panelIdToLocationId_READ_ONLY[id], true);
 			HudManager::get()->queueNotification("This location was previously collected.", { 0.7f, 0.7f, 0.7f });
 		}
+		toRemove.push_back(id);
+	}
+	for (int id : toRemove) {
 		recolorWhenSolved.erase(id);
 	}
 
