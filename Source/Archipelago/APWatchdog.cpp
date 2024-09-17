@@ -594,8 +594,9 @@ void APWatchdog::MarkLocationChecked(int64_t locationId)
 
 			SkipPanel(panelId, "Collected", false);
 		}
-
-		PotentiallyColorPanel(locationId);
+		else {
+			PotentiallyColorPanel(locationId);
+		}
 	}
 
 	else if (allEPs.count(panelId) && Collect != "Unchanged") {
