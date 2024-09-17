@@ -11,7 +11,7 @@ const std::vector<std::string>& GetJokeHints() {
   static const std::vector<std::string> jokeHints = {
     "Have you tried Adventure?\n...Holy crud, that game is 17 years older than me.",
     reinterpret_cast<const char*>(u8"Have you tried Aquaria?\nAdmittedly, singing is a much cooler interaction mechanic than \"drawing lines on stuff\"™."),
-    "Have you tried A Hat in Time?\nThere's an actual metro in that game, not just one on the tracker."
+    "Have you tried A Hat in Time?\nThere's an actual metro in that game, not just one on the tracker.",
     "Have you tried A Link to the Past?\nThe Archipelago game that started it all!",
     "Waiting to get your items?\nTry APSudoku! Make progress even while stuck.",
     "Have you tried Blasphemous?\nYou haven't? Blasphemy!\n...Sorry. You should try it, though!",
