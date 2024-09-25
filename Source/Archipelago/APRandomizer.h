@@ -29,7 +29,7 @@ class APRandomizer {
 		int PanelHuntPostgame = 0;
 		bool DeathLink;
 		int DeathLinkAmnesty = 0;
-		bool ElevatorsComeToYou = false;
+		std::set<std::string> ElevatorsComeToYou = {};
 
 		int mostRecentItemId = -1;
 

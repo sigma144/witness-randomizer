@@ -122,7 +122,14 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		DeathLinkAmnesty = slotData.contains("death_link_amnesty") ? (int) slotData["death_link_amnesty"] : 0;
 		if (!DeathLink) DeathLinkAmnesty = -1;
 
-		ElevatorsComeToYou = slotData.contains("elevators_come_to_you") ? slotData["elevators_come_to_you"] == true : false;
+		if (slotData["elevators_come_to_you"].is_array()) {
+			for (std::string key : slotData["elevators_come_to_you"]) {
+				ElevatorsComeToYou.insert(key);
+			}
+		}
+		else if (slotData["elevators_come_to_you"] == true) {
+			ElevatorsComeToYou = { "Quarry Elevator", "Swamp Long Bridge", "Bunker Elevator", "Town Maze Rooftop Bridge" };
+		}
 
 		if (!UnlockSymbols) {
 			state.unlockedArrows = true;

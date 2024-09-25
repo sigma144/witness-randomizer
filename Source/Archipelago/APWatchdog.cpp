@@ -29,7 +29,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, bool elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
 	populateWarpLookup();
 	
 	generator = std::make_shared<Generate>();
@@ -2289,7 +2289,7 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		}
 	}
 
-	if (ElevatorsComeToYou){
+	if (ElevatorsComeToYou.contains("Quarry Elevator")) {
 		if (quarryElevatorUpper->containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 1.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 1.0f) {
 			ASMPayloadManager::get()->BridgeToggle(0x17CC4, false);
 		}
@@ -2297,7 +2297,8 @@ void APWatchdog::CheckImportantCollisionCubes() {
 		if (quarryElevatorLower->containsPoint(playerPosition) && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T) == 0.0f && ReadPanelData<float>(0x17CC1, DOOR_OPEN_T_TARGET) == 0.0f) {
 			ASMPayloadManager::get()->BridgeToggle(0x17CC4, true);
 		}
-
+	}
+	if (ElevatorsComeToYou.contains("Bunker Elevator")) {
 		if (bunkerElevatorCube->containsPoint(playerPosition)) {
 			std::vector<int> allBunkerElevatorDoors = { 0x0A069, 0x0A06A, 0x0A06B, 0x0A06C, 0x0A070, 0x0A071, 0x0A072, 0x0A073, 0x0A074, 0x0A075, 0x0A076, 0x0A077 };
 
@@ -2312,9 +2313,11 @@ void APWatchdog::CheckImportantCollisionCubes() {
 
 			if (ReadPanelData<float>(0x0A076, DOOR_OPEN_T) == 0.0f && ReadPanelData<float>(0x0A075, DOOR_OPEN_T) == 1.0f) problem = true; // Already in the correct spot
 
-			if(!problem) ASMPayloadManager::get()->SendBunkerElevatorToFloor(5, true);
+			if (!problem) ASMPayloadManager::get()->SendBunkerElevatorToFloor(5, true);
 		}
+	}
 
+	if (ElevatorsComeToYou.contains("Swamp Long Bridge")) {
 		if (swampLongBridgeNear->containsPoint(playerPosition) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T) == 1.0f) {
 			if (ReadPanelData<float>(0x1802C, DOOR_OPEN_T) == ReadPanelData<float>(0x1802C, DOOR_OPEN_T_TARGET) && ReadPanelData<float>(0x17E74, DOOR_OPEN_T_TARGET) == 1.0f) {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_a", false);
@@ -2328,7 +2331,9 @@ void APWatchdog::CheckImportantCollisionCubes() {
 				ASMPayloadManager::get()->ToggleFloodgate("floodgate_control_arm_b", false);
 			}
 		}
+	}
 
+	if (ElevatorsComeToYou.contains("Town Maze Rooftop Bridge")) {
 		if (townRedRoof->containsPoint(playerPosition) && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) != 1.0f && ReadPanelData<float>(0x2897C, DOOR_OPEN_T) == ReadPanelData<float>(0x2897C, DOOR_OPEN_T_TARGET)) {
 			ASMPayloadManager::get()->OpenDoor(0x2897C);
 		}
