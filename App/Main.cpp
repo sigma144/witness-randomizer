@@ -393,24 +393,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-	LoadLibrary(L"Msftedit.dll");
-
-	WNDCLASSW wndClass = {
-		CS_HREDRAW | CS_VREDRAW,
-		WndProc,
-		0,
-		0,
-		hInstance,
-		NULL,
-		LoadCursor(nullptr, IDC_ARROW),
-		(HBRUSH)(COLOR_WINDOW+1),
-		WINDOW_CLASS,
-		WINDOW_CLASS,
-	};
-	RegisterClassW(&wndClass);
-
-	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 320, nullptr, nullptr, hInstance, nullptr);
 
 	//Initialize memory globals constant depending on game version
 	Memory memory("witness64_d3d11.exe");
@@ -447,6 +429,67 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			}
 		}
 	}
+	
+	if (wcscmp(lpCmdLine, L"-nogui") == 0)
+	{
+		// if -nogui is passed as argument, just keep saved settings and re-randomize using them
+		std::wcout << L"Running in nogui mode" << std::endl;
+		// SEED
+		randomizer->seed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+		// HARD
+		hard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+		// DOUBLE
+		randomizer->doubleMode = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+
+		// COLORBLIND
+		std::ifstream configFile("WRPGconfig.txt");
+		if (configFile.is_open()) {
+			std::map<std::string, std::string> settings;
+			std::string setting, value;
+			while (!configFile.eof() && configFile.good()) {
+				std::getline(configFile, setting, ':');
+				std::getline(configFile, value);
+				settings[setting] = value;
+			}
+			if (settings.count("colorblind") && settings["colorblind"] == "true") {
+				randomizer->colorblind = true;
+			}
+			configFile.close();
+		}
+		randomizer->seedIsRNG = false;
+		
+		std::wcout << L"Randomizing..." << std::endl;
+		
+		randomizer->ClearOffsets();
+		randomizer->AdjustSpeed();
+		
+		if (hard) randomizer->GenerateHard(hwndLoadingText);
+		else randomizer->GenerateNormal(hwndLoadingText);
+		
+		std::wcout << L"Done !" << std::endl;
+		
+		return 0;
+	}
+	
+	LoadLibrary(L"Msftedit.dll");
+
+	WNDCLASSW wndClass = {
+		CS_HREDRAW | CS_VREDRAW,
+		WndProc,
+		0,
+		0,
+		hInstance,
+		NULL,
+		LoadCursor(nullptr, IDC_ARROW),
+		(HBRUSH)(COLOR_WINDOW+1),
+		WINDOW_CLASS,
+		WINDOW_CLASS,
+	};
+	RegisterClassW(&wndClass);
+
+	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
+      650, 200, 600, DEBUG ? 700 : 320, nullptr, nullptr, hInstance, nullptr);
+
 	Memory::showMsg = true;
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
