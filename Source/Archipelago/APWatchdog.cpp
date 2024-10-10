@@ -328,7 +328,10 @@ std::vector<int> APWatchdog::CheckCompletedHuntEntities() {
 void APWatchdog::CheckSolvedPanels() {
 	std::vector<int> toRemove = {};
 	for (int id : recolorWhenSolved) {
-		if (!panelIdToLocationId_READ_ONLY.contains(id)) recolorWhenSolved.erase(id);
+		if (!panelIdToLocationId_READ_ONLY.contains(id)) {
+			toRemove.push_back(id);
+			continue;
+		}
 		if (!IsPanelSolved(id, true)) continue;
 
 		if (FirstEverLocationCheckDone) {
@@ -371,6 +374,11 @@ void APWatchdog::CheckSolvedPanels() {
 				isCompleted = true;
 				eee = true;
 				HudManager::get()->queueBannerMessage("Victory!");
+				if (timePassedSinceRandomisation > 10.0f) {
+					if (ClientWindow::get()->getJinglesSettingSafe() != "Off") {
+						APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedVictory, APJingleBehavior::PlayImmediate);
+					}
+				}
 				ap->StatusUpdate(APClient::ClientStatus::GOAL);
 			}
 		}
@@ -379,7 +387,12 @@ void APWatchdog::CheckSolvedPanels() {
 			HudManager::get()->queueBannerMessage("Victory!");
 
 			if (timePassedSinceRandomisation > 10.0f) {
-				if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+				if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
+					APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedVictory, APJingleBehavior::PlayImmediate);
+				}
+				else if (ClientWindow::get()->getJinglesSettingSafe() == "Full") {
+					APAudioPlayer::get()->PlayAudio(APJingle::Victory, APJingleBehavior::PlayImmediate);
+				}
 			}
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
@@ -2408,7 +2421,12 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 		backgroundColor = { 0.07f, 0.07f, 0.07f, 1.0f };
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT){
-		backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
+		if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			backgroundColor = { 1.0f, 223.f/255.f, 20./255.f, 1.0f };
+		}
+		else {
+			backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
+		}
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 		backgroundColor = { 0.427f, 0.545f, 0.91f, 1.0f };
@@ -2477,7 +2495,12 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 
 	if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedProgression, APJingleBehavior::Queue, epicVersion);
+			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedProgUseful, APJingleBehavior::Queue, epicVersion);
+			}
+			else {
+				APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedProgression, APJingleBehavior::Queue, epicVersion);
+			}
 		}
 		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 			APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedUseful, APJingleBehavior::Queue, epicVersion);
@@ -2493,7 +2516,12 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 
 	if (isEP){
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-			APAudioPlayer::get()->PlayAudio(APJingle::EPProgression, APJingleBehavior::Queue, epicVersion);
+			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				APAudioPlayer::get()->PlayAudio(APJingle::EPProgUseful, APJingleBehavior::Queue, epicVersion);
+			}
+			else {
+				APAudioPlayer::get()->PlayAudio(APJingle::EPProgression, APJingleBehavior::Queue, epicVersion);
+			}
 		}
 		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 			APAudioPlayer::get()->PlayAudio(APJingle::EPUseful, APJingleBehavior::Queue, epicVersion);
@@ -2509,7 +2537,12 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 
 	if (id == 0xFFF80) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-			APAudioPlayer::get()->PlayAudio(APJingle::DogProgression, APJingleBehavior::Queue, false);
+			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				APAudioPlayer::get()->PlayAudio(APJingle::DogProgUseful, APJingleBehavior::Queue, false);
+			}
+			else {
+				APAudioPlayer::get()->PlayAudio(APJingle::DogProgression, APJingleBehavior::Queue, false);
+			}
 		}
 		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 			APAudioPlayer::get()->PlayAudio(APJingle::DogUseful, APJingleBehavior::Queue, false);
@@ -2525,7 +2558,12 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 
 	if (finalRoomMusicTimer != -1) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-			APAudioPlayer::get()->PlayFinalRoomJingle("progression", APJingleBehavior::Queue, finalRoomMusicTimer);
+			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				APAudioPlayer::get()->PlayFinalRoomJingle("proguseful", APJingleBehavior::Queue, finalRoomMusicTimer);
+			}
+			else {
+				APAudioPlayer::get()->PlayFinalRoomJingle("progression", APJingleBehavior::Queue, finalRoomMusicTimer);
+			}
 		}
 		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 			APAudioPlayer::get()->PlayFinalRoomJingle("useful", APJingleBehavior::Queue, finalRoomMusicTimer);
@@ -2540,7 +2578,12 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 	}
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-		APAudioPlayer::get()->PlayAudio(APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
+		if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::PanelProgUseful, APJingleBehavior::Queue, epicVersion);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::PanelProgression, APJingleBehavior::Queue, epicVersion);
+		}
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 		APAudioPlayer::get()->PlayAudio(APJingle::PanelUseful, APJingleBehavior::Queue, epicVersion);

@@ -178,6 +178,38 @@ IDR_WAVE63              WAVE                    "..\\Music\\Panel Hunt 10.wav"
 
 IDR_WAVE64              WAVE                    "..\\Music\\Panel Hunt 11.wav"
 
+IDR_WAVE65              WAVE                    "..\\Music\\Panel ProgUseful Epic.wav"
+
+IDR_WAVE66              WAVE                    "..\\Music\\Pillars ProgUseful Bmaj.wav"
+
+IDR_WAVE67              WAVE                    "..\\Music\\Pillars ProgUseful EbMin.wav"
+
+IDR_WAVE68              WAVE                    "..\\Music\\Pillars ProgUseful Emaj.wav"
+
+IDR_WAVE69              WAVE                    "..\\Music\\Victory Understated.wav"
+
+IDR_WAVE70              WAVE                    "..\\Music\\Dog ProgUseful.wav"
+
+IDR_WAVE71              WAVE                    "..\\Music\\EP ProgUseful 2.wav"
+
+IDR_WAVE72              WAVE                    "..\\Music\\EP ProgUseful.wav"
+
+IDR_WAVE73              WAVE                    "..\\Music\\Incoming ProgUseful.wav"
+
+IDR_WAVE75              WAVE                    "..\\Music\\Panel Hunt 12.wav"
+
+IDR_WAVE76              WAVE                    "..\\Music\\Panel Hunt 13.wav"
+
+IDR_WAVE77              WAVE                    "..\\Music\\Panel ProgUseful 1.wav"
+
+IDR_WAVE78              WAVE                    "..\\Music\\Panel ProgUseful 2.wav"
+
+IDR_WAVE79              WAVE                    "..\\Music\\Panel ProgUseful 3.wav"
+
+IDR_WAVE80              WAVE                    "..\\Music\\Panel ProgUseful 4.wav"
+
+IDR_WAVE81              WAVE                    "..\\Music\\Panel ProgUseful 5.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
