@@ -210,6 +210,8 @@ IDR_WAVE80              WAVE                    "..\\Music\\Panel ProgUseful 4.w
 
 IDR_WAVE81              WAVE                    "..\\Music\\Panel ProgUseful 5.wav"
 
+IDR_WAVE74              WAVE                    "..\\Music\\Panel Hunt 14.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 

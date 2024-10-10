@@ -103,6 +103,7 @@ inline const std::vector<int> entityHuntJingles = {
 	IDR_WAVE53, // 2
 	IDR_WAVE55, // 4
 	IDR_WAVE54, // 3
+	IDR_WAVE74, // 14
 	IDR_WAVE76, // 13
 	IDR_WAVE57, // 6
 	IDR_WAVE64, // 11
