@@ -6,7 +6,7 @@ RgbColor getColorByItemFlag(const __int64 flags) {
 	//   much more vivid for contrast. See https://github.com/ArchipelagoMW/Archipelago/blob/main/NetUtils.py for details.
 	if (flags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 		if (flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
-			return { 255 / 255.f, 223 / 255.f, 20 / 255.f };
+			return { 240.f / 255.f, 200.f / 255.f, 0.0f };
 		}
 		else {
 			return { 188 / 255.f, 81 / 255.f, 224 / 255.f };

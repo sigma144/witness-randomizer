@@ -737,7 +737,7 @@ void LockablePanel::UpdateLock(APState state) {
 
 	if (puzzleIsMissingKey) {
 		text = "locked";
-		backgroundColor = { 0.6f, 0.55f, 0.2f, 1.0f };
+		backgroundColor = { 0.55f, 0.6f, 0.2f, 1.0f };
 		if (puzzleIsMissingSymbols) {
 			backgroundColor = { 0.5f, 0.25f, 0.0f, 1.0f };
 		}
