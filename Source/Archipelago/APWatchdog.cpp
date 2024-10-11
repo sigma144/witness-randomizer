@@ -2422,7 +2422,7 @@ void APWatchdog::SetItemRewardColor(const int& id, const int& itemFlags) {
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT){
 		if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
-			backgroundColor = { 240.f/255.f, 200.f/255.f, 0.0f, 1.0f };
+			backgroundColor = { 240.f/255.f, 210.f/255.f, 0.0f, 1.0f };
 		}
 		else {
 			backgroundColor = { 0.686f, 0.6f, 0.937f, 1.0f };
