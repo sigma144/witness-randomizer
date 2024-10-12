@@ -1,0 +1,41 @@
+
+#pragma once
+#include <comdef.h>
+#include <iostream>
+#include <vector>
+class TextureMaker
+{
+
+private:
+	int width;
+	int height;
+	//int gridwidth;
+	//int gridheight;
+
+	std::vector<uint8_t> prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint8_t bits, const char* DXTString);
+
+
+
+public:
+	TextureMaker(int width, int height);
+
+	int read_spec_bg(unsigned char* dest, unsigned int len) {
+
+	};
+
+	int handle_errors(HRESULT result, const char* desc) {
+		if (FAILED(result)) {
+			_com_error err(result);
+			auto errMsg = err.ErrorMessage();
+			std::wcout << "failed on step " << desc << " with " << HRESULT_CODE(result) << " " << err.ErrorMessage() << std::endl; 
+			return -1;
+		}
+		else {
+			return 0;
+		}
+	};
+
+	std::vector<uint8_t> generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness);
+
+};
+
