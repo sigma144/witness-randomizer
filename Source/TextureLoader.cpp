@@ -3,49 +3,69 @@
 #include "Randomizer.h"
 #include "Memory.h"
 #include "TextureMaker.h"
+#include <memory.h>
 
 TextureLoader* TextureLoader::_singleton = nullptr;
 
 void TextureLoader::generateColorBunkerTexture(int32_t panelid)
 {
-	//auto p = new Panel(panelid);
+	Memory* memory = Memory::get();
 
-	//// need to flatten _grid into one contiguous array so that rust-code can read it safely. 
-	//std::vector<int> flattened;
-	//for (auto row : p->_grid) {
-	//	for (auto element : row) {
-	//		flattened.push_back(element);
-	//	}
-	//}
+	//I suspect this is the wrong way to get information about a panel
+	//is memory->ReadPanelData better?
+	//probably faster
+	//TODO rewrite
+	auto p = std::make_unique<Panel>(panelid);
+	std::vector<Color> colorarray;
 
-	//auto bg = ColorPanelBackground::Blueprint;
-	//switch (p->id) {
-	//case 0x0A010:
-	//case 0x0A01B:
-	//	bg = ColorPanelBackground::LightGrey;
-	//	break;
-	//case 0x0A01F:
-	//	bg = ColorPanelBackground::DarkGrey;
-	//	break;
-	//case 0x17E63:
-	//case 0x17E67:
-	//	bg = ColorPanelBackground::White;
-	//	break;
-	//case 0x0A079:
-	//	bg = ColorPanelBackground::Elevator;
-	//	break;
-	//}
+	if ((panelid == 0x0A010) || (panelid == 0x0A01B) || (panelid == 0x0A01F)) { //4x4 initial color filter panels
+		std::vector<Color> colorarrayFlipped = memory->ReadArray<Color>(panelid, DECORATION_COLORS, p->get_num_grid_blocks());
+		for (int i = 3; i >= 0; i--) {
+			for (int j = 0; j < 4; j++) {
+				colorarray.push_back(colorarrayFlipped[i * 4 + j]);
+			}
+		}
+		
+		//colorarray = memory->ReadArray<Color>(panelid, DECORATION_COLORS, p->get_num_grid_blocks());
+	}
+	else if (panelid == 0x17E63) {//first 3x3 ones with the door you have to open. This puzzle has a unique color scheme. It looks monochrome under the magenta light. 
+		std::vector<Color> colorarrayFlipped = memory->ReadArray<Color>(panelid, DECORATION_COLORS, p->get_num_grid_blocks());
+		for (int i = 2; i >= 0; i--) {
+			for (int j = 0; j < 3; j++) {
+				Color generated_color = colorarrayFlipped[i * 3 + j];
+				if (generated_color.r == 1.0 ) {
+					//must be "white"
+					colorarray.push_back(Color{ 0.5, 0.0, 1.0 });
+				}
+				else if(generated_color.b == 1.0){
+					//must be "blue"
+					colorarray.push_back(Color{ 0.5, 0.65, 1.0 });
 
+				} else {
+					//must be "black"
+					colorarray.push_back(Color{ 0.5, 1.0, 1.0 });
+				}
+			}
+		}
+	}
+	else if (panelid == 0x17E67) { //second 3x3 one where you have to close the door to see the puzzle in magenta light. 
+		std::vector<Color> colorarrayFlipped = memory->ReadArray<Color>(panelid, DECORATION_COLORS, p->get_num_grid_blocks());
+		for (int i = 2; i >= 0; i--) {
+			for (int j = 0; j < 3; j++) {
+				colorarray.push_back(colorarrayFlipped[i * 3 + j]);
+			}
+		}
+	}
+	TextureMaker tm(1024, 1024);
+	auto wtxBuffer = tm.generate_color_panel_grid(p->_grid, p->id, colorarray);
 
-	//TextureBuffer tex = wtx_tools_generate_colorpanel_from_grid((const uint32_t*)&flattened[0], p->_width, p->_height, bg);
-	//// Rust will continue to hold some knowledge of that memory it allocated to return the `tex`
-	//// so we should copy the data to a local variable, and tell rust that we are done and it can free that memory safely.
-	//std::vector<uint8_t> wtxBuffer = std::vector<uint8_t>(tex.data, tex.data + tex.len);
+	
+	//storedTextures[textureNames[id]] = wtxBuffer;
+	auto texturename = textureNames[p->id];
 
-	////let rust free the memory it allocated
-	//free_texbuf(tex);
+	memory->LoadTexture(memory->GetTextureMapFromCatalog(texturename), wtxBuffer);
+	memory->WritePanelData(p->id, NEEDS_REDRAW, 1);
 
-	//storedTextures[textureNames[panelid]] = wtxBuffer;
 }
 
 void TextureLoader::generateSpecTexture(int32_t id)
@@ -79,10 +99,24 @@ TextureLoader* TextureLoader::get()
 	return _singleton;
 }
 
+void TextureLoader::forceLoadBunkerTextures() {
+	Memory* memory = Memory::get();
+	memory->LoadPackage("save_58472"); //tells game to load the color bunker assets into memory, so we can edit them
+}
+
+void TextureLoader::forceLoadDesertTextures() {
+	Memory* memory = Memory::get();
+	memory->LoadPackage("save_58392");
+	memory->LoadPackage("save_58473");
+	memory->LoadPackage("save_58413");
+	memory->LoadPackage("save_58440");
+	memory->LoadPackage("globals");
+}
+
+
 void TextureLoader::loadTextures()
 {
 	Memory* memory = Memory::get();
-	memory->LoadPackage("save_58472"); //tells game to load the color bunker assets into memory, so we can edit them
 
 	for (auto& elem : storedTextures) {
 		auto texturename = elem.first;
@@ -94,7 +128,8 @@ void TextureLoader::loadTextures()
 
 void TextureLoader::generateTexture(int32_t panelid)
 {
-
+	//this was done in case a similar setup is to be used on other panels
+	//can use this same generateTexture(), but handle different panels differently
 	switch (panelid) {
 	case 0x09F7D:
 	case 0x09FDC:
