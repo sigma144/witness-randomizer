@@ -3,6 +3,7 @@
 #include <comdef.h>
 #include <iostream>
 #include <vector>
+#include <cairo/cairo.h>
 class TextureMaker
 {
 
