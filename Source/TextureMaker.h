@@ -35,6 +35,8 @@ public:
 		}
 	};
 
+	std::vector<uint8_t> convert_cairo_surface_to_wtx(cairo_surface_t* surface, int dxtVersion, int flags);
+
 	std::vector<uint8_t> generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness);
 
 };

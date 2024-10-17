@@ -55,10 +55,68 @@ std::vector<uint8_t> TextureMaker::prepend_header(std::vector<uint8_t> buffer, u
 	return header;
 }
 
-std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness)
-{
+//dxtVersion is either 1 or 5, for "DXT1" or "DXT5". this also sets compression level to BC1/BC3.
+//"flags" is some hardcoded bit flags. Not sure how much they matter. spec textures use 0x05. most diffuse textures use 0x01.
+std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t* surface, int dxtVersion, int flags) {
+	int width = cairo_image_surface_get_width(surface);
+	int height = cairo_image_surface_get_height(surface);
+	int stride = cairo_image_surface_get_stride(surface);
+
+	const uint8_t* data = cairo_image_surface_get_data(surface);
+
+	DirectX::Image image = {};
+	image.width = width;
+	image.height = height;
+	image.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	image.rowPitch = width * 4;
+	image.slicePitch = width * 4 * height;
+	image.pixels = const_cast<uint8_t*>(data);
+
+	DirectX::ScratchImage scratchImage;
+	scratchImage.Initialize2D(DXGI_FORMAT_B8G8R8X8_UNORM, width, height, 1, 1);
+	memcpy(scratchImage.GetPixels(), image.pixels, image.slicePitch);
 	std::unique_ptr<DirectX::ScratchImage> compressed_dds_image;
 
+	const char* dxtString = "DXT5";
+	DXGI_FORMAT dxtFormat = DXGI_FORMAT_BC3_UNORM;
+
+	switch (dxtVersion) {
+	case 1:
+		dxtString = "DXT1";
+		dxtFormat = DXGI_FORMAT_BC1_UNORM;
+		break;
+	case 5:
+		dxtString = "DXT5";
+		dxtFormat = DXGI_FORMAT_BC3_UNORM;
+		break;
+	}
+
+	compressed_dds_image = std::make_unique<DirectX::ScratchImage>();
+	if (0 != this->handle_errors(Compress(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), dxtFormat, DirectX::TEX_COMPRESS_DEFAULT, 0.5f, *compressed_dds_image), "compressing image")) {
+		//return -1;
+	}
+
+	auto merged_vector = std::vector<uint8_t>();
+
+	for (int i = 0; i < compressed_dds_image.get()->GetImageCount(); i++) {
+		auto raw_converted = compressed_dds_image.get()->GetImage(i, 0, 0);
+		auto resulting_blob = std::make_unique<DirectX::Blob>();
+		if (0 != handle_errors(DirectX::SaveToDDSMemory(*raw_converted, DirectX::DDS_FLAGS::DDS_FLAGS_NONE, *resulting_blob), "Makin a blob")) {
+			//return -1;
+		}
+		auto blob_pointer = reinterpret_cast<uint8_t*>(resulting_blob.get()->GetBufferPointer());
+		auto blob_size = resulting_blob.get()->GetBufferSize();
+		auto blob_vec = std::vector<uint8_t>(blob_pointer, blob_pointer + blob_size); //copies the data out of the blob, into a new vec.
+		blob_vec.erase(blob_vec.begin(), blob_vec.begin() + 128);
+
+		merged_vector.insert(merged_vector.end(), blob_vec.begin(), blob_vec.end());
+	}
+	auto withheader = TextureMaker::prepend_header(merged_vector, width, height, flags, dxtString);
+	return withheader;
+}
+
+std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness)
+{
 	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 	auto background = cairo_image_surface_create_from_png("./images/desertspecpanel_square_bg.png");
 	//auto status = surface->get_status();
@@ -91,51 +149,7 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	cairo_set_source(bgcr, pattern);
 	cairo_paint(bgcr);
 
-
-	const uint8_t* data = cairo_image_surface_get_data(background);
-	int stride = cairo_image_surface_get_stride(background);
-
-
-	//I really thought I'd have to transpose these pixels' bytes around.
-	//after all, one is supposedly ARGB (in cairo) and the other is BGRA (in directX)
-	//but it works without transposing?
-	//Maybe It *isnt* working and i'm just getting lucky since this texture is grayscale?
-
-
-	DirectX::Image image = {};
-	image.width = width;
-	image.height = height;
-	image.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	image.rowPitch = width * 4;
-	image.slicePitch = width * 4 * height;
-	image.pixels = const_cast<uint8_t*>(data);
-
-	DirectX::ScratchImage scratchImage;
-	scratchImage.Initialize2D(DXGI_FORMAT_B8G8R8X8_UNORM, width, height, 1, 1);
-	memcpy(scratchImage.GetPixels(), image.pixels, image.slicePitch);
-
-	compressed_dds_image = std::make_unique<DirectX::ScratchImage>();
-	if (0 != this->handle_errors(Compress(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), DXGI_FORMAT_BC1_UNORM, DirectX::TEX_COMPRESS_DEFAULT, 0.5f, *compressed_dds_image), "compressing image")) {
-		//return -1;
-	}
-
-	auto merged_vector = std::vector<uint8_t>();
-
-	for (int i = 0; i < compressed_dds_image.get()->GetImageCount(); i++) {
-		auto raw_converted = compressed_dds_image.get()->GetImage(i, 0, 0);
-		auto resulting_blob = std::make_unique<DirectX::Blob>();
-		if (0 != handle_errors(DirectX::SaveToDDSMemory(*raw_converted, DirectX::DDS_FLAGS::DDS_FLAGS_NONE, *resulting_blob), "Makin a blob")) {
-			//return -1;
-		}
-		auto blob_pointer = reinterpret_cast<uint8_t*>(resulting_blob.get()->GetBufferPointer());
-		auto blob_size = resulting_blob.get()->GetBufferSize();
-		auto blob_vec = std::vector<uint8_t>(blob_pointer, blob_pointer + blob_size); //copies the data out of the blob, into a new vec.
-		blob_vec.erase(blob_vec.begin(), blob_vec.begin() + 128);
-
-		merged_vector.insert(merged_vector.end(), blob_vec.begin(), blob_vec.end());
-	}
-	auto withheader = TextureMaker::prepend_header(merged_vector, width, height, 0x05, "DXT1");
-
+	auto finalTexture = convert_cairo_surface_to_wtx(background, 1, 0x05);
 
 	cairo_pattern_destroy(pattern);
 	cairo_destroy(cr);
@@ -143,5 +157,5 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	cairo_destroy(bgcr);
 	cairo_surface_destroy(background);
 
-	return withheader;
+	return finalTexture;
 }
