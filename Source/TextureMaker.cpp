@@ -19,7 +19,7 @@ TextureMaker::TextureMaker(int h, int w) {
 	width = w;
 }
 
-std::vector<uint8_t> TextureMaker::prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint8_t bits, const char * DXTString)
+std::vector<uint8_t> TextureMaker::prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint16_t mipmaps,  uint8_t bits, const char * DXTString)
 {
 	auto header = std::vector<uint8_t>({
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x00, //header always constant
@@ -40,8 +40,7 @@ std::vector<uint8_t> TextureMaker::prepend_header(std::vector<uint8_t> buffer, u
 	memcpy(&header[8], &len, 4);
 	memcpy(&header[12], &width, 2);
 	memcpy(&header[14], &height, 2);
-	uint16_t num_mipmaps = 1;
-	memcpy(&header[18], &num_mipmaps, 2);
+	memcpy(&header[18], &mipmaps, 2);
 	float color = 0.0;
 	float alpha = 1.0;
 	memcpy(&header[24], &color, 4);
@@ -73,7 +72,7 @@ std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t*
 	image.pixels = const_cast<uint8_t*>(data);
 
 	DirectX::ScratchImage scratchImage;
-	scratchImage.Initialize2D(DXGI_FORMAT_B8G8R8X8_UNORM, width, height, 1, 1);
+	scratchImage.Initialize2D(DXGI_FORMAT_B8G8R8A8_UNORM, width, height, 1, 1);
 	memcpy(scratchImage.GetPixels(), image.pixels, image.slicePitch);
 	std::unique_ptr<DirectX::ScratchImage> compressed_dds_image;
 
@@ -91,27 +90,36 @@ std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t*
 		break;
 	}
 
+	auto scratchtexture_with_mipmaps = std::make_unique<DirectX::ScratchImage>();
+	if (0 != this->handle_errors(GenerateMipMaps(*scratchImage.GetImage(0,0,0), TEX_FILTER_CUBIC | TEX_FILTER_SEPARATE_ALPHA , 0, *scratchtexture_with_mipmaps), "making mipmaps")) {
+		//
+	}
+	
+
 	compressed_dds_image = std::make_unique<DirectX::ScratchImage>();
-	if (0 != this->handle_errors(Compress(scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(), dxtFormat, DirectX::TEX_COMPRESS_DEFAULT, 0.5f, *compressed_dds_image), "compressing image")) {
+	if (0 != this->handle_errors(Compress(scratchtexture_with_mipmaps->GetImages(), scratchtexture_with_mipmaps->GetImageCount(), scratchtexture_with_mipmaps->GetMetadata(), dxtFormat, DirectX::TEX_COMPRESS_DEFAULT, 0.5f, *compressed_dds_image), "compressing image")) {
 		//return -1;
 	}
 
 	auto merged_vector = std::vector<uint8_t>();
 
-	for (int i = 0; i < compressed_dds_image.get()->GetImageCount(); i++) {
-		auto raw_converted = compressed_dds_image.get()->GetImage(i, 0, 0);
-		auto resulting_blob = std::make_unique<DirectX::Blob>();
-		if (0 != handle_errors(DirectX::SaveToDDSMemory(*raw_converted, DirectX::DDS_FLAGS::DDS_FLAGS_NONE, *resulting_blob), "Makin a blob")) {
-			//return -1;
-		}
-		auto blob_pointer = reinterpret_cast<uint8_t*>(resulting_blob.get()->GetBufferPointer());
-		auto blob_size = resulting_blob.get()->GetBufferSize();
-		auto blob_vec = std::vector<uint8_t>(blob_pointer, blob_pointer + blob_size); //copies the data out of the blob, into a new vec.
-		blob_vec.erase(blob_vec.begin(), blob_vec.begin() + 128);
-
-		merged_vector.insert(merged_vector.end(), blob_vec.begin(), blob_vec.end());
+	auto raw_converted = compressed_dds_image.get()->GetImages();
+	auto resulting_blob = std::make_unique<DirectX::Blob>();
+	if (0 != handle_errors(DirectX::SaveToDDSMemory(raw_converted, compressed_dds_image.get()->GetImageCount(), compressed_dds_image.get()->GetMetadata(), DirectX::DDS_FLAGS::DDS_FLAGS_NONE, *resulting_blob), "Makin a blob")) {
+		//return -1;
 	}
-	auto withheader = TextureMaker::prepend_header(merged_vector, width, height, flags, dxtString);
+	if (0 != handle_errors(DirectX::SaveToDDSFile(raw_converted, compressed_dds_image.get()->GetImageCount(), compressed_dds_image.get()->GetMetadata(), DirectX::DDS_FLAGS::DDS_FLAGS_NONE, L"D:\\mipmaps.dds"), "Makin a blob")) {
+		//return -1;
+	}
+	auto blob_pointer = reinterpret_cast<uint8_t*>(resulting_blob.get()->GetBufferPointer());
+	auto blob_size = resulting_blob.get()->GetBufferSize();
+	auto blob_vec = std::vector<uint8_t>(blob_pointer, blob_pointer + blob_size); //copies the data out of the blob, into a new vec.
+	blob_vec.erase(blob_vec.begin(), blob_vec.begin() + 128);
+
+	merged_vector.insert(merged_vector.end(), blob_vec.begin(), blob_vec.end());
+	
+	auto mipmaps = compressed_dds_image.get()->GetImageCount();
+	auto withheader = TextureMaker::prepend_header(merged_vector, width, height, mipmaps, flags, dxtString);
 	return withheader;
 }
 

@@ -13,7 +13,8 @@ private:
 	//int gridwidth;
 	//int gridheight;
 
-	std::vector<uint8_t> prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint8_t bits, const char* DXTString);
+	std::vector<uint8_t> prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint16_t mipmaps, uint8_t bits, const char* DXTString);
+	std::vector<uint8_t> convert_cairo_surface_to_wtx(cairo_surface_t* surface, int dxtversion, int flags);
 
 
 
@@ -35,9 +36,6 @@ public:
 			return 0;
 		}
 	};
-
-	std::vector<uint8_t> convert_cairo_surface_to_wtx(cairo_surface_t* surface, int dxtVersion, int flags);
-
 	std::vector<uint8_t> generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness);
 
 };
