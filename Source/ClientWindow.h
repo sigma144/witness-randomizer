@@ -19,7 +19,8 @@ enum ClientToggleSetting {
 
 enum ClientDropdownSetting {
 	Collect,
-	DisabledPuzzles,
+	DisabledPanels,
+	DisabledEPs,
 	Jingles,
 };
 

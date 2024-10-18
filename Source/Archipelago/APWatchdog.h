@@ -20,7 +20,7 @@ class Color;
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync);
+	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::string disEP, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -149,6 +149,7 @@ private:
 	std::string CollectText = "Unchanged";
 	bool CollectUnlock = false;
 	std::string DisabledPuzzlesBehavior = "Prevent Solve";
+	std::string DisabledEPsBehavior = "Prevent Solve";
 	std::set<int> DisabledEntities;
 	bool SyncProgress = false;
 

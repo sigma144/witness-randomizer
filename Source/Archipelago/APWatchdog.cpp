@@ -29,7 +29,7 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::string disEP, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
 	populateWarpLookup();
 	
 	generator = std::make_shared<Generate>();
@@ -52,6 +52,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 	CollectText = col;
 	Collect = col;
 	DisabledPuzzlesBehavior = dis;
+	DisabledEPsBehavior = disEP;
 	DisabledEntities = disP;
 	ElevatorsComeToYou = elev;
 	doorToItemId = dToI;
@@ -3052,10 +3053,13 @@ void APWatchdog::LookingAtLockedEntity() {
 	if (entityToName.count(lookingAtEP)) {
 		std::string epName = entityToName[lookingAtEP];
 
-		if (epToObeliskSides.count(lookingAtEP)) {
+		if (DisabledEntities.count(lookingAtEP)) {
+			epName += " (Disabled)";
+		}
+		else if (epToObeliskSides.count(lookingAtEP)) {
 			int obeliskSideHex = epToObeliskSides[lookingAtEP];
-			if (panelIdToLocationId.count(obeliskSideHex)) {
-				epName += " (" + ap->get_location_name(panelIdToLocationId[obeliskSideHex], "The Witness") + ")";
+			if (entityToName.count(obeliskSideHex)) {
+				epName += " (" + entityToName[obeliskSideHex] + ")";
 			}
 
 			HudManager::get()->showInformationalMessage(InfoMessageCategory::EnvironmentalPuzzle, entityToName[lookingAtEP] + " (" + + ")");
@@ -3509,16 +3513,17 @@ void APWatchdog::DisablePuzzle(int id) {
 	auto memory = Memory::get();
 
 	if (allEPs.count(id)) {
-		memory->SolveEP(id);
-
 		if (id == 0x3352F && finalPanel == 0x03629) { // Gate EP in Panel Hunt: Be normal challenge difficulty impossible
 			panelLocker->PermanentlyUnlockPuzzle(id, *state);
 			return;
 		}
-		if ((DisabledPuzzlesBehavior == "Auto-Skip" || DisabledPuzzlesBehavior == "Prevent Solve") && precompletableEpToName.count(id) && precompletableEpToPatternPointBytes.count(id)) {
+		if (DisabledEPsBehavior != "Unchanged") {
+			memory->SolveEP(id);
+		}
+		if ((DisabledEPsBehavior == "Glow on Hover" || DisabledEPsBehavior == "Prevent Solve") && precompletableEpToName.count(id) && precompletableEpToPatternPointBytes.count(id)) {
 			memory->MakeEPGlow(precompletableEpToName.at(id), precompletableEpToPatternPointBytes.at(id));
 		}
-		if (DisabledPuzzlesBehavior == "Prevent Solve") {
+		if (DisabledEPsBehavior == "Prevent Solve") {
 			panelLocker->DisablePuzzle(id);
 		}
 	}

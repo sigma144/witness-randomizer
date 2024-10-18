@@ -19,7 +19,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 8
+#define SAVE_VERSION 9
 
 #define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -62,6 +62,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_HIGHCONTRAST 0x505
 #define IDC_SETTING_PANELEFFECTS 0x506
 #define IDC_SETTING_EXTRAINFO 0x507
+#define IDC_SETTING_DISABLED_EPS 0x508
 #define IDC_SETTING_JINGLES 0x510
 
 
@@ -88,7 +89,8 @@ void ClientWindow::saveSettings()
 
 	data["challengeTimer"] = getSetting(ClientToggleSetting::ChallengeTimer);
 	data["collect"] = getSetting(ClientDropdownSetting::Collect);
-	data["disabled"] = getSetting(ClientDropdownSetting::DisabledPuzzles);
+	data["disabled"] = getSetting(ClientDropdownSetting::DisabledPanels);
+	data["disabled_eps"] = getSetting(ClientDropdownSetting::DisabledEPs);
 	data["colorblind"] = getSetting(ClientToggleSetting::ColorblindMode);
 	data["syncprogress"] = getSetting(ClientToggleSetting::SyncProgress);
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
@@ -130,7 +132,8 @@ void ClientWindow::loadSettings()
 			setSetting(ClientToggleSetting::ExtraInfo, data.contains("extrainfo") ? data["extrainfo"].get<bool>() : true);
 
 			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
-			setSetting(ClientDropdownSetting::DisabledPuzzles, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
+			setSetting(ClientDropdownSetting::DisabledPanels, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
+			setSetting(ClientDropdownSetting::DisabledEPs, data.contains("disabled_eps") ? data["disabled_eps"].get<std::string>() : "Prevent Solve");
 			setSetting(ClientToggleSetting::ColorblindMode, data.contains("colorblind") ? data["colorblind"].get<bool>() : false);
 
 			// Load keybinds.
@@ -158,7 +161,8 @@ void ClientWindow::loadSettings()
 		setSetting(ClientToggleSetting::ExtraInfo, true);
 
 		setSetting(ClientDropdownSetting::Collect, "Unchanged");
-		setSetting(ClientDropdownSetting::DisabledPuzzles, "Prevent Solve");
+		setSetting(ClientDropdownSetting::DisabledPanels, "Prevent Solve");
+		setSetting(ClientDropdownSetting::DisabledEPs, "Prevent Solve");
 		setSetting(ClientToggleSetting::ColorblindMode, false);
 
 		InputWatchdog* input = InputWatchdog::get();
@@ -323,7 +327,8 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
-		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPanels)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledEPs)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
@@ -351,7 +356,8 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, true);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, true);
-		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, true);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPanels)->second, true);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledEPs)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, true);
@@ -387,7 +393,8 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		// Disable randomization settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ColorblindMode)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Collect)->second, false);
-		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPuzzles)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledPanels)->second, false);
+		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::DisabledEPs)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
@@ -725,14 +732,37 @@ void ClientWindow::addGameOptions(int& currentY) {
 		CONTROL_MARGIN + SETTING_LABEL_WIDTH * 1.25, currentY,
 		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
 		hwndRootWindow, (HMENU)IDC_SETTING_DISABLED, hAppInstance, NULL);
-	dropdownBoxes[ClientDropdownSetting::DisabledPuzzles] = hwndOptionDisabled;
-	dropdownIds[ClientDropdownSetting::DisabledPuzzles] = IDC_SETTING_DISABLED;
+	dropdownBoxes[ClientDropdownSetting::DisabledPanels] = hwndOptionDisabled;
+	dropdownIds[ClientDropdownSetting::DisabledPanels] = IDC_SETTING_DISABLED;
 
 	SendMessage(hwndOptionDisabled, CB_ADDSTRING, 0, (LPARAM)L"Unchanged");
 	SendMessage(hwndOptionDisabled, CB_ADDSTRING, 0, (LPARAM)L"Free Skip");
 	SendMessage(hwndOptionDisabled, CB_ADDSTRING, 0, (LPARAM)L"Auto-Skip");
 	SendMessage(hwndOptionDisabled, CB_ADDSTRING, 0, (LPARAM)L"Prevent Solve");
-	SendMessage(hwndOptionDisabled, CB_SELECTSTRING, 0, (LPARAM)L"Unchanged");
+	SendMessage(hwndOptionDisabled, CB_SELECTSTRING, 0, (LPARAM)L"Prevent Solve");
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING * 2;
+
+	// Option for disabled EPs
+	HWND hwndOptionDisabledEPsText = CreateWindow(L"STATIC", L"Disabled EPs:",
+		WS_VISIBLE | WS_CHILD | SS_LEFT,
+		STATIC_TEXT_MARGIN, currentY + SETTING_LABEL_Y_OFFSET,
+		SETTING_LABEL_WIDTH * 1.25, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, NULL, hAppInstance, NULL);
+
+	HWND hwndOptionDisabledEPs = CreateWindow(L"COMBOBOX", NULL,
+		CBS_DROPDOWNLIST | WS_VISIBLE | WS_CHILD,
+		CONTROL_MARGIN + SETTING_LABEL_WIDTH * 1.25, currentY,
+		SETTING_LABEL_WIDTH, STATIC_TEXT_HEIGHT * 6,
+		hwndRootWindow, (HMENU)IDC_SETTING_DISABLED_EPS, hAppInstance, NULL);
+	dropdownBoxes[ClientDropdownSetting::DisabledEPs] = hwndOptionDisabledEPs;
+	dropdownIds[ClientDropdownSetting::DisabledEPs] = IDC_SETTING_DISABLED_EPS;
+
+	SendMessage(hwndOptionDisabledEPs, CB_ADDSTRING, 0, (LPARAM)L"Unchanged");
+	SendMessage(hwndOptionDisabledEPs, CB_ADDSTRING, 0, (LPARAM)L"Solved on Obelisk");
+	SendMessage(hwndOptionDisabledEPs, CB_ADDSTRING, 0, (LPARAM)L"Glow on Hover");
+	SendMessage(hwndOptionDisabledEPs, CB_ADDSTRING, 0, (LPARAM)L"Prevent Solve");
+	SendMessage(hwndOptionDisabledEPs, CB_SELECTSTRING, 0, (LPARAM)L"Prevent Solve");
 
 	currentY += STATIC_TEXT_HEIGHT * 2;
 
