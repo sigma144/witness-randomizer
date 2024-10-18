@@ -16,7 +16,7 @@ private:
 	//int gridwidth;
 	//int gridheight;
 
-	std::vector<uint8_t> prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint8_t bits, const char* DXTString);
+	std::vector<uint8_t> prepend_header(std::vector<uint8_t> buffer, uint16_t width, uint16_t height, uint16_t mipmaps, uint8_t bits, const char* DXTString);
 	std::vector<uint8_t> convert_cairo_surface_to_wtx(cairo_surface_t* surface, int dxtversion, int flags);
 	void draw_stone_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor);
 	void draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor);
