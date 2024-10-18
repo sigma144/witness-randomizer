@@ -913,6 +913,11 @@ void PuzzleList::GenerateDesertN()
 {
 	Generate generate;
 	Memory* memory = Memory::get();
+	memory->LoadPackage("save_58392");
+	memory->LoadPackage("save_58473");
+	memory->LoadPackage("save_58413");
+	memory->LoadPackage("save_58440");
+	memory->LoadPackage("globals");
 	//Surface
 	specialCase->generateSpecularPuzzle(0x00698, HEXAGON_GRID);
 	specialCase->generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });
@@ -977,11 +982,7 @@ void PuzzleList::GenerateDesertN()
 	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 0.04f });  // Desert Surface Final Control, 4x
 	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
 	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
-	memory->LoadPackage("save_58392");
-	memory->LoadPackage("save_58473");
-	memory->LoadPackage("save_58413");
-	memory->LoadPackage("save_58440");
-	memory->LoadPackage("globals");
+
 }
 
 void PuzzleList::GenerateKeepN()
