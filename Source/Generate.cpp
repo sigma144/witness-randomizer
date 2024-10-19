@@ -591,22 +591,23 @@ bool Generate::place_all_symbols(PuzzleSymbols & symbols)
 	//In each of these loops, s.first is the symbol and s.second is the amount of it to add
 
 	_SHAPEDIRECTIONS = (hasFlag(Config::DisconnectShapes) ? _DISCONNECT : _DIRECTIONS2);
-	int numShapes = 0, numRotate = 0, numNegative = 0;
+	int totalRegular = 0, numRotatedRegular = 0, totalNegative = 0, numRotatedNegative = 0;
 	std::vector<int> colors, negativeColors;
 	for (std::pair<int, int> s : symbols[Decoration::Poly]) {
 		for (int i = 0; i < s.second; i++) {
-			if (s.first & Decoration::Can_Rotate) numRotate++;
 			if (s.first & Decoration::Negative) {
-				numNegative++;
+				if (s.first & Decoration::Can_Rotate) numRotatedNegative++;
+				totalNegative++;
 				negativeColors.push_back(s.first & 0xf);
 			}
 			else {
-				numShapes++;
+				if (s.first & Decoration::Can_Rotate) numRotatedRegular++;
+				totalRegular++;
 				colors.push_back(s.first & 0xf);
 			}
 		}
 	}
-	if (numShapes > 0 && !place_shapes(colors, negativeColors, numShapes, numRotate, numNegative) || numShapes == 0 && numNegative > 0)
+	if (totalRegular > 0 && !place_shapes(colors, negativeColors, totalRegular, numRotatedRegular, totalNegative, numRotatedNegative) || totalRegular == 0 && totalNegative > 0)
 		return false;
 
 	_stoneTypes = static_cast<int>(symbols[Decoration::Stone].size());
@@ -1330,15 +1331,16 @@ int Generate::make_shape_symbol(Shape shape, bool rotated, bool negative, int ro
 }
 
 //Place the given amount of shapes with random colors selected from the color vectors.
-//colors - colors for regular shapes, negativeColors - colors for negative shapes, amount - how many normal shapes
-//numRotated - how many rotated shapes, numNegative - how many negative shapes
-bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int amount, int numRotated, int numNegative)
+//colors - colors for regular shapes, negativeColors - colors for negative shapes, 
+//totalRegular - how many normal shapes (regardless of rotated or not), numRotatedRegular - how many rotated normal shapes,
+//totalNegative - how many negative shapes (regardless of rotated or not), numRotatedNegative - how many rotated negative shapes
+bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int totalRegular, int numRotatedRegular, int totalNegative, int numRotatedNegative)
 {
 	std::set<Point> open = _openpos;
-	int shapeSize = hasFlag(Config::SmallShapes) ? 2 : hasFlag(Config::BigShapes) ? amount == 1 ? 8 : 6 : 4;
-	int targetArea = amount * shapeSize * 7 / 8; //Average size must be at least 7/8 of the target size
-	if (amount * shapeSize > _panel->get_num_grid_blocks()) targetArea = _panel->get_num_grid_blocks();
-	int originalAmount = amount;
+	int shapeSize = hasFlag(Config::SmallShapes) ? 2 : hasFlag(Config::BigShapes) ? totalRegular == 1 ? 8 : 6 : 4;
+	int targetArea = totalRegular * shapeSize * 7 / 8; //Average size must be at least 7/8 of the target size
+	if (totalRegular * shapeSize > _panel->get_num_grid_blocks()) targetArea = _panel->get_num_grid_blocks();
+	int originalAmount = totalRegular;
 	if (hasFlag(Generate::Config::MountainFloorH) && _panel->_width == 9) { //The 4 small puzzles shape size may vary depending on the path
 		targetArea = 0;
 		removeFlag(Generate::Config::MountainFloorH);
@@ -1348,8 +1350,8 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 	int colorIndex = Random::rand() % colors.size();
 	int colorIndexN = Random::rand() % (negativeColors.size() + 1);
 	bool shapesCanceled = false, shapesCombined = false, flatShapes = true;
-	if (amount == 1) shapesCombined = true;
-	while (amount > 0) {
+	if (totalRegular == 1) shapesCombined = true;
+	while (totalRegular > 0) {
 		if (open.size() == 0)
 			return false;
 		Point pos = pick_random(open);
@@ -1363,8 +1365,8 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			targetArea != _panel->get_num_grid_blocks()) continue; //To prevent shapes from filling every grid point
 		std::vector<Shape> shapes;
 		std::vector<Shape> shapesN;
-		int numShapesN = std::min(Random::rand() % (numNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
-		if (amount == 1) numShapesN = numNegative;
+		int numShapesN = std::min(Random::rand() % (totalNegative + 1), static_cast<int>(region.size()) / 3); //Negative blocks may be at max 1/3 of the regular blocks
+		if (totalRegular == 1) numShapesN = totalNegative;
 		if (numShapesN) {
 			std::set<Point> regionN = _gridpos;
 			int maxSize = static_cast<int>(region.size()) - numShapesN * 3; //Max size of negative shapes
@@ -1390,7 +1392,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 		}
 		int numShapes = static_cast<int>(region.size() + bufferRegion.size()) / (shapeSize + 1) + 1; //Pick a number of shapes to make. I tried different ones until I found something that made a good variety of shapes
 		if (numShapes == 1 && bufferRegion.size() > 0) numShapes++; //If there is any overlap, we need at least two shapes
-		if (numShapes < amount && region.size() > shapeSize && Random::rand() % 2 == 1) numShapes++; //Adds more variation to the shape sizes
+		if (numShapes < totalRegular && region.size() > shapeSize && Random::rand() % 2 == 1) numShapes++; //Adds more variation to the shape sizes
 		if (region.size() <= shapeSize + 1 && bufferRegion.size() == 0 && Random::rand() % 2 == 1) numShapes = 1; //For more variation, sometimes make a bigger shape than the target if the size is close
 		if (hasFlag(Config::MountainFloorH)) {
 			if (region.size() < 19) continue;
@@ -1400,15 +1402,15 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 		if (hasFlag(Config::SplitShapes) && numShapes != 1) continue;
 		if (hasFlag(Config::RequireCombineShapes) && numShapes == 1) continue;
 		bool balance = false;
-		if (numShapes > amount //The region is too big for the number of shapes chosen
-			|| numNegative > 0 && _panel->id == 0x288AA //Expert UTM Perspective 4
-			|| numNegative > 0 && _panel->id == 0x00089) { //Expert UTM Invisible 6
-			if (numNegative < 2 || hasFlag(Config::DisableCancelShapes)) continue;
+		if (numShapes > totalRegular //The region is too big for the number of shapes chosen
+			|| totalNegative > 0 && _panel->id == 0x288AA //Expert UTM Perspective 4
+			|| totalNegative > 0 && _panel->id == 0x00089) { //Expert UTM Invisible 6
+			if (totalNegative < 2 || hasFlag(Config::DisableCancelShapes)) continue;
 			//Make balancing shapes - Positive and negative will be switched so that code can be reused
 			balance = true;
 			std::set<Point> regionN = _gridpos;
-			numShapes = std::max(2, Random::rand() % numNegative + 1);			//Actually the negative shapes
-			numShapesN = std::min(amount, 1);		//Actually the positive shapes
+			numShapes = std::max(2, Random::rand() % totalNegative + 1);			//Actually the negative shapes
+			numShapesN = std::min(totalRegular, 1);		//Actually the positive shapes
 			if (numShapesN >= numShapes * 3 || numShapesN * 5 <= numShapes) continue;
 			shapes.clear();
 			shapesN.clear();
@@ -1430,7 +1432,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			_panel->symmetry == Panel::Symmetry::ParallelHFlip || _panel->symmetry == Panel::Symmetry::ParallelVFlip)
 			&& region.count(Point((_panel->_width / 4) * 2 + 1, (_panel->_height / 4) * 2 + 1)))
 			continue; //Prevent parallel symmetry from making regions through the center line (this tends to make the puzzles way too hard)
-		if (!balance && numShapesN && (numShapesN > 1 && numRotated > 0 || numShapesN > 2 || numShapes + numShapesN > 6))
+		if (!balance && numShapesN && (numShapesN > 1 && numRotatedRegular > 0 || numShapesN > 2 || numShapes + numShapesN > 6))
 			continue; //Trying to prevent the game's shape calculator from lagging too much
 		if (!(hasFlag(Config::MountainFloorH) && _panel->_width == 11) && open2.size() < numShapes + numShapesN) continue; //Not enough space to put the symbols
 		if (numShapes == 1) {
@@ -1491,14 +1493,15 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			if (!disconnect) continue;
 		}
 		if (numShapes > 1) shapesCombined = true;
-		numNegative -= static_cast<int>(shapesN.size());
-		if (hasFlag(Generate::Config::MountainFloorH) && amount == 6) { //For mountain floor, combine some of the shapes together
+		totalNegative -= static_cast<int>(shapesN.size());
+		if (hasFlag(Generate::Config::MountainFloorH) && totalRegular == 6) { //For mountain floor, combine some of the shapes together
 			if (!combine_shapes(shapes) || !combine_shapes(shapes)) //Must call this twice b/c there are two combined areas
 				return false;
-			amount -= 2;
+			totalRegular -= 2;
 		}
 		for (Shape& shape : shapes) {
-			int symbol = make_shape_symbol(shape, (numRotated-- > 0), (numShapes-- <= 0));
+			bool is_negative = (numShapes-- <= 0);
+			int symbol = make_shape_symbol(shape, is_negative ? (numRotatedNegative-- > 0) : (numRotatedRegular-- > 0), is_negative);
 			if (symbol == 0)
 				return false;
 			if (!((symbol >> 16) == 0x000F || (symbol >> 16) == 0x1111))
@@ -1522,7 +1525,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			else {
 				set(pos, symbol | colors[(colorIndex++) % colors.size()]);
 				totalArea += static_cast<int>(shape.size());
-				amount--;
+				totalRegular--;
 			}
 			open2.erase(pos);
 			_openpos.erase(pos);
@@ -1536,7 +1539,7 @@ bool Generate::place_shapes(const std::vector<int>& colors, const std::vector<in
 			}
 		}
 	} //Do some final checks - make sure targetArea has been reached, all shapes have been placed, and that config requirements have been met
-	if (totalArea < targetArea || numNegative > 0 ||
+	if (totalArea < targetArea || totalNegative > 0 ||
 		hasFlag(Config::RequireCancelShapes) && !shapesCanceled ||
 		hasFlag(Config::RequireCombineShapes) && !shapesCombined ||
 		originalAmount > 1 && flatShapes)

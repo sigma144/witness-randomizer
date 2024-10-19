@@ -125,7 +125,7 @@ private:
 	Shape generate_shape(std::set<Point>& region, Point pos, int maxSize) { std::set<Point> buffer; return generate_shape(region, buffer, pos, maxSize); }
 	int make_shape_symbol(Shape shape, bool rotated, bool negative, int rotation, int depth);
 	int make_shape_symbol(const Shape& shape, bool rotated, bool negative) { return make_shape_symbol(shape, rotated, negative, -1, 0); }
-	bool place_shapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int amount, int numRotated, int numNegative);
+	bool place_shapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int totalRegular, int numRotatedRegular, int totalNegative, int numRotatedNegative);
 	int count_color(const std::set<Point>& region, int color);
 	bool place_stars(int color, int amount);
 	bool has_star(const std::set<Point>& region, int color);
