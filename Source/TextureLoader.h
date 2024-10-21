@@ -20,6 +20,8 @@ protected:
 public:
 
 	static TextureLoader* get();
+	void forceLoadBunkerTextures();
+	void forceLoadDesertTextures();
 	void loadTextures();
 	void generateTexture(int32_t panelid);
 	void generateSpecTexture(int32_t panelid);

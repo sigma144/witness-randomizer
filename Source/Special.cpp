@@ -187,6 +187,73 @@ void Special::generateColorFilterPuzzle(int id, Point size, const std::vector<st
 	generator->resetConfig();
 }
 
+
+// variant of the above, but with *any* color possible. Not just primary and secondary colors.
+// used for the second color filter panel in color bunker, where you shut the door to bring the rainbow of dots under magenta light.
+void Special::generateColorfulColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind)
+{
+	generator->setFlagOnce(Generate::Config::DisableWrite);
+	generator->setGridSize(size.first, size.second);
+	generator->generate(id, symbols);
+	std::vector<Color> availableColors = { {0, 0, 0, 1} };
+	if (filter.r == 1) {
+		for (int i = 0; i < availableColors.size(); i++) {
+			Color c = availableColors[i];
+			if (c.r == 0) availableColors.push_back({ 1, c.g, c.b, 1 });
+		}
+	}
+	if (filter.g == 1) {
+		for (int i = 0; i < availableColors.size(); i++) {
+			Color c = availableColors[i];
+			if (colorblind && c.r == 0) continue;
+			if (c.g == 0) availableColors.push_back({ c.r, 1, c.b, 1 });
+		}
+	}
+	if (filter.b == 1) {
+		for (int i = 0; i < availableColors.size(); i++) {
+			Color c = availableColors[i];
+			if (c.b == 0) availableColors.push_back({ c.r, c.g, 1, 1 });
+		}
+	}
+	//availableColors.erase(availableColors.begin()); //consider deleting black as color option here? idk.
+	for (int i = 0; i < availableColors.size(); i++) { //Shuffle
+		std::swap(availableColors[i], availableColors[Random::rand() % availableColors.size()]);
+	}
+	std::vector<Color> symbolColors;
+	//availablecolors.erase_if(a)
+	for (int y = generator->_panel->_height - 2; y > 0; y -= 2) {
+		for (int x = 1; x < generator->_panel->_width - 1; x += 2) {
+			if (generator->get(x, y) == 0) symbolColors.push_back({ 0, 0, 0, 0 });
+			else symbolColors.push_back(availableColors[(generator->get(x, y) & 0xf) - 1]);
+		}
+	}
+	bool pass = false;
+	while (!pass) {
+		//Add random variation in remaining color channel(s)
+		for (Color& c : symbolColors) {
+			if (c.a == 0) continue;
+			if (filter.r == 0) c.r = static_cast<float>(Random::rand_float());
+			if (filter.g == 0) c.g = static_cast<float>(Random::rand_float());
+			if (filter.b == 0) c.b = static_cast<float>(Random::rand_float());
+		}
+		//Check for solvability
+		std::map<Color, int> colorCounts;
+		for (Color& c : symbolColors) {
+			colorCounts[c]++;
+		}
+		for (const auto& pair : colorCounts) {
+			if (pair.second % 2) {
+				pass = true;
+				break;
+			}
+		}
+	}
+	generator->setFlagOnce(Generate::Config::WriteColors);
+	generator->write(id);
+	Memory::get()->WriteArray(id, DECORATION_COLORS, symbolColors);
+	generator->resetConfig();
+}
+
 void Special::generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSequence, bool writeSequence) {
 	generator->setFlag(Generate::Config::DisableReset);
 	generateSoundDotPuzzle(id1, { 5, 5 }, dotSequence, writeSequence);
