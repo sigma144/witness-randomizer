@@ -57,7 +57,6 @@ std::vector<uint8_t> TextureMaker::prepend_header(std::vector<uint8_t> buffer, u
 	return header;
 }
 
-
 //dxtVersion is either 1 or 5, for "DXT1" or "DXT5". this also sets compression level to BC1/BC3.
 //"flags" is some hardcoded bit flags. Not sure how much they matter. spec textures use 0x05. most diffuse textures use 0x01.
 std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t* surface, int dxtVersion, int flags) {
@@ -66,9 +65,6 @@ std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t*
 	int stride = cairo_image_surface_get_stride(surface);
 
 	const uint8_t* data = cairo_image_surface_get_data(surface);
-
-
-
 
 	DirectX::Image image = {};
 	image.width = width;
@@ -132,7 +128,6 @@ std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t*
 
 std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness)
 {
-
 	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 	auto background = cairo_image_surface_create_from_png("./images/desertspecpanel_square_bg.png");
 	//auto status = surface->get_status();
@@ -385,5 +380,6 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	//cairo_surface_destroy(/*surface*/);
 	//cairo_destroy(bgcr);
 	cairo_surface_destroy(background);
+
 	return finalTexture;
 }

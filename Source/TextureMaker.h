@@ -22,7 +22,6 @@ private:
 	void draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor);
 	void flip_image_vertically(cairo_surface_t* image);
 
-	//std::vector<uint8_t> generate_color_panel_grid(int panelid);
 
 
 public:
