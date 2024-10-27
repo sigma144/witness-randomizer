@@ -3327,7 +3327,7 @@ int APWatchdog::LookingAtEasterEgg()
 
 	for (auto [easterEggID, position] : easterEggs) {
 		if (clickedEasterEggs.contains(easterEggID)) continue;
-		if ((position - headPosition).length() > 10) continue;
+		if ((position - headPosition).length() > 6) continue;
 
 		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f)) {
 			for (Vector3 mouseRay : InputWatchdog::get()->getCone()) {
