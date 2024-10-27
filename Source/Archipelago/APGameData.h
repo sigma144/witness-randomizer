@@ -2472,9 +2472,75 @@ inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
 	{ "Swamp Platform", { 152.052, 47.727, 8.728 }},
 };
 
-inline std::map<int, Vector3> easterEggs = {
+inline std::map<int, std::pair<Vector3, float>> easterEggs = {
+	// Outside Tutorial
+	{ 0xEE004, {{-104.693, -127.225, 3.710}, 1.0f}}, // Tree near Outpost Entry, Exempt-Medic*
+
+	// Orchard
+	{ 0xEE019, {{-94.904, 28.306, 16.661}, 1.0f}}, // Near Flower Cross, NewSoupVi*
+
+	// Glass Factory
+	{ 0xEE00E, {{-197.448, -35.103, 1.323}, 1.0f}}, // Glass Factory Furnace, Exempt-Medic*
+	{ 0xEE01F, {{-213.326, -34.874, 1.880}, 1.0f}}, // Sand Castle, NewSoupVi*
+
+	// Desert
+	{ 0xEE020, {{-181.717, 102.155, 3.272}, 1.0f}}, // Symmetry Island Outlines Tree Stump, NewSoupVi*
+	{ 0xEE00C, {{-125.556, 67.313, 15.252}, 1.0f}}, // Sand Snake EP Tree, Scipio*
+	{ 0xEE00D, {{-122.256, 86.287, 12.876}, 1.0f}}, // Desert Laser "Air Hole", Scipio*
+	{ 0xEE00F, {{-88.467, 194.095, 20.817}, 1.0f}}, // Desert Perspective Tree, Scipio*
+
+	// Outside Quarry
+	{ 0xEE015, {{-70.564, 184.644, 11.981}, 10.0f}}, // Rooftop Path near Desert Perspective Tree Dead End, NewSoupVi*, Might need to be brown??
+	{ 0xEE016, {{-56.49, 97.680, 12.197}, 10.0f}}, // Rooftop Path near Laser Dead End, NewSoupVi*, Might need to be brown or brighter somehow??
+
+	// Quarry
+	{ 0xEE010, {{-17.823, 192.332, 2.189}, 1.0f}}, // Quarry Boathouse Outside Beam, Scipio*
+	{ 0xEE014, {{-60.823, 176.821, 1.043}, 1.0f}}, // Near Railroad Crevace, NewSoupVi*
+	{ 0xEE01A, {{-53.649, 197.953, 1.840}, 1.0f}}, // Quarry Railroad under broken floor, Exempt-Medic*
+	{ 0xEE011, {{-73.622, 114.307, 3.248}, 10.0f}}, // Outside Stoneworks on Brick Pile, Scipio*
+	{ 0xEE012, {{-69.310, 131.049, 3.030}, 0.5f}}, // Quarry Stoneworks Furnace, Scipio*
+	{ 0xEE013, {{-67.412, 131.519, 4.081}, 1.0f}}, // Quarry Stoneworks Furnace Vent, NewSoupVi*
+	{ 0xEE017, {{-74.498, 138.827, 5.019}, 0.5f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic*
+	{ 0xEE018, {{-69.430, 133.384, 4.416}, 1.0f}}, // Quarry Stoneworks Furnace Inside, NewSoupVi*
+
+	// Shadows
+	{ 0xEE01B, {{-8.868, 89.086, 13.445}, 5.0f}}, // Near Butterfly Tree, Exempt-Medic*
+
+	// Keep
+	{ 0xEE00B, {{31.072, 142.531, 22.811}, 1.2f}}, // Keep Center West Tower, Exempt-Medic*
+
+	// Shipwreck
+	{ 0xEE009, {{178.019, 204.495, 2.354}, 1.0f}}, // Abandoned Staircase, Exempt-Medic*
+
+	// Town
+	{ 0xEE005, {{-9.643, -19.203, 11.249}, 1.0f}}, // Under Town Maze Stairs, Exempt-Medic*
+	{ 0xEE021, {{-64.381, -8.078, 9.593}, 1.0f}}, // Town Hole, Scipio*
+
+	// Windmill
+	{ 0xEE022, {{-92.426, 27.212, 12.733}, 1.0f}}, // Windmill Behind Entry Door, Scipio*
+
+	// Monastery
+	{ 0xEE007, {{-8.969, -95.064, 2.952}, 1.0f}}, // Shore, NewSoupVi*
+	{ 0xEE006, {{20.800, -27.668, 16.710}, 1.0f}}, // Monastery North Shutters, Exempt-Medic*
+
 	// Jungle
-	{ 0xEE000, {-20.581, -154.352, 8.987}}, // Peninsula Chalice, NewSoupVi
+	{ 0xEE008, {{0.078, -153.611, 0.650}, 10.0f}}, // Peninsula Glass, NewSoupVi*
+	{ 0xEE00A, {{-20.898, -138.570, 1.186}, 1.0f}}, // Peninsula Dead End, Scipio*
+	{ 0xEE000, {{-20.581, -154.352, 8.987}, 2.0f}}, // Peninsula Chalice, NewSoupVi
+
+	// Outside Bunker
+	{ 0xEE003, {{160.954, -102.040, 7.248}, 1.0f}}, // Entry under Stairs, Scipio*
+	{ 0xEE002, {{167.589, -88.950, 21.426}, 1.0f}}, // Outside Green Room Crevace, Scipio*
+
+	// Inside Bunker
+	{ 0xEE01D, {{156.335, -88.469, 7.256}, 1.0f}}, // Bottom Floor behind Elevator, Exempt-Medic*
+	{ 0xEE01C, {{156.502, -87.455, 21.456}, 0.7f}}, // Green Room behind Elevator, Exempt-Medic*
+
+	// Mountaintop
+	{ 0xEE001, {{148.684, -44.313, 67.200}, 3.0f}}, // Lip, Scipio*
+
+	// Challenge
+	{ 0xEE01E, {{12.457, -27.756, -4.989}, 1.0f}}, // Weird path near reallocating, Exempt-Medic*
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
@@ -2483,4 +2549,4 @@ void populateWarpLookup();
 
 class Vector3;
 struct WitnessDrawnSphere;
-std::vector<WitnessDrawnSphere> makeEgg(Vector3 originalPosition, float scale);
+std::vector<WitnessDrawnSphere> makeEgg(Vector3 originalPosition, float scale = 1.0f, float brightness = 1.0f);

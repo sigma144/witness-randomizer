@@ -3325,7 +3325,8 @@ int APWatchdog::LookingAtEasterEgg()
 
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 
-	for (auto [easterEggID, position] : easterEggs) {
+	for (auto [easterEggID, positionAndBrightness] : easterEggs) {
+		Vector3 position = positionAndBrightness.first;
 		if (clickedEasterEggs.contains(easterEggID)) continue;
 		if ((position - headPosition).length() > 6) continue;
 
@@ -3887,24 +3888,27 @@ void APWatchdog::DrawSpheres(float deltaSeconds) {
 		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
 	}
 
-	for (auto [easterEggID, position] : easterEggs) {
+	for (auto [easterEggID, positionAndBrightness] : easterEggs) {
 		if (clickedEasterEggs.contains(easterEggID)) continue;
+		Vector3 position = positionAndBrightness.first;
 		if ((position - headPosition).length() > 60) continue;
 
 		float scale = 1.0f;
 
-		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f)) {
+		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f, positionAndBrightness.second)) {
 			spheresToDraw.push_back(eggSphere);
 		}
 	}
 
-	// Mouse visualisation
+	/*
+	//Mouse visualisation
 	float distanceMod = std::fmod(timePassedSinceRandomisation, 3);
 
 	for (Vector3 rayDirection : InputWatchdog::get()->getCone()) {
 		Vector3 position = headPosition + (rayDirection * (distanceMod * 10));
 		spheresToDraw.push_back(WitnessDrawnSphere({ position, 0.005f * distanceMod, RgbColor(distanceMod * 0.33f, 0.0f, 1.0f, 1.0f), true }));
 	}
+	*/
 	drawManager->drawSpheres(spheresToDraw);
 }
 
