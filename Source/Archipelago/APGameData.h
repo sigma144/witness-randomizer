@@ -2473,7 +2473,8 @@ inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
 };
 
 inline std::map<int, Vector3> easterEggs = {
-	{ 0xEE000, {-20.581, -154.352, 8.987}},
+	// Jungle
+	{ 0xEE000, {-20.581, -154.352, 8.987}}, // Peninsula Chalice
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
