@@ -2472,6 +2472,14 @@ inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
 	{ "Swamp Platform", { 152.052, 47.727, 8.728 }},
 };
 
+inline std::map<int, Vector3> easterEggs = {
+	{ 0xEE000, {-20.581, -154.352, 8.987}},
+};
+
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
 std::string getStringFromFlag(unsigned int flags);
 void populateWarpLookup();
+
+class Vector3;
+struct WitnessDrawnSphere;
+std::vector<WitnessDrawnSphere> makeEgg(Vector3 originalPosition, float scale);

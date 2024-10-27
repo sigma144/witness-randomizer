@@ -1,5 +1,6 @@
 #include "APGameData.h"
 #include "Client/apclientpp/apclient.hpp"
+#include "DrawIngameManager.h"
 
 RgbColor getColorByItemFlag(const __int64 flags) {
 	// Pick the appropriate color for this item based on its progression flags. Colors are loosely based on AP codes but
@@ -56,4 +57,17 @@ void populateWarpLookup() {
 	for (Warp warp : allPossibleWarps) {
 		warpLookup[warp.name] = warp;
 	}
+}
+
+std::vector<WitnessDrawnSphere> makeEgg(Vector3 originalPosition, float scale) {
+	scale *= 1.1f;
+
+	std::vector<WitnessDrawnSphere> spheresToDraw = {};
+
+	spheresToDraw.push_back(WitnessDrawnSphere({ originalPosition, 0.04f * scale, RgbColor(1.0f, 1.0f, 1.0f, 1.0f), true }));
+	spheresToDraw.push_back(WitnessDrawnSphere({ originalPosition + Vector3(0, 0, 0.010f * scale), 0.036f * scale, RgbColor(1.0f, 1.0f, 1.0f, 1.0f), true }));
+	spheresToDraw.push_back(WitnessDrawnSphere({ originalPosition + Vector3(0, 0, 0.020f * scale), 0.03f * scale, RgbColor(1.0f, 1.0f, 1.0f, 1.0f), true }));
+	spheresToDraw.push_back(WitnessDrawnSphere({ originalPosition + Vector3(0, 0, 0.032f * scale), 0.02f * scale, RgbColor(1.0f, 1.0f, 1.0f, 1.0f), true }));
+
+	return spheresToDraw;
 }

@@ -37,7 +37,7 @@ public:
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
 
-	void TriggerBonk();
+	float TriggerBonk(bool fromDeathLink);
 	void ResetDeathLink();
 
 	void StartRebindingKey(enum class CustomKey key);
@@ -168,9 +168,8 @@ private:
 	bool firstJinglePlayed = false;
 
 	bool hasPowerSurge = false;
-	bool isKnockedOut = false;
+
 	std::chrono::system_clock::time_point powerSurgeStartTime;
-	std::chrono::system_clock::time_point knockOutStartTime;
 
 	std::set<double> deathLinkTimestamps;
 
@@ -189,6 +188,8 @@ private:
 	int storageCheckCounter = 6;
 
 	float speedTime = 0.0f;
+	float bonkTime = 0.0f;
+	int amountOfBonksInCurrentBonk = 0;
 	float solveModeSpeedFactor = 0.0f;
 
 	bool infiniteChallenge = false;
@@ -224,15 +225,25 @@ private:
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
-	void HandleDeathLink();
+	void HandleKnockout(float deltaSeconds);
 	bool IsEncumbered();
 	void HandleEncumberment(float deltaSeconds, bool doFunctions);
 	void HandleWarp(float deltaSeconds);
 
 	void LookingAtLockedEntity();
 
-	void PettingTheDog(float deltaSeconds);
+	void UpdateCursorVisual(int cursorVisual);
+
+	enum cursorVisual : int {
+		normal = 0,
+		recolored = 1,
+		big = 2,
+	};
+
+	int PettingTheDog(float deltaSeconds);
 	bool LookingAtTheDog() const;
+	int LookingAtEasterEgg();
+	int HandleEasterEgg();
 
 	// Updates puzzle skip logic.
 	void UpdatePuzzleSkip(float deltaSeconds);
@@ -309,6 +320,7 @@ private:
 	std::set<int> openedDoors;
 	std::set<int> solvedHuntEntitiesDataStorage;
 	std::map<std::string, bool> lastDeadChecks;
+	std::set<int> clickedEasterEggs;
 
 	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;

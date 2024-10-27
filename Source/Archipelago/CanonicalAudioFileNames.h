@@ -90,5 +90,12 @@ inline std::map<int, std::vector<std::string>> canonicalAudioFileNames = {
 	{ IDR_WAVE80, { "Panel ProgUseful 4.wav", "Panel ProgUseful 3.wav", "Panel ProgUseful 2.wav", "Panel ProgUseful 1.wav", "Panel Useful.wav", }},
 	{ IDR_WAVE81, { "Panel ProgUseful 5.wav", "Panel ProgUseful 4.wav", "Panel ProgUseful 3.wav", "Panel ProgUseful 2.wav", "Panel ProgUseful 1.wav", "Panel Useful.wav", }},
 
+	{ IDR_WAVE82, { "Plop 1.wav", "Plop.wav"}},
+	{ IDR_WAVE83, { "Plop 2.wav", "Plop.wav"}},
+	{ IDR_WAVE84, { "Plop 3.wav", "Plop.wav"}},
+	{ IDR_WAVE85, { "Plop 4.wav", "Plop.wav"}},
+	{ IDR_WAVE86, { "Plop 5.wav", "Plop.wav"}},
+
+
 	{ -2, {"Challenge.wav"}},
 };

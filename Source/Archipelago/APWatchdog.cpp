@@ -107,6 +107,16 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		speedTime = 0;
 	}
 
+	bonkTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR + 4);
+	if (bonkTime < 3.0f) { // this also avoids the original value 1.0f
+		bonkTime = 0;
+	}
+	if (bonkTime > 0) {
+		int bonkTimeInt = (int)std::ceil(bonkTime);
+		HudManager::get()->queueNotification("Still have " + std::to_string(bonkTimeInt) + "s of knockout time remaining.");
+		if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Bonk, APJingleBehavior::PlayImmediate);
+	}
+
 	for (auto [key, value] : obeliskHexToEPHexes) {
 		obeliskHexToAmountOfEPs[key] = (int)value.size();
 	}
@@ -153,6 +163,7 @@ void APWatchdog::action() {
 	HandleEncumberment(frameDuration, halfSecondCountdown <= 0);
 	HandleWarp(frameDuration);
 	HandleMovementSpeed(frameDuration);
+	HandleKnockout(frameDuration);
 	
 	HandleKeyTaps();
 
@@ -185,7 +196,6 @@ void APWatchdog::action() {
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
 		HandlePowerSurge();
-		HandleDeathLink();
 		DisableCollisions();
 
 		UpdateInfiniteChallenge();
@@ -211,7 +221,12 @@ void APWatchdog::action() {
 
 	CheckImportantCollisionCubes();
 	LookingAtLockedEntity();
-	PettingTheDog(frameDuration);
+	
+	int cursorVisual = 0;
+	cursorVisual |= PettingTheDog(frameDuration);
+	cursorVisual |= HandleEasterEgg();
+
+	UpdateCursorVisual(cursorVisual);
 
 	SetStatusMessages();
 	HudManager::get()->update(frameDuration);
@@ -358,7 +373,7 @@ void APWatchdog::CheckSolvedPanels() {
 				InputWatchdog* inputWatchdog = InputWatchdog::get();
 				InteractionState iState = inputWatchdog->getInteractionState();
 
-				if (isKnockedOut) {
+				if (bonkTime > 0.0f) {
 					return;
 				}
 
@@ -752,31 +767,46 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-void APWatchdog::TriggerBonk() {
-	if (eee && isCompleted) return;
+float APWatchdog::TriggerBonk(bool fromDeathLink) {
+	if (eee && isCompleted) return 0.0f;
 
-	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
+	amountOfBonksInCurrentBonk++;
 
-	if (isKnockedOut) {
-		knockOutStartTime = std::chrono::system_clock::now();
+	float amountOfTimeToAdd = DEATHLINK_DURATION;
+	int bonksAbove2 = amountOfBonksInCurrentBonk - 2;
+	if (fromDeathLink) bonksAbove2 += 1;
+	if (bonksAbove2 == 1) amountOfTimeToAdd = DEATHLINK_DURATION * 11.f / 15.f;
+	else if (bonksAbove2 == 2) amountOfTimeToAdd = DEATHLINK_DURATION * 8.f / 15.f;
+	else if (bonksAbove2 == 3) amountOfTimeToAdd = DEATHLINK_DURATION * 5.5f / 15.f;
+	else if (bonksAbove2 > 3) {
+		amountOfTimeToAdd = (std::log(bonksAbove2) / std::log(2.f) - std::log(bonksAbove2 - 1.f) / std::log(2.f)) * (DEATHLINK_DURATION * 9.f / 15.f);
 	}
-	else {
-		isKnockedOut = true;
-		knockOutStartTime = std::chrono::system_clock::now();
-	}
+	if (amountOfTimeToAdd < 0.1) amountOfTimeToAdd = 0.1;
+
+	bonkTime += amountOfTimeToAdd;
+
+	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Bonk, APJingleBehavior::PlayImmediate);
+
+	return amountOfTimeToAdd;
 }
 
-void APWatchdog::HandleDeathLink() {
-	if (isKnockedOut)
+void APWatchdog::HandleKnockout(float deltaSeconds) {
+	if (bonkTime > 0.0f)
 	{
-		if (DateTime::since(knockOutStartTime).count() > DEATHLINK_DURATION * 1000) ResetDeathLink();
+		bonkTime -= deltaSeconds;
+		if (bonkTime <= 0.0f) {
+			bonkTime = 0.0f;
+			ResetDeathLink();
+		}
 	}
+
+	WritePanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR + 4, { bonkTime });
 }
 
 bool APWatchdog::IsEncumbered() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 
-	return isKnockedOut || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping || interactionState == InteractionState::MenuAndSleeping;
+	return bonkTime > 0.0f || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping || interactionState == InteractionState::MenuAndSleeping;
 }
 
 void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
@@ -786,7 +816,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 		memory->EnableVision(false);
 		Memory::get()->EnableMovement(false);
 		Memory::get()->EnableSolveMode(false);
-		memory->MoveVisionTowards(0.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
+		memory->MoveVisionTowards(0.0f, bonkTime > 0.0f ? 1.0f : deltaSeconds * 2);
 
 		int interactMode = InputWatchdog::get()->readInteractMode();
 		if ((interactMode == 0 || interactMode == 1) && doFunctions) {
@@ -796,7 +826,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 	else {
 		Memory::get()->EnableMovement(true);
 		Memory::get()->EnableSolveMode(true);
-		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, isKnockedOut ? deltaSeconds : deltaSeconds * 2);
+		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, bonkTime > 0.0f ? deltaSeconds : deltaSeconds * 2);
 		if (previousAndNewBrightness.second == 1.0f) memory->EnableVision(true);
 	}
 }
@@ -898,10 +928,9 @@ void APWatchdog::HandleWarp(float deltaSeconds){
 }
 
 void APWatchdog::ResetDeathLink() {
+	amountOfBonksInCurrentBonk = 0;
 	Memory::get()->EnableMovement(true);
 	Memory::get()->EnableSolveMode(true);
-
-	isKnockedOut = false;
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)
@@ -2719,6 +2748,7 @@ void APWatchdog::QueueItemMessages() {
 		__int64 item = it->at(0);
 		__int64 flags = it->at(1);
 		__int64 realitem = it->at(2);
+		__int64 isReducedBonk = it->at(3);
 
 		if (ap->get_item_name(realitem, "The Witness") == "Unknown" || ap->get_item_name(item, "The Witness") == "Unknown") {
 			it++;
@@ -2729,6 +2759,10 @@ void APWatchdog::QueueItemMessages() {
 
 		if (realitem != item && realitem > 0) {
 			name += " (" + ap->get_item_name(realitem, "The Witness") + ")";
+		}
+
+		if (isReducedBonk != 0) {
+			name = "Reduced Bonk";
 		}
 
 		// Track the quantity of this item received in this batch.
@@ -2771,14 +2805,13 @@ void APWatchdog::SetStatusMessages() {
 			HudManager::get()->clearWalkStatusMessage();
 		}
 		else {
-			if (isKnockedOut) {
-				int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(knockOutStartTime).count() / 1000;
-
-				if (secondsRemainingDeathLink <= 0) {
+			if (bonkTime > 0.0f) {
+				if (bonkTime <= 0) {
 					HudManager::get()->clearWalkStatusMessage();
 				}
 				else {
-					HudManager::get()->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
+					int bonkTimeInt = (int)std::ceil(bonkTime);
+					HudManager::get()->setWalkStatusMessage("Knocked out for " + std::to_string(bonkTimeInt) + " seconds.");
 				}
 			}
 
@@ -3166,15 +3199,30 @@ void APWatchdog::LookingAtLockedEntity() {
 	}
 }
 
-void APWatchdog::PettingTheDog(float deltaSeconds) {
+void APWatchdog::UpdateCursorVisual(int cursorVisual) {
+	Memory* memory = Memory::get();
+	
+	if (cursorVisual & cursorVisual::big) {
+		memory->writeCursorSize(2.0f);
+	}
+	else {
+		memory->writeCursorSize(1.0f);
+	}
+
+	if (cursorVisual & cursorVisual::recolored) {
+		memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
+	}
+	else {
+		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+	}
+}
+
+int APWatchdog::PettingTheDog(float deltaSeconds) {
 	Memory* memory = Memory::get();
 
 	if (!LookingAtTheDog()) {
 		letGoSinceInteractModeOpen = false;
 		dogPettingDuration = 0;
-
-		memory->writeCursorSize(1.0f);
-		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
 
 		if (dogBarkDuration > 0.f) {
 			dogBarkDuration -= deltaSeconds;
@@ -3186,7 +3234,7 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 			HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 		}
 
-		return;
+		return cursorVisual::normal;
 	}
 	else if (dogBarkDuration > 0.f) {
 		dogBarkDuration -= deltaSeconds;
@@ -3194,17 +3242,11 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 			HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 		}
 
-		return;
+		return cursorVisual::normal;
 	}
-
-	memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
 	if (dogPettingDuration >= 4.0f) {
 		HudManager::get()->showInformationalMessage(InfoMessageCategory::Dog, "Woof Woof!");
-
-		Memory::get()->writeCursorSize(1.0f);
-		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
-
 
 		dogPettingDuration = 0.f;
 		dogBarkDuration = 4.f;
@@ -3217,16 +3259,12 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
 		letGoSinceInteractModeOpen = true;
 
-		Memory::get()->writeCursorSize(2.0f);
-		return;
+		return cursorVisual::big | cursorVisual::recolored;
 	}
 
 	if (!letGoSinceInteractModeOpen) {
-		Memory::get()->writeCursorSize(2.0f);
-		return;
+		return cursorVisual::big | cursorVisual::recolored;
 	}
-
-	Memory::get()->writeCursorSize(1.0f);
 
 	const Vector3& currentMouseDirection = InputWatchdog::get()->getMouseDirection();
 	if (lastMouseDirection != currentMouseDirection)
@@ -3235,6 +3273,8 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 	}
 
 	lastMouseDirection = currentMouseDirection;
+
+	return cursorVisual::recolored;
 }
 
 bool APWatchdog::LookingAtTheDog() const {
@@ -3274,6 +3314,49 @@ bool APWatchdog::LookingAtTheDog() const {
 	}
 
 	return true;
+}
+
+int APWatchdog::LookingAtEasterEgg()
+{
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) {
+		return -1;
+	}
+
+	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
+
+	for (auto [easterEggID, position] : easterEggs) {
+		if (clickedEasterEggs.contains(easterEggID)) continue;
+		if ((position - headPosition).length() > 10) continue;
+
+		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f)) {
+			for (Vector3 mouseRay : InputWatchdog::get()->getCone()) {
+				Vector3 v = eggSphere.position - headPosition;
+				float t = mouseRay * v;
+				Vector3 p = headPosition + mouseRay * t;
+				float distance = (p - eggSphere.position).length();
+				if (distance < eggSphere.radius) {
+					return easterEggID;
+				}
+			}
+		}
+	}
+
+	return -1;
+}
+
+int APWatchdog::HandleEasterEgg()
+{
+	int lookingAtEgg = LookingAtEasterEgg();
+
+	if (lookingAtEgg == -1) return cursorVisual::normal;
+
+	if (InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) || InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
+		clickedEasterEggs.insert(lookingAtEgg);
+		if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Plop, APJingleBehavior::PlayImmediate);
+	}
+
+	return cursorVisual::big | cursorVisual::recolored;
 }
 
 APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {
@@ -3348,7 +3431,7 @@ void APWatchdog::SendDeathLink(int panelId)
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
 	if (eee || DeathLinkAmnesty == -1) return;
 
-	TriggerBonk();
+	bool wasReduced = TriggerBonk(true) < DEATHLINK_DURATION;
 
 	double a = -1;
 
@@ -3364,6 +3447,7 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 	}
 
 	std::string firstSentence = "Received death.";
+
 	std::string secondSentence = "";
 
 	if (cause != "") {
@@ -3373,7 +3457,16 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		firstSentence = "Received death from " + source + ".";
 	}
 
-	HudManager::get()->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+	std::string full = firstSentence + secondSentence;
+
+	if (wasReduced) {
+		if (full.back() != '.' && full.back() != '!' && full.back() != '?' && full.back() != ')') {
+			full += ".";
+		}
+
+		full += " (Duration reduced due to already being knocked out)";
+	}
+	HudManager::get()->queueNotification(full, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 }
 
 void APWatchdog::UpdateInfiniteChallenge() {
@@ -3466,15 +3559,22 @@ void APWatchdog::HandleReceivedItems() {
 
 		if (mostRecentItemId >= item.index + 1) continue;
 
+		bool isReducedBonk = false;
+
 		if (unlockLater) {
-			unlockItem(realitem);
+			if (item.item == ITEM_BONK_TRAP) {
+				isReducedBonk = TriggerBonk(false) < DEATHLINK_DURATION;
+			}
+			else {
+				unlockItem(realitem);
+			}
 		}
 
 		mostRecentItemId = item.index + 1;
 
 		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
 
-		QueueReceivedItem({ item.item, advancement, realitem });
+		QueueReceivedItem({ item.item, advancement, realitem, isReducedBonk });
 		if (item.item != ITEM_BONK_TRAP && item.player != ap->get_player_number()) PlayReceivedJingle(item.flags);
 	}
 }
@@ -3504,7 +3604,6 @@ void APWatchdog::unlockItem(int item) {
 
 		//Traps
 	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
-	case ITEM_BONK_TRAP:							TriggerBonk();						  break;
 	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
 }
@@ -3788,6 +3887,24 @@ void APWatchdog::DrawSpheres(float deltaSeconds) {
 		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
 	}
 
+	for (auto [easterEggID, position] : easterEggs) {
+		if (clickedEasterEggs.contains(easterEggID)) continue;
+		if ((position - headPosition).length() > 60) continue;
+
+		float scale = 1.0f;
+
+		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f)) {
+			spheresToDraw.push_back(eggSphere);
+		}
+	}
+
+	// Mouse visualisation
+	float distanceMod = std::fmod(timePassedSinceRandomisation, 3);
+
+	for (Vector3 rayDirection : InputWatchdog::get()->getCone()) {
+		Vector3 position = headPosition + (rayDirection * (distanceMod * 10));
+		spheresToDraw.push_back(WitnessDrawnSphere({ position, 0.005f * distanceMod, RgbColor(distanceMod * 0.33f, 0.0f, 1.0f, 1.0f), true }));
+	}
 	drawManager->drawSpheres(spheresToDraw);
 }
 
@@ -3834,7 +3951,7 @@ void APWatchdog::ToggleSleep() {
 	InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState iState = inputWatchdog->getInteractionState();
 
-	if (isKnockedOut || iState == InteractionState::Cutscene || eee) {
+	if (bonkTime > 0.0f || iState == InteractionState::Cutscene || eee) {
 		HudManager::get()->displayBannerMessageIfQueueEmpty("Can't go into sleep mode right now.");
 		return;
 	}

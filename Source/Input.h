@@ -252,6 +252,11 @@ public:
 	void updateWarpTimer(float deltaSeconds);
 	int readInteractMode();
 
+	Vector2 getMouseScreenPosition();
+	std::vector<Vector3> getCone();
+	Vector3 getMouseDirectionFromScreenPosition(Vector2 screenPosition);
+	Vector3 calculateMouseVector();
+
 private:
 	InputWatchdog();
 	static InputWatchdog* _singleton;

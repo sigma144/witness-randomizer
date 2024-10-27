@@ -351,16 +351,41 @@ void InputWatchdog::updateKeyState() {
 	std::copy(newKeyState, newKeyState + INPUT_KEYSTATE_SIZE, currentKeyState);
 }
 
-void InputWatchdog::updateMouseVector()
-{
+Vector2 InputWatchdog::getMouseScreenPosition() {
 	Memory* memory = Memory::get();
 
 	uint64_t gestureDataAddress;
 	memory->ReadAbsolute(reinterpret_cast<LPVOID>(memory->GESTURE_MANAGER), &gestureDataAddress, sizeof(uint64_t));
 
-
 	Vector2 screenPosition = Vector2(0.5f, 0.5f);
 	memory->ReadAbsolute(reinterpret_cast<LPVOID>(gestureDataAddress + 0x18), &screenPosition, sizeof(Vector2));
+	return screenPosition;
+}
+
+std::vector<Vector3> InputWatchdog::getCone() {
+	Vector2 mouseScreenPosition = InputWatchdog::get()->getMouseScreenPosition();
+	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
+
+	std::vector<Vector3> rayDirections = {};
+
+	for (int i = -3; i < 4; i++) {
+		for (int j = -3; j < 4; j++) {
+			if (std::abs(i) + std::abs(j) >= 5) continue;
+			Vector2 rayPosition = mouseScreenPosition + Vector2(0.0024f * i, 0.0024f * j);
+			Vector3 rayDirection = InputWatchdog::get()->getMouseDirectionFromScreenPosition(rayPosition);
+
+			rayDirections.push_back(rayDirection);
+		}
+	}
+
+	return rayDirections;
+}
+
+Vector3 InputWatchdog::getMouseDirectionFromScreenPosition(Vector2 screenPosition) {
+	Memory* memory = Memory::get();
+
+	uint64_t gestureDataAddress;
+	memory->ReadAbsolute(reinterpret_cast<LPVOID>(memory->GESTURE_MANAGER), &gestureDataAddress, sizeof(uint64_t));
 
 	struct CursorParams {
 		Vector2 strut;
@@ -372,10 +397,21 @@ void InputWatchdog::updateMouseVector()
 
 	memory->ReadAbsolute(reinterpret_cast<LPVOID>(gestureDataAddress + 0x94), &cursorParams, sizeof(CursorParams));
 
-	mouseDirection = (cursorParams.e1 * 2.f * cursorParams.strut.X * screenPosition.X) +
+	Vector3 mouseDir = (cursorParams.e1 * 2.f * cursorParams.strut.X * screenPosition.X) +
 		(cursorParams.e2 * 2.f * cursorParams.strut.X * screenPosition.Y) +
 		cursorParams.corner - cursorParams.origin;
-	mouseDirection = mouseDirection.normalized();
+	return mouseDir.normalized();
+}
+
+Vector3 InputWatchdog::calculateMouseVector() {
+	Memory* memory = Memory::get();
+
+	return getMouseDirectionFromScreenPosition(getMouseScreenPosition());
+}
+
+void InputWatchdog::updateMouseVector()
+{
+	mouseDirection = calculateMouseVector();
 }
 
 void InputWatchdog::updateInteractionState() {
