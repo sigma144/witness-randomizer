@@ -11,6 +11,9 @@
 #include <comdef.h>
 #include <algorithm>
 #include <vector>
+#include <random>
+#include "Panel.h"
+#include <optional>
 
 using namespace DirectX;
 
@@ -158,11 +161,224 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	cairo_paint(bgcr);
 
 	auto finalTexture = convert_cairo_surface_to_wtx(background, 1, 0x05);
-
 	cairo_pattern_destroy(pattern);
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
 	cairo_destroy(bgcr);
+	cairo_surface_destroy(background);
+	return finalTexture;
+}
+
+
+void TextureMaker::draw_stone_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor) {
+	auto* cr_image = cairo_create(image);
+
+	std::tuple<float, float, float> color = { 0.0, 0.0, 0.0 };
+	switch (symbolflags & 0xF) {
+	case 0x2:
+		color = { 0xff / 255.0, 0xff / 255.0, 0xff / 255.0 };
+		break;
+	case 0x4:
+		color = { 0xa5 / 255.0, 0x51 / 255.0, 0xff / 255.0 };
+		break;
+	case 0x5:
+		color = { 0x6e / 255.0, 0xab / 255.0, 0x5d / 255.0 };
+		break;
+	case 0x7:
+		color = { 0xa4 / 255.0, 0x37 / 255.0, 0xf0 / 255.0 };
+		break;
+	case 0x8:
+		color = { 0xf9 / 255.0, 0xf8 / 255.0, 0x45 / 255.0 };
+		break;
+	case 0x9:
+		color = { 0x00 / 255.0, 0xa8 / 255.0, 0xe9 / 255.0 };
+		break;
+	}
+	if (customcolor.has_value()) {
+		color = { customcolor.value().r,customcolor.value().g,customcolor.value().b };
+	}
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<int> dis(0, 3);
+
+	int stone_number = dis(gen);
+	auto filepath = "./images/symbols/brush_stone_0.png";
+	switch (stone_number) {
+	case 0:
+		filepath = "./images/symbols/brush_stone_0.png";
+		break;
+	case 1:
+		filepath = "./images/symbols/brush_stone_1.png";
+		break;
+	case 2:
+		filepath = "./images/symbols/brush_stone_2.png";
+		break;
+	case 3:
+		filepath = "./images/symbols/brush_stone_3.png";
+		break;
+	}
+
+	auto stone_mask_image = cairo_image_surface_create_from_png(filepath);
+	int maskwidth = cairo_image_surface_get_width(stone_mask_image);
+	int maskheight = cairo_image_surface_get_height(stone_mask_image);
+	auto scaled_stone_mask = cairo_surface_create_similar(stone_mask_image, CAIRO_CONTENT_ALPHA, maskwidth * scale, maskheight * scale);
+	auto cr_scaled_mask = cairo_create(scaled_stone_mask);
+	cairo_scale(cr_scaled_mask, scale, scale);
+	cairo_set_source_surface(cr_scaled_mask, stone_mask_image, 0, 0);
+	cairo_paint(cr_scaled_mask);
+	cairo_destroy(cr_scaled_mask);
+
+	auto [r, g, b] = color;
+	cairo_set_source_rgb(cr_image, r, g, b);
+	cairo_mask_surface(cr_image, scaled_stone_mask, x - (scale * maskwidth * .5), y - (scale * maskheight * .5));
+
+	cairo_fill(cr_image);
+	//cairo_fill(cr);
+	cairo_destroy(cr_image);
+	//cairo_destroy(cr_color);
+	//cairo_destroy(cr_mask);
+
+}
+
+void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor) {
+	if ((symbolflags & 0x100) > 0) {
+		//stone here
+		draw_stone_on_surface(image, x, y, scale, symbolflags, customcolor);
+	}
+
+
+
+
+}
+
+void TextureMaker::flip_image_vertically(cairo_surface_t* image)
+{
+	auto flipped_surface = cairo_surface_create_similar(image, CAIRO_CONTENT_COLOR_ALPHA, width, height);
+	auto cr = cairo_create(flipped_surface);
+	cairo_matrix_t matrix;
+	cairo_matrix_init(&matrix, 1.0, 0.0, 0.0, -1.0, 0.0, height);
+	cairo_transform(cr, &matrix);
+
+	cairo_set_source_surface(cr, image, 0, 0);
+	cairo_paint(cr);
+	//flipped surface should now be painted with flipped image
+	//now revert the flip, so we can copy contents back to original (could just return new surface? but this works too)
+	cairo_transform(cr, &matrix);
+
+	auto originalcr = cairo_create(image);
+	cairo_set_source_surface(originalcr, flipped_surface, 0, 0);
+	cairo_paint(originalcr);
+	cairo_destroy(cr);
+	cairo_destroy(originalcr);
+	cairo_surface_destroy(flipped_surface);
+}
+
+
+std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::vector<int>> grid, int id, std::vector<Color> colors)
+{
+	auto gridheight = grid.size();
+	auto gridwidth = grid[0].size();
+	std::vector<int> only_symbols;
+	for (size_t i = 0; i < gridwidth; ++i) {
+		for (size_t j = 0; j < gridheight; ++j) {
+			if ((i % 2 != 0) && (j % 2 != 0)) { // Check if it's between two lines
+				int cell = grid[j][i];
+				only_symbols.push_back(cell);
+			}
+		}
+	}
+
+	//while its theoretically better to actually calculate these for arbitrary sizes
+	//until we can change the puzzle meshes in the bunker, there are only ever a few puzzle sizes
+	//3x3, 4x4, and 4x5
+	//we can simply hard code the positions of the puzzle elements and their scales
+	float puzzle_element_scale;
+	std::vector<std::tuple<double, double>> symbol_coordinates;
+
+	switch (only_symbols.size()) {
+	case 9:
+		symbol_coordinates = {
+			{280.0, 280.0}, {512.0, 280.0}, {744.0, 280.0},
+			{280.0, 512.0}, {512.0, 512.0}, {744.0, 512.0},
+			{280.0, 744.0}, {512.0, 744.0}, {744.0, 744.0}
+		};
+		puzzle_element_scale = .6;
+		break;
+	case 16:
+		symbol_coordinates = {
+			{238.0, 238.0}, {421.0, 238.0}, {604.0, 238.0}, {787.0, 238.0},
+			{238.0, 421.0}, {421.0, 421.0}, {604.0, 421.0}, {787.0, 421.0},
+			{238.0, 604.0}, {421.0, 604.0}, {604.0, 604.0}, {787.0, 604.0},
+			{238.0, 787.0}, {421.0, 787.0}, {604.0, 787.0}, {787.0, 787.0}
+		};
+		puzzle_element_scale = .5;
+		break;
+	case 20:
+		symbol_coordinates = {
+			{212.0, 288.0}, {362.0, 288.0}, {512.0, 288.0}, {662.0, 288.0}, {812.0, 288.0},
+			{212.0, 437.0}, {362.0, 437.0}, {512.0, 437.0}, {662.0, 437.0}, {812.0, 437.0},
+			{212.0, 586.0}, {362.0, 586.0}, {512.0, 586.0}, {662.0, 586.0}, {812.0, 586.0},
+			{212.0, 736.0}, {362.0, 736.0}, {512.0, 736.0}, {662.0, 736.0}, {812.0, 736.0}
+		};
+		puzzle_element_scale = .4;
+		break;
+	}
+
+	auto bg_path = "./images/color_bunker_blueprint_bg.png";
+	switch (id) {
+	case 0x0A010:
+	case 0x0A01B:
+		bg_path = "./images/color_bunker_greyred_light.png";
+		break;
+	case 0x0A01F:
+		bg_path = "./images/color_bunker_greyred_dark.png";
+		break;
+	case 0x17E63:
+	case 0x17E67:
+		bg_path = "./images/color_bunker_whitepaper.png";
+		break;
+	case 0x0A079:
+		bg_path = "./images/color_bunker_blueprint_elevator.png";
+		break;
+	}
+
+	//auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+	auto background = cairo_image_surface_create_from_png(bg_path);
+	//flip_image_vertically(background); //doesn't *really* matter, but texture loads upside down to what game displays.
+	//auto status = surface->get_status();
+
+	auto cr = cairo_create(background);
+
+
+	////fill background (idk if this is necessary)
+	//cairo_set_source_rgba(cr, 0, 0, 0, 0);
+	//cairo_paint(cr);
+
+	//iterate over both (puzzle elements, coordinates) by index
+	for (int i = 0; i < only_symbols.size(); i++) {
+		auto element = only_symbols[i];
+		auto [x, y] = symbol_coordinates[i];
+		if (colors.size() > 0) {
+			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, colors[i]);
+		}
+		else {
+			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, std::nullopt);
+		}
+	}
+	flip_image_vertically(background);
+	//zero alpha channel
+	//TODO which panels do we need to do this with, exactly?
+	cairo_surface_flush(background);
+	uint8_t* data = cairo_image_surface_get_data(background);
+	for (int i = 3; i < (width * height * 4); i += 4) {
+		data[i] = 0;
+	}
+	cairo_surface_mark_dirty(background); //tell cairo we tampered with the raw pixel data.
+	auto finalTexture = convert_cairo_surface_to_wtx(background, 5, 0x01);
+	//cairo_pattern_destroy(pattern);
+	cairo_destroy(cr);
+	//cairo_surface_destroy(/*surface*/);
+	//cairo_destroy(bgcr);
 	cairo_surface_destroy(background);
 
 	return finalTexture;

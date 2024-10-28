@@ -4,6 +4,7 @@
 
 #include "PuzzleList.h"
 #include "Watchdog.h"
+#include "TextureLoader.h"
 
 void PuzzleList::GenerateAllN()
 {
@@ -13,7 +14,7 @@ void PuzzleList::GenerateAllN()
 	GenerateTutorialN();
 	GenerateSymmetryN();
 	GenerateQuarryN();
-	//GenerateBunkerN(); //Can't randomize because panels refuse to render the symbols
+	GenerateBunkerN();
 	GenerateSwampN();
 	GenerateTreehouseN();
 	GenerateTownN();
@@ -306,9 +307,53 @@ void PuzzleList::GenerateQuarryN()
 
 void PuzzleList::GenerateBunkerN()
 {
-	//I would randomize this, if I could get the panels to actually render the symbols.
-	//Unfortunately, the path is rendered to a 3D model that doesn't have any geometry between the grid lines.
-	//Somehow, I would either have to change the model, or make the puzzle render to the background texture instead.
+	auto texloader = TextureLoader::get();
+
+	texloader->forceLoadBunkerTextures();
+
+	generator->setLoadingData(L"Bunker", 9);
+	generator->resetConfig();
+	generator->setGridSize(3, 3);
+	generator->generate(0x09F7D, Decoration::Stone | Decoration::Color::Purple, 1, Decoration::Stone | Decoration::Color::Green, 1);
+	texloader->generateTexture(0x09F7D);
+	generator->generate(0x09FDC, Decoration::Stone | Decoration::Color::Purple, 1, Decoration::Stone | Decoration::Color::Green, 1, Decoration::Stone | Decoration::Color::White, 1);
+	texloader->generateTexture(0x09FDC);
+	generator->generate(0x09FF7, Decoration::Stone | Decoration::Color::Purple, 2, Decoration::Stone | Decoration::Color::Green, 2, Decoration::Stone | Decoration::Color::White, 1);
+	texloader->generateTexture(0x09FF7);
+	generator->generate(0x09F82, Decoration::Stone | Decoration::Color::Purple, 4, Decoration::Stone | Decoration::Color::Green, 1, Decoration::Stone | Decoration::Color::White, 4);
+	texloader->generateTexture(0x09F82);
+	generator->setGridSize(4, 4);
+	generator->generate(0x09FF8, Decoration::Stone | Decoration::Color::Purple, 2, Decoration::Stone | Decoration::Color::Green, 1, Decoration::Stone | Decoration::Color::White, 2);
+	texloader->generateTexture(0x09FF8);
+
+	generator->setGridSize(3, 3);
+	generator->generate(0x09D9F, Decoration::Stone | Decoration::Color::White, 1, Decoration::Stone | Decoration::Color::Yellow, 1, Decoration::Stone | Decoration::Color::Blue, 1, Decoration::Stone | Decoration::Color::Magenta, 1);
+	texloader->generateTexture(0x09D9F);
+	generator->setGridSize(4, 4);
+	generator->generate(0x09DA1, Decoration::Stone | Decoration::Color::White, 2, Decoration::Stone | Decoration::Color::Yellow, 2, Decoration::Stone | Decoration::Color::Blue, 2, Decoration::Stone | Decoration::Color::Magenta, 2);
+	texloader->generateTexture(0x09DA1);
+	generator->generate(0x09DA2, Decoration::Stone | Decoration::Color::White, 2, Decoration::Stone | Decoration::Color::Yellow, 2, Decoration::Stone | Decoration::Color::Blue, 2, Decoration::Stone | Decoration::Color::Magenta, 2);
+	texloader->generateTexture(0x09DA2);
+	generator->setGridSize(5, 4);
+	generator->generate(0x09DAF, Decoration::Stone | Decoration::Color::White, 4, Decoration::Stone | Decoration::Color::Yellow, 3, Decoration::Stone | Decoration::Color::Blue, 3, Decoration::Stone | Decoration::Color::Magenta, 2);
+	texloader->generateTexture(0x09DAF);
+
+	//specialCase->generateColorFilterPuzzle(0x28A0D, { 4, 4 }, { { Decoration::Star | 1, 6 },{ Decoration::Star | 2, 6 }, { Decoration::Star | 3, 4 } }, { 1, 1, 0, 0 }, colorblind);
+	specialCase->generateColorFilterPuzzle(0x0A010, { 4, 4 }, { { Decoration::Stone | 1, 4 },{ Decoration::Stone | 2, 8 }, { Decoration::Stone | 3, 4 } }, { 1, 1, 0, 0 }, colorblind);
+	texloader->generateTexture(0x0A010);
+	specialCase->generateColorFilterPuzzle(0x0A01B, { 4, 4 }, { { Decoration::Stone | 1, 4 },{ Decoration::Stone | 2, 4 }, { Decoration::Stone | 3, 4 } }, { 0, 1, 1, 0 }, colorblind);
+	texloader->generateTexture(0x0A01B);
+	specialCase->generateColorFilterPuzzle(0x0A01F, { 4, 4 }, { { Decoration::Stone | 1, 4 },{ Decoration::Stone | 2, 3 } }, { 0, 1, 0, 0 }, colorblind);
+	texloader->generateTexture(0x0A01F);
+	generator->setGridSize(3, 3);
+	generator->setFlag(Generate::Config::WriteColors);
+	generator->generate(0x17E63, Decoration::Stone | Decoration::Color::Black, 2, Decoration::Stone | Decoration::Color::Blue, 5, Decoration::Stone | Decoration::Color::White, 2);
+	texloader->generateTexture(0x17E63);
+	generator->setFlag(Generate::Config::ResetColors);
+	specialCase->generateColorfulColorFilterPuzzle(0x17E67, { 3, 3 }, { { Decoration::Stone | 1, 2 },{ Decoration::Stone | 2, 5 }, { Decoration::Stone | 3, 2 } }, { 1, 0, 1, 0 }, colorblind);
+	texloader->generateTexture(0x17E67);
+
+
 }
 
 void PuzzleList::GenerateSwampN()
@@ -913,6 +958,14 @@ void PuzzleList::GenerateDesertN()
 {
 	Generate generate;
 	Memory* memory = Memory::get();
+	auto texloader = TextureLoader::get();
+	texloader->forceLoadDesertTextures();
+
+
+	memory->LoadPackage("globals");
+	memory->LoadPackage("globals");
+	memory->LoadPackage("globals");
+	memory->LoadPackage("globals");
 	//Surface
 	specialCase->generateSpecularPuzzle(0x00698, HEXAGON_GRID);
 	specialCase->generateSpecularPuzzle(0x0048F, HEXAGON_GRID, { {3,9},{5,6},{5,11},{6,12} });

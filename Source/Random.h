@@ -13,5 +13,8 @@ struct Random {
 	static int rand() {
 		return abs((int)gen());
 	}
-
+	static double rand_float() {
+		std::uniform_real_distribution<> dist(0, 1);
+		return dist(gen);
+	}
 };
