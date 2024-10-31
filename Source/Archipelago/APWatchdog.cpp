@@ -3318,11 +3318,6 @@ bool APWatchdog::LookingAtTheDog() const {
 
 int APWatchdog::LookingAtEasterEgg()
 {
-	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
-	if (interactionState != InteractionState::Focusing) {
-		return -1;
-	}
-
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 
 	for (auto [easterEggID, positionAndBrightness] : easterEggs) {
@@ -3348,13 +3343,44 @@ int APWatchdog::LookingAtEasterEgg()
 
 int APWatchdog::HandleEasterEgg()
 {
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) {
+		letGoOfLeftClickSinceEnteringFocusMode = false;
+		return cursorVisual::normal;
+	}
+
+	bool holdingLeftClick = InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) || InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN);
+	if (!holdingLeftClick) {
+		letGoOfLeftClickSinceEnteringFocusMode = true;
+	}
+
 	int lookingAtEgg = LookingAtEasterEgg();
 
 	if (lookingAtEgg == -1) return cursorVisual::normal;
 
-	if (InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) || InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
-		clickedEasterEggs.insert(lookingAtEgg);
-		if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Plop, APJingleBehavior::PlayImmediate);
+	Vector3 position = easterEggs[lookingAtEgg].first;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_H)) position.X += 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_F)) position.X -= 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_T)) position.Y += 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_G)) position.Y -= 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_R)) position.Z += 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_Z)) position.Z -= 0.001f;
+	easterEggs[lookingAtEgg].first = position;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_N)) easterEggs[lookingAtEgg].second += 0.01f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_V)) easterEggs[lookingAtEgg].second -= 0.01f;
+
+	std::wstringstream s;
+	s << position.X << ", " << position.Y << ", " << position.Z << "\n" << easterEggs[lookingAtEgg].second << "\n";
+	OutputDebugStringW(s.str().c_str());
+
+	if (holdingLeftClick) {
+		if (letGoOfLeftClickSinceEnteringFocusMode) {
+			clickedEasterEggs.insert(lookingAtEgg);
+			if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Plop, APJingleBehavior::PlayImmediate);
+		}
+		else {
+			return cursorVisual::recolored;
+		}
 	}
 
 	return cursorVisual::big | cursorVisual::recolored;

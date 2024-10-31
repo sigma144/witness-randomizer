@@ -2474,59 +2474,101 @@ inline std::map < std::string, Vector3> warpPositionUnlockPointOverrides = {
 
 inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Outside Tutorial
-	{ 0xEE004, {{-104.693, -127.225, 3.710}, 1.0f}}, // Tree near Outpost Entry, Exempt-Medic*
+	{ 0xEE004, {{-104.693, -127.221, 3.721}, 1.2f}}, // Tree near Outpost Entry, Exempt-Medic
+	{ 0xEE057, {{-126.076, -171.657, 15.6509}, 3.0f}}, // Gate Wall, NewSoupVi
 
 	// Orchard
-	{ 0xEE019, {{-94.904, 28.306, 16.661}, 1.0f}}, // Near Flower Cross, NewSoupVi*
+	{ 0xEE036, {{-104.46, 25.2631, 17.149}, 0.5f}}, // Wedged under Table, Rever
+	{ 0xEE019, {{-94.907, 28.318, 16.696}, 2.0f}}, // Near Flower Cross, NewSoupVi
 
 	// Glass Factory
-	{ 0xEE00E, {{-197.448, -35.103, 1.323}, 1.0f}}, // Glass Factory Furnace, Exempt-Medic*
-	{ 0xEE01F, {{-213.326, -34.874, 1.880}, 1.0f}}, // Sand Castle, NewSoupVi*
+	{ 0xEE00E, {{-197.448, -35.103, 1.306}, 0.8f}}, // Glass Factory Furnace, Exempt-Medic
+	{ 0xEE01F, {{-213.318, -34.87, 1.829}, 1.0f}}, // Sand Castle, NewSoupVi
+
+	// Symmetry Island
+	{ 0xEE056, {{-211.458, 10.609, 0.579}, 1.0f}}, // Env Set behind panel, NewSoupVi
+	{ 0xEE055, {{-203.65, 39.952, 16.664}, 3.0f}}, // Behind Laser, NewSoupVi
 
 	// Desert
-	{ 0xEE020, {{-181.717, 102.155, 3.272}, 1.0f}}, // Symmetry Island Outlines Tree Stump, NewSoupVi*
-	{ 0xEE00C, {{-125.556, 67.313, 15.252}, 1.0f}}, // Sand Snake EP Tree, Scipio*
-	{ 0xEE00D, {{-122.256, 86.287, 12.876}, 1.0f}}, // Desert Laser "Air Hole", Scipio*
-	{ 0xEE00F, {{-88.467, 194.095, 20.817}, 1.0f}}, // Desert Perspective Tree, Scipio*
+	{ 0xEE020, {{-181.662, 102.185, 3.249}, 4.0f}}, // Symmetry Island Outlines Tree Stump, NewSoupVi
+	{ 0xEE00C, {{-125.541, 67.34, 15.211}, 2.46f}}, // Sand Snake EP Tree, Scipio
+	{ 0xEE00D, {{-122.259, 86.258, 12.839}, 1.49f}}, // Desert Laser "Air Hole", Scipio
+	{ 0xEE00F, {{-88.7798, 193.946, 20.9679}, 2.0f}}, // Desert Perspective Tree, Scipio
+	{ 0xEE03A, {{-108.916, 207.97, 0.415998}, 3.0f}}, // Desert Shore Near Perspective Tree, Rever
+	{ 0xEE028, {{-201.321, 238.077, 0.648001}, 0.5f}}, // Desert Shore Right, NewSoupVi
+	{ 0xEE02B, {{-164.225, 163.973, -0.683999}, 1.0f}}, // Staircase to Pond Room, NewSoupVi*
+	{ 0xEE029, {{-180.825, 165.418, -3.31}, 1.0f}}, // Pond Room, NewSoupVi
+	{ 0xEE02C, {{-180.579, 166.568, -9.46402}, 0.8f}}, // Flood Room EP, Rever
+	{ 0xEE02D, {{-147.136, 129.896, -7.148}, 0.6f}}, // Elev Room Behind Bent 3, NewSoupVi
+	{ 0xEE02A, {{-230.669, 199.455, 0.852001}, 0.55f}}, // Desert Vault, NewSoupVi
 
 	// Outside Quarry
-	{ 0xEE015, {{-70.564, 184.644, 11.981}, 10.0f}}, // Rooftop Path near Desert Perspective Tree Dead End, NewSoupVi*, Might need to be brown??
-	{ 0xEE016, {{-56.49, 97.680, 12.197}, 10.0f}}, // Rooftop Path near Laser Dead End, NewSoupVi*, Might need to be brown or brighter somehow??
+	{ 0xEE015, {{-70.556, 184.644, 11.943}, 12.0f}}, // Rooftop Path near Desert Perspective Tree Dead End, NewSoupVi*, Might need to be brown??
+	{ 0xEE016, {{-56.535, 97.754, 12.149}, 10.0f}}, // Rooftop Path near Laser Dead End, NewSoupVi*, Might need to be brown or brighter somehow??
 
 	// Quarry
-	{ 0xEE010, {{-17.823, 192.332, 2.189}, 1.0f}}, // Quarry Boathouse Outside Beam, Scipio*
-	{ 0xEE014, {{-60.823, 176.821, 1.043}, 1.0f}}, // Near Railroad Crevace, NewSoupVi*
-	{ 0xEE01A, {{-53.649, 197.953, 1.840}, 1.0f}}, // Quarry Railroad under broken floor, Exempt-Medic*
-	{ 0xEE011, {{-73.622, 114.307, 3.248}, 10.0f}}, // Outside Stoneworks on Brick Pile, Scipio*
-	{ 0xEE012, {{-69.310, 131.049, 3.030}, 0.5f}}, // Quarry Stoneworks Furnace, Scipio*
-	{ 0xEE013, {{-67.412, 131.519, 4.081}, 1.0f}}, // Quarry Stoneworks Furnace Vent, NewSoupVi*
-	{ 0xEE017, {{-74.498, 138.827, 5.019}, 0.5f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic*
-	{ 0xEE018, {{-69.430, 133.384, 4.416}, 1.0f}}, // Quarry Stoneworks Furnace Inside, NewSoupVi*
+	{ 0xEE010, {{-17.823, 192.332, 2.02101}, 1.0f}}, // Quarry Boathouse Outside Beam, Scipio
+	{ 0xEE014, {{-60.823, 176.821, 1.005}, 2.0f}}, // Near Railroad Crevace, NewSoupVi*
+	{ 0xEE01A, {{-53.625, 197.965, 1.84}, 1.0f}}, // Quarry Railroad under broken floor, Exempt-Medic
+	{ 0xEE011, {{-73.614, 114.297, 3.16901}, 6.0f}}, // Outside Stoneworks on Brick Pile, Scipio
+	{ 0xEE012, {{-69.342, 130.798, 2.88501}, 0.14f}}, // Quarry Stoneworks Furnace, Scipio
+	{ 0xEE013, {{-67.417, 131.506, 4.081}, 3.0f}}, // Quarry Stoneworks Furnace Vent, NewSoupVi
+
+	// Stoneworks
+	{ 0xEE017, {{-74.42, 138.859, 4.972}, 0.11f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic
+	{ 0xEE018, {{-69.412, 133.404, 4.419}, 0.15f}}, // Quarry Stoneworks Furnace Inside, NewSoupVi
+	{ 0xEE034, {{-63.943, 133.809, 1.957}, 1.0f}}, // The meanest egg to ever exist, Rever*
 
 	// Shadows
-	{ 0xEE01B, {{-8.868, 89.086, 13.445}, 5.0f}}, // Near Butterfly Tree, Exempt-Medic*
+	{ 0xEE01B, {{-9.02006, 88.7752, 13.46}, 5.0f}}, // Near Butterfly Tree, Exempt-Medic
 
 	// Keep
-	{ 0xEE00B, {{31.072, 142.531, 22.811}, 1.2f}}, // Keep Center West Tower, Exempt-Medic*
+	{ 0XEE044, {{68.222, 130.334, 24.535}, 1.0f}}, // Keep Center East Tower, NewSoupVi*
+	{ 0xEE00B, {{31.071, 142.541, 22.764}, 1.2f}}, // Keep Center West Tower, Exempt-Medic
+	{ 0xEE045, {{45.009, 94.477, 19.194}, 1.0f}}, // Keep Hedge 3 Hole, NewSoupVi*
+	{ 0xEE046, {{43.039, 83.077, 19.888}, 1.0f}}, // Keep Hedge 3 Wall Cubby, NewSoupVi*
+	{ 0xEE047, {{20.604, 91.599, 21.977}, 1.0f}}, // Keep SW Tower, NewSoupVi*
+	{ 0xEE041, {{68.448, 188.811, 20.474}, 1.0f}}, // PP2 Broken Wall, NewSoupVi*
+	{ 0xEE042, {{65.596, 184.118, 22.813}, 1.0f}}, // PP2->PP3 Walkable Wall, NewSoupVi*
+	{ 0xEE040, {{50.212, 184.124, 16.447}, 1.0f}}, // Keep PP3 Hand Guy, NewSoupVi*
+	{ 0xEE03F, {{55.748, 162.963, 17.566}, 1.0f}}, // Keep PP4 Hand Guy, Rever*
+	{ 0xEE043, {{53.065, 145.744, 33.264}, 1.0f}}, // Kepp Tower Shooty Hole, NewSoupVi*
 
 	// Shipwreck
-	{ 0xEE009, {{178.019, 204.495, 2.354}, 1.0f}}, // Abandoned Staircase, Exempt-Medic*
+	{ 0xEE048, {{108.072, 209.618, 10.482}, 1.0f}}, // Shipwreck Under Entrance, NewSoupVi*
+	{ 0xEE049, {{117.090, 207.460, 12.055}, 1.0f}}, // In weird long hole thing, NewSoupVi*
+	{ 0xEE04A, {{150.674, 204.527, 7.880}, 1.0f}}, // Outside Walkway, NewSoupVi*
+	{ 0xEE04B, {{177.602, 205.270, 0.890}, 1.0f}}, // Bottom Floor Dead End, NewSoupVi*
+	{ 0xEE009, {{178.018, 204.497, 2.27301}, 2.0f}}, // Abandoned Staircase, Exempt-Medic
+	{ 0xEE04C, {{190.402, 203.283, 3.505}, 1.0f}}, // Behind Stern, NewSoupVi*
 
 	// Town
-	{ 0xEE005, {{-9.643, -19.203, 11.249}, 1.0f}}, // Under Town Maze Stairs, Exempt-Medic*
-	{ 0xEE021, {{-64.381, -8.078, 9.593}, 1.0f}}, // Town Hole, Scipio*
+	{ 0xEE03E, {{-10.312, 64.650, 9.040}, 1.0f}}, // Progress Lake, NewSoupVi*
+	{ 0xEE005, {{-9.66801, -19.212, 11.21}, 0.15f}}, // Under Town Maze Stairs, Exempt-Medic
+	{ 0xEE021, {{-64.456, -8.16704, 9.65603}, 1.0f}}, // Town Hole, Scipio
+	{ 0xEE037, {{0.538, 12.434, 11.014}, 1.0f}}, // Under Bridge to Quarry, Rever*
+	{ 0xEE051, {{-20.315, 3.197, 7.415}, 1.0f}}, // Sound Room Broken Speaker, NewSoupVi*
+	{ 0xEE038, {{-25.854, -2.402, 13.479}, 1.0f}}, // RGB House Upstairs Stairs Room, NewSoupVi*
+	{ 0xEE03B, {{-51.707, -19.708, 12.083}, 1.0f}}, // Town Wooden Rooftop, NewSoupVi*
+	{ 0xEE039, {{-41.219, -12.283, 22.859}, 1.0f}}, // Under Town Laser, Rever*
 
 	// Windmill
-	{ 0xEE022, {{-92.426, 27.212, 12.733}, 1.0f}}, // Windmill Behind Entry Door, Scipio*
+	{ 0xEE022, {{-92.465, 27.214, 12.699}, 0.4f}}, // Windmill Behind Entry Door, Scipio
+
+	// Theater
+	{ 0xEE03C, {{-68.084, -4.291, -1.172}, 1.0f}}, // Theater, Rever*
 
 	// Monastery
 	{ 0xEE007, {{-8.969, -95.064, 2.952}, 1.0f}}, // Shore, NewSoupVi*
 	{ 0xEE006, {{20.800, -27.668, 16.710}, 1.0f}}, // Monastery North Shutters, Exempt-Medic*
+	{ 0xEE053, {{32.713, -31.666, 15.162}, 1.0f}}, // Garden, NewSoupVi*
+	{ 0xEE054, {{8.518, -40.171, 16.122}, 1.0f}}, // Left Wall, NewSoupVi*
 
 	// Jungle
 	{ 0xEE008, {{0.078, -153.611, 0.650}, 10.0f}}, // Peninsula Glass, NewSoupVi*
 	{ 0xEE00A, {{-20.898, -138.570, 1.186}, 1.0f}}, // Peninsula Dead End, Scipio*
 	{ 0xEE000, {{-20.581, -154.352, 8.987}, 2.0f}}, // Peninsula Chalice, NewSoupVi
+	{ 0xEE052, {{57.877, -56.310, 19.374}, 1.0f}}, // Under Popup Wall, Exempt-Medic*
 
 	// Outside Bunker
 	{ 0xEE003, {{160.954, -102.040, 7.248}, 1.0f}}, // Entry under Stairs, Scipio*
@@ -2536,11 +2578,37 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE01D, {{156.335, -88.469, 7.256}, 1.0f}}, // Bottom Floor behind Elevator, Exempt-Medic*
 	{ 0xEE01C, {{156.502, -87.455, 21.456}, 0.7f}}, // Green Room behind Elevator, Exempt-Medic*
 
+	// Swamp
+	{ 0xEE04D, {{92.511, 9.257, 18.791}, 1.0f}}, // Painter, NewSoupVi*
+	{ 0xEE026, {{134.658, 54.921, 1.086}, 1.0f}}, // Under Stairs to Platform, Scipio*
+	{ 0xEE04F, {{208.555, -11.861, 0.598}, 1.0f}}, // Apparent River EP Start Point, NewSoupVi*
+	{ 0xEE027, {{134.496, 50.524, -2.963}, 1.0f}}, // Cyan Underwater Corner, Scipio*
+	{ 0xEE024, {{207.825, 7.957, 2.491}, 1.0f}}, // Cage, Scipio*
+	{ 0xEE025, {{146.651, 17.623, 0.341}, 1.0f}}, // Behind Red Maze, Scipio*
+
+	// Treehouse
+	{ 0xEE04E, {{134.763, 144.285, 0.538}, 1.0f}}, // Beach Right Path, NewSoupVi*
+	{ 0xEE032, {{128.706, 147.551, 12.434}, 1.0f}}, // Junction Weird Tree, NewSoupVi*
+	{ 0xEE030, {{118.341, 142.913, 16.674}, 1.0f}}, // Timer Platform Corner, NewSoupVi*
+	{ 0xEE031, {{134.060, 118.915, 15.219}, 1.0f}}, // Between Purple Bridges Stairs House, NewSoupVi*
+	{ 0xEE02F, {{125.695, 159.286, 16.563}, 1.0f}}, // Plank near Right Bridge EP, NewSoupVi*
+	{ 0xEE033, {{114.090, 119.98, 19.495}, 1.0f}}, // Shoulder of Burnt House Tree Guy, NewSoupVi*
+	{ 0xEE023, {{107.033, 133.805, 19.631}, 1.0f}}, // Treehouse Laser House Roof, hatkirby*
+
 	// Mountaintop
+	{ 0xEE026, {{160.446, -17.001, 39.776}, 1.0f}}, // Giant statue elbow, NewSoupVi*
+	{ 0xEE050, {{165.301, -53.807, 47.289}, 1.0f}}, // Before Mountain Vault, NewSoupVi*
 	{ 0xEE001, {{148.684, -44.313, 67.200}, 3.0f}}, // Lip, Scipio*
 
+	// Inside Mountain
+	{ 0xEE035, {{138.489, -35.956, 36.716}, 1.0f}}, // Model Windmills inside Treehouse house, Rever*
+
 	// Challenge
-	{ 0xEE01E, {{12.457, -27.756, -4.989}, 1.0f}}, // Weird path near reallocating, Exempt-Medic*
+	{ 0xEE01E, {{12.457, -27.756, -4.989}, 0.8f}}, // Weird path near reallocating, Exempt-Medic*
+
+	// Tunnels
+	{ 0xEE03D, {{-98.697, 46.002, -3.090}, 1.0f}}, // Walkway ontop of lamp, NewSoupVi*
+	{ 0xEE02E, {{-64.948, -4.645, 1.999}, 1.0f}}, // Walkway Tiles, hatkirby*
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);

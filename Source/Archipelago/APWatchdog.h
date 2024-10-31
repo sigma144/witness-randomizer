@@ -354,6 +354,7 @@ private:
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 
 	Vector3 lastMouseDirection;
+	bool letGoOfLeftClickSinceEnteringFocusMode = false;
 	float dogPettingDuration = 0.f;
 	float dogBarkDuration = 0.f;
 	bool sentDog = false;
