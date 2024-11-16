@@ -169,6 +169,9 @@ void Main::randomize() {
 	ClientWindow* clientWindow = ClientWindow::get();
 	clientWindow->setWindowMode(ClientWindowMode::Disabled);
 
+	clientWindow->logLine("Store settings.");
+	clientWindow->saveSettings();
+
 	clientWindow->logLine("Attempting randomization.");
 
 	Memory* memory = Memory::get();
@@ -244,9 +247,6 @@ void Main::randomize() {
 	Special::writeStringToPanels(apAddress, addressPanels);
 	Special::writeStringToPanels(apSlotName, slotNamePanels);
 	Special::writeStringToPanels(apPassword, passwordPanels);
-
-	clientWindow->logLine("Store settings.");
-	clientWindow->saveSettings();
 
 	clientWindow->logLine("Configure base randomizer.");
 	randomizer->seed = seed;

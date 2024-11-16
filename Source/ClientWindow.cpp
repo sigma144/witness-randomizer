@@ -83,6 +83,7 @@ ClientWindow* ClientWindow::get() {
 void ClientWindow::saveSettings()
 {
 	currentJingles = getSetting(ClientDropdownSetting::Jingles);
+	finalizedWarps = getSetting(ClientToggleSetting::Warps);
 
 	json data;
 
@@ -308,6 +309,11 @@ void ClientWindow::displaySeenAudioHints(std::vector<std::string> hints, std::ve
 std::string ClientWindow::getJinglesSettingSafe()
 {
 	return currentJingles;
+}
+
+bool ClientWindow::getWarpsSettingSafe()
+{
+	return finalizedWarps;
 }
 
 void ClientWindow::EnableDeathLinkDisablingButton(bool enable)
@@ -1081,7 +1087,6 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		}
 		case IDC_SETTING_WARPS: {
 			toggleCheckbox(IDC_SETTING_WARPS);
-			saveSettings();
 			break;
 		}
 		// Buttons.
