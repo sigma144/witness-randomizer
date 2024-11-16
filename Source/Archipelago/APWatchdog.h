@@ -111,6 +111,7 @@ private:
 	std::map<int, int> locationIdToPanelId_READ_ONLY;
 	std::map<int64_t, unsigned int> locationIdToItemFlags;
 	std::set<int64_t> checkedLocations;
+	std::set<int64_t> handledInMarkLocationChecked;
 	std::set<int> recolorWhenSolved;
 	std::set<int> alreadyColored;
 	std::set<int> alreadyPlayedHuntEntityJingle;

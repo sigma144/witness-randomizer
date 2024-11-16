@@ -586,6 +586,9 @@ void APWatchdog::SkipPanel(int id, std::string reason, bool kickOut, int cost, b
 
 void APWatchdog::MarkLocationChecked(int64_t locationId)
 {
+	if (handledInMarkLocationChecked.contains(locationId)) return;
+	handledInMarkLocationChecked.insert(locationId);
+
 	while (!FirstEverLocationCheckDone) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(10)));
 	}
