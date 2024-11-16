@@ -469,7 +469,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//Initialize memory globals constant depending on game version
 	Memory::create();
 	Memory* memory = memory->get();
-	
+
 	InputWatchdog::initialize();
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
@@ -641,7 +641,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//ACCEL Accel[] = { { FVIRTKEY, VK_TAB, IDC_TAB}, { FVIRTKEY, VK_RETURN, IDC_RETURN} };
 	//const HACCEL hAccel = CreateAcceleratorTable(Accel, sizeof(Accel) / sizeof(ACCEL));
 
-    MSG msg;
+	MSG msg;
 	ClientWindow* clientWindow = ClientWindow::get();
 	while (GetMessage(&msg, nullptr, 0, 0))
 	{
@@ -650,7 +650,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-    }
+	}
 
-    return (int) msg.wParam;
+	return (int)msg.wParam;
 }
