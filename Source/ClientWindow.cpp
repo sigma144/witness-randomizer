@@ -643,6 +643,17 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 }
 
 void ClientWindow::addGameOptions(int& currentY) {
+	// Warps (remove with 0.5.2)
+	HWND hwndOptionWarps = CreateWindow(L"BUTTON", L"Unlockable Warps (0.5.2 feature preview)",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_WARPS, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::Warps] = IDC_SETTING_WARPS;
+	toggleSettingCheckboxes[ClientToggleSetting::Warps] = hwndOptionWarps;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
 	// Colorblind option. This is 2 lines tall.
 	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzle contents will be identical apart from that.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
@@ -706,17 +717,6 @@ void ClientWindow::addGameOptions(int& currentY) {
 		hwndRootWindow, (HMENU)IDC_SETTING_EXTRAINFO, hAppInstance, NULL);
 	toggleSettingButtonIds[ClientToggleSetting::ExtraInfo] = IDC_SETTING_EXTRAINFO;
 	toggleSettingCheckboxes[ClientToggleSetting::ExtraInfo] = hwndOptionExtraInfo;
-
-	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
-
-	// Extra Info
-	HWND hwndOptionWarps = CreateWindow(L"BUTTON", L"Unlockable Warps (0.5.2 feature preview)",
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
-		CONTROL_MARGIN, currentY,
-		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
-		hwndRootWindow, (HMENU)IDC_SETTING_WARPS, hAppInstance, NULL);
-	toggleSettingButtonIds[ClientToggleSetting::Warps] = IDC_SETTING_WARPS;
-	toggleSettingCheckboxes[ClientToggleSetting::Warps] = hwndOptionWarps;
 
 	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
 
