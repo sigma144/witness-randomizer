@@ -2012,9 +2012,7 @@ void Special::ColorPanel(int id, std::string text) {
 			memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.25f, 0.25f, 0.25f, 1.0f });
 		}
 		else if (text == "Disabled") {
-			memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
-			memory->WritePanelData<float>(id, ACTIVE_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
-			memory->WritePanelData<float>(id, SUCCESS_COLOR_A, { 0.8f, 0.2f, 0.2f, 1.0f });
+			memory->WritePanelData<float>(id, PATH_COLOR, { 0.8f, 0.2f, 0.2f, 1.0f });
 		}
 		else if (text == "Excluded") {
 			memory->WritePanelData<float>(id, PATH_COLOR, { 0.9f, 0.9f, 0.9f, 1.0f });
@@ -2098,7 +2096,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 
 	Memory* memory = Memory::get();
 
-	if (skip_completelyExclude.count(id)|| fairly_thin_panels.count(id) || very_thin_panels.count(id)) {
+	if (skip_completelyExclude.count(id) || fairly_thin_panels.count(id) || very_thin_panels.count(id) || (cutoutPanels.contains(id) && !tiltedCutoutPanels.contains(id))) {
 		if (text == "Disabled Completely") {
 			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f };
 			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
@@ -2108,6 +2106,55 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 			float path_width_scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
 
 			memory->WritePanelData<float>(id, PATTERN_SCALE, { 0.5f / path_width_scale });
+			memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+			memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+			memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+			memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+			memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+			return;
+		}
+	}
+	if (tiltedCutoutPanels.contains(id) && text == "Disabled Completely") {
+		if (id == 0x15ADD) {
+			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f, 0.0f, 0.5f, 1.0f, 0.5f, 0.5f, 1.0f, 0.5f, 0.0f };
+			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+			std::vector<int> connectionsA = { 2, 4 };
+			std::vector<int> connectionsB = { 3, 5 };
+
+			memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
+			memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
+			memory->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) }); //amount of connected points, for each connection we specify start in sourceConnectionsA and end in sourceConnectionsB
+			memory->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA); //start of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB); //end of a connection between points, contains position of point in sourceIntersectionFlags
+			memory->WritePanelData<int>(id, TRACED_EDGES, { 0 }); //removed the traced line
+			memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+			return;
+		}
+		else {
+			float path_width = 0.062f;
+			float margin = path_width / 2;
+			float inset = 0.05f;
+
+			float zero = path_width;
+			float third = 1.0f / 3.0f + margin;
+			float twothirds = 2.0f / 3.0f - margin;
+			float one = 1.0f - path_width;
+			std::vector<float> intersections = { 
+				-0.3f, -0.3f, 1.3f, 1.3f, 
+				zero + path_width + 0.01f, twothirds, twothirds - margin - 0.01f, twothirds,
+				third, third + margin + 0.01f, third, one - path_width - 0.01f,
+				third + margin + 0.01f, third, one - path_width - 0.01f, third,
+				twothirds, zero + path_width + 0.01f, twothirds, twothirds - margin - 0.01f,
+			};
+			std::vector<int> intersectionFlags = { IntersectionFlags::STARTPOINT, IntersectionFlags::ENDPOINT };
+			std::vector<int> connectionsA = { 2, 4, 6, 8, };
+			std::vector<int> connectionsB = { 3, 5, 7, 9, };
+
+			memory->WritePanelData<float>(id, PATTERN_SCALE, { 1.2f / memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE) });
 			memory->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) }); //amount of intersections
 			memory->WriteArray<float>(id, DOT_POSITIONS, intersections); //position of each point as array of x,y,x,y,x,y so this vector is twice the suze if sourceIntersectionFlags
 			memory->WriteArray<int>(id, DOT_FLAGS, intersectionFlags); //flags for each point such as entrance or exit
@@ -2143,7 +2190,7 @@ void Special::DrawSimplePanel(int id, std::string text, bool kickOut)
 	float width = 1.0f;
 
 	if (text == "Disabled Completely") {
-		if (Utilities::isAprilFools()) { // Make this true for an Easter Egg :)
+		if (Utilities::isAprilFools()) {
 			std::vector<float> intersections = { -0.3f, -0.3f, 1.3f, 1.3f,
 				0.25f, 0.9f, 0.25f, 0.6f,
 				0.65f, 0.9f, 0.65f, 0.6f,     0.85f, 0.8f, 0.85f, 0.6f,

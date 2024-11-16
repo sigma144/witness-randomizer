@@ -125,6 +125,12 @@ inline const std::set<int> skip_noLine = {
 	0x17CAA, // River to Monastery shortcut lattice
 };
 
+inline const std::set<int> tiltedCutoutPanels = {
+	0x15ADD, // River Vault
+	0x17CAA, // River to Monastery shortcut lattice
+	0x00290, 0x00038, 0x00037, //Monastery Lattice
+};
+
 inline const std::set<int> cutoutPanels = {
 	0x28a69, 0x15ADD, 0x00290, 0x00038, 0x00037, 0x17caa, 0x09F7D, 0x09FDC, 0x09FF7, 0x09F82, 0x09D9F, 0x09FF8, 0x09DA1, 0x09DA2, 0x09DAF, 0x0A010, 0x0A01B, 0x0A01F, 0x17E63, 0x17E67,
 };
