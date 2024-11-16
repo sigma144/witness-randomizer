@@ -280,6 +280,7 @@ private:
 
 	std::string startingWarp = "Tutorial First Hallway";
 	std::map<std::string, bool> unlockableWarps = {};
+	std::set<std::string> badWarps = {};
 	std::vector<Warp*> unlockedWarps = {};
 	Warp* selectedWarp = NULL;
 	bool hasTeleported = true;

@@ -94,6 +94,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		bool unlockableWarpsIsOn = slotData.contains("unlockable_warps") ? slotData["unlockable_warps"] == true : false;
+		unlockableWarpsIsOn = unlockableWarpsIsOn or clientWindow->getSetting(ClientToggleSetting::Warps);
 		UnlockableWarps = { 
 			"Tutorial First Hallway",
 			"Desert Outside",
