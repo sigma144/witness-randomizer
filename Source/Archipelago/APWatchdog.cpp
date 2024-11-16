@@ -2128,12 +2128,12 @@ void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value) 
 void APWatchdog::HandleWarpResponse(nlohmann::json value) {
 	std::map<std::string, bool> warpsAcquiredAccordingToDataStorage = value;
 	
-	std::vector<std::string> unlockedWarps = {};
+	std::vector<std::string> localUnlockedWarps = {};
 	for (auto [warp, val] : warpsAcquiredAccordingToDataStorage) {
-		unlockedWarps.push_back(warp);
+		localUnlockedWarps.push_back(warp);
 	}
 	
-	UnlockWarps(unlockedWarps);
+	UnlockWarps(localUnlockedWarps);
 }
 
 void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
@@ -3908,7 +3908,9 @@ void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
 	std::vector<std::string> newWarps = {};
 	
 	for (auto warp : warps) {
-		if (!unlockableWarps.contains(warp) && !badWarps.contains(warp)) {
+		if (badWarps.contains(warp)) continue;
+
+		if (!unlockableWarps.contains(warp)) {
 			badWarps.insert(warp);
 			HudManager::get()->queueNotification("Server reported unlocked warp \"" + warp + "\", but this is not an unlockable warp for this slot.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 			continue;
