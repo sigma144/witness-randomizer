@@ -6,4 +6,4 @@
 	url = https://github.com/black-sliver/wswrap.git
 [submodule "Source/Archipelago/Client/apclientpp"]
 	path = Source/Archipelago/Client/apclientpp
-	url = https://github.com/black-sliver/apclientpp.git
+	url = https://github.com/NewSoupVi/apclientpp.git
