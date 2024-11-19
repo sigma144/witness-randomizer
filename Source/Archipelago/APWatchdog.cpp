@@ -337,6 +337,7 @@ void APWatchdog::CheckSolvedPanels() {
 
 		if (FirstEverLocationCheckDone) {
 			PotentiallyColorPanel(panelIdToLocationId_READ_ONLY[id], true);
+			neverRecolorAgain.insert(panelIdToLocationId_READ_ONLY[id]);
 			HudManager::get()->queueNotification("This location was previously collected.", { 0.7f, 0.7f, 0.7f });
 		}
 		toRemove.push_back(id);
@@ -2261,8 +2262,8 @@ void APWatchdog::PotentiallyColorPanel(int64_t location, bool overrideRecolor) {
 	if (recolorWhenSolved.contains(panelId) && !overrideRecolor) return;
 	if (!allPanels.count(panelId) || PuzzlesSkippedThisGame.count(panelId)) return;
 	if (!locationIdToItemFlags.count(location)) return;
+	if (neverRecolorAgain.contains(location)) return;
 
-	alreadyColored.insert(location);
 	APWatchdog::SetItemRewardColor(panelId, locationIdToItemFlags[location]);
 }
 
