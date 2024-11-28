@@ -283,7 +283,6 @@ void PuzzleList::GenerateQuarryN()
 	generator->generate(0x021B6, Decoration::Star | Decoration::Color::Green, 3, Decoration::Star | Decoration::Color::Magenta, 4, Decoration::Eraser | Decoration::Color::Green, 1, Decoration::Gap, 2);
 	generator->generate(0x021B7, Decoration::Star | Decoration::Color::Green, 6, Decoration::Star | Decoration::Color::Orange, 5, Decoration::Eraser | Decoration::Orange, 1);
 	generator->generate(0x021BB, Decoration::Star | Decoration::Color::Magenta, 7, Decoration::Star | Decoration::Color::Orange, 6, Decoration::Eraser | Decoration::Orange, 1);
-	generator->setFlagOnce(Generate::Config::CombineErasers);
 	generator->generate(0x09DB5, { { Decoration::Star | Decoration::Color::Green, 1 },{ Decoration::Eraser | Decoration::Color::Green, 1 },
 		{ Decoration::Star | Decoration::Color::Magenta, 1 },{ Decoration::Eraser | Decoration::Color::Magenta, 1 },
 		{ Decoration::Star | Decoration::Color::Orange, 1 },{ Decoration::Eraser | Decoration::Color::Orange, 1 },
@@ -960,8 +959,6 @@ void PuzzleList::GenerateDesertN()
 	Memory* memory = Memory::get();
 	auto texloader = TextureLoader::get();
 	texloader->forceLoadDesertTextures();
-
-
 	memory->LoadPackage("globals");
 	memory->LoadPackage("globals");
 	memory->LoadPackage("globals");

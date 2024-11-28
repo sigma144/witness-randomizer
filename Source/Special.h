@@ -15,6 +15,7 @@ typedef std::set<Point> Shape;
 #define TRIANGLE_GRID_4x4 4
 #define GRID_4x4_3START 5
 #define GRID_4x4_4START 6
+#define GRID_5x5_3START 7
 
 //Functions to handle special case puzzles
 
@@ -76,7 +77,7 @@ public:
 	void setOrientation(int id, float yaw, float pitch, float roll);
 	void setOrientation(int id, float x, float y, float z, float w);
 	void setScale(int id, float scale);
-	std::vector<int> generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags, std::vector<std::pair<int, int>> shadows);
+	std::vector<int> generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags, std::vector<int>& symmetry, std::vector<std::pair<int, int>> shadows);
 	bool isAmbiguous(std::vector<int>& path, std::vector<std::vector<int>>& solutions, std::vector<std::pair<int, int>> shadows);
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,
 		float left, float right, float top, float bottom);

@@ -4,6 +4,7 @@
 #include "Memory.h"
 #include "Randomizer.h"
 #include "Watchdog.h"
+#include "TextureMaker.h"
 #include <sstream>
 #include <fstream>
 
@@ -71,7 +72,6 @@ void Panel::Write() {
 		memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(newRegions.size()) / 4 });
 		memory->WriteArray(id, COLORED_REGIONS, newRegions);
 	}
-
 	if (!decorationsOnly) WriteIntersections();
 	else {
 		std::vector<int> iflags = memory->ReadArray<int>(id, DOT_FLAGS, memory->ReadPanelData<int>(id, NUM_DOTS));
@@ -269,6 +269,7 @@ void Panel::WriteDecorations() {
 	Memory* memory = Memory::get();
 	std::vector<int> decorations;
 	std::vector<Color> decorationColors;
+	std::vector<Color> decorationSpecular;
 	bool any = false;
 	bool arrows = false;
 	_style &= ~0x3fc0; //Remove all element flags
@@ -285,8 +286,13 @@ void Panel::WriteDecorations() {
 					_grid[x][y] &= ~0xf; _grid[x][y] |= 4;
 				}
 			}
+			else if (colorMode == ColorMode::Specular) {
+				Color color = get_color_rgb(_grid[x][y] & 0xf);
+				decorationSpecular.push_back({ 1, 1, 1, color.g });
+				decorationColors.push_back({color.r, color.r, color.b, 1 });
+			}
+			else decorationColors.push_back(get_color_rgb(_grid[x][y] & 0xf));
 			decorations.push_back(_grid[x][y]);
-			decorationColors.push_back(get_color_rgb(_grid[x][y] & 0xf));
 			if (_grid[x][y])
 				any = true;
 			if ((_grid[x][y] & 0x700) == Decoration::Shape::Stone) _style |= HAS_STONES;
@@ -311,7 +317,7 @@ void Panel::WriteDecorations() {
 	}
 	else {
 		memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-		if (colorMode == ColorMode::WriteColors || colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseAlternate || memory->ReadPanelData<int>(id, DECORATION_COLORS))
+		if (colorMode == ColorMode::WriteColors || colorMode == ColorMode::Treehouse || colorMode == ColorMode::TreehouseAlternate || colorMode == ColorMode::Specular || memory->ReadPanelData<int>(id, DECORATION_COLORS))
 			memory->WriteArray<Color>(id, DECORATION_COLORS, decorationColors);
 		else if (colorMode == ColorMode::Reset || colorMode == ColorMode::Alternate) {
 			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { colorMode == ColorMode::Reset ? 0 : 1 });
@@ -331,6 +337,12 @@ void Panel::WriteDecorations() {
 			memory->WritePanelData<Color>(id, SYMBOL_C, { { 1, 0.5, 0, 1 } }); //Orange
 			memory->WritePanelData<Color>(id, SYMBOL_D, { { 1, 0, 1, 1 } }); //Magenta
 			memory->WritePanelData<Color>(id, SYMBOL_E, { { 1, 1, 1, 1 } }); //Green->White
+		}
+		if (colorMode == ColorMode::Specular) {
+			TextureMaker tm(1024, 1024);
+			auto wtxBuffer = tm.generate_color_panel_grid(_grid, id, decorationSpecular, true);
+			memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer);
+			memory->WritePanelData(id, NEEDS_REDRAW, 1);
 		}
 	}
 	if (any || memory->ReadPanelData<int>(id, DECORATIONS)) {
@@ -362,8 +374,18 @@ void Panel::ReadIntersections() {
 	int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
 	std::vector<float> intersections = memory->ReadArray<float>(id, DOT_POSITIONS, numIntersections * 2);
 	int num_grid_points = this->get_num_grid_points();
+	if (intersections.size() < num_grid_points * 2 - 2) {
+		num_grid_points = intersections.size();
+	}
 	minx = intersections[0]; miny = intersections[1];
-	maxx = intersections[num_grid_points * 2 - 2]; maxy = intersections[num_grid_points * 2 - 1];
+	if (num_grid_points * 2 - 2 >= intersections.size()) {
+		minx = miny = 0.1f; maxx = maxy = 0.9f;
+		symmetry = Symmetry::None;
+		return; //Not an actual grid
+	}
+	else {
+		maxx = intersections[num_grid_points * 2 - 2]; maxy = intersections[num_grid_points * 2 - 1];
+	}
 	if (minx > maxx) std::swap(minx, maxx);
 	if (miny > maxy) std::swap(miny, maxy);
 	unitWidth = (maxx - minx) / (_width - 1);

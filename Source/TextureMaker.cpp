@@ -126,7 +126,7 @@ std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t*
 	return withheader;
 }
 
-std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness)
+std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness, bool symmetry)
 {
 	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 	auto background = cairo_image_surface_create_from_png("./images/desertspecpanel_square_bg.png");
@@ -150,6 +150,13 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
 	cairo_move_to(cr, width * xpoints[0], height * ypoints[0]);
 	for (int index = 0; index < xpoints.size(); index++) {
+		if (symmetry && index == xpoints.size() / 2) { //Draw start of second (symmetry) line
+			cairo_stroke(cr);
+			cairo_move_to(cr, width * xpoints[index], height * ypoints[index]);
+			cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1);
+			cairo_arc(cr, width * xpoints[index], height * ypoints[index], dotthickness, 0.0, 360.0);
+			cairo_fill(cr);
+		}
 		cairo_line_to(cr, width * xpoints[index], height * ypoints[index]);
 	}
 	cairo_stroke(cr);
@@ -168,7 +175,6 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	cairo_surface_destroy(background);
 	return finalTexture;
 }
-
 
 void TextureMaker::draw_stone_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor) {
 	auto* cr_image = cairo_create(image);
@@ -241,14 +247,15 @@ void TextureMaker::draw_stone_on_surface(cairo_surface_t* image, float x, float 
 }
 
 void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor) {
-	if ((symbolflags & 0x100) > 0) {
+	if (customcolor.has_value() && customcolor.value().a == 0)
+		return;
+	if ((symbolflags & 0x100) > 0 || 1) {
 		//stone here
 		draw_stone_on_surface(image, x, y, scale, symbolflags, customcolor);
 	}
-
-
-
-
+	else {
+		symbolflags = 0;
+	}
 }
 
 void TextureMaker::flip_image_vertically(cairo_surface_t* image)
@@ -274,7 +281,7 @@ void TextureMaker::flip_image_vertically(cairo_surface_t* image)
 }
 
 
-std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::vector<int>> grid, int id, std::vector<Color> colors)
+std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::vector<int>> grid, int id, std::vector<Color> colors, bool specular)
 {
 	auto gridheight = grid.size();
 	auto gridwidth = grid[0].size();
@@ -288,11 +295,23 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 		}
 	}
 
+	std::vector<Color> colorsCopy;
+	if (!specular) { //Need to transpose the color array (TODO: figure out why this is not the case for bunker randomization)
+		colorsCopy = colors;
+		colors.clear();
+		for (size_t i = 0; i < gridwidth / 2; ++i) {
+			for (size_t j = 0; j < gridheight / 2; ++j) {
+				colors.emplace_back(colorsCopy[j * (gridwidth / 2) + i]);
+			}
+		}
+	}
+
 	//while its theoretically better to actually calculate these for arbitrary sizes
 	//until we can change the puzzle meshes in the bunker, there are only ever a few puzzle sizes
 	//3x3, 4x4, and 4x5
 	//we can simply hard code the positions of the puzzle elements and their scales
 	float puzzle_element_scale;
+	float SPEC_SCALE = 0.55f;
 	std::vector<std::tuple<double, double>> symbol_coordinates;
 
 	switch (only_symbols.size()) {
@@ -323,6 +342,7 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 		puzzle_element_scale = .4;
 		break;
 	}
+	if (specular) puzzle_element_scale *= SPEC_SCALE;
 
 	auto bg_path = "./images/color_bunker_blueprint_bg.png";
 	switch (id) {
@@ -341,6 +361,7 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 		bg_path = "./images/color_bunker_blueprint_elevator.png";
 		break;
 	}
+	if (specular) bg_path = "./images/desertspecpanel_square_bg.png";
 
 	//auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 	auto background = cairo_image_surface_create_from_png(bg_path);
@@ -358,6 +379,9 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	for (int i = 0; i < only_symbols.size(); i++) {
 		auto element = only_symbols[i];
 		auto [x, y] = symbol_coordinates[i];
+		if (specular) {
+			x *= SPEC_SCALE; y *= SPEC_SCALE;
+		}
 		if (colors.size() > 0) {
 			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, colors[i]);
 		}
@@ -369,12 +393,14 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	//zero alpha channel
 	//TODO which panels do we need to do this with, exactly?
 	cairo_surface_flush(background);
-	uint8_t* data = cairo_image_surface_get_data(background);
-	for (int i = 3; i < (width * height * 4); i += 4) {
-		data[i] = 0;
-	}
-	cairo_surface_mark_dirty(background); //tell cairo we tampered with the raw pixel data.
-	auto finalTexture = convert_cairo_surface_to_wtx(background, 5, 0x01);
+	if (!specular) {
+		uint8_t* data = cairo_image_surface_get_data(background);
+		for (int i = 3; i < (width * height * 4); i += 4) {
+			data[i] = 0;
+		}
+		cairo_surface_mark_dirty(background); //tell cairo we tampered with the raw pixel data.
+	}	
+	auto finalTexture = convert_cairo_surface_to_wtx(background, 5, specular ? 0x05 : 0x01);
 	//cairo_pattern_destroy(pattern);
 	cairo_destroy(cr);
 	//cairo_surface_destroy(/*surface*/);

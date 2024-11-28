@@ -17,7 +17,7 @@ AlternateColors: Use an alternate symbol color scheme. The colors used vary by p
 WriteColors: Write out exact colors from each symbol. Sometimes needed to get a proper red, orange, or green. Unfortunately it doesn't apply to triangles
 Write2Color: Write out line and dot colors for a blue/yellow symmetry puzzle
 FixBackground: Fix the background area to match the puzzle shape. For puzzles with irregular background areas being turned into rectangular
-CombineErasers: Allow erasers to be together
+WriteSpecular: Write the green channel into the specular texture
 LongPath: Make a longer than usual path, covering at least 7/8 of the available points
 ShortPath: Make a path without any length restrictions
 EnableFlash: Turn on symbol flashing for the panel

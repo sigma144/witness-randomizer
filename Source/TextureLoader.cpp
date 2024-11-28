@@ -81,10 +81,18 @@ void TextureLoader::generateSpecTexture(int32_t id)
 	}
 	float scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
 	float dotscale = memory->ReadPanelData<float>(id, STARTPOINT_SCALE);
-	int symdata = memory->ReadPanelData<int>(id, REFLECTION_DATA);
+	int symmetry = memory->ReadPanelData<int>(id, REFLECTION_DATA);
+	std::vector<int> symmetryData;
+	if (symmetry) {
+		symmetryData = memory->ReadArray<int>(id, REFLECTION_DATA, memory->ReadPanelData<int>(id, NUM_DOTS));
+		for (int i : solution) {
+			linePointsX.emplace_back(allPoints[symmetryData[i] * 2]);
+			linePointsY.emplace_back(allPoints[symmetryData[i] * 2 + 1]);
+		}
+	}
 
 	TextureMaker tm(512, 512);
-	auto wtxBuffer2 = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 35, dotscale * 35);
+	auto wtxBuffer2 = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 35, dotscale * 26, symmetry != 0);
 
 	//storedTextures[textureNames[id]] = wtxBuffer;
 	memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer2);

@@ -175,7 +175,7 @@ public:
 	Symmetry symmetry;
 
 	float pathWidth;
-	enum ColorMode { Default, Reset, Alternate, WriteColors, Treehouse, TreehouseAlternate };
+	enum ColorMode { Default, Reset, Alternate, WriteColors, Treehouse, TreehouseAlternate, Specular };
 	ColorMode colorMode;
 	bool decorationsOnly;
 	bool enableFlash;

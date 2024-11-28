@@ -238,6 +238,12 @@ void Generate::write(int id)
 	else if (hasFlag(Config::TreehouseColors)) {
 		_panel->colorMode = colorblind ? Panel::ColorMode::TreehouseAlternate : Panel::ColorMode::Treehouse;
 	}
+	else if (hasFlag(Config::WriteSpecular)) {
+		_panel->colorMode = Panel::ColorMode::Specular;
+	}
+	if (_panel->symmetry != Panel::Symmetry::None) {
+		memory->WritePanelData(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
+	}
 	if (hasFlag(Config::Write2Color)) {
 		memory->WritePanelData(id, PATTERN_POINT_COLOR_A, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_A));
 		memory->WritePanelData(id, PATTERN_POINT_COLOR_B, memory->ReadPanelData<Color>(0x0007C, PATTERN_POINT_COLOR_B));
@@ -523,7 +529,7 @@ bool Generate::generate(int id, PuzzleSymbols symbols)
 	initPanel(id);
 
 	//Multiple erasers are forced to be separate by default. This is because combining them causes unpredictable and inconsistent behavior. 
-	if (symbols.getNum(Decoration::Eraser) > 1 && !hasFlag(Config::CombineErasers)) {
+	if (symbols.getNum(Decoration::Eraser) == 2) {
 		setSymbol(Decoration::Gap_Row, 1, 0);
 		setSymbol(Decoration::Gap_Row, _panel->_width - 2, _panel->_height - 1);
 		_splitPoints = { Point(1, 1), Point(_panel->_width - 2, _panel->_height - 2) };
