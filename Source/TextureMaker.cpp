@@ -176,7 +176,41 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	return finalTexture;
 }
 
-void TextureMaker::draw_stone_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor) {
+void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor, bool specular) {
+	if (customcolor.has_value() && customcolor.value().a == 0)
+		return;
+	if (symbolflags == 0)
+		return;
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<int> dis(0, 3);
+	std::string filepath;
+	if ((symbolflags & 0x700) == Decoration::Stone) {
+		int stone_number = dis(gen);
+		filepath = "./images/symbols/brush_stone_0.png";
+		switch (stone_number) {
+		case 0:
+			filepath = "./images/symbols/brush_stone_0.png";
+			break;
+		case 1:
+			filepath = "./images/symbols/brush_stone_1.png";
+			break;
+		case 2:
+			filepath = "./images/symbols/brush_stone_2.png";
+			break;
+		case 3:
+			filepath = "./images/symbols/brush_stone_3.png";
+			break;
+		}
+		if (specular) filepath = "./images/symbols/spec_stone.png";
+	}
+	else if ((symbolflags & 0x700) == Decoration::Star) {
+		filepath = "./images/symbols/spec_star.png";
+	}
+	else {
+		filepath = "./images/symbols/spec_stone.png";  //Undefined symbol
+	}
+
 	auto* cr_image = cairo_create(image);
 
 	std::tuple<float, float, float> color = { 0.0, 0.0, 0.0 };
@@ -203,34 +237,14 @@ void TextureMaker::draw_stone_on_surface(cairo_surface_t* image, float x, float 
 	if (customcolor.has_value()) {
 		color = { customcolor.value().r,customcolor.value().g,customcolor.value().b };
 	}
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_int_distribution<int> dis(0, 3);
 
-	int stone_number = dis(gen);
-	auto filepath = "./images/symbols/brush_stone_0.png";
-	switch (stone_number) {
-	case 0:
-		filepath = "./images/symbols/brush_stone_0.png";
-		break;
-	case 1:
-		filepath = "./images/symbols/brush_stone_1.png";
-		break;
-	case 2:
-		filepath = "./images/symbols/brush_stone_2.png";
-		break;
-	case 3:
-		filepath = "./images/symbols/brush_stone_3.png";
-		break;
-	}
-
-	auto stone_mask_image = cairo_image_surface_create_from_png(filepath);
-	int maskwidth = cairo_image_surface_get_width(stone_mask_image);
-	int maskheight = cairo_image_surface_get_height(stone_mask_image);
-	auto scaled_stone_mask = cairo_surface_create_similar(stone_mask_image, CAIRO_CONTENT_ALPHA, maskwidth * scale, maskheight * scale);
+	auto mask_image = cairo_image_surface_create_from_png(filepath.c_str());
+	int maskwidth = cairo_image_surface_get_width(mask_image);
+	int maskheight = cairo_image_surface_get_height(mask_image);
+	auto scaled_stone_mask = cairo_surface_create_similar(mask_image, CAIRO_CONTENT_ALPHA, maskwidth * scale, maskheight * scale);
 	auto cr_scaled_mask = cairo_create(scaled_stone_mask);
 	cairo_scale(cr_scaled_mask, scale, scale);
-	cairo_set_source_surface(cr_scaled_mask, stone_mask_image, 0, 0);
+	cairo_set_source_surface(cr_scaled_mask, mask_image, 0, 0);
 	cairo_paint(cr_scaled_mask);
 	cairo_destroy(cr_scaled_mask);
 
@@ -239,23 +253,7 @@ void TextureMaker::draw_stone_on_surface(cairo_surface_t* image, float x, float 
 	cairo_mask_surface(cr_image, scaled_stone_mask, x - (scale * maskwidth * .5), y - (scale * maskheight * .5));
 
 	cairo_fill(cr_image);
-	//cairo_fill(cr);
 	cairo_destroy(cr_image);
-	//cairo_destroy(cr_color);
-	//cairo_destroy(cr_mask);
-
-}
-
-void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor) {
-	if (customcolor.has_value() && customcolor.value().a == 0)
-		return;
-	if ((symbolflags & 0x100) > 0 || 1) {
-		//stone here
-		draw_stone_on_surface(image, x, y, scale, symbolflags, customcolor);
-	}
-	else {
-		symbolflags = 0;
-	}
 }
 
 void TextureMaker::flip_image_vertically(cairo_surface_t* image)
@@ -286,22 +284,11 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	auto gridheight = grid.size();
 	auto gridwidth = grid[0].size();
 	std::vector<int> only_symbols;
-	for (size_t i = 0; i < gridwidth; ++i) {
-		for (size_t j = 0; j < gridheight; ++j) {
+	for (int i = gridwidth - 1; i >= 0; --i) {
+		for (int j = 0; j < gridheight; ++j) {
 			if ((i % 2 != 0) && (j % 2 != 0)) { // Check if it's between two lines
 				int cell = grid[j][i];
 				only_symbols.push_back(cell);
-			}
-		}
-	}
-
-	std::vector<Color> colorsCopy;
-	if (!specular) { //Need to transpose the color array (TODO: figure out why this is not the case for bunker randomization)
-		colorsCopy = colors;
-		colors.clear();
-		for (size_t i = 0; i < gridwidth / 2; ++i) {
-			for (size_t j = 0; j < gridheight / 2; ++j) {
-				colors.emplace_back(colorsCopy[j * (gridwidth / 2) + i]);
 			}
 		}
 	}
@@ -311,38 +298,17 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	//3x3, 4x4, and 4x5
 	//we can simply hard code the positions of the puzzle elements and their scales
 	float puzzle_element_scale;
-	float SPEC_SCALE = 0.55f;
 	std::vector<std::tuple<double, double>> symbol_coordinates;
 
-	switch (only_symbols.size()) {
-	case 9:
-		symbol_coordinates = {
-			{280.0, 280.0}, {512.0, 280.0}, {744.0, 280.0},
-			{280.0, 512.0}, {512.0, 512.0}, {744.0, 512.0},
-			{280.0, 744.0}, {512.0, 744.0}, {744.0, 744.0}
-		};
-		puzzle_element_scale = .6;
-		break;
-	case 16:
-		symbol_coordinates = {
-			{238.0, 238.0}, {421.0, 238.0}, {604.0, 238.0}, {787.0, 238.0},
-			{238.0, 421.0}, {421.0, 421.0}, {604.0, 421.0}, {787.0, 421.0},
-			{238.0, 604.0}, {421.0, 604.0}, {604.0, 604.0}, {787.0, 604.0},
-			{238.0, 787.0}, {421.0, 787.0}, {604.0, 787.0}, {787.0, 787.0}
-		};
-		puzzle_element_scale = .5;
-		break;
-	case 20:
-		symbol_coordinates = {
-			{212.0, 288.0}, {362.0, 288.0}, {512.0, 288.0}, {662.0, 288.0}, {812.0, 288.0},
-			{212.0, 437.0}, {362.0, 437.0}, {512.0, 437.0}, {662.0, 437.0}, {812.0, 437.0},
-			{212.0, 586.0}, {362.0, 586.0}, {512.0, 586.0}, {662.0, 586.0}, {812.0, 586.0},
-			{212.0, 736.0}, {362.0, 736.0}, {512.0, 736.0}, {662.0, 736.0}, {812.0, 736.0}
-		};
-		puzzle_element_scale = .4;
-		break;
+	float minx = 0.1f; float miny = 0.11f; float maxx = 0.92f; float maxy = 0.922f;
+	float unitWidth = (maxx - minx) / (gridwidth - 1);
+	float unitHeight = (maxy - miny) / (gridheight - 1);
+	for (int y = 1; y < gridheight; y += 2) {
+		for (int x = 1; x < gridwidth; x += 2) {
+			symbol_coordinates.push_back({ (minx + x * unitWidth) * 500, (miny + y * unitHeight) * 500 });
+		}
 	}
-	if (specular) puzzle_element_scale *= SPEC_SCALE;
+	puzzle_element_scale = min(unitWidth, unitHeight) * 2.7f;
 
 	auto bg_path = "./images/color_bunker_blueprint_bg.png";
 	switch (id) {
@@ -379,14 +345,11 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	for (int i = 0; i < only_symbols.size(); i++) {
 		auto element = only_symbols[i];
 		auto [x, y] = symbol_coordinates[i];
-		if (specular) {
-			x *= SPEC_SCALE; y *= SPEC_SCALE;
-		}
 		if (colors.size() > 0) {
-			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, colors[i]);
+			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, colors[i], specular);
 		}
 		else {
-			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, std::nullopt);
+			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, std::nullopt, specular);
 		}
 	}
 	flip_image_vertically(background);

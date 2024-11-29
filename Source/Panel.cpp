@@ -288,8 +288,14 @@ void Panel::WriteDecorations() {
 			}
 			else if (colorMode == ColorMode::Specular) {
 				Color color = get_color_rgb(_grid[x][y] & 0xf);
-				decorationSpecular.push_back({ 1, 1, 1, color.g });
-				decorationColors.push_back({color.r, color.r, color.b, 1 });
+				if ((_grid[x][y] & 0xf) == Decoration::Color::Red) {
+					decorationSpecular.push_back({ 0, 0, 0, 1 });
+					decorationColors.push_back(memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
+				}
+				else {
+					decorationSpecular.push_back({ 0, 0, 0, color.g });
+					decorationColors.push_back({ color.r, color.r, color.b, 1 });
+				}
 			}
 			else decorationColors.push_back(get_color_rgb(_grid[x][y] & 0xf));
 			decorations.push_back(_grid[x][y]);
@@ -342,7 +348,9 @@ void Panel::WriteDecorations() {
 			TextureMaker tm(1024, 1024);
 			auto wtxBuffer = tm.generate_color_panel_grid(_grid, id, decorationSpecular, true);
 			memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer);
-			memory->WritePanelData(id, NEEDS_REDRAW, 1);
+			memory->WritePanelData<int>(id, SEQUENCE_LEN, 0);
+			memory->WritePanelData<void*>(id, SEQUENCE, 0);
+			_style |= NO_BLINK;
 		}
 	}
 	if (any || memory->ReadPanelData<int>(id, DECORATIONS)) {

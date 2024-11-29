@@ -124,6 +124,7 @@
       <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
       <CompileAsManaged>false</CompileAsManaged>
+      <AdditionalIncludeDirectories>$VCPKG_ROOT</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

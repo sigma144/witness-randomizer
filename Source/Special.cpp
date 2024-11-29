@@ -1973,13 +1973,12 @@ void Special::test() {
 	//texloader->forceLoadDesertTextures();
 	//memory->LoadPackage("globals");
 
-	generate.setSymmetry(Panel::None);
-	generate.setFlag(Generate::Config::StartEdgeOnly);
 	generate.setFlag(Generate::Config::WriteSpecular);
 	generate.setGridSize(4, 4);
-	generate.generate(0x00C72, Decoration::Start, 1, Decoration::Exit, 1, Decoration::Stone | Decoration::Color::Cyan, 1, Decoration::Stone | Decoration::Color::Green, 12);
+	generate.setSymbol(Decoration::Start, 0, 8);
+	generate.setSymbol(Decoration::Exit, 8, 0);
+	generate.generate(0x00698, Decoration::Star | Decoration::Color::Black, 6, Decoration::Star | Decoration::Color::Red, 8);
 	
-
 	return;
 
 	//Surface
@@ -2053,8 +2052,15 @@ void Special::test() {
 
 	//Pond Room
 
-	generateSpecularPuzzle(0x00C72);
-	generateSpecularPuzzle(0x0129D, HEXAGON_GRID);
+	generate.setFlag(Generate::Config::WriteSpecular);
+	generate.setGridSize(4, 4);
+	generate.setSymbol(Decoration::Start, 0, 8);
+	generate.setSymbol(Decoration::Exit, 8, 0);
+	generate.generate(0x00C72, Decoration::Stone | Decoration::Color::Black, 6, Decoration::Stone | Decoration::Color::Green, 6);
+	generate.setSymbol(Decoration::Start, 0, 8);
+	generate.setSymbol(Decoration::Exit, 8, 0);
+	generate.generate(0x0129D, Decoration::Star | Decoration::Color::Black, 6, Decoration::Star | Decoration::Color::Red, 8);
+	return;
 	generateSpecularPuzzle(0x008BB);
 	generateSpecularPuzzle(0x0078D);
 	generateSpecularPuzzle(0x18313);
