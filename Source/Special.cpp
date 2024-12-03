@@ -1973,12 +1973,8 @@ void Special::test() {
 	//texloader->forceLoadDesertTextures();
 	//memory->LoadPackage("globals");
 
-	generate.setFlag(Generate::Config::WriteSpecular);
-	generate.setGridSize(4, 4);
-	generate.setSymbol(Decoration::Start, 0, 8);
-	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.generate(0x00698, Decoration::Star | Decoration::Color::Black, 6, Decoration::Star | Decoration::Color::Red, 8);
-	
+
+
 	return;
 
 	//Surface
@@ -2059,12 +2055,21 @@ void Special::test() {
 	generate.generate(0x00C72, Decoration::Stone | Decoration::Color::Black, 6, Decoration::Stone | Decoration::Color::Green, 6);
 	generate.setSymbol(Decoration::Start, 0, 8);
 	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.generate(0x0129D, Decoration::Star | Decoration::Color::Black, 6, Decoration::Star | Decoration::Color::Red, 8);
+	generate.generate(0x0129D, Decoration::Star | Decoration::Color::Red, 6, Decoration::Star | Decoration::Color::Green, 6, Decoration::Star | Decoration::Color::Black, 4);
+	generate.setSymbol(Decoration::Start, 0, 8);
+	generate.setSymbol(Decoration::Exit, 8, 0);
+	generate.generate(0x008BB, Decoration::Poly | Decoration::Color::Black, 1, Decoration::Poly | Decoration::Color::Red, 2);
+	generate.setSymbol(Decoration::Start, 0, 8);
+	generate.setSymbol(Decoration::Exit, 8, 0);
+	generate.blockPos = { { 3, 7 } };
+	generate.generate(0x0078D, Decoration::Triangle | Decoration::Color::Black, 4, Decoration::Triangle | Decoration::Color::Red, 5, Decoration::Triangle | Decoration::Color::Green, 1);
+	generate.setSymbol(Decoration::Start, 0, 8);
+	generate.setSymbol(Decoration::Exit, 8, 0);
+	generate.generate(0x18313, Decoration::Eraser | Decoration::Color::Black, 1, Decoration::Poly | Decoration::Color::Red, 3);
 	return;
-	generateSpecularPuzzle(0x008BB);
-	generateSpecularPuzzle(0x0078D);
-	generateSpecularPuzzle(0x18313);
+
 	//Flood Room
+
 	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
 	generateSpecularPuzzle(0x04D18);
 	generateSpecularPuzzle(0x01205);

@@ -291,6 +291,7 @@ void Panel::WriteDecorations() {
 				if ((_grid[x][y] & 0xf) == Decoration::Color::Red) {
 					decorationSpecular.push_back({ 0, 0, 0, 1 });
 					decorationColors.push_back(memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
+					_grid[x][y] &= ~0xf; _grid[x][y] |= 6;
 				}
 				else {
 					decorationSpecular.push_back({ 0, 0, 0, color.g });
@@ -351,6 +352,10 @@ void Panel::WriteDecorations() {
 			memory->WritePanelData<int>(id, SEQUENCE_LEN, 0);
 			memory->WritePanelData<void*>(id, SEQUENCE, 0);
 			_style |= NO_BLINK;
+			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, { 1 });
+			memory->WritePanelData<Color>(id, SYMBOL_A, { { 0, 0, 0, 1 } });
+			memory->WritePanelData<Color>(id, SYMBOL_C, { { 0, 0, 0, 1 } });
+			memory->WritePanelData<Color>(id, SYMBOL_E, { memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR) });
 		}
 	}
 	if (any || memory->ReadPanelData<int>(id, DECORATIONS)) {

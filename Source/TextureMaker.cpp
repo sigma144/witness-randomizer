@@ -207,6 +207,16 @@ void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float
 	else if ((symbolflags & 0x700) == Decoration::Star) {
 		filepath = "./images/symbols/spec_star.png";
 	}
+	else if ((symbolflags & 0x700) == Decoration::Triangle) {
+		filepath = "./images/symbols/spec_tri1.png";
+		if ((symbolflags & 0xF0000) == 0x20000)
+			filepath = "./images/symbols/spec_tri2.png";
+		if ((symbolflags & 0xF0000) == 0x30000)
+			filepath = "./images/symbols/spec_tri3.png";
+	}
+	else if ((symbolflags & 0x700) == Decoration::Poly) {
+		filepath = "./images/symbols/spec_poly.png";
+	}
 	else {
 		filepath = "./images/symbols/spec_stone.png";  //Undefined symbol
 	}
@@ -345,11 +355,39 @@ std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::ve
 	for (int i = 0; i < only_symbols.size(); i++) {
 		auto element = only_symbols[i];
 		auto [x, y] = symbol_coordinates[i];
-		if (colors.size() > 0) {
-			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, colors[i], specular);
+		if ((element & 0x700) == Decoration::Poly) {
+			int shape = element >> 16;
+			int maxx = 0, maxy = 0;
+			for (int x2 = 0; x2 < 4; x2++) {
+				for (int y2 = 0; y2 < 4; y2++) {
+					if (((shape >> (y2 * 4 + x2)) & 1) == 1) {
+						maxx = max(x2, maxx);
+						maxy = max(y2, maxy);
+					}
+				}
+			}
+			for (int x2 = 0; x2 < 4; x2++) {
+				for (int y2 = 0; y2 < 4; y2++) {
+					if (((shape >> (y2 * 4 + x2)) & 1) == 1) {
+						if (colors.size() > 0) {
+							draw_symbol_on_surface(background, x + (x2 * 2 - maxx) * 33.3f * puzzle_element_scale + 1.5f, y + (y2 * 2 - maxy) * 33.3f * puzzle_element_scale,
+								puzzle_element_scale, element, colors[i], specular);
+						}
+						else {
+							draw_symbol_on_surface(background, x + (x2 * 2 - maxx) * 33.3f * puzzle_element_scale + 1.5f, y + (y2 * 2 - maxy) * 33.3f * puzzle_element_scale,
+								puzzle_element_scale, element, std::nullopt, specular);
+						}
+					}
+				}
+			}
 		}
 		else {
-			draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, std::nullopt, specular);
+			if (colors.size() > 0) {
+				draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, colors[i], specular);
+			}
+			else {
+				draw_symbol_on_surface(background, x, y, puzzle_element_scale, element, std::nullopt, specular);
+			}
 		}
 	}
 	flip_image_vertically(background);
