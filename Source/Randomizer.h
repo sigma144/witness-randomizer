@@ -17,9 +17,10 @@ public:
 	enum SWAP {
 		NONE = 0,
 		TARGETS = 1,
-		LINES = 2,
+		PATHS = 2,
 		AUDIO_NAMES = 4,
 		COLORS = 8,
+		DRAWN_LINES = 16,
 	};
 
 	int seed = 0;

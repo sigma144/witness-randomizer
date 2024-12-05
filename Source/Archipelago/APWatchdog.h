@@ -112,7 +112,7 @@ private:
 	std::map<int64_t, unsigned int> locationIdToItemFlags;
 	std::set<int64_t> checkedLocations;
 	std::set<int> recolorWhenSolved;
-	std::set<int> alreadyColored;
+	std::set<int> neverRecolorAgain;
 	std::set<int> alreadyPlayedHuntEntityJingle;
 	std::set<std::pair<int, int64_t>> locationsThatContainedItemsFromOtherPlayers;
 	int finalPanel;
@@ -291,6 +291,7 @@ private:
 
 	std::string startingWarp = "Tutorial First Hallway";
 	std::map<std::string, bool> unlockableWarps = {};
+	std::set<std::string> badWarps = {};
 	std::vector<Warp*> unlockedWarps = {};
 	Warp* selectedWarp = NULL;
 	bool hasTeleported = true;

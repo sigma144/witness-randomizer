@@ -141,7 +141,7 @@ void Randomizer::RandomizeDesert() {
 			continue;
 		}
 		if (i != target) {
-			SwapPanels(puzzles[i], puzzles[target], SWAP::LINES);
+			SwapPanels(puzzles[i], puzzles[target], SWAP::PATHS);
 			std::swap(desertPanels[i], desertPanels[target]);
 		}
 		Memory::get()->WritePanelData<float>(puzzles[i], PATH_WIDTH_SCALE, {0.8f});
@@ -236,8 +236,7 @@ void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 		offsets[NUM_COLORED_REGIONS] = sizeof(int);
 		offsets[COLORED_REGIONS] = sizeof(void*);
 	}
-	if (flags & SWAP::LINES) {
-		offsets[TRACED_EDGES] = 16;
+	if (flags & SWAP::PATHS) {
 		offsets[AUDIO_PREFIX] = sizeof(void*);
 		offsets[PATH_WIDTH_SCALE] = sizeof(float);
 		offsets[STARTPOINT_SCALE] = sizeof(float);
@@ -263,6 +262,9 @@ void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 		offsets[DOT_SEQUENCE_REFLECTION] = sizeof(void*);
 		offsets[PANEL_TARGET] = sizeof(void*);
 		offsets[SPECULAR_TEXTURE] = sizeof(void*);
+	}
+	if (flags & SWAP::DRAWN_LINES) {
+		offsets[TRACED_EDGES] = 16;
 	}
 
 	Memory* memory = Memory::get();
@@ -326,27 +328,27 @@ void Randomizer::ShufflePanels(bool hard) {
 
 	// General shuffles.
 	if (hard) {
-		SwapWithRandomPanel(0x0A3B5, tutorialBackLeftExpertOptions, SWAP::LINES | SWAP::COLORS); // Tutorial Back Left
+		SwapWithRandomPanel(0x0A3B5, tutorialBackLeftExpertOptions, SWAP::PATHS | SWAP::COLORS); // Tutorial Back Left
 	} else {
-		SwapWithRandomPanel(0x0A3B5, tutorialBackLeftOptions, SWAP::LINES | SWAP::COLORS); // Tutorial Back Left
+		SwapWithRandomPanel(0x0A3B5, tutorialBackLeftOptions, SWAP::PATHS | SWAP::COLORS); // Tutorial Back Left
 	}
-	Randomize(utmElevatorControls, SWAP::LINES | SWAP::COLORS);
-	Randomize(treehousePivotSet, SWAP::LINES | SWAP::COLORS);
-	Randomize(utmPerspectiveSet, SWAP::LINES | SWAP::COLORS);
+	Randomize(utmElevatorControls, SWAP::PATHS | SWAP::COLORS);
+	Randomize(treehousePivotSet, SWAP::PATHS | SWAP::COLORS);
+	Randomize(utmPerspectiveSet, SWAP::PATHS | SWAP::COLORS);
 	if (!hard) {
-		Randomize(symmetryLaserYellows, SWAP::LINES | SWAP::COLORS);
-		Randomize(symmetryLaserBlues, SWAP::LINES | SWAP::COLORS);
-		Randomize(squarePanels, SWAP::LINES | SWAP::COLORS);
+		Randomize(symmetryLaserYellows, SWAP::PATHS | SWAP::COLORS);
+		Randomize(symmetryLaserBlues, SWAP::PATHS | SWAP::COLORS);
+		Randomize(squarePanels, SWAP::PATHS | SWAP::COLORS);
 	} else {
 		std::vector<int> panelsToRandom = copyWithoutElements(squarePanels, squarePanelsExpertBanned);
 		std::vector<int> firstPass = copyWithoutElements(panelsToRandom, arrowPanels);
 		std::vector<int> secondPass = copyWithoutElements(panelsToRandom, glassPanels);
 
-		Randomize(firstPass, SWAP::LINES | SWAP::COLORS);
-		Randomize(secondPass, SWAP::LINES | SWAP::COLORS);
+		Randomize(firstPass, SWAP::PATHS | SWAP::COLORS);
+		Randomize(secondPass, SWAP::PATHS | SWAP::COLORS);
 	}
-	Randomize(desertPanelsWide, SWAP::LINES);
-	Randomize(mountainMultipanel, SWAP::LINES | SWAP::COLORS);
+	Randomize(desertPanelsWide, SWAP::PATHS);
+	Randomize(mountainMultipanel, SWAP::PATHS | SWAP::COLORS);
 
 	// Symmetry transparent.
 	std::vector<int> transparentRandomOrder(transparent.size(), 0);

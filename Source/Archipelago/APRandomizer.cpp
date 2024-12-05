@@ -94,6 +94,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		if (slotData.contains("mountain_lasers")) MountainLasers = slotData["mountain_lasers"];
 		if (slotData.contains("challenge_lasers")) ChallengeLasers = slotData["challenge_lasers"];
 		bool unlockableWarpsIsOn = slotData.contains("unlockable_warps") ? slotData["unlockable_warps"] == true : false;
+		unlockableWarpsIsOn = unlockableWarpsIsOn || clientWindow->getWarpsSettingSafe();
 		UnlockableWarps = { 
 			"Tutorial First Hallway",
 			"Desert Outside",
@@ -523,7 +524,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 
 	clientWindow->logLine("Connect: Waiting for connection result.");
 	while (!hasConnectionResult) {
-		if (DateTime::since(start).count() > 5000) { //5 seconnd timeout on waiting for response from server
+		if (DateTime::since(start).count() > 10000) { //5 seconnd timeout on waiting for response from server
 			connected = false;
 			hasConnectionResult = true;
 

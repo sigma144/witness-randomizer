@@ -64,6 +64,7 @@ ClientWindow* ClientWindow::_singleton = nullptr;
 #define IDC_SETTING_EXTRAINFO 0x507
 #define IDC_SETTING_DISABLED_EPS 0x508
 #define IDC_SETTING_JINGLES 0x510
+#define IDC_SETTING_WARPS 0x511
 
 
 void ClientWindow::create(HINSTANCE inAppInstance, int nCmdShow) {
@@ -82,6 +83,7 @@ ClientWindow* ClientWindow::get() {
 void ClientWindow::saveSettings()
 {
 	currentJingles = getSetting(ClientDropdownSetting::Jingles);
+	finalizedWarps = getSetting(ClientToggleSetting::Warps);
 
 	json data;
 
@@ -96,6 +98,7 @@ void ClientWindow::saveSettings()
 	data["highcontrast"] = getSetting(ClientToggleSetting::HighContrast);
 	data["paneleffects"] = getSetting(ClientToggleSetting::PanelEffects);
 	data["extrainfo"] = getSetting(ClientToggleSetting::ExtraInfo);
+	data["warps"] = getSetting(ClientToggleSetting::Warps);
 	data["jingles"] = getSetting(ClientDropdownSetting::Jingles);
 
 	InputWatchdog* input = InputWatchdog::get();
@@ -130,6 +133,7 @@ void ClientWindow::loadSettings()
 			setSetting(ClientToggleSetting::HighContrast, data.contains("highcontrast") ? data["highcontrast"].get<bool>() : false);
 			setSetting(ClientToggleSetting::PanelEffects, data.contains("paneleffects") ? data["paneleffects"].get<bool>() : false);
 			setSetting(ClientToggleSetting::ExtraInfo, data.contains("extrainfo") ? data["extrainfo"].get<bool>() : true);
+			setSetting(ClientToggleSetting::Warps, data.contains("warps") ? data["warps"].get<bool>() : false);
 
 			setSetting(ClientDropdownSetting::Collect, data.contains("collect") ? data["collect"].get<std::string>() : "Unchanged");
 			setSetting(ClientDropdownSetting::DisabledPanels, data.contains("disabled") ? data["disabled"].get<std::string>() : "Prevent Solve");
@@ -159,6 +163,7 @@ void ClientWindow::loadSettings()
 		setSetting(ClientToggleSetting::HighContrast, false);
 		setSetting(ClientToggleSetting::PanelEffects, false);
 		setSetting(ClientToggleSetting::ExtraInfo, true);
+		setSetting(ClientToggleSetting::Warps, false);
 
 		setSetting(ClientDropdownSetting::Collect, "Unchanged");
 		setSetting(ClientDropdownSetting::DisabledPanels, "Prevent Solve");
@@ -306,6 +311,11 @@ std::string ClientWindow::getJinglesSettingSafe()
 	return currentJingles;
 }
 
+bool ClientWindow::getWarpsSettingSafe()
+{
+	return finalizedWarps;
+}
+
 void ClientWindow::EnableDeathLinkDisablingButton(bool enable)
 {
 	EnableWindow(hwndDisableDeathlink, enable);
@@ -336,6 +346,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
 		EnableWindow(dropdownBoxes.find(ClientDropdownSetting::Jingles)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ExtraInfo)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Warps)->second, false);
 
 		for (auto keybindButton : customKeybindButtons) {
 			EnableWindow(keybindButton.second, false);
@@ -361,6 +372,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, true);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, true);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Warps)->second, true);
 
 		// Disable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, false);
@@ -398,6 +410,7 @@ void ClientWindow::setWindowMode(ClientWindowMode mode)
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::SyncProgress)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::HighContrast)->second, false);
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::PanelEffects)->second, false);
+		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::Warps)->second, false);
 
 		// Enable runtime settings.
 		EnableWindow(toggleSettingCheckboxes.find(ClientToggleSetting::ChallengeTimer)->second, true);
@@ -630,6 +643,17 @@ void ClientWindow::addArchipelagoCredentials(int& currentY) {
 }
 
 void ClientWindow::addGameOptions(int& currentY) {
+	// Warps (remove with 0.5.2)
+	HWND hwndOptionWarps = CreateWindow(L"BUTTON", L"Unlockable Warps (0.5.2 feature preview)",
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
+		CONTROL_MARGIN, currentY,
+		CLIENT_WINDOW_WIDTH - STATIC_TEXT_MARGIN, STATIC_TEXT_HEIGHT,
+		hwndRootWindow, (HMENU)IDC_SETTING_WARPS, hAppInstance, NULL);
+	toggleSettingButtonIds[ClientToggleSetting::Warps] = IDC_SETTING_WARPS;
+	toggleSettingCheckboxes[ClientToggleSetting::Warps] = hwndOptionWarps;
+
+	currentY += STATIC_TEXT_HEIGHT + LINE_SPACING;
+
 	// Colorblind option. This is 2 lines tall.
 	HWND hwndOptionColorblind = CreateWindow(L"BUTTON", L"Colorblind Mode - The colors on certain panels will be changed to be more accommodating to people with colorblindness. The puzzle contents will be identical apart from that.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
@@ -1059,6 +1083,10 @@ LRESULT CALLBACK ClientWindow::handleWndProc(HWND hwnd, UINT message, WPARAM wPa
 		case IDC_SETTING_EXTRAINFO: {
 			toggleCheckbox(IDC_SETTING_EXTRAINFO);
 			saveSettings();
+			break;
+		}
+		case IDC_SETTING_WARPS: {
+			toggleCheckbox(IDC_SETTING_WARPS);
 			break;
 		}
 		// Buttons.

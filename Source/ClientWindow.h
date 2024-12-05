@@ -14,7 +14,8 @@ enum ClientToggleSetting {
 	SyncProgress,
 	HighContrast,
 	PanelEffects,
-	ExtraInfo
+	ExtraInfo,
+	Warps,
 };
 
 enum ClientDropdownSetting {
@@ -81,6 +82,7 @@ public:
 	// Display seen Audio Logs.
 	void displaySeenAudioHints(std::vector<std::string> hints, std::vector<std::string> fullyClearedAreas, std::vector<std::string> deadChecks, std::vector<std::string> otherPeoplesDeadChecks);
 	std::string getJinglesSettingSafe();
+	bool getWarpsSettingSafe();
 
 	void EnableDeathLinkDisablingButton(bool enable);
 
@@ -169,6 +171,7 @@ private:
 	APClient* ap = NULL;
 
 	std::string currentJingles = "Understated";
+	bool finalizedWarps = false;
 };
 
 inline std::ofstream clientLog = std::ofstream("WitnessRandomizerLog.txt");
