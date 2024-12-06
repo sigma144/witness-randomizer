@@ -2496,19 +2496,19 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE00F, {{-88.7798, 193.946, 20.9679}, 2.0f}}, // Desert Perspective Tree, Scipio
 	{ 0xEE03A, {{-108.916, 207.97, 0.415998}, 3.0f}}, // Desert Shore Near Perspective Tree, Rever
 	{ 0xEE028, {{-201.321, 238.077, 0.648001}, 0.5f}}, // Desert Shore Right, NewSoupVi
-	{ 0xEE02B, {{-164.225, 163.973, -0.683999}, 1.0f}}, // Staircase to Pond Room, NewSoupVi*
+	{ 0xEE02B, {{-164.225, 163.973, -0.683999}, 1.0f}}, // Staircase to Pond Room, NewSoupVi
 	{ 0xEE029, {{-180.825, 165.418, -3.31}, 1.0f}}, // Pond Room, NewSoupVi
 	{ 0xEE02C, {{-180.579, 166.568, -9.46402}, 0.8f}}, // Flood Room EP, Rever
 	{ 0xEE02D, {{-147.136, 129.896, -7.148}, 0.6f}}, // Elev Room Behind Bent 3, NewSoupVi
 	{ 0xEE02A, {{-230.669, 199.455, 0.852001}, 0.55f}}, // Desert Vault, NewSoupVi
 
 	// Outside Quarry
-	{ 0xEE015, {{-70.556, 184.644, 11.943}, 12.0f}}, // Rooftop Path near Desert Perspective Tree Dead End, NewSoupVi*, Might need to be brown??
-	{ 0xEE016, {{-56.535, 97.754, 12.149}, 10.0f}}, // Rooftop Path near Laser Dead End, NewSoupVi*, Might need to be brown or brighter somehow??
+	{ 0xEE015, {{-70.556, 184.644, 11.943}, 12.0f}}, // Rooftop Path near Desert Perspective Tree Dead End, NewSoupVi
+	{ 0xEE016, {{-56.535, 97.754, 12.149}, 10.0f}}, // Rooftop Path near Laser Dead End, NewSoupVi
 
 	// Quarry
 	{ 0xEE010, {{-17.823, 192.332, 2.02101}, 1.0f}}, // Quarry Boathouse Outside Beam, Scipio
-	{ 0xEE014, {{-60.823, 176.821, 1.005}, 2.0f}}, // Near Railroad Crevace, NewSoupVi*
+	{ 0xEE014, {{-60.823, 176.821, 1.005}, 2.0f}}, // Near Railroad Crevace, NewSoupVi
 	{ 0xEE01A, {{-53.625, 197.965, 1.84}, 1.0f}}, // Quarry Railroad under broken floor, Exempt-Medic
 	{ 0xEE011, {{-73.614, 114.297, 3.16901}, 6.0f}}, // Outside Stoneworks on Brick Pile, Scipio
 	{ 0xEE012, {{-69.342, 130.798, 2.88501}, 0.14f}}, // Quarry Stoneworks Furnace, Scipio
@@ -2517,30 +2517,30 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Stoneworks
 	{ 0xEE017, {{-74.42, 138.859, 4.972}, 0.11f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic
 	{ 0xEE018, {{-69.412, 133.404, 4.419}, 0.15f}}, // Quarry Stoneworks Furnace Inside, NewSoupVi
-	{ 0xEE034, {{-63.943, 133.809, 1.957}, 1.0f}}, // The meanest egg to ever exist, Rever*
+	{ 0xEE034, {{-63.958, 133.729, 2.01}, 0.14f}}, // The meanest egg to ever exist, Rever
 
 	// Shadows
 	{ 0xEE01B, {{-9.02006, 88.7752, 13.46}, 5.0f}}, // Near Butterfly Tree, Exempt-Medic
 
 	// Keep
-	{ 0XEE044, {{68.222, 130.334, 24.535}, 1.0f}}, // Keep Center East Tower, NewSoupVi*
+	{ 0XEE044, {{68.215, 130.336, 24.499}, 2.0f}}, // Keep Center East Tower, NewSoupVi
 	{ 0xEE00B, {{31.071, 142.541, 22.764}, 1.2f}}, // Keep Center West Tower, Exempt-Medic
-	{ 0xEE045, {{45.009, 94.477, 19.194}, 1.0f}}, // Keep Hedge 3 Hole, NewSoupVi*
-	{ 0xEE046, {{43.039, 83.077, 19.888}, 1.0f}}, // Keep Hedge 3 Wall Cubby, NewSoupVi*
-	{ 0xEE047, {{20.604, 91.599, 21.977}, 1.0f}}, // Keep SW Tower, NewSoupVi*
-	{ 0xEE041, {{68.448, 188.811, 20.474}, 1.0f}}, // PP2 Broken Wall, NewSoupVi*
-	{ 0xEE042, {{65.596, 184.118, 22.813}, 1.0f}}, // PP2->PP3 Walkable Wall, NewSoupVi*
-	{ 0xEE040, {{50.212, 184.124, 16.447}, 1.0f}}, // Keep PP3 Hand Guy, NewSoupVi*
-	{ 0xEE03F, {{55.748, 162.963, 17.566}, 1.0f}}, // Keep PP4 Hand Guy, Rever*
-	{ 0xEE043, {{53.065, 145.744, 33.264}, 1.0f}}, // Kepp Tower Shooty Hole, NewSoupVi*
+	{ 0xEE045, {{45.042, 94.549, 19.171}, 5.0f}}, // Keep Hedge 3 Hole, NewSoupVi
+	{ 0xEE046, {{43.05, 82.9641, 19.7891}, 1.0f}}, // Keep Hedge 3 Wall Cubby, NewSoupVi
+	{ 0xEE047, {{20.574, 91.622, 21.911}, 0.58f}}, // Keep SW Tower, NewSoupVi
+	{ 0xEE041, {{68.464, 189.053, 20.3061}, 0.9f}}, // PP2 Broken Wall, NewSoupVi
+	{ 0xEE042, {{65.588, 184.168, 22.756}, 2.0f}}, // PP2->PP3 Walkable Wall, NewSoupVi
+	{ 0xEE040, {{50.212, 184.124, 16.395}, 1.0f}}, // Keep PP3 Hand Guy, NewSoupVi
+	{ 0xEE03F, {{55.794, 163.02, 17.4661}, 1.0f}}, // Keep PP4 Hand Guy, Rever
+	{ 0xEE043, {{53.061, 145.743, 33.222}, 0.55f}}, // Keep Tower Shooty Hole, NewSoupVi
 
 	// Shipwreck
-	{ 0xEE048, {{108.072, 209.618, 10.482}, 1.0f}}, // Shipwreck Under Entrance, NewSoupVi*
-	{ 0xEE049, {{117.090, 207.460, 12.055}, 1.0f}}, // In weird long hole thing, NewSoupVi*
-	{ 0xEE04A, {{150.674, 204.527, 7.880}, 1.0f}}, // Outside Walkway, NewSoupVi*
-	{ 0xEE04B, {{177.602, 205.270, 0.890}, 1.0f}}, // Bottom Floor Dead End, NewSoupVi*
+	{ 0xEE048, {{108.048, 209.634, 10.2499}, 0.3f}}, // Shipwreck Under Entrance, NewSoupVi
+	{ 0xEE049, {{115.119, 214.291, 9.41693}, 0.7f}}, // In weird long hole thing, NewSoupVi
+	{ 0xEE04A, {{150.674, 204.555, 7.83}, 1.0f}}, // Outside Walkway, NewSoupVi
+	{ 0xEE04B, {{177.602, 205.27, 0.873}, 0.12f}}, // Bottom Floor Dead End, NewSoupVi
 	{ 0xEE009, {{178.018, 204.497, 2.27301}, 2.0f}}, // Abandoned Staircase, Exempt-Medic
-	{ 0xEE04C, {{190.402, 203.283, 3.505}, 1.0f}}, // Behind Stern, NewSoupVi*
+	{ 0xEE04C, {{190.402, 203.267, 3.449}, 2.0f}}, // Behind Stern, NewSoupVi
 
 	// Town
 	{ 0xEE03E, {{-10.312, 64.650, 9.040}, 1.0f}}, // Progress Lake, NewSoupVi*
