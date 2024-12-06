@@ -2543,48 +2543,50 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE04C, {{190.402, 203.267, 3.449}, 2.0f}}, // Behind Stern, NewSoupVi
 
 	// Town
-	{ 0xEE03E, {{-10.312, 64.650, 9.040}, 1.0f}}, // Progress Lake, NewSoupVi*
+	{ 0xEE03E, {{-10.239, 64.711, 8.98798}, 2.0f}}, // Progress Lake, NewSoupVi
 	{ 0xEE005, {{-9.66801, -19.212, 11.21}, 0.15f}}, // Under Town Maze Stairs, Exempt-Medic
 	{ 0xEE021, {{-64.456, -8.16704, 9.65603}, 1.0f}}, // Town Hole, Scipio
-	{ 0xEE037, {{0.538, 12.434, 11.014}, 1.0f}}, // Under Bridge to Quarry, Rever*
-	{ 0xEE051, {{-20.315, 3.197, 7.415}, 1.0f}}, // Sound Room Broken Speaker, NewSoupVi*
-	{ 0xEE038, {{-25.854, -2.402, 13.479}, 1.0f}}, // RGB House Upstairs Stairs Room, NewSoupVi*
-	{ 0xEE03B, {{-51.707, -19.708, 12.083}, 1.0f}}, // Town Wooden Rooftop, NewSoupVi*
-	{ 0xEE039, {{-41.219, -12.283, 22.859}, 1.0f}}, // Under Town Laser, Rever*
+	{ 0xEE037, {{0.538, 12.449, 10.911}, 1.0f}}, // Under Bridge to Quarry, Rever
+	{ 0xEE051, {{-20.304, 3.196, 7.347}, 1.0f}}, // Sound Room Broken Speaker, NewSoupVi
+	{ 0xEE038, {{-25.854, -2.402, 13.479}, 0.310001}}, // RGB House Upstairs Stairs Room, NewSoupVi // Change color?
+	{ 0xEE03B, {{-51.692, -19.692, 12.086}, 0.66f}}, // Town Wooden Rooftop, NewSoupVi
+	{ 0xEE039, {{-41.219, -12.284, 22.861}, 0.76f}}, // Under Town Laser, Rever
+	{ 0xEE058, {{-26.592, -26.399, 10.280}, 1.0f}}, // Town Brick Furnace, NewSoupVi*
 
 	// Windmill
 	{ 0xEE022, {{-92.465, 27.214, 12.699}, 0.4f}}, // Windmill Behind Entry Door, Scipio
+	{ 0xEE059, {{-93.745, 27.761, 7.328}, 1.0f}}, // Windmill Staircase, NewSoupVi*
 
 	// Theater
-	{ 0xEE03C, {{-68.084, -4.291, -1.172}, 1.0f}}, // Theater, Rever*
+	{ 0xEE03C, {{-68.084, -4.291, -1.191}, 0.17f}}, // Theater, Rever
 
 	// Monastery
-	{ 0xEE007, {{-8.969, -95.064, 2.952}, 1.0f}}, // Shore, NewSoupVi*
-	{ 0xEE006, {{20.800, -27.668, 16.710}, 1.0f}}, // Monastery North Shutters, Exempt-Medic*
-	{ 0xEE053, {{32.713, -31.666, 15.162}, 1.0f}}, // Garden, NewSoupVi*
-	{ 0xEE054, {{8.518, -40.171, 16.122}, 1.0f}}, // Left Wall, NewSoupVi*
+	{ 0xEE006, {{19.0879, -27.2952, 17.2457}, 1.0f}}, // Monastery North Shutters, Exempt-Medic
+	{ 0xEE053, {{37.955, -45.666, 15.162}, 1.0f}}, // Garden, NewSoupVi*
 
 	// Jungle
-	{ 0xEE008, {{0.078, -153.611, 0.650}, 10.0f}}, // Peninsula Glass, NewSoupVi*
-	{ 0xEE00A, {{-20.898, -138.570, 1.186}, 1.0f}}, // Peninsula Dead End, Scipio*
-	{ 0xEE000, {{-20.581, -154.352, 8.987}, 2.0f}}, // Peninsula Chalice, NewSoupVi
-	{ 0xEE052, {{57.877, -56.310, 19.374}, 1.0f}}, // Under Popup Wall, Exempt-Medic*
+	{ 0xEE007, {{-13, -117.75, 0.114}, 1.0f}}, // Peninsula Shore, NewSoupVi*
+	{ 0xEE008, {{0.083, -153.61, 0.697999}, 10.0f}}, // Peninsula Glass, NewSoupVi
+	{ 0xEE00A, {{-20.894, -138.558, 1.163}, 0.5f}}, // Peninsula Dead End, Scipio
+	{ 0xEE054, {{-44.0, -155.6, 1}, 1.0f}}, // Peninsula Dead End Right, NewSoupVi*
+	{ 0xEE000, {{-20.579, -154.348, 8.987}, 2.0f}}, // Peninsula Chalice, NewSoupVi
+	{ 0xEE052, {{57.877, -56.289, 19.314}, 0.62f}}, // Under Popup Wall, Exempt-Medic
 
 	// Outside Bunker
-	{ 0xEE003, {{160.954, -102.040, 7.248}, 1.0f}}, // Entry under Stairs, Scipio*
-	{ 0xEE002, {{167.589, -88.950, 21.426}, 1.0f}}, // Outside Green Room Crevace, Scipio*
+	{ 0xEE003, {{160.996, -102.079, 7.226}, 0.25f}}, // Entry under Stairs, Scipio
+	{ 0xEE002, {{167.459, -88.8181, 21.448}, 1.0f}}, // Outside Green Room Crevace, Scipio
 
 	// Inside Bunker
-	{ 0xEE01D, {{156.335, -88.469, 7.256}, 1.0f}}, // Bottom Floor behind Elevator, Exempt-Medic*
-	{ 0xEE01C, {{156.502, -87.455, 21.456}, 0.7f}}, // Green Room behind Elevator, Exempt-Medic*
+	{ 0xEE01D, {{158.945, -87.1297, 7.237}, 0.25f}}, // Bottom Floor behind Elevator, Exempt-Medic // Better color?
+	{ 0xEE01C, {{156.901, -87.1712, 21.391}, 0.09f}}, // Green Room behind Elevator, Exempt-Medic // Better color?
 
 	// Swamp
-	{ 0xEE04D, {{92.511, 9.257, 18.791}, 1.0f}}, // Painter, NewSoupVi*
-	{ 0xEE026, {{134.658, 54.921, 1.086}, 1.0f}}, // Under Stairs to Platform, Scipio*
-	{ 0xEE04F, {{208.555, -11.861, 0.598}, 1.0f}}, // Apparent River EP Start Point, NewSoupVi*
-	{ 0xEE027, {{134.496, 50.524, -2.963}, 1.0f}}, // Cyan Underwater Corner, Scipio*
-	{ 0xEE024, {{207.825, 7.957, 2.491}, 1.0f}}, // Cage, Scipio*
-	{ 0xEE025, {{146.651, 17.623, 0.341}, 1.0f}}, // Behind Red Maze, Scipio*
+	{ 0xEE04D, {{92.508, 9.21898, 18.746}, 6.0f}}, // Painter, NewSoupVi
+	{ 0xEE026, {{134.71, 55.0499, 0.944997}, 0.44f}}, // Under Stairs to Platform, Scipio
+	{ 0xEE04F, {{208.499, -11.762, 0.521001}, 10.0f}}, // Apparent River EP Start Point, NewSoupVi
+	{ 0xEE027, {{134.658, 48.614, -3.16699}, 0.47f}}, // Cyan Underwater Corner, Scipio
+	{ 0xEE024, {{207.84, 7.99, 2.482}, 3.0f}}, // Cage, Scipio
+	{ 0xEE025, {{146.63, 17.653, 0.304}, 6.0f}}, // Behind Red Maze, Scipio
 
 	// Treehouse
 	{ 0xEE04E, {{134.763, 144.285, 0.538}, 1.0f}}, // Beach Right Path, NewSoupVi*
