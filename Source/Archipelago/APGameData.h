@@ -2481,9 +2481,11 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE002, {{-175.897, -99.033, 7.06974}, 2.0f}}, // Path to Outpost ish, NewSoupVi
 	{ 0xEE003, {{-104.693, -127.221, 3.721}, 1.2f}}, // Tree near Outpost Entry, Exempt-Medic
 
-	// Orchard
-	{ 0xEE004, {{-104.46, 25.2631, 17.149}, 0.5f}}, // Wedged under Table, Rever
-	{ 0xEE005, {{-94.907, 28.318, 16.696}, 2.0f}}, // Near Flower Cross, NewSoupVi
+	// Orchard 1
+	{ 0xEE004, {{-94.907, 28.318, 16.696}, 2.0f}}, // Near Flower Cross, NewSoupVi
+
+	// Orchard 2
+	{ 0xEE005, {{-104.46, 25.2631, 17.149}, 0.5f}}, // Wedged under Table, Rever
 
 	// Glass Factory
 	{ 0xEE006, {{-197.448, -35.103, 1.306}, 0.8f}}, // Glass Factory Furnace, Exempt-Medic
@@ -2491,6 +2493,8 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 
 	// Symmetry Island
 	{ 0xEE008, {{-211.458, 10.609, 0.579}, 1.0f}}, // Env Set behind panel, NewSoupVi
+
+	// Symmetry Island Upper
 	{ 0xEE009, {{-203.65, 39.952, 16.664}, 3.0f}}, // Behind Laser, NewSoupVi
 
 	// Desert
@@ -2500,11 +2504,19 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE00D, {{-88.7798, 193.946, 20.9679}, 2.0f}}, // Desert Perspective Tree, Scipio
 	{ 0xEE00E, {{-108.916, 207.97, 0.415998}, 3.0f}}, // Desert Shore Near Perspective Tree, Rever
 	{ 0xEE00F, {{-201.321, 238.077, 0.648001}, 0.5f}}, // Desert Shore Right, NewSoupVi
+
+	// Desert Vault
+	{ 0xEE014, {{-230.669, 199.455, 0.852001}, 0.55f}}, // Desert Vault, NewSoupVi
+
+	// Desert Pond Room
 	{ 0xEE010, {{-164.225, 163.973, -0.683999}, 1.0f}}, // Staircase to Pond Room, NewSoupVi
 	{ 0xEE011, {{-180.825, 165.418, -3.31}, 1.0f}}, // Pond Room, NewSoupVi
+
+	// Desert Flood Room
 	{ 0xEE012, {{-180.579, 166.568, -9.46402}, 0.8f}}, // Flood Room EP, Rever
+
+	// Desert Elevator Room
 	{ 0xEE013, {{-147.136, 129.896, -7.148}, 0.6f}}, // Elev Room Behind Bent 3, NewSoupVi
-	{ 0xEE014, {{-230.669, 199.455, 0.852001}, 0.55f}}, // Desert Vault, NewSoupVi
 
 	// Outside Quarry
 	{ 0xEE015, {{-70.556, 184.644, 11.943}, 12.0f}}, // Rooftop Path near Desert Perspective Tree Dead End, NewSoupVi
@@ -2529,14 +2541,24 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 
 	// Keep
 	{ 0XEE021, {{68.215, 130.336, 24.499}, 2.0f}}, // Keep Center East Tower, NewSoupVi
-	{ 0xEE022, {{31.071, 142.541, 22.764}, 1.2f}}, // Keep Center West Tower, Exempt-Medic
+
+	// Keep Hedge Maze 3
 	{ 0xEE023, {{45.042, 94.549, 19.171}, 5.0f}}, // Keep Hedge 3 Hole, NewSoupVi
 	{ 0xEE024, {{43.05, 82.9641, 19.7891}, 1.0f}}, // Keep Hedge 3 Wall Cubby, NewSoupVi
 	{ 0xEE025, {{20.574, 91.622, 21.911}, 0.58f}}, // Keep SW Tower, NewSoupVi
+
+	// Keep Pressure Plates 2
 	{ 0xEE026, {{68.464, 189.053, 20.3061}, 0.9f}}, // PP2 Broken Wall, NewSoupVi
 	{ 0xEE027, {{65.588, 184.168, 22.756}, 2.0f}}, // PP2->PP3 Walkable Wall, NewSoupVi
+
+	// Keep Pressure Plates 3
 	{ 0xEE028, {{50.212, 184.124, 16.395}, 1.0f}}, // Keep PP3 Hand Guy, NewSoupVi
+
+	// Keep Pressure Plates 4
 	{ 0xEE029, {{55.794, 163.02, 17.4661}, 1.0f}}, // Keep PP4 Hand Guy, Rever
+
+	// Keep Tower
+	{ 0xEE022, {{31.071, 142.541, 22.764}, 1.2f}}, // Keep Center West Tower, Exempt-Medic
 	{ 0xEE02A, {{53.061, 145.743, 33.222}, 0.55f}}, // Keep Tower Shooty Hole, NewSoupVi
 
 	// Shipwreck
@@ -2546,14 +2568,29 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE02E, {{178.018, 204.497, 2.27301}, 2.0f}}, // Abandoned Staircase, Exempt-Medic
 	{ 0xEE02F, {{190.402, 203.267, 3.449}, 2.0f}}, // Behind Stern, NewSoupVi
 
+	// Inside Monastery
+	{ 0xEE03B, {{18.01, -35.491, 18.1371}, 0.96f}}, // Inside Tree, NewSoupVi
+
+	// Monastery North Shutters
+	{ 0xEE03C, {{19.0879, -27.2952, 17.2457}, 1.0f}}, // Monastery North Shutters, Exempt-Medic
+
+	// Monastery Garden
+	{ 0xEE03D, {{37.982, -45.8769, 15.3241}, 0.54f}}, // Garden, NewSoupVi
+
 	// Town
 	{ 0xEE030, {{-10.239, 64.711, 8.98798}, 2.0f}}, // Progress Lake, NewSoupVi
 	{ 0xEE031, {{-9.66801, -19.212, 11.21}, 0.15f}}, // Under Town Maze Stairs, Exempt-Medic
 	{ 0xEE032, {{-26.2322, -26.356, 10.188}, 0.17f}}, // Town Brick Furnace, NewSoupVi
 	{ 0xEE033, {{-64.456, -8.16704, 9.65603}, 1.0f}}, // Town Hole, Scipio
 	{ 0xEE034, {{0.538, 12.449, 10.911}, 1.0f}}, // Under Bridge to Quarry, Rever
+
+	// Town RGB House
 	{ 0xEE035, {{-20.304, 3.196, 7.347}, 1.0f}}, // Sound Room Broken Speaker, NewSoupVi
+
+	// Town Wooden Rooftop
 	{ 0xEE036, {{-51.692, -19.692, 12.086}, 0.66f}}, // Town Wooden Rooftop, NewSoupVi
+
+	// Town Tower 4th
 	{ 0xEE037, {{-41.219, -12.284, 22.861}, 0.76f}}, // Under Town Laser, Rever
 
 	// Windmill
@@ -2563,54 +2600,79 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Theater
 	{ 0xEE03A, {{-68.084, -4.291, -1.191}, 0.17f}}, // Theater, Rever
 
-	// Monastery
-	{ 0xEE03B, {{18.01, -35.491, 18.1371}, 0.96f}}, // Inside Tree, NewSoupVi
-	{ 0xEE03C, {{19.0879, -27.2952, 17.2457}, 1.0f}}, // Monastery North Shutters, Exempt-Medic
-	{ 0xEE03D, {{37.982, -45.8769, 15.3241}, 0.54f}}, // Garden, NewSoupVi
-
 	// Jungle
 	{ 0xEE03E, {{-11.7705, -117.198, 0.141}, 0.5f}}, // Peninsula Shore, NewSoupVi
 	{ 0xEE03F, {{0.083, -153.61, 0.697999}, 10.0f}}, // Peninsula Glass, NewSoupVi
 	{ 0xEE040, {{-20.894, -138.558, 1.163}, 0.5f}}, // Peninsula Dead End, Scipio
 	{ 0xEE041, {{-44.4687, -155.232, 0.529006}, 0.84f}}, // Peninsula Dead End Right, NewSoupVi
 	{ 0xEE042, {{-20.579, -154.348, 8.987}, 2.0f}}, // Peninsula Chalice, NewSoupVi
+
+	// Jungle
+	{ 0xEE045, {{100.254, -70.377, 24.5151}, 0.96f} }, // Bamboo Maze Outskirt, NewSoupVi
+
+	// Jungle Under Popup Wall
 	{ 0xEE043, {{57.877, -56.289, 19.314}, 0.62f}}, // Under Popup Wall, Exempt-Medic
-	{ 0xEE044, {{49.991, -70.988, 9.02993}, 0.1f}}, // Jungle Vault, NewSoupVi
-	{ 0xEE045, {{100.254, -70.377, 24.5151}, 0.96f}}, // Bamboo Maze Outskirt, NewSoupVi
+
+	// Jungle Vault
+	{ 0xEE044, {{49.991, -70.988, 9.02993}, 0.1f} }, // Jungle Vault, NewSoupVi
 
 	// Outside Bunker
 	{ 0xEE046, {{160.996, -102.079, 7.226}, 0.25f}}, // Entry under Stairs, Scipio
 	{ 0xEE047, {{167.459, -88.8181, 21.448}, 1.0f}}, // Outside Green Room Crevace, Scipio
 
-	// Inside Bunker
+	// Bunker Under Elevator
 	{ 0xEE048, {{158.945, -87.1297, 7.237}, 0.25f}}, // Bottom Floor behind Elevator, Exempt-Medic // Better color?
+
+	// Bunker Green Room
 	{ 0xEE049, {{156.901, -87.1712, 21.391}, 0.09f}}, // Green Room behind Elevator, Exempt-Medic // Better color?
 
-	// Swamp
+	// Outside Swamp
 	{ 0xEE04A, {{92.508, 9.21898, 18.746}, 6.0f}}, // Painter, NewSoupVi
+	{ 0xEE04C, {{208.499, -11.762, 0.521001}, 10.0f} }, // Apparent River EP Start Point, NewSoupVi
+
+	// Swamp Platform
 	{ 0xEE04B, {{134.71, 55.0499, 0.944997}, 0.44f}}, // Under Stairs to Platform, Scipio
-	{ 0xEE04C, {{208.499, -11.762, 0.521001}, 10.0f}}, // Apparent River EP Start Point, NewSoupVi
+
+	// Swamp Cyan Underwater
 	{ 0xEE04D, {{134.658, 48.614, -3.16699}, 0.47f}}, // Cyan Underwater Corner, Scipio
+
+	// Swamp Beyond Bridge
 	{ 0xEE04E, {{207.84, 7.99, 2.482}, 3.0f}}, // Cage, Scipio
+
+	// Swamp 
 	{ 0xEE04F, {{146.63, 17.653, 0.304}, 6.0f}}, // Behind Red Maze, Scipio
 
-	// Treehouse
+	// Treehouse Beach
 	{ 0xEE050, {{134.795, 144.177, 0.367002}, 0.6f}}, // Beach Right Path, NewSoupVi
+
+	// Treehouse Junction
 	{ 0xEE051, {{128.683, 147.598, 12.2289}, 0.8f}}, // Junction Weird Tree, NewSoupVi
 	{ 0xEE052, {{117.915, 142.597, 16.746}, 0.18f}}, // Timer Platform Corner, NewSoupVi
-	{ 0xEE053, {{134.06, 118.917, 15.183}, 1.0f}}, // Between Purple Bridges Stairs House, NewSoupVi
-	{ 0xEE054, {{125.683, 159.287, 16.526}, 0.37f}}, // Plank near Right Bridge EP, NewSoupVi
-	{ 0xEE055, {{113.961, 120.549, 18.8394}, 2.0f}}, // Shoulder of Burnt House Tree Guy, NewSoupVi
-	{ 0xEE056, {{107.055, 133.771, 19.626}, 2.0f}}, // Treehouse Laser House Roof, hatkirby
 
-	// Mountaintop
+	// Treehouse Second Purple Bridge
+	{ 0xEE053, {{134.06, 118.917, 15.183}, 1.0f}}, // Between Purple Bridges Stairs House, NewSoupVi
+
+	// Treehouse Green Bridge Left House
+	{ 0xEE054, {{125.683, 159.287, 16.526}, 0.37f}}, // Plank near Right Bridge EP, NewSoupVi
+
+	// Treehouse Laser Room Back Platform
+	{ 0xEE056, {{107.055, 133.771, 19.626}, 2.0f} }, // Treehouse Laser House Roof, hatkirby
+
+	// Treehouse Burned House
+	{ 0xEE055, {{113.961, 120.549, 18.8394}, 2.0f}}, // Shoulder of Burnt House Tree Guy, NewSoupVi
+
+	// Mountainside
 	{ 0xEE057, {{160.928, -19.2877, 38.1159}, 3.0f}}, // Giant statue elbow, NewSoupVi
 	{ 0xEE058, {{165.278, -53.6661, 47.217}, 0.56f}}, // Before Mountain Vault, NewSoupVi
-	{ 0xEE059, {{148.683, -44.315, 67.19}, 1.0f}}, // Lip, Scipio
 	{ 0xEE05A, {{127.641, -52.9993, 35.1405}, 1.0f}}, // Mountainside Waterfall, NewSoupVi
 
-	// Inside Mountain
+	// Mountaintop
+	{ 0xEE059, {{148.683, -44.315, 67.19}, 1.0f} }, // Lip, Scipio
+
+	// Inside Mountain Floor 1 Trash Pile
 	{ 0xEE05B, {{155.68, -53.735, 49.9621}, 0.83f}}, // Trash Pile, NewSoupVi
+
+	// Mountain Floor 2
 	{ 0xEE05C, {{138.55, -35.988, 36.668}, 0.73f}}, // Model Windmills inside Treehouse house, Rever
 	{ 0xEE05D, {{204.421, -41.8059, 0.757003}, 1.0f}}, // Final Room Statue, NewSoupVi
 
