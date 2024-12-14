@@ -63,11 +63,20 @@ void ArrowWatchdog::action() {
 		complete = false;
 	}
 	if (length == 0 || complete) {
+		tracedLength = length;
 		sleepTime = 0.1f;
 		return;
 	}
 	sleepTime = 0.01f;
 	if (length == tracedLength) return;
+
+	if (!ensureArrowsStillExist()) {
+		complete = true;
+		WritePanelData<uint64_t>(id, SEQUENCE, { 0 });
+		WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
+		return;
+	}
+
 	initPath();
 	if (complete) {
 		for (int x = 1; x < width; x++) {
@@ -83,6 +92,15 @@ void ArrowWatchdog::action() {
 		WritePanelData<uint64_t>(id, SEQUENCE, { 0 });
 		WritePanelData<int>(id, SEQUENCE_LEN, { 0 });
 	}
+}
+
+bool ArrowWatchdog::ensureArrowsStillExist() {
+	int numDecorations = ReadPanelData<int>(id, NUM_DECORATIONS);
+	std::vector<int> decorations = ReadArray<int>(id, DECORATIONS, numDecorations);
+	for (int decoration : decorations) {
+		if ((decoration & 0x700) == Decoration::Arrow) return true;
+	}
+	return false;
 }
 
 void ArrowWatchdog::initPath()
