@@ -2523,12 +2523,12 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE016, {{-56.535, 97.754, 12.149}, 10.0f}}, // Rooftop Path near Laser Dead End, NewSoupVi
 
 	// Quarry
-	{ 0xEE017, {{-17.823, 192.332, 2.02101}, 1.0f}}, // Quarry Boathouse Outside Beam, Scipio
+	{ 0xEE017, {{-17.823, 192.332, 2.02101}, 3.0f}}, // Quarry Boathouse Outside Beam, Scipio
 	{ 0xEE018, {{-60.823, 176.821, 1.005}, 2.0f}}, // Near Railroad Crevace, NewSoupVi
 	{ 0xEE019, {{-53.625, 197.965, 1.84}, 1.0f}}, // Quarry Railroad under broken floor, Exempt-Medic
-	{ 0xEE01A, {{-73.614, 114.297, 3.16901}, 6.0f}}, // Outside Stoneworks on Brick Pile, Scipio
-	{ 0xEE01B, {{-69.342, 130.798, 2.88501}, 0.14f}}, // Quarry Stoneworks Furnace, Scipio
-	{ 0xEE01C, {{-67.417, 131.506, 4.081}, 3.0f}}, // Quarry Stoneworks Furnace Vent, NewSoupVi
+	{ 0xEE01A, {{-73.614, 114.297, 3.16901}, 8.0f}}, // Outside Stoneworks on Brick Pile, Scipio
+	{ 0xEE01B, {{-69.342, 130.798, 2.88501}, 0.4f}}, // Quarry Stoneworks Furnace, Scipio
+	{ 0xEE01C, {{-67.417, 131.506, 4.081}, 9.0f}}, // Quarry Stoneworks Furnace Vent, NewSoupVi
 
 	// Stoneworks
 	{ 0xEE01D, {{-74.42, 138.859, 4.972}, 0.11f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic
