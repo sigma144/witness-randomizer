@@ -496,7 +496,6 @@ void APWatchdog::CheckSolvedPanels() {
 
 	if (newEggCheck && FirstEverLocationCheckDone) {
 		if (lowestUnfoundEggCount == 999999) HudManager::get()->queueNotification("All egg checks sent!");
-		else HudManager::get()->queueNotification("New egg check! Next egg check at: " + std::to_string(lowestUnfoundEggCount));
 	}
 
 	std::list<int64_t> solvedLocations = {};
@@ -2206,6 +2205,7 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 			ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) });
 		}
 		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+		firstEggShouldSendMessage = newRemoteEggs.empty();
 	}
 	firstEggResponse = true;
 
@@ -3493,20 +3493,12 @@ int APWatchdog::HandleEasterEgg()
 				if (status) eggCount++;
 			}
 
-			int lowestUnfoundEggCount = 99999999;
-			for (auto [entityID, locationID] : panelIdToLocationId) {
-				if (entityID > 0xEE200 && entityID < 0xEE300) {
-					int associatedEggCount = entityID - 0xEE200 + 1;  // 0-indexed
-					if (associatedEggCount < lowestUnfoundEggCount) lowestUnfoundEggCount = associatedEggCount;
-				}
+			if (firstEggShouldSendMessage) {
+				HudManager::get()->queueNotification("Found an Easter Egg! There are " + std::to_string(eggTotal) + " eggs to find.");
 			}
 
 			if (lookingAtEgg == 0xEE0FF) HudManager::get()->queueNotification("Found Rever's special egg! It is worth 5 eggs. New Total: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal), getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT | APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
 			else HudManager::get()->queueNotification("Easter Eggs: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal));
-
-			if (lowestUnfoundEggCount != 99999999 && eggCount < lowestUnfoundEggCount) {
-				HudManager::get()->queueNotification("Next egg check at: " + std::to_string(lowestUnfoundEggCount));
-			}
 		}
 		else {
 			return cursorVisual::recolored;

@@ -47,7 +47,9 @@ Memory::Memory() {
 				break;
 			}
 			else {
-				outputStream << "NOT ABLE TO RETRIEVE HANDLE TO THIS WITNESS INSTANCE.";
+				outputStream << "NOT ABLE TO RETRIEVE HANDLE TO THIS WITNESS INSTANCE. Error Code: ";
+				outputStream << std::system_category().message(GetLastError());
+				outputStream << "\n";
 			}
 		}
 	}

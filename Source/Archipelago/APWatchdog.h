@@ -17,6 +17,23 @@ class DrawIngameManager;
 class PanelLocker;
 class Color;
 
+class apSettings {
+public:
+	std::map<int, int> panelIdToLocationId;
+	int lastPanel;
+	std::map<int, inGameHint> audioLogHints;
+	std::map<int, std::set<int>> obeliskHexToEPHexes;
+	bool EPShuffle;
+	int PuzzleRandomization;
+	std::set<std::string> ElevatorsComeToYou;
+};
+
+class fixedClientSettings {
+	std::string CollectedPuzzlesBehavior;
+	std::string DisabledPuzzlesBehavior;
+	float SolveModeSpeedFactor;
+};
+
 
 class APWatchdog : public Watchdog {
 public:
@@ -162,6 +179,7 @@ private:
 
 	std::map<int, bool> easterEggToSolveStatus;
 	bool firstEggResponse = false;
+	bool firstEggShouldSendMessage = false;
 
 	std::map<int, int> doorToItemId;
 

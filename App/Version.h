@@ -5,7 +5,7 @@
 
 #define MAJOR 7
 #define MINOR 0
-#define PATCH 0
+#define PATCH 2
 
 #define VERSION_STR     "Secret Feature"
 #define VERSION			MAJOR, MINOR, PATCH
