@@ -67,6 +67,12 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		huntEntityKeepActive[huntEntity] = 0.0f;
 	}
 
+	for (auto [egg, irrelevant] : easterEggs) {
+		if (!DisabledEntities.contains(egg)) {
+			easterEggToSolveStatus[egg] = false;
+		}
+	}
+
 	for (auto [area_name, entities] : areaNameToEntityIDs) {
 		huntEntitiesPerArea[area_name] = {};
 
@@ -415,6 +421,18 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 	}
 
+	int solvedEggs = 0;
+	for (auto [egg, status] : easterEggToSolveStatus) {
+		if (egg == 0xEE0FF) {
+			if (status) solvedEggs += 5;
+			continue;
+		}
+		if (status) solvedEggs++;
+	}
+
+	bool newEggCheck = false;
+	int lowestUnfoundEggCount = 999999;
+
 	locationCheckInProgress = true;
 	for (auto [entityID, locationID] : panelIdToLocationId)
 	{
@@ -459,11 +477,26 @@ void APWatchdog::CheckSolvedPanels() {
 			}
 			continue;
 		}
-
+		else if (entityID > 0xEE200 && entityID < 0xEE300) {
+			int associatedEggCount = entityID - 0xEE200 + 1;  // 0-indexed
+			
+			if (solvedEggs >= associatedEggCount) {
+				solvedEntityIDs.push_back(entityID);
+				newEggCheck = true;
+			}
+			else {
+				if (associatedEggCount < lowestUnfoundEggCount) lowestUnfoundEggCount = associatedEggCount;
+			}
+		}
 		else if (IsPanelSolved(entityID, true))
 		{
 			solvedEntityIDs.push_back(entityID);
 		}
+	}
+
+	if (newEggCheck && FirstEverLocationCheckDone) {
+		if (lowestUnfoundEggCount == 999999) HudManager::get()->queueNotification("All egg checks sent!");
+		else HudManager::get()->queueNotification("New egg check! Next egg check at: " + std::to_string(lowestUnfoundEggCount));
 	}
 
 	std::list<int64_t> solvedLocations = {};
@@ -495,10 +528,11 @@ void APWatchdog::CheckSolvedPanels() {
 			if (PanelShouldPlayEpicVersion(locationIdToPanelId_READ_ONLY[solvedLocation])) {
 				return;
 			}
+
+			// Don't interrupt panel ramping chain
+			APAudioPlayer::get()->ResetRampingCooldownPanel();
 		}
-		// Don't interrupt panel ramping chain
-		APAudioPlayer::get()->ResetRampingCooldownPanel();
-		// but play panel hunt jingle instead of normal
+		// play panel hunt jingle instead of normal
 		PlayEntityHuntJingle(completedHuntEntities.front());
 	}
 }
@@ -2015,15 +2049,7 @@ void APWatchdog::CheckPanels() {
 		if (solvedPanels.count(panel)) continue;
 
 		if (ReadPanelData<int>(panel, SOLVED)) {
-			std::stringstream stream;
-			stream << std::hex << panel;
-			std::string panel_str(stream.str());
-
-			while (panel_str.size() < 5) {
-				panel_str = "0" + panel_str;
-			}
-
-			panel_str = "0x" + panel_str;
+			std::string panel_str = Utilities::entityStringRepresentation(panel);
 
 			newlySolvedPanels[panel_str] = true;
 			solvedPanels.insert(panel);
@@ -2051,15 +2077,7 @@ void APWatchdog::CheckHuntEntities() {
 		if (!solveStatus) continue;
 		if (solvedHuntEntitiesDataStorage.count(huntEntity)) continue;
 		
-		std::stringstream stream;
-		stream << std::hex << huntEntity;
-		std::string panel_str(stream.str());
-
-		while (panel_str.size() < 5) {
-			panel_str = "0" + panel_str;
-		}
-
-		panel_str = "0x" + panel_str;
+		std::string panel_str = Utilities::entityStringRepresentation(huntEntity);
 
 		newlySolvedHuntEntities[panel_str] = true;
 	}
@@ -2083,15 +2101,7 @@ void APWatchdog::CheckDoors() {
 		if (openedDoors.count(door)) continue;
 
 		if (ReadPanelData<int>(door, DOOR_OPEN)) {
-			std::stringstream stream;
-			stream << std::hex << door;
-			std::string door_str(stream.str());
-
-			while (door_str.size() < 5) {
-				door_str = "0" + door_str;
-			}
-
-			door_str = "0x" + door_str;
+			std::string door_str = Utilities::entityStringRepresentation(door);
 
 			newlyOpenedDoors[door_str] = true;
 			openedDoors.insert(door);
@@ -2164,6 +2174,66 @@ void APWatchdog::HandleWarpResponse(nlohmann::json value) {
 	}
 	
 	UnlockWarps(localUnlockedWarps);
+}
+
+void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) {
+	int pNO = ap->get_player_number();
+
+	std::map<std::string, bool> eggsSolvedAccordingToDataStorage = value;
+
+	std::set<int> newRemoteEggs;
+
+	for (auto [entityString, dataStorageSolveStatus] : eggsSolvedAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
+
+		int entityID = std::stoul(entityString, nullptr, 16);
+
+		if (!easterEggToSolveStatus.count(entityID)) {
+			HudManager::get()->queueBannerMessage("Got faulty EasterEgg response for entity " + entityString);
+			continue;
+		}
+
+		solvedEasterEggsDataStorage.insert(entityID);
+
+		if (easterEggToSolveStatus[entityID]) continue;
+
+		easterEggToSolveStatus[entityID] = true;
+		newRemoteEggs.insert(entityID);
+	}
+
+	if (!firstEggResponse) {
+		if (SyncProgress) {
+			ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) });
+		}
+		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+	}
+	firstEggResponse = true;
+
+	if (newRemoteEggs.empty()) return;
+
+	int eggTotal = 0;
+	for (auto [egg, status] : easterEggToSolveStatus) {
+		if (egg == 0xEE0FF) {
+			continue;
+		}
+		if (status) eggTotal++;
+	}
+
+	bool coop = key == "WitnessEasterEggStatus" + std::to_string(pNO);
+
+	std::string message = "Easter Eggs were ";
+	if (newRemoteEggs.size() == 1) {
+		message = "An Easter Egg was ";
+	}
+	if (coop) {
+		message += "collected remotely (Coop). New total: ";
+	}
+	else {
+		message += "reported as previously collected. Current total: ";
+	}
+	message += std::to_string(eggTotal) + "/" + std::to_string(easterEggToSolveStatus.size() - 1);
+
+	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 }
 
 void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
@@ -2583,6 +2653,27 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		}
 		else {
 			APAudioPlayer::get()->PlayAudio(APJingle::DogFiller, APJingleBehavior::Queue, false);
+		}
+		return;
+	}
+
+	if (id > 0xEE200 && id < 0xEE300) {
+		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				APAudioPlayer::get()->PlayAudio(APJingle::EasterProgUseful, APJingleBehavior::Queue, false);
+			}
+			else {
+				APAudioPlayer::get()->PlayAudio(APJingle::EasterProgression, APJingleBehavior::Queue, false);
+			}
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EasterUseful, APJingleBehavior::Queue, false);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EasterTrap, APJingleBehavior::Queue, false);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::EasterFiller, APJingleBehavior::Queue, false);
 		}
 		return;
 	}
@@ -3321,9 +3412,10 @@ int APWatchdog::LookingAtEasterEgg()
 {
 	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
 
-	for (auto [easterEggID, positionAndBrightness] : easterEggs) {
+	for (auto [easterEggID, solveStatus] : easterEggToSolveStatus) {
+		auto positionAndBrightness = easterEggs[easterEggID];
 		Vector3 position = positionAndBrightness.first;
-		if (clickedEasterEggs.contains(easterEggID)) continue;
+		if (easterEggToSolveStatus[easterEggID]) continue;
 		if ((position - headPosition).length() > 6) continue;
 
 		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f)) {
@@ -3344,6 +3436,12 @@ int APWatchdog::LookingAtEasterEgg()
 
 int APWatchdog::HandleEasterEgg()
 {
+	int pNO = ap->get_player_number();
+	if (!firstActionDone) {
+		ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()) });
+		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+	}
+
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 	if (interactionState != InteractionState::Focusing) {
 		letGoOfLeftClickSinceEnteringFocusMode = false;
@@ -3376,8 +3474,39 @@ int APWatchdog::HandleEasterEgg()
 
 	if (holdingLeftClick) {
 		if (letGoOfLeftClickSinceEnteringFocusMode) {
-			clickedEasterEggs.insert(lookingAtEgg);
+			easterEggToSolveStatus[lookingAtEgg] = true;
 			if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Plop, APJingleBehavior::PlayImmediate);
+
+			std::string lookingAtEggString = Utilities::entityStringRepresentation(lookingAtEgg);
+			std::map<std::string, bool> newEgg = {{ lookingAtEggString, true }};
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newEgg } });
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), false, { { "update" , newEgg } });
+		
+			int eggCount = 0;
+			int eggTotal = 0;
+			for (auto [egg, status] : easterEggToSolveStatus) {
+				if (egg == 0xEE0FF) {
+					if (status) eggCount += 5;
+					continue;
+				}
+				eggTotal++;
+				if (status) eggCount++;
+			}
+
+			int lowestUnfoundEggCount = 99999999;
+			for (auto [entityID, locationID] : panelIdToLocationId) {
+				if (entityID > 0xEE200 && entityID < 0xEE300) {
+					int associatedEggCount = entityID - 0xEE200 + 1;  // 0-indexed
+					if (associatedEggCount < lowestUnfoundEggCount) lowestUnfoundEggCount = associatedEggCount;
+				}
+			}
+
+			if (lookingAtEgg == 0xEE0FF) HudManager::get()->queueNotification("Found Rever's special egg! It is worth 5 eggs. New Total: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal), getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT | APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
+			else HudManager::get()->queueNotification("Easter Eggs: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal));
+
+			if (lowestUnfoundEggCount != 99999999 && eggCount < lowestUnfoundEggCount) {
+				HudManager::get()->queueNotification("Next egg check at: " + std::to_string(lowestUnfoundEggCount));
+			}
 		}
 		else {
 			return cursorVisual::recolored;
@@ -3915,14 +4044,14 @@ void APWatchdog::DrawSpheres(float deltaSeconds) {
 		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
 	}
 
-	for (auto [easterEggID, positionAndBrightness] : easterEggs) {
-		if (clickedEasterEggs.contains(easterEggID)) continue;
-		Vector3 position = positionAndBrightness.first;
+	for (auto [easterEggID, solveStatus] : easterEggToSolveStatus) {
+		if (solveStatus) continue;
+		Vector3 position = easterEggs[easterEggID].first;
 		if ((position - headPosition).length() > 60) continue;
 
 		float scale = 1.0f;
 
-		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f, positionAndBrightness.second)) {
+		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f, easterEggs[easterEggID].second)) {
 			spheresToDraw.push_back(eggSphere);
 		}
 	}

@@ -78,6 +78,7 @@ public:
 	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value);
 	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value);
 	void HandleSolvedPanelsResponse(nlohmann::json value);
+	void HandleEasterEggResponse(std::string key, nlohmann::json value);
 	void HandleHuntEntityResponse(nlohmann::json value);
 	void HandleOpenedDoorsResponse(nlohmann::json value);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
@@ -158,6 +159,9 @@ private:
 	std::map<int, float> huntEntitySphereOpacities;
 	std::map<int, Vector3> huntEntityPositions;
 	std::map<int, float> huntEntityKeepActive;
+
+	std::map<int, bool> easterEggToSolveStatus;
+	bool firstEggResponse = false;
 
 	std::map<int, int> doorToItemId;
 
@@ -320,8 +324,8 @@ private:
 	std::set<int> solvedPanels;
 	std::set<int> openedDoors;
 	std::set<int> solvedHuntEntitiesDataStorage;
+	std::set<int> solvedEasterEggsDataStorage;
 	std::map<std::string, bool> lastDeadChecks;
-	std::set<int> clickedEasterEggs;
 
 	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;

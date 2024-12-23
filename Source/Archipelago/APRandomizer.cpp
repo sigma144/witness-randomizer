@@ -443,6 +443,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		else if (key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value);
 		else if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value);
 		else if (key.find("WitnessHuntEntityStatus") != std::string::npos) async->HandleHuntEntityResponse(value);
+		else if (key.find("WitnessEasterEggStatus") != std::string::npos) async->HandleEasterEggResponse(key, value);
 		else if (key.find("WitnessOpenedDoors") != std::string::npos) async->HandleOpenedDoorsResponse(value);
 		else if (key.find("WitnessUnlockedWarps") != std::string::npos) async->HandleWarpResponse(value);
 	});

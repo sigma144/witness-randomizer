@@ -35,6 +35,12 @@ enum APJingle
 	DogFiller,
 	DogTrap,
 
+	EasterFiller,
+	EasterProgression,
+	EasterProgUseful,
+	EasterTrap,
+	EasterUseful,
+
 	UnderstatedProgUseful,
 	UnderstatedFiller,
 	UnderstatedProgression,
@@ -188,6 +194,12 @@ private:
 		{DogTrap, {IDR_WAVE34}},
 		{DogUseful, {IDR_WAVE37}},
 
+		{EasterFiller, {IDR_WAVE87}},
+		{EasterProgression, {IDR_WAVE88}},
+		{EasterProgUseful, {IDR_WAVE89}},
+		{EasterTrap, {IDR_WAVE90}},
+		{EasterUseful, {IDR_WAVE91}},
+
 		{UnderstatedVictory, {IDR_WAVE69}},
 		{Victory, {IDR_WAVE30}},
 		{FirstJingle, {IDR_WAVE50}},
@@ -226,6 +238,12 @@ private:
 		{DogTrap, IDR_WAVE34},
 		{DogUseful, IDR_WAVE37},
 
+		{EasterFiller, IDR_WAVE87},
+		{EasterProgression, IDR_WAVE88},
+		{EasterProgUseful, IDR_WAVE89},
+		{EasterTrap, IDR_WAVE90},
+		{EasterUseful, IDR_WAVE91},
+
 		{UnderstatedVictory, IDR_WAVE69},
 		{Victory, IDR_WAVE30},
 		{FirstJingle, IDR_WAVE50},
@@ -255,6 +273,14 @@ private:
 		DogProgUseful,
 		DogProgression,
 		DogTrap
+	};
+
+	std::set<APJingle> easterJingles = {
+		EasterFiller,
+		EasterUseful,
+		EasterProgUseful,
+		EasterTrap,
+		EasterProgression,
 	};
 
 	std::set<APJingle> understatedJingles = {

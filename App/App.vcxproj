@@ -217,6 +217,11 @@
     <Media Include="..\Music\Dog ProgUseful.wav" />
     <Media Include="..\Music\Dog Trap.wav" />
     <Media Include="..\Music\Dog Useful.wav" />
+    <Media Include="..\Music\Easter Filler.wav" />
+    <Media Include="..\Music\Easter Progression.wav" />
+    <Media Include="..\Music\Easter ProgUseful.wav" />
+    <Media Include="..\Music\Easter Trap.wav" />
+    <Media Include="..\Music\Easter Useful.wav" />
     <Media Include="..\Music\EP Filler 2.wav" />
     <Media Include="..\Music\EP Filler.wav" />
     <Media Include="..\Music\EP Progression 2.wav" />

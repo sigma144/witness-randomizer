@@ -222,6 +222,16 @@ IDR_WAVE85              WAVE                    "..\\Music\\Plop 4.wav"
 
 IDR_WAVE86              WAVE                    "..\\Music\\Plop 5.wav"
 
+IDR_WAVE87              WAVE                    "..\\Music\\Easter Filler.wav"
+
+IDR_WAVE88              WAVE                    "..\\Music\\Easter Progression.wav"
+
+IDR_WAVE89              WAVE                    "..\\Music\\Easter ProgUseful.wav"
+
+IDR_WAVE90              WAVE                    "..\\Music\\Easter Trap.wav"
+
+IDR_WAVE91              WAVE                    "..\\Music\\Easter Useful.wav"
+
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
 
