@@ -2674,7 +2674,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 
 	// Mountain Floor 2
 	{ 0xEE05C, {{138.55, -35.988, 36.668}, 0.73f}}, // Model Windmills inside Treehouse house, Rever
-	{ 0xEE05D, {{204.421, -41.8059, 0.757003}, 1.0f}}, // Final Room Statue, NewSoupVi
+	{ 0xEE05D, {{204.421, -41.8059, 0.757003}, 5.0f}}, // Final Room Statue, NewSoupVi
 
 	// Caves
 	{ 0xEE05E, {{140.332, -43.302, 3.53}, 1.0f}}, // Caves Entry Door, NewSoupVi

@@ -17,27 +17,38 @@ class DrawIngameManager;
 class PanelLocker;
 class Color;
 
-class apSettings {
+class ApSettings {
 public:
 	std::map<int, int> panelIdToLocationId;
 	int lastPanel;
-	std::map<int, inGameHint> audioLogHints;
+	std::map<int, inGameHint> inGameHints;
 	std::map<int, std::set<int>> obeliskHexToEPHexes;
 	bool EPShuffle;
 	int PuzzleRandomization;
 	std::set<std::string> ElevatorsComeToYou;
+	std::set<int> DisabledEntities;
+	std::set<int> huntEntites;
+	std::map<int, std::set<int>> itemIdToDoorSet;
+	std::map<int, int> doorToItemId;
+	std::map<int, std::vector<int>> progressiveItems;
+	std::vector<std::string> warps;
+	int DeathLinkAmnesty;
+	int EggHuntStep;
 };
 
-class fixedClientSettings {
+class FixedClientSettings {
+public:
 	std::string CollectedPuzzlesBehavior;
 	std::string DisabledPuzzlesBehavior;
+	std::string DisabledEPsBehavior;
 	float SolveModeSpeedFactor;
+	bool SyncProgress;
 };
 
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::string disEP, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync);
+	APWatchdog(APClient* client, PanelLocker* panelLocker, APState* state, ApSettings* apSettings, FixedClientSettings* fixedClientSettings);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -180,6 +191,7 @@ private:
 	std::map<int, bool> easterEggToSolveStatus;
 	bool firstEggResponse = false;
 	bool firstEggShouldSendMessage = false;
+	int EggHuntStep = 0;
 
 	std::map<int, int> doorToItemId;
 

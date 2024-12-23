@@ -29,38 +29,39 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::string disEP, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* state, ApSettings* apSettings, FixedClientSettings* fixedClientSettings) : Watchdog(0.033f) {
 	populateWarpLookup();
 	
 	generator = std::make_shared<Generate>();
 	ap = client;
-	panelIdToLocationId = mapping;
+	panelIdToLocationId = apSettings->panelIdToLocationId;
 
 	for (auto [key, value] : panelIdToLocationId) {
 		panelIdToLocationId_READ_ONLY[key] = value;
 		locationIdToPanelId_READ_ONLY[value] = key;
 	}
 
-	DeathLinkAmnesty = dlA;
-	finalPanel = lastPanel;
-	panelLocker = p;
-	inGameHints = a;
-	state = s;
-	EPShuffle = ep;
-	obeliskHexToEPHexes = o;
-	solveModeSpeedFactor = smsf;
-	CollectText = col;
-	Collect = col;
-	DisabledPuzzlesBehavior = dis;
-	DisabledEPsBehavior = disEP;
-	DisabledEntities = disP;
-	ElevatorsComeToYou = elev;
-	doorToItemId = dToI;
-	progressiveItems = pI;
-	itemIdToDoorSet = iTD;
-	SyncProgress = sync;
+	DeathLinkAmnesty = apSettings->DeathLinkAmnesty;
+	finalPanel = apSettings->lastPanel;
+	this->panelLocker = panelLocker;
+	inGameHints = apSettings->inGameHints;
+	this->state = state;
+	EPShuffle = apSettings->EPShuffle;
+	obeliskHexToEPHexes = apSettings->obeliskHexToEPHexes;
+	solveModeSpeedFactor = fixedClientSettings->SolveModeSpeedFactor;
+	CollectText = fixedClientSettings->CollectedPuzzlesBehavior;
+	Collect = fixedClientSettings->CollectedPuzzlesBehavior;
+	DisabledPuzzlesBehavior = fixedClientSettings->DisabledPuzzlesBehavior;
+	DisabledEPsBehavior = fixedClientSettings->DisabledEPsBehavior;
+	DisabledEntities = apSettings->DisabledEntities;
+	ElevatorsComeToYou = apSettings->ElevatorsComeToYou;
+	doorToItemId = apSettings->doorToItemId;
+	progressiveItems = apSettings->progressiveItems;
+	itemIdToDoorSet = apSettings->itemIdToDoorSet;
+	SyncProgress = fixedClientSettings->SyncProgress;
+	EggHuntStep = apSettings->EggHuntStep;
 	
-	for (int huntEntity : hunt) {
+	for (int huntEntity : apSettings->huntEntites) {
 		huntEntityToSolveStatus[huntEntity] = false;
 		huntEntitySphereOpacities[huntEntity] = 0.0f;
 		huntEntityPositions[huntEntity] = Vector3(0, 0, 0);
@@ -77,7 +78,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		huntEntitiesPerArea[area_name] = {};
 
 		for (int entity : entities) {
-			if (hunt.count(entity)) {
+			if (apSettings->huntEntites.count(entity)) {
 				huntEntitiesPerArea[area_name].insert(entity);
 			}
 		}
@@ -89,7 +90,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		}
 	}
 
-	for (auto warpname : warps) {
+	for (auto warpname : apSettings->warps) {
 		unlockableWarps[warpname] = false;
 	};
 	
@@ -127,14 +128,14 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		obeliskHexToAmountOfEPs[key] = (int)value.size();
 	}
 
-	PuzzleRandomization = puzzle_rando;
+	PuzzleRandomization = apSettings->PuzzleRandomization;
 
 	panelsThatHaveToBeSkippedForEPPurposes = {
 		0x09E86, 0x09ED8, // light controllers 2 3
 		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
 	};
 
-	if (puzzle_rando == SIGMA_EXPERT) {
+	if (PuzzleRandomization == SIGMA_EXPERT) {
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x03629); // Tutorial Gate Open
@@ -3494,8 +3495,11 @@ int APWatchdog::HandleEasterEgg()
 			}
 
 			if (firstEggShouldSendMessage) {
-				HudManager::get()->queueNotification("Found an Easter Egg! There are " + std::to_string(eggTotal) + " eggs to find.");
+				HudManager::get()->queueNotification("Found an Easter Egg! There are " + std::to_string(eggTotal) + " total eggs to find.");
+				HudManager::get()->queueNotification("Every " + std::to_string(EggHuntStep) + " Easter Eggs, a check will be sent.");
+				HudManager::get()->queueNotification("Good Luck!", RgbColor(110 / 255.0, 99 / 255.0, 192 / 255.0));
 			}
+			firstEggShouldSendMessage = false;
 
 			if (lookingAtEgg == 0xEE0FF) HudManager::get()->queueNotification("Found Rever's special egg! It is worth 5 eggs. New Total: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal), getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT | APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
 			else HudManager::get()->queueNotification("Easter Eggs: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal));

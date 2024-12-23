@@ -114,6 +114,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			UnlockableWarps = {};
 		}
 
+		if (slotData.contains("easter_egg_hunt")) EggHuntStep = slotData["easter_egg_hunt"];
+
 		if (slotData.contains("panel_hunt_required_absolute")) RequiredHuntEntities = slotData["panel_hunt_required_absolute"];
 		PanelHuntPostgame = slotData.contains("panel_hunt_postgame") ? (int) slotData["panel_hunt_postgame"] : 0;
 
@@ -851,8 +853,40 @@ void APRandomizer::RestoreOriginals() {
 	PanelRestore::RestoreOriginalPanelData();
 }
 
+ApSettings APRandomizer::GetAPSettings() {
+	ApSettings apSettings = ApSettings();
+	apSettings.panelIdToLocationId = panelIdToLocationId;
+	apSettings.lastPanel = FinalPanel;
+	apSettings.inGameHints = inGameHints;
+	apSettings.obeliskHexToEPHexes = obeliskSideIDsToEPHexes;
+	apSettings.EPShuffle = EPShuffle;
+	apSettings.PuzzleRandomization = PuzzleRandomization;
+	apSettings.ElevatorsComeToYou = ElevatorsComeToYou;
+	apSettings.DisabledEntities = disabledEntities;
+	apSettings.huntEntites = huntEntities;
+	apSettings.itemIdToDoorSet = itemIdToDoorSet;
+	apSettings.doorToItemId = doorToItemId;
+	apSettings.progressiveItems = progressiveItems;
+	apSettings.warps = UnlockableWarps;
+	apSettings.DeathLinkAmnesty = DeathLinkAmnesty;
+	apSettings.EggHuntStep = EggHuntStep;
+	return apSettings;
+}
+
+FixedClientSettings APRandomizer::GetFixedClientSettings() {
+	FixedClientSettings fixedClientSettings = FixedClientSettings();
+	fixedClientSettings.CollectedPuzzlesBehavior = CollectedPuzzlesBehavior;
+	fixedClientSettings.DisabledPuzzlesBehavior = DisabledPanelsBehavior;
+	fixedClientSettings.DisabledEPsBehavior = DisabledEPsBehavior;
+	fixedClientSettings.SolveModeSpeedFactor = solveModeSpeedFactor;
+	fixedClientSettings.SyncProgress = SyncProgress;
+	return fixedClientSettings;
+}
+
 void APRandomizer::GenerateNormal() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPanelsBehavior, DisabledEPsBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId, UnlockableWarps, SyncProgress);
+	ApSettings apSettings = GetAPSettings();
+	FixedClientSettings fixedClientSettings = GetFixedClientSettings();
+	async = new APWatchdog(ap, panelLocker, &state, &apSettings, &fixedClientSettings);
 	SeverDoors();
 
 	if (DisableNonRandomizedPuzzles)
@@ -860,7 +894,9 @@ void APRandomizer::GenerateNormal() {
 }
 
 void APRandomizer::GenerateVariety() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPanelsBehavior, DisabledEPsBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId, UnlockableWarps, SyncProgress);
+	ApSettings apSettings = GetAPSettings();
+	FixedClientSettings fixedClientSettings = GetFixedClientSettings();
+	async = new APWatchdog(ap, panelLocker, &state, &apSettings, &fixedClientSettings);
 	SeverDoors();
 
 	Memory::get()->PowerNext(0x03629, 0x36);
@@ -870,7 +906,9 @@ void APRandomizer::GenerateVariety() {
 }
 
 void APRandomizer::GenerateHard() {
-	async = new APWatchdog(ap, panelIdToLocationId, FinalPanel, panelLocker, inGameHints, obeliskSideIDsToEPHexes, EPShuffle, PuzzleRandomization, &state, solveModeSpeedFactor, ElevatorsComeToYou, CollectedPuzzlesBehavior, DisabledPanelsBehavior, DisabledEPsBehavior, disabledEntities, huntEntities, itemIdToDoorSet, progressiveItems, DeathLinkAmnesty, doorToItemId, UnlockableWarps, SyncProgress);
+	ApSettings apSettings = GetAPSettings();
+	FixedClientSettings fixedClientSettings = GetFixedClientSettings();
+	async = new APWatchdog(ap, panelLocker, &state, &apSettings, &fixedClientSettings);
 	SeverDoors();
 
 	//Mess with Town targets
