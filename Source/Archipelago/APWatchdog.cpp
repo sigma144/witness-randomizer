@@ -68,9 +68,18 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 		huntEntityKeepActive[huntEntity] = 0.0f;
 	}
 
-	for (auto [egg, irrelevant] : easterEggs) {
-		if (!DisabledEntities.contains(egg)) {
-			easterEggToSolveStatus[egg] = false;
+	bool anyEggCheckIsOn = false;
+	for (auto [entityID, locationID] : panelIdToLocationId) {
+		if (entityID >= 0xEE200 && entityID < 0xEE300) {
+			anyEggCheckIsOn = true;
+			break;
+		}
+	}
+	if (anyEggCheckIsOn) {
+		for (auto [egg, irrelevant] : easterEggs) {
+			if (!DisabledEntities.contains(egg)) {
+				easterEggToSolveStatus[egg] = false;
+			}
 		}
 	}
 
