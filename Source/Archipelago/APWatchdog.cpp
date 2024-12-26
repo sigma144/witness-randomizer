@@ -2789,7 +2789,12 @@ void APWatchdog::PlayReceivedJingle(const int& itemFlags) {
 	if (0.0f < timePassedSinceFirstJinglePlayed && timePassedSinceFirstJinglePlayed < 10.0f) return;
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
-		APAudioPlayer::get()->PlayAudio(APJingle::IncomingProgression, APJingleBehavior::DontQueue);
+		if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::IncomingProgUseful, APJingleBehavior::DontQueue);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::IncomingProgression, APJingleBehavior::DontQueue);
+		}
 	}
 	else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 		APAudioPlayer::get()->PlayAudio(APJingle::IncomingUseful, APJingleBehavior::DontQueue);
