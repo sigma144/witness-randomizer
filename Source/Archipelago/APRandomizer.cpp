@@ -863,6 +863,7 @@ ApSettings APRandomizer::GetAPSettings() {
 	apSettings.PuzzleRandomization = PuzzleRandomization;
 	apSettings.ElevatorsComeToYou = ElevatorsComeToYou;
 	apSettings.DisabledEntities = disabledEntities;
+	apSettings.ExcludedEntities = precompletedLocations;
 	apSettings.huntEntites = huntEntities;
 	apSettings.itemIdToDoorSet = itemIdToDoorSet;
 	apSettings.doorToItemId = doorToItemId;

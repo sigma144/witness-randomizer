@@ -72,7 +72,13 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 	for (auto [entityID, locationID] : panelIdToLocationId) {
 		if (entityID >= 0xEE200 && entityID < 0xEE300) {
 			anyEggCheckIsOn = true;
-			break;
+			int associatedEggCount = entityID - 0xEE200 + 1;
+			if (associatedEggCount > HighestEggCheck) {
+				HighestEggCheck = associatedEggCount;
+			}
+			if (!apSettings->ExcludedEntities.contains(entityID) && associatedEggCount > HighestRealEggCheck) {
+				HighestRealEggCheck = associatedEggCount;
+			}
 		}
 	}
 	if (anyEggCheckIsOn) {
@@ -441,7 +447,8 @@ void APWatchdog::CheckSolvedPanels() {
 	}
 
 	bool newEggCheck = false;
-	int lowestUnfoundEggCount = 999999;
+	bool finalUnexcludedEggCheck = false;
+	bool finalEggCheck = false;
 
 	locationCheckInProgress = true;
 	for (auto [entityID, locationID] : panelIdToLocationId)
@@ -489,13 +496,14 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 		else if (entityID > 0xEE200 && entityID < 0xEE300) {
 			int associatedEggCount = entityID - 0xEE200 + 1;  // 0-indexed
+
 			
 			if (solvedEggs >= associatedEggCount) {
+				if (associatedEggCount == HighestEggCheck) finalEggCheck = true;
+				if (associatedEggCount == HighestRealEggCheck) finalUnexcludedEggCheck = true;
+
 				solvedEntityIDs.push_back(entityID);
 				newEggCheck = true;
-			}
-			else {
-				if (associatedEggCount < lowestUnfoundEggCount) lowestUnfoundEggCount = associatedEggCount;
 			}
 		}
 		else if (IsPanelSolved(entityID, true))
@@ -504,9 +512,8 @@ void APWatchdog::CheckSolvedPanels() {
 		}
 	}
 
-	if (newEggCheck && FirstEverLocationCheckDone) {
-		if (lowestUnfoundEggCount == 999999) HudManager::get()->queueNotification("All egg checks sent!");
-	}
+	if (finalEggCheck) HudManager::get()->queueNotification("All egg checks sent!");
+	else if (finalUnexcludedEggCheck) HudManager::get()->queueNotification("More egg checks exist, but will only award filler.");
 
 	std::list<int64_t> solvedLocations = {};
 	for (int solvedEntityID : solvedEntityIDs) {
@@ -3506,6 +3513,11 @@ int APWatchdog::HandleEasterEgg()
 			if (firstEggShouldSendMessage) {
 				HudManager::get()->queueNotification("Found an Easter Egg! There are " + std::to_string(eggTotal) + " total eggs to find.");
 				HudManager::get()->queueNotification("Every " + std::to_string(EggHuntStep) + " Easter Eggs, a check will be sent.");
+
+				if (HighestRealEggCheck != -1 && HighestRealEggCheck != HighestEggCheck) {
+					HudManager::get()->queueNotification("Collecting Easter Eggs beyond " + std::to_string(HighestRealEggCheck) + " will only award filler.");
+				}
+
 				HudManager::get()->queueNotification("Good Luck!", RgbColor(110 / 255.0, 99 / 255.0, 192 / 255.0));
 			}
 			firstEggShouldSendMessage = false;

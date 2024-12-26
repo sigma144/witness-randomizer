@@ -27,6 +27,7 @@ public:
 	int PuzzleRandomization;
 	std::set<std::string> ElevatorsComeToYou;
 	std::set<int> DisabledEntities;
+	std::set<int> ExcludedEntities;
 	std::set<int> huntEntites;
 	std::map<int, std::set<int>> itemIdToDoorSet;
 	std::map<int, int> doorToItemId;
@@ -192,6 +193,8 @@ private:
 	bool firstEggResponse = false;
 	bool firstEggShouldSendMessage = false;
 	int EggHuntStep = 0;
+	int HighestRealEggCheck = 0; // Not excluded
+	int HighestEggCheck = 0;
 
 	std::map<int, int> doorToItemId;
 
