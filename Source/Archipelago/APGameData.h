@@ -2479,14 +2479,14 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Outside Tutorial
 	{ 0xEE001, {{-126.076, -171.657, 15.6509}, 11.0f}}, // Gate Wall, NewSoupVi
 	{ 0xEE002, {{-175.897, -99.033, 7.06974}, 2.0f}}, // Path to Outpost ish, NewSoupVi
-	{ 0xEE003, {{-143, -88, 11}, 1.0f}}, // Big tree, NewSoupVi*
-	{ 0xEE004, {{-153.6, -38.1, 5.64}, 1.0f}}, // Tractor, NewSoupVi*
+	{ 0xEE003, {{-143, -88, 11}, 2.0f}}, // Big tree, NewSoupVi
+	{ 0xEE004, {{-153.172, -35.9619, 6.364}, 12.0f}}, // Tractor, NewSoupVi
 
 	// Outpost Path
 	{ 0xEE005, {{-104.693, -127.221, 3.721}, 1.2f}}, // Tree near Outpost Entry, Exempt-Medic
 
 	// Outpost
-	{ 0xEE006, {{-105.6, -122.1, 8.2}, 1.0f}}, // Outpost Wall*
+	{ 0xEE006, {{-105.663, -122.064, 7.53495}, 6.0f}}, // Outpost Wall
 
 	// Orchard 1
 	{ 0xEE007, {{-94.907, 28.318, 16.696}, 2.0f}}, // Near Flower Cross, NewSoupVi
@@ -2499,11 +2499,11 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE00A, {{-213.318, -34.87, 1.829}, 1.0f}}, // Sand Castle, NewSoupVi
 
 	// Symmetry Island
-	{ 0xEE00B, {{-210.675, 29.501, 3.938}, 1.0f}}, // In red branch*
+	{ 0xEE00B, {{-210.822, 29.588, 3.48303}, 7.0f}}, // In red branch
 	{ 0xEE00C, {{-211.458, 10.609, 0.579}, 3.0f}}, // Env Set behind panel, NewSoupVi
 
 	// Symmetry Island Upper
-	{ 0xEE00D, {{-203.65, 39.952, 16.664}, 3.0f}}, // Behind Laser, NewSoupVi
+	{ 0xEE00D, {{-203.65, 39.952, 16.664}, 5.0f}}, // Behind Laser, NewSoupVi
 
 	// Desert
 	{ 0xEE00E, {{-181.662, 102.185, 3.249}, 9.0f}}, // Symmetry Island Outlines Tree Stump, NewSoupVi
@@ -2539,7 +2539,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 
 	// Quarry Boathouse
 	{ 0xEE020, {{-17.823, 192.332, 2.02101}, 3.0f}}, // Quarry Boathouse Outside Beam, Scipio
-	{ 0xEE021, {{-7.849, 191.634, 0.420}, 1.0f}}, // Quarry Boathouse Lower Path, NewSoupVi*
+	{ 0xEE021, {{-7.836, 191.667, 0.343001}, 0.25f}}, // Quarry Boathouse Lower Path, NewSoupVi*
 
 	// Stoneworks
 	{ 0xEE022, {{-74.42, 138.859, 4.972}, 0.2f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic
@@ -2551,10 +2551,10 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE025, {{19.3622, 183.396, 8.91213}, 0.38f}}, // Shadows under platform, NewSoupVi
 
 	// Shadows Ledge
-	{ 0xEE026, {{-23, 114.5, 8}, 1.0f}}, // Left side, NewSoupVi*
+	{ 0xEE026, {{-22.7661, 114.579, 6.95508}, 3.0f}}, // Left side, NewSoupVi
 
 	// Shadows Laser Room
-	{ 0xEE027, {{-7, 91.1, 15.4}, 1.0f}}, // Behind Laser Right, Rever*
+	{ 0xEE027, {{-7.16899, 91.093, 15.2759}, 2.0f}}, // Behind Laser Right, Rever
 
 	// Keep
 	{ 0XEE028, {{68.215, 130.336, 24.499}, 2.0f}}, // Keep Center East Tower, NewSoupVi
@@ -2602,8 +2602,8 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE03E, {{0.538, 12.449, 10.911}, 1.0f}}, // Under Bridge to Quarry, Rever
 
 	// Town RGB House
-	{ 0xEE03F, {{-18.604, 2.336, 10.673}, 1.0f}}, // Shelf, NewSoupVi
-	{ 0xEE040, {{-20.304, 3.196, 7.347}, 1.0f}}, // Sound Room Broken Speaker, NewSoupVi*
+	{ 0xEE03F, {{-18.594, 2.271, 10.3709}, 1.0f}}, // Shelf, NewSoupVi
+	{ 0xEE040, {{-20.304, 3.196, 7.347}, 1.0f}}, // Sound Room Broken Speaker, NewSoupVi
 
 	// Town Wooden Rooftop
 	{ 0xEE041, {{-51.692, -19.692, 12.086}, 0.66f}}, // Town Wooden Rooftop, NewSoupVi
@@ -2626,7 +2626,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE04A, {{-20.579, -154.348, 8.987}, 2.0f}}, // Peninsula Chalice, NewSoupVi
 
 	// Jungle
-	{ 0xEE04B, {{60.2, -75.84, 13.16}, 1.0f}}, // Crevace near Waves, NewSoupVi*
+	{ 0xEE04B, {{60.169, -75.4972, 12.9949}, 0.150001f}}, // Crevace near Waves, NewSoupVi
 	{ 0xEE04C, {{100.254, -70.377, 24.5151}, 0.96f} }, // Bamboo Maze Outskirt, NewSoupVi
 
 	// Jungle Under Popup Wall
@@ -2638,10 +2638,10 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Outside Bunker
 	{ 0xEE04F, {{160.996, -102.079, 7.226}, 0.25f}}, // Entry under Stairs, Scipio
 	{ 0xEE050, {{167.459, -88.8181, 21.448}, 1.0f}}, // Outside Green Room Crevace, Scipio
-	{ 0xEE051, {{159.6, -89.673, 25.397}, 1.0f}}, // Near Elevator Crevace*
+	{ 0xEE051, {{159.529, -89.596, 25.0892}, 2.0f}}, // Near Elevator Crevace
 
 	// Bunker Glass Room
-	{ 0xEE052, {{172.7, -105.6, 8.8}, 1.0f}}, // Back Left Behind Panel*
+	{ 0xEE052, {{173.028, -105.652, 8.36382}, 2.0f}}, // Back Left Behind Panel
 
 	// Bunker Under Elevator
 	{ 0xEE053, {{158.945, -87.1297, 7.237}, 0.25f}}, // Bottom Floor behind Elevator, Exempt-Medic // Better color?
@@ -2654,7 +2654,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE056, {{208.499, -11.762, 0.521001}, 10.0f} }, // Apparent River EP Start Point, NewSoupVi
 
 	// Swamp Entry Area
-	{ 0xEE057, {{123.15, 32.439, 2.606}, 1.0f}}, // Wedged between Panel Sets, NewSoupVi*
+	{ 0xEE057, {{123.245, 32.6569, 2.42201}, 2.0f}}, // Wedged between Panel Sets, NewSoupVi
 
 	// Swamp Platform
 	{ 0xEE058, {{134.71, 55.0499, 0.944997}, 0.75f}}, // Under Stairs to Platform, Scipio
@@ -2672,7 +2672,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE05C, {{134.795, 144.177, 0.367002}, 0.6f}}, // Beach Right Path, NewSoupVi
 
 	// Treehouse Yellow Bridge
-	{ 0xEE05D, {{155.351, 140.291, 12.802}, 1.0f}}, // Ontop of door, NewSoupVi*
+	{ 0xEE05D, {{155.323, 140.275, 12.5139}, 2.0f}}, // Ontop of door, NewSoupVi
 
 	// Treehouse Junction
 	{ 0xEE05E, {{128.683, 147.598, 12.2289}, 0.8f}}, // Junction Weird Tree, NewSoupVi
@@ -2691,13 +2691,13 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE063, {{113.961, 120.549, 18.8394}, 2.0f}}, // Shoulder of Burnt House Tree Guy, NewSoupVi
 
 	// Treehouse Drawbridge Platform
-	{ 0xEE064, {{102.609, 149.321, 16.497}, 1.0f}}, // Under Bridge End, NewSoupVi*
+	{ 0xEE064, {{102.569, 149.464, 16.2631}, 1.0f}}, // Under Bridge End, NewSoupVi
 
 	// Mountainside
 	{ 0xEE065, {{160.928, -19.2877, 38.1159}, 3.0f}}, // Giant statue elbow, NewSoupVi
 	{ 0xEE066, {{165.278, -53.6661, 47.217}, 0.56f}}, // Before Mountain Vault, NewSoupVi
 	{ 0xEE067, {{127.641, -52.9993, 35.1405}, 1.0f}}, // Mountainside Waterfall, NewSoupVi
-	{ 0xEE068, {{113.174, -47.799, 28.677}, 1.0f}}, // Mountainside Lower Waterfall, NewSoupVi*
+	{ 0xEE068, {{113.174, -47.6361, 28.0573}, 4.0f}}, // Mountainside Lower Waterfall, NewSoupVi
 
 	// Mountaintop
 	{ 0xEE069, {{148.683, -44.315, 67.19}, 1.0f} }, // Lip, Scipio
@@ -2706,7 +2706,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE06A, {{155.68, -53.735, 49.9621}, 0.83f}}, // Trash Pile, NewSoupVi
 
 	// Inside Mountain Back Section
-	{ 0xEE06B, {{161.236, -63.357, 48.390}, 1.0f}}, // Back Section Trash Can, NewSoupVi*
+	{ 0xEE06B, {{161.232, -63.2361, 48.2401}, 0.55f}}, // Back Section Trash Can, NewSoupVi
 
 	// Mountain Floor 2
 	{ 0xEE06C, {{138.55, -35.988, 36.668}, 0.73f}}, // Model Windmills inside Treehouse house, Rever
@@ -2715,10 +2715,10 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Caves
 	{ 0xEE06E, {{140.332, -43.302, 3.53}, 1.0f}}, // Caves Entry Door, NewSoupVi
 	{ 0xEE06F, {{106.46, -56.941, -3.13199}, 0.1f}}, // Caves Near Wooden Beams, NewSoupVi
-	{ 0xEE070, {{83.201, -54.547, 0.765}, 1.0f}}, // Staircase behind plank, NewSoupVi*
+	{ 0xEE070, {{83.19, -54.49, 0.734}, 0.7f}}, // Staircase behind plank, NewSoupVi
 
 	// Caves Path to Challenge
-	{ 0xEE071, {{83.482, -37.577, -0.225}, 1.0f}}, // Path to Challenge, NewSoupVi*
+	{ 0xEE071, {{83.43, -37.601, -0.446997}, 0.75f}}, // Path to Challenge, NewSoupVi
 
 	// Challenge
 	{ 0xEE072, {{12.462, -27.74, -5.008}, 0.1f}}, // Weird path near reallocating, Exempt-Medic
@@ -2729,8 +2729,8 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE075, {{-64.948, -4.648, 1.964}, 0.44f}}, // Walkway Tiles, hatkirby
 
 	// Boat
-	{ 0xEEE76, {{-172.062, 32.606, 0.242}, 1.0f}}, // Glass Factory Optional Path, NewSoupVi*
-	{ 0xEEE77, {{164.763, 181.379, 1.268}, 1.0f}}, // Treehouse Optional Path, NewSoupVi*
+	{ 0xEEE76, {{-172.062, 32.559, 0.0269997}, 3.0f}}, // Glass Factory Optional Path, NewSoupVi
+	{ 0xEEE77, {{164.824, 181.399, 0.653992}, 7.0f}}, // Treehouse Optional Path, NewSoupVi
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);
