@@ -2532,7 +2532,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 
 	// Quarry
 	{ 0xEE01B, {{-60.823, 176.821, 1.005}, 3.0f}}, // Near Railroad Crevace, NewSoupVi
-	{ 0xEE01C, {{-53.625, 197.965, 3.0f}, 1.0f}}, // Quarry Railroad under broken floor, Exempt-Medic
+	{ 0xEE01C, {{-53.625, 197.965, 1.84f}, 3.0f}}, // Quarry Railroad under broken floor, Exempt-Medic*
 	{ 0xEE01D, {{-73.614, 114.297, 3.16901}, 8.0f}}, // Outside Stoneworks on Brick Pile, Scipio
 	{ 0xEE01E, {{-69.342, 130.798, 2.88501}, 0.4f}}, // Quarry Stoneworks Furnace, Scipio
 	{ 0xEE01F, {{-67.417, 131.506, 4.081}, 9.0f}}, // Quarry Stoneworks Furnace Vent, NewSoupVi
