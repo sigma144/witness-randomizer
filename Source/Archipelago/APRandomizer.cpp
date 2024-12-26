@@ -114,7 +114,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			UnlockableWarps = {};
 		}
 
-		if (slotData.contains("easter_egg_hunt")) EggHuntStep = slotData["easter_egg_hunt"];
+		if (slotData.contains("easter_egg_hunt")) EggHuntDifficulty = slotData["easter_egg_hunt"];
 
 		if (slotData.contains("panel_hunt_required_absolute")) RequiredHuntEntities = slotData["panel_hunt_required_absolute"];
 		PanelHuntPostgame = slotData.contains("panel_hunt_postgame") ? (int) slotData["panel_hunt_postgame"] : 0;
@@ -854,6 +854,10 @@ void APRandomizer::RestoreOriginals() {
 }
 
 ApSettings APRandomizer::GetAPSettings() {
+	int EggHuntStep = 0;
+	if (EggHuntDifficulty == 1 || EggHuntDifficulty == 2) EggHuntStep = 3;
+	if (EggHuntDifficulty >= 3) EggHuntStep = 4;
+
 	ApSettings apSettings = ApSettings();
 	apSettings.panelIdToLocationId = panelIdToLocationId;
 	apSettings.lastPanel = FinalPanel;

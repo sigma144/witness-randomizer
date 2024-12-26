@@ -33,7 +33,7 @@ class APRandomizer {
 		int PanelHuntPostgame = 0;
 		bool DeathLink;
 		int DeathLinkAmnesty = 0;
-		int EggHuntStep = 0;
+		int EggHuntDifficulty = 0;
 		std::set<std::string> ElevatorsComeToYou = {};
 
 		int mostRecentItemId = -1;
