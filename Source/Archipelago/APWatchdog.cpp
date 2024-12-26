@@ -1541,6 +1541,55 @@ void APWatchdog::HandleKeyTaps() {
 				TryWarp();
 			}
 		}
+		else if (interactionState == InteractionState::Walking) {
+			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE) && !easterEggToSolveStatus.empty()) {
+				int eggsNearby = 0;
+				float lowestDist = 1000000000;
+				bool nearbyButAbove = false;
+				bool nearbyButBelow = false;
+				Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
+				for (auto [egg, solveStatus] : easterEggToSolveStatus) {
+					if (solveStatus) {
+						continue;
+					}
+					if (egg == 0xEE0FF) continue;
+
+					Vector3 eggPosition = easterEggs[egg].first;
+					float distance = (playerPosition - eggPosition).length();
+					float verticalDistance = playerPosition.Z - eggPosition.Z;
+					bool tooLow = verticalDistance > 3.5;
+					bool tooHigh = verticalDistance < -1;
+					bool withinVerticalRange = !tooLow && !tooHigh;
+					if (distance < 20 && withinVerticalRange) {
+						eggsNearby++;
+					}
+					if (distance < lowestDist) {
+						lowestDist = distance;
+						nearbyButAbove = distance < 20 && tooHigh;
+						nearbyButBelow = distance < 20 && tooLow;
+					}
+				}
+
+				if (eggsNearby >= 2) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There are multiple Easter Eggs nearby.");
+				}
+				else if (eggsNearby == 1) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby.");
+				}
+				else if (nearbyButAbove) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit above you.");
+				}
+				else if (nearbyButBelow) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit below you.");
+				}
+				else if (lowestDist < 40) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("The nearest Easter Egg is a bit further away.");
+				}
+				else {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There are no Easter Eggs nearby.");
+				}
+			}
+		}
 		else {
 			switch (tappedButton) {
 #if CHEAT_KEYS_ENABLED
@@ -2909,18 +2958,18 @@ void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
 void APWatchdog::SetStatusMessages() {
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
+
+	std::string walkStatus = "";
+
 	if (interactionState == InteractionState::Walking) {
 		if (eee && isCompleted) {
 			HudManager::get()->clearWalkStatusMessage();
 		}
 		else {
 			if (bonkTime > 0.0f) {
-				if (bonkTime <= 0) {
-					HudManager::get()->clearWalkStatusMessage();
-				}
-				else {
+				if (bonkTime > 0) {
 					int bonkTimeInt = (int)std::ceil(bonkTime);
-					HudManager::get()->setWalkStatusMessage("Knocked out for " + std::to_string(bonkTimeInt) + " seconds.");
+					walkStatus = "Knocked out for " + std::to_string(bonkTimeInt) + " seconds.";
 				}
 			}
 
@@ -2928,16 +2977,16 @@ void APWatchdog::SetStatusMessages() {
 				int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
 				if (speedTime > 0) {
-					HudManager::get()->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+					walkStatus = "Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.";
 				}
 				else if (speedTime < 0) {
-					HudManager::get()->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
-				}
-				else {
-					HudManager::get()->clearWalkStatusMessage();
+					walkStatus = "Slowness active for " + std::to_string(speedTimeInt) + " seconds.";
 				}
 			}
 		}
+
+		if (walkStatus == "") HudManager::get()->clearWalkStatusMessage();
+		else HudManager::get()->setWalkStatusMessage(walkStatus);
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
 		// Always show the number of puzzle skips available while in focus mode.

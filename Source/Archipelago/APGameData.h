@@ -2479,7 +2479,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	// Outside Tutorial
 	{ 0xEE001, {{-126.076, -171.657, 15.6509}, 11.0f}}, // Gate Wall, NewSoupVi
 	{ 0xEE002, {{-175.897, -99.033, 7.06974}, 2.0f}}, // Path to Outpost ish, NewSoupVi
-	{ 0xEE003, {{-143, -88, 11}, 2.0f}}, // Big tree, NewSoupVi
+	{ 0xEE003, {{-143.481, -88.6127, 11.015}, 2.0f}}, // Big tree, NewSoupVi
 	{ 0xEE004, {{-153.172, -35.9619, 6.364}, 12.0f}}, // Tractor, NewSoupVi
 
 	// Outpost Path
@@ -2650,7 +2650,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE054, {{156.901, -87.1712, 21.391}, 0.09f}}, // Green Room behind Elevator, Exempt-Medic // Better color?
 
 	// Outside Swamp
-	{ 0xEE055, {{92.508, 9.21898, 18.746}, 6.0f}}, // Painter, NewSoupVi
+	{ 0xEE055, {{92.508, 9.21898, 18.746}, 9.0f}}, // Painter, NewSoupVi
 	{ 0xEE056, {{208.499, -11.762, 0.521001}, 10.0f} }, // Apparent River EP Start Point, NewSoupVi
 
 	// Swamp Entry Area
@@ -2729,7 +2729,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE075, {{-64.948, -4.648, 1.964}, 0.44f}}, // Walkway Tiles, hatkirby
 
 	// Boat
-	{ 0xEEE76, {{-172.062, 32.559, 0.0269997}, 3.0f}}, // Glass Factory Optional Path, NewSoupVi
+	{ 0xEEE76, {{-170.391, 32.1132, 0.0269997}, 4.0f}}, // Glass Factory Optional Path, NewSoupVi
 	{ 0xEEE77, {{164.824, 181.399, 0.653992}, 7.0f}}, // Treehouse Optional Path, NewSoupVi
 };
 
