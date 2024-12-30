@@ -2589,7 +2589,7 @@ inline std::map<int, std::pair<Vector3, float>> easterEggs = {
 	{ 0xEE037, {{18.01, -35.491, 18.1371}, 0.96f}}, // Inside Tree, NewSoupVi
 
 	// Monastery North Shutters
-	{ 0xEE038, {{19.0879, -27.2952, 17.2457}, 1.0f}}, // Monastery North Shutters, Exempt-Medic
+	{ 0xEE038, {{19.0049, -27.2742, 17.1458}, 1.0f}}, // Monastery North Shutters, Exempt-Medic
 
 	// Monastery Garden
 	{ 0xEE039, {{37.982, -45.8769, 15.3241}, 0.54f}}, // Garden, NewSoupVi
