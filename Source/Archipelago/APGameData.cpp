@@ -59,12 +59,10 @@ void populateWarpLookup() {
 	}
 }
 
-std::vector<WitnessDrawnSphere> makeEgg(Vector3 originalPosition, float scale, float brightness) {
+std::vector<WitnessDrawnSphere> makeEgg(Vector3 originalPosition, float scale, RgbColor color) {
 	scale *= 1.3f;
 
 	std::vector<WitnessDrawnSphere> spheresToDraw = {};
-
-	RgbColor color = RgbColor(brightness, brightness, brightness, 1.0f);
 
 	spheresToDraw.push_back(WitnessDrawnSphere({ originalPosition, 0.04f * scale, color, true }));
 	spheresToDraw.push_back(WitnessDrawnSphere({ originalPosition + Vector3(0, 0, 0.010f * scale), 0.036f * scale, color, true }));
