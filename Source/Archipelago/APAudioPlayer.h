@@ -35,6 +35,12 @@ enum APJingle
 	DogFiller,
 	DogTrap,
 
+	EasterFiller,
+	EasterProgression,
+	EasterProgUseful,
+	EasterTrap,
+	EasterUseful,
+
 	UnderstatedProgUseful,
 	UnderstatedFiller,
 	UnderstatedProgression,
@@ -47,7 +53,8 @@ enum APJingle
 	Victory,
 	UnderstatedVictory,
 	FirstJingle,
-	DeathLink,
+	Bonk,
+	Plop,
 };
 
 enum APJingleBehavior
@@ -135,6 +142,7 @@ private:
 	std::chrono::system_clock::time_point lastEPJinglePlayedTime;
 	APJingle lastPanelJinglePlayed;
 	APJingle lastEPJinglePlayed;
+	int lastPlopIndex = -1;
 	int panelChain;
 	int epChain;
 	int lastEntityHuntIndex = -1;
@@ -186,10 +194,17 @@ private:
 		{DogTrap, {IDR_WAVE34}},
 		{DogUseful, {IDR_WAVE37}},
 
+		{EasterFiller, {IDR_WAVE87}},
+		{EasterProgression, {IDR_WAVE88}},
+		{EasterProgUseful, {IDR_WAVE89}},
+		{EasterTrap, {IDR_WAVE90}},
+		{EasterUseful, {IDR_WAVE91}},
+
 		{UnderstatedVictory, {IDR_WAVE69}},
 		{Victory, {IDR_WAVE30}},
 		{FirstJingle, {IDR_WAVE50}},
-		{DeathLink, {IDR_WAVE51}}
+		{Bonk, {IDR_WAVE51}},
+		{Plop, {IDR_WAVE82, IDR_WAVE83, IDR_WAVE84, IDR_WAVE85, IDR_WAVE86}},
 	};
 
 	std::map<APJingle, int> jingleEpicVersions = {
@@ -211,22 +226,29 @@ private:
 		{IncomingTrap, IDR_WAVE26},
 		{IncomingUseful, IDR_WAVE27},
 
-		{UnderstatedProgUseful, {IDR_WAVE71}},
-		{UnderstatedFiller, {IDR_WAVE1}},
-		{UnderstatedProgression, {IDR_WAVE2}},
-		{UnderstatedTrap, {IDR_WAVE3}},
-		{UnderstatedUseful, {IDR_WAVE4}},
+		{UnderstatedProgUseful, IDR_WAVE71},
+		{UnderstatedFiller, IDR_WAVE1},
+		{UnderstatedProgression, IDR_WAVE2},
+		{UnderstatedTrap, IDR_WAVE3},
+		{UnderstatedUseful, IDR_WAVE4},
 
-		{DogProgUseful, {IDR_WAVE70}},
-		{DogFiller, {IDR_WAVE35}},
-		{DogProgression, {IDR_WAVE36}},
-		{DogTrap, {IDR_WAVE34}},
-		{DogUseful, {IDR_WAVE37}},
+		{DogProgUseful, IDR_WAVE70},
+		{DogFiller, IDR_WAVE35},
+		{DogProgression, IDR_WAVE36},
+		{DogTrap, IDR_WAVE34},
+		{DogUseful, IDR_WAVE37},
 
-		{UnderstatedVictory, {IDR_WAVE69}},
-		{Victory, {IDR_WAVE30}},
-		{FirstJingle, {IDR_WAVE50}},
-		{DeathLink, {IDR_WAVE51}},
+		{EasterFiller, IDR_WAVE87},
+		{EasterProgression, IDR_WAVE88},
+		{EasterProgUseful, IDR_WAVE89},
+		{EasterTrap, IDR_WAVE90},
+		{EasterUseful, IDR_WAVE91},
+
+		{UnderstatedVictory, IDR_WAVE69},
+		{Victory, IDR_WAVE30},
+		{FirstJingle, IDR_WAVE50},
+		{Bonk, IDR_WAVE51},
+		{Plop, IDR_WAVE82},
 	};
 
 	std::set<APJingle> epJingles = {
@@ -251,6 +273,14 @@ private:
 		DogProgUseful,
 		DogProgression,
 		DogTrap
+	};
+
+	std::set<APJingle> easterJingles = {
+		EasterFiller,
+		EasterUseful,
+		EasterProgUseful,
+		EasterTrap,
+		EasterProgression,
 	};
 
 	std::set<APJingle> understatedJingles = {

@@ -178,6 +178,20 @@ public:
 		return std::string(buffer.data());
 	}
 
+	static std::string entityStringRepresentation(int entityID) {
+		std::stringstream stream;
+		stream << std::hex << entityID;
+		std::string entity_str(stream.str());
+
+		while (entity_str.size() < 5) {
+			entity_str = "0" + entity_str;
+		}
+
+		entity_str = "0x" + entity_str;
+
+		return entity_str;
+	}
+
 private:
 	static std::wstring GenerateUUID() {
 		GUID guid;

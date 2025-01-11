@@ -21,6 +21,10 @@ struct RgbColor {
 	}
 
 	static RgbColor lerpHSV(RgbColor a, RgbColor b, float t);
+
+	friend RgbColor operator*(const RgbColor& lhs, const float& rhs) {
+		return RgbColor(lhs.R * rhs, lhs.G * rhs, lhs.B * rhs, lhs.A);
+	}
 };
 
 struct Vector2 {

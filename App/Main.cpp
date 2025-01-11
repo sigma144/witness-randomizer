@@ -239,10 +239,6 @@ void Main::randomize() {
 
 	clientWindow->logLine("Last seed: " + std::to_string(lastSeed));
 
-	if (lastSeed == 0) {
-		memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 8, { 0.0f });
-	}
-
 	clientWindow->logLine("Store AP credentials to in-game data.");
 	Special::writeStringToPanels(apAddress, addressPanels);
 	Special::writeStringToPanels(apSlotName, slotNamePanels);

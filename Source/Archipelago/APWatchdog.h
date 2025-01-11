@@ -17,10 +17,39 @@ class DrawIngameManager;
 class PanelLocker;
 class Color;
 
+class ApSettings {
+public:
+	std::map<int, int> panelIdToLocationId;
+	int lastPanel;
+	std::map<int, inGameHint> inGameHints;
+	std::map<int, std::set<int>> obeliskHexToEPHexes;
+	bool EPShuffle;
+	int PuzzleRandomization;
+	std::set<std::string> ElevatorsComeToYou;
+	std::set<int> DisabledEntities;
+	std::set<int> ExcludedEntities;
+	std::set<int> huntEntites;
+	std::map<int, std::set<int>> itemIdToDoorSet;
+	std::map<int, int> doorToItemId;
+	std::map<int, std::vector<int>> progressiveItems;
+	std::vector<std::string> warps;
+	int DeathLinkAmnesty;
+	int EggHuntStep;
+};
+
+class FixedClientSettings {
+public:
+	std::string CollectedPuzzlesBehavior;
+	std::string DisabledPuzzlesBehavior;
+	std::string DisabledEPsBehavior;
+	float SolveModeSpeedFactor;
+	bool SyncProgress;
+};
+
 
 class APWatchdog : public Watchdog {
 public:
-	APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::string disEP, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync);
+	APWatchdog(APClient* client, PanelLocker* panelLocker, APState* state, ApSettings* apSettings, FixedClientSettings* fixedClientSettings);
 
 	int DEATHLINK_DURATION = 15;
 
@@ -37,7 +66,7 @@ public:
 	void TriggerPowerSurge();
 	void ResetPowerSurge();
 
-	void TriggerBonk();
+	float TriggerBonk(bool fromDeathLink);
 	void ResetDeathLink();
 
 	void StartRebindingKey(enum class CustomKey key);
@@ -78,6 +107,7 @@ public:
 	void HandleAudioLogResponse(std::string logIDstr, nlohmann::json value);
 	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value);
 	void HandleSolvedPanelsResponse(nlohmann::json value);
+	void HandleEasterEggResponse(std::string key, nlohmann::json value);
 	void HandleHuntEntityResponse(nlohmann::json value);
 	void HandleOpenedDoorsResponse(nlohmann::json value);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
@@ -159,6 +189,13 @@ private:
 	std::map<int, Vector3> huntEntityPositions;
 	std::map<int, float> huntEntityKeepActive;
 
+	std::map<int, bool> easterEggToSolveStatus;
+	bool firstEggResponse = false;
+	bool firstEggShouldSendMessage = false;
+	int EggHuntStep = 0;
+	int HighestRealEggCheck = 0; // Not excluded
+	int HighestEggCheck = 0;
+
 	std::map<int, int> doorToItemId;
 
 	bool FirstEverLocationCheckDone = false;
@@ -168,9 +205,8 @@ private:
 	bool firstJinglePlayed = false;
 
 	bool hasPowerSurge = false;
-	bool isKnockedOut = false;
+
 	std::chrono::system_clock::time_point powerSurgeStartTime;
-	std::chrono::system_clock::time_point knockOutStartTime;
 
 	std::set<double> deathLinkTimestamps;
 
@@ -189,6 +225,8 @@ private:
 	int storageCheckCounter = 6;
 
 	float speedTime = 0.0f;
+	float bonkTime = 0.0f;
+	int amountOfBonksInCurrentBonk = 0;
 	float solveModeSpeedFactor = 0.0f;
 
 	bool infiniteChallenge = false;
@@ -224,15 +262,25 @@ private:
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
-	void HandleDeathLink();
+	void HandleKnockout(float deltaSeconds);
 	bool IsEncumbered();
 	void HandleEncumberment(float deltaSeconds, bool doFunctions);
 	void HandleWarp(float deltaSeconds);
 
 	void LookingAtLockedEntity();
 
-	void PettingTheDog(float deltaSeconds);
+	void UpdateCursorVisual(int cursorVisual);
+
+	enum cursorVisual : int {
+		normal = 0,
+		recolored = 1,
+		big = 2,
+	};
+
+	int PettingTheDog(float deltaSeconds);
 	bool LookingAtTheDog() const;
+	int LookingAtEasterEgg();
+	int HandleEasterEgg();
 
 	// Updates puzzle skip logic.
 	void UpdatePuzzleSkip(float deltaSeconds);
@@ -309,6 +357,7 @@ private:
 	std::set<int> solvedPanels;
 	std::set<int> openedDoors;
 	std::set<int> solvedHuntEntitiesDataStorage;
+	std::set<int> solvedEasterEggsDataStorage;
 	std::map<std::string, bool> lastDeadChecks;
 
 	std::map<std::string, int> EPIDsToEPs;
@@ -343,6 +392,7 @@ private:
 	std::map<int, int> obeliskHexToAmountOfEPs = {};
 
 	Vector3 lastMouseDirection;
+	bool letGoOfLeftClickSinceEnteringFocusMode = false;
 	float dogPettingDuration = 0.f;
 	float dogBarkDuration = 0.f;
 	bool sentDog = false;

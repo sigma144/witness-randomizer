@@ -47,6 +47,11 @@ inline std::map<int, std::vector<std::string>> canonicalAudioFileNames = {
 	{ IDR_WAVE36, { "Dog Progression.wav", }},
 	{ IDR_WAVE37, { "Dog Useful.wav", }},
 	{ IDR_WAVE70, { "Dog ProgUseful.wav", }},
+	{ IDR_WAVE87, { "Easter Filler.wav", }},
+	{ IDR_WAVE88, { "Easter Progression.wav", }},
+	{ IDR_WAVE89, { "Easter ProgUseful.wav", }},
+	{ IDR_WAVE90, { "Easter Trap.wav", }},
+	{ IDR_WAVE91, { "Easter Useful.wav", }},
 	{ IDR_WAVE38, { "Pillars Filler Bmaj.wav", "Pillars Filler.wav", }},
 	{ IDR_WAVE39, { "Pillars Filler EbMin.wav", "Pillars Filler.wav", }},
 	{ IDR_WAVE40, { "Pillars Filler Emaj.wav", "Pillars Filler.wav", }},
@@ -89,6 +94,13 @@ inline std::map<int, std::vector<std::string>> canonicalAudioFileNames = {
 	{ IDR_WAVE79, { "Panel ProgUseful 3.wav", "Panel ProgUseful 2.wav", "Panel ProgUseful 1.wav", "Panel Useful.wav", }},
 	{ IDR_WAVE80, { "Panel ProgUseful 4.wav", "Panel ProgUseful 3.wav", "Panel ProgUseful 2.wav", "Panel ProgUseful 1.wav", "Panel Useful.wav", }},
 	{ IDR_WAVE81, { "Panel ProgUseful 5.wav", "Panel ProgUseful 4.wav", "Panel ProgUseful 3.wav", "Panel ProgUseful 2.wav", "Panel ProgUseful 1.wav", "Panel Useful.wav", }},
+
+	{ IDR_WAVE82, { "Plop 1.wav", "Plop.wav"}},
+	{ IDR_WAVE83, { "Plop 2.wav", "Plop.wav"}},
+	{ IDR_WAVE84, { "Plop 3.wav", "Plop.wav"}},
+	{ IDR_WAVE85, { "Plop 4.wav", "Plop.wav"}},
+	{ IDR_WAVE86, { "Plop 5.wav", "Plop.wav"}},
+
 
 	{ -2, {"Challenge.wav"}},
 };

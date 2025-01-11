@@ -29,49 +29,71 @@
 #define CHEAT_KEYS_ENABLED 0
 #define SKIP_HOLD_DURATION 1.f
 
-APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPanel, PanelLocker* p, std::map<int, inGameHint> a, std::map<int, std::set<int>> o, bool ep, int puzzle_rando, APState* s, float smsf, std::set<std::string> elev, std::string col, std::string dis, std::string disEP, std::set<int> disP, std::set<int> hunt, std::map<int, std::set<int>> iTD, std::map<int, std::vector<int>> pI, int dlA, std::map<int, int> dToI, std::vector<std::string> warps, bool sync) : Watchdog(0.033f) {
+APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* state, ApSettings* apSettings, FixedClientSettings* fixedClientSettings) : Watchdog(0.033f) {
 	populateWarpLookup();
 	
 	generator = std::make_shared<Generate>();
 	ap = client;
-	panelIdToLocationId = mapping;
+	panelIdToLocationId = apSettings->panelIdToLocationId;
 
 	for (auto [key, value] : panelIdToLocationId) {
 		panelIdToLocationId_READ_ONLY[key] = value;
 		locationIdToPanelId_READ_ONLY[value] = key;
 	}
 
-	DeathLinkAmnesty = dlA;
-	finalPanel = lastPanel;
-	panelLocker = p;
-	inGameHints = a;
-	state = s;
-	EPShuffle = ep;
-	obeliskHexToEPHexes = o;
-	solveModeSpeedFactor = smsf;
-	CollectText = col;
-	Collect = col;
-	DisabledPuzzlesBehavior = dis;
-	DisabledEPsBehavior = disEP;
-	DisabledEntities = disP;
-	ElevatorsComeToYou = elev;
-	doorToItemId = dToI;
-	progressiveItems = pI;
-	itemIdToDoorSet = iTD;
-	SyncProgress = sync;
+	DeathLinkAmnesty = apSettings->DeathLinkAmnesty;
+	finalPanel = apSettings->lastPanel;
+	this->panelLocker = panelLocker;
+	inGameHints = apSettings->inGameHints;
+	this->state = state;
+	EPShuffle = apSettings->EPShuffle;
+	obeliskHexToEPHexes = apSettings->obeliskHexToEPHexes;
+	solveModeSpeedFactor = fixedClientSettings->SolveModeSpeedFactor;
+	CollectText = fixedClientSettings->CollectedPuzzlesBehavior;
+	Collect = fixedClientSettings->CollectedPuzzlesBehavior;
+	DisabledPuzzlesBehavior = fixedClientSettings->DisabledPuzzlesBehavior;
+	DisabledEPsBehavior = fixedClientSettings->DisabledEPsBehavior;
+	DisabledEntities = apSettings->DisabledEntities;
+	ElevatorsComeToYou = apSettings->ElevatorsComeToYou;
+	doorToItemId = apSettings->doorToItemId;
+	progressiveItems = apSettings->progressiveItems;
+	itemIdToDoorSet = apSettings->itemIdToDoorSet;
+	SyncProgress = fixedClientSettings->SyncProgress;
+	EggHuntStep = apSettings->EggHuntStep;
 	
-	for (int huntEntity : hunt) {
+	for (int huntEntity : apSettings->huntEntites) {
 		huntEntityToSolveStatus[huntEntity] = false;
 		huntEntitySphereOpacities[huntEntity] = 0.0f;
 		huntEntityPositions[huntEntity] = Vector3(0, 0, 0);
 		huntEntityKeepActive[huntEntity] = 0.0f;
 	}
 
+	bool anyEggCheckIsOn = false;
+	for (auto [entityID, locationID] : panelIdToLocationId) {
+		if (entityID >= 0xEE200 && entityID < 0xEE300) {
+			anyEggCheckIsOn = true;
+			int associatedEggCount = entityID - 0xEE200 + 1;
+			if (associatedEggCount > HighestEggCheck) {
+				HighestEggCheck = associatedEggCount;
+			}
+			if (!apSettings->ExcludedEntities.contains(entityID) && associatedEggCount > HighestRealEggCheck) {
+				HighestRealEggCheck = associatedEggCount;
+			}
+		}
+	}
+	if (anyEggCheckIsOn) {
+		for (auto [egg, irrelevant] : easterEggs) {
+			if (!DisabledEntities.contains(egg)) {
+				easterEggToSolveStatus[egg] = false;
+			}
+		}
+	}
+
 	for (auto [area_name, entities] : areaNameToEntityIDs) {
 		huntEntitiesPerArea[area_name] = {};
 
 		for (int entity : entities) {
-			if (hunt.count(entity)) {
+			if (apSettings->huntEntites.count(entity)) {
 				huntEntitiesPerArea[area_name].insert(entity);
 			}
 		}
@@ -83,7 +105,7 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		}
 	}
 
-	for (auto warpname : warps) {
+	for (auto warpname : apSettings->warps) {
 		unlockableWarps[warpname] = false;
 	};
 	
@@ -107,18 +129,28 @@ APWatchdog::APWatchdog(APClient* client, std::map<int, int> mapping, int lastPan
 		speedTime = 0;
 	}
 
+	bonkTime = ReadPanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR + 4);
+	if (bonkTime < 3.0f) { // this also avoids the original value 1.0f
+		bonkTime = 0;
+	}
+	if (bonkTime > 0) {
+		int bonkTimeInt = (int)std::ceil(bonkTime);
+		HudManager::get()->queueNotification("Still have " + std::to_string(bonkTimeInt) + "s of knockout time remaining.");
+		if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Bonk, APJingleBehavior::PlayImmediate);
+	}
+
 	for (auto [key, value] : obeliskHexToEPHexes) {
 		obeliskHexToAmountOfEPs[key] = (int)value.size();
 	}
 
-	PuzzleRandomization = puzzle_rando;
+	PuzzleRandomization = apSettings->PuzzleRandomization;
 
 	panelsThatHaveToBeSkippedForEPPurposes = {
 		0x09E86, 0x09ED8, // light controllers 2 3
 		0x033EA, 0x01BE9, 0x01CD3, 0x01D3F, // Pressure Plates
 	};
 
-	if (puzzle_rando == SIGMA_EXPERT) {
+	if (PuzzleRandomization == SIGMA_EXPERT) {
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x181F5);
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x334D8);
 		panelsThatHaveToBeSkippedForEPPurposes.insert(0x03629); // Tutorial Gate Open
@@ -153,6 +185,7 @@ void APWatchdog::action() {
 	HandleEncumberment(frameDuration, halfSecondCountdown <= 0);
 	HandleWarp(frameDuration);
 	HandleMovementSpeed(frameDuration);
+	HandleKnockout(frameDuration);
 	
 	HandleKeyTaps();
 
@@ -185,7 +218,6 @@ void APWatchdog::action() {
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
 		HandlePowerSurge();
-		HandleDeathLink();
 		DisableCollisions();
 
 		UpdateInfiniteChallenge();
@@ -211,7 +243,12 @@ void APWatchdog::action() {
 
 	CheckImportantCollisionCubes();
 	LookingAtLockedEntity();
-	PettingTheDog(frameDuration);
+	
+	int cursorVisual = 0;
+	cursorVisual |= PettingTheDog(frameDuration);
+	cursorVisual |= HandleEasterEgg();
+
+	UpdateCursorVisual(cursorVisual);
 
 	SetStatusMessages();
 	HudManager::get()->update(frameDuration);
@@ -359,7 +396,7 @@ void APWatchdog::CheckSolvedPanels() {
 				InputWatchdog* inputWatchdog = InputWatchdog::get();
 				InteractionState iState = inputWatchdog->getInteractionState();
 
-				if (isKnockedOut) {
+				if (bonkTime > 0.0f) {
 					return;
 				}
 
@@ -399,6 +436,19 @@ void APWatchdog::CheckSolvedPanels() {
 			ap->StatusUpdate(APClient::ClientStatus::GOAL);
 		}
 	}
+
+	int solvedEggs = 0;
+	for (auto [egg, status] : easterEggToSolveStatus) {
+		if (egg == 0xEE0FF) {
+			if (status) solvedEggs += 5;
+			continue;
+		}
+		if (status) solvedEggs++;
+	}
+
+	bool newEggCheck = false;
+	bool finalUnexcludedEggCheck = false;
+	bool finalEggCheck = false;
 
 	locationCheckInProgress = true;
 	for (auto [entityID, locationID] : panelIdToLocationId)
@@ -444,12 +494,26 @@ void APWatchdog::CheckSolvedPanels() {
 			}
 			continue;
 		}
+		else if (entityID > 0xEE200 && entityID < 0xEE300) {
+			int associatedEggCount = entityID - 0xEE200 + 1;  // 0-indexed
 
+			
+			if (solvedEggs >= associatedEggCount) {
+				if (associatedEggCount == HighestEggCheck) finalEggCheck = true;
+				if (associatedEggCount == HighestRealEggCheck) finalUnexcludedEggCheck = true;
+
+				solvedEntityIDs.push_back(entityID);
+				newEggCheck = true;
+			}
+		}
 		else if (IsPanelSolved(entityID, true))
 		{
 			solvedEntityIDs.push_back(entityID);
 		}
 	}
+
+	if (finalEggCheck) HudManager::get()->queueNotification("All egg checks sent!");
+	else if (finalUnexcludedEggCheck) HudManager::get()->queueNotification("More egg checks exist, but will only award filler.");
 
 	std::list<int64_t> solvedLocations = {};
 	for (int solvedEntityID : solvedEntityIDs) {
@@ -480,10 +544,11 @@ void APWatchdog::CheckSolvedPanels() {
 			if (PanelShouldPlayEpicVersion(locationIdToPanelId_READ_ONLY[solvedLocation])) {
 				return;
 			}
+
+			// Don't interrupt panel ramping chain
+			APAudioPlayer::get()->ResetRampingCooldownPanel();
 		}
-		// Don't interrupt panel ramping chain
-		APAudioPlayer::get()->ResetRampingCooldownPanel();
-		// but play panel hunt jingle instead of normal
+		// play panel hunt jingle instead of normal
 		PlayEntityHuntJingle(completedHuntEntities.front());
 	}
 }
@@ -753,31 +818,46 @@ void APWatchdog::ResetPowerSurge() {
 	}
 }
 
-void APWatchdog::TriggerBonk() {
-	if (eee && isCompleted) return;
+float APWatchdog::TriggerBonk(bool fromDeathLink) {
+	if (eee && isCompleted) return 0.0f;
 
-	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::DeathLink, APJingleBehavior::PlayImmediate);
+	amountOfBonksInCurrentBonk++;
 
-	if (isKnockedOut) {
-		knockOutStartTime = std::chrono::system_clock::now();
+	float amountOfTimeToAdd = DEATHLINK_DURATION;
+	int bonksAbove2 = amountOfBonksInCurrentBonk - 2;
+	if (fromDeathLink) bonksAbove2 += 1;
+	if (bonksAbove2 == 1) amountOfTimeToAdd = DEATHLINK_DURATION * 11.f / 15.f;
+	else if (bonksAbove2 == 2) amountOfTimeToAdd = DEATHLINK_DURATION * 8.f / 15.f;
+	else if (bonksAbove2 == 3) amountOfTimeToAdd = DEATHLINK_DURATION * 5.5f / 15.f;
+	else if (bonksAbove2 > 3) {
+		amountOfTimeToAdd = (std::log(bonksAbove2) / std::log(2.f) - std::log(bonksAbove2 - 1.f) / std::log(2.f)) * (DEATHLINK_DURATION * 9.f / 15.f);
 	}
-	else {
-		isKnockedOut = true;
-		knockOutStartTime = std::chrono::system_clock::now();
-	}
+	if (amountOfTimeToAdd < 0.1) amountOfTimeToAdd = 0.1;
+
+	bonkTime += amountOfTimeToAdd;
+
+	if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Bonk, APJingleBehavior::PlayImmediate);
+
+	return amountOfTimeToAdd;
 }
 
-void APWatchdog::HandleDeathLink() {
-	if (isKnockedOut)
+void APWatchdog::HandleKnockout(float deltaSeconds) {
+	if (bonkTime > 0.0f)
 	{
-		if (DateTime::since(knockOutStartTime).count() > DEATHLINK_DURATION * 1000) ResetDeathLink();
+		bonkTime -= deltaSeconds;
+		if (bonkTime <= 0.0f) {
+			bonkTime = 0.0f;
+			ResetDeathLink();
+		}
 	}
+
+	WritePanelData<float>(0x3D9A7, VIDEO_STATUS_COLOR + 4, { bonkTime });
 }
 
 bool APWatchdog::IsEncumbered() {
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
 
-	return isKnockedOut || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping || interactionState == InteractionState::MenuAndSleeping;
+	return bonkTime > 0.0f || interactionState == InteractionState::Sleeping || interactionState == InteractionState::Warping || interactionState == InteractionState::MenuAndSleeping;
 }
 
 void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
@@ -787,7 +867,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 		memory->EnableVision(false);
 		Memory::get()->EnableMovement(false);
 		Memory::get()->EnableSolveMode(false);
-		memory->MoveVisionTowards(0.0f, isKnockedOut ? 1.0f : deltaSeconds * 2);
+		memory->MoveVisionTowards(0.0f, bonkTime > 0.0f ? 1.0f : deltaSeconds * 2);
 
 		int interactMode = InputWatchdog::get()->readInteractMode();
 		if ((interactMode == 0 || interactMode == 1) && doFunctions) {
@@ -797,7 +877,7 @@ void APWatchdog::HandleEncumberment(float deltaSeconds, bool doFunctions) {
 	else {
 		Memory::get()->EnableMovement(true);
 		Memory::get()->EnableSolveMode(true);
-		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, isKnockedOut ? deltaSeconds : deltaSeconds * 2);
+		std::pair<float, float> previousAndNewBrightness = memory->MoveVisionTowards(1.0f, bonkTime > 0.0f ? deltaSeconds : deltaSeconds * 2);
 		if (previousAndNewBrightness.second == 1.0f) memory->EnableVision(true);
 	}
 }
@@ -899,10 +979,9 @@ void APWatchdog::HandleWarp(float deltaSeconds){
 }
 
 void APWatchdog::ResetDeathLink() {
+	amountOfBonksInCurrentBonk = 0;
 	Memory::get()->EnableMovement(true);
 	Memory::get()->EnableSolveMode(true);
-
-	isKnockedOut = false;
 }
 
 void APWatchdog::StartRebindingKey(CustomKey key)
@@ -1462,6 +1541,55 @@ void APWatchdog::HandleKeyTaps() {
 				TryWarp();
 			}
 		}
+		else if (interactionState == InteractionState::Walking) {
+			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE) && !easterEggToSolveStatus.empty()) {
+				int eggsNearby = 0;
+				float lowestDist = 1000000000;
+				bool nearbyButAbove = false;
+				bool nearbyButBelow = false;
+				Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
+				for (auto [egg, solveStatus] : easterEggToSolveStatus) {
+					if (solveStatus) {
+						continue;
+					}
+					if (egg == 0xEE0FF) continue;
+
+					Vector3 eggPosition = easterEggs[egg].first;
+					float distance = (playerPosition - eggPosition).length();
+					float verticalDistance = playerPosition.Z - eggPosition.Z;
+					bool tooLow = verticalDistance > 3.5;
+					bool tooHigh = verticalDistance < -1;
+					bool withinVerticalRange = !tooLow && !tooHigh;
+					if (distance < 20 && withinVerticalRange) {
+						eggsNearby++;
+					}
+					if (distance < lowestDist) {
+						lowestDist = distance;
+						nearbyButAbove = distance < 20 && tooHigh;
+						nearbyButBelow = distance < 20 && tooLow;
+					}
+				}
+
+				if (eggsNearby >= 2) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There are multiple Easter Eggs nearby.");
+				}
+				else if (eggsNearby == 1) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby.");
+				}
+				else if (nearbyButAbove) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit above you.");
+				}
+				else if (nearbyButBelow) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit below you.");
+				}
+				else if (lowestDist < 40) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("The nearest Easter Egg is a bit further away.");
+				}
+				else {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("There are no Easter Eggs nearby.");
+				}
+			}
+		}
 		else {
 			switch (tappedButton) {
 #if CHEAT_KEYS_ENABLED
@@ -1986,15 +2114,7 @@ void APWatchdog::CheckPanels() {
 		if (solvedPanels.count(panel)) continue;
 
 		if (ReadPanelData<int>(panel, SOLVED)) {
-			std::stringstream stream;
-			stream << std::hex << panel;
-			std::string panel_str(stream.str());
-
-			while (panel_str.size() < 5) {
-				panel_str = "0" + panel_str;
-			}
-
-			panel_str = "0x" + panel_str;
+			std::string panel_str = Utilities::entityStringRepresentation(panel);
 
 			newlySolvedPanels[panel_str] = true;
 			solvedPanels.insert(panel);
@@ -2022,15 +2142,7 @@ void APWatchdog::CheckHuntEntities() {
 		if (!solveStatus) continue;
 		if (solvedHuntEntitiesDataStorage.count(huntEntity)) continue;
 		
-		std::stringstream stream;
-		stream << std::hex << huntEntity;
-		std::string panel_str(stream.str());
-
-		while (panel_str.size() < 5) {
-			panel_str = "0" + panel_str;
-		}
-
-		panel_str = "0x" + panel_str;
+		std::string panel_str = Utilities::entityStringRepresentation(huntEntity);
 
 		newlySolvedHuntEntities[panel_str] = true;
 	}
@@ -2054,15 +2166,7 @@ void APWatchdog::CheckDoors() {
 		if (openedDoors.count(door)) continue;
 
 		if (ReadPanelData<int>(door, DOOR_OPEN)) {
-			std::stringstream stream;
-			stream << std::hex << door;
-			std::string door_str(stream.str());
-
-			while (door_str.size() < 5) {
-				door_str = "0" + door_str;
-			}
-
-			door_str = "0x" + door_str;
+			std::string door_str = Utilities::entityStringRepresentation(door);
 
 			newlyOpenedDoors[door_str] = true;
 			openedDoors.insert(door);
@@ -2135,6 +2239,67 @@ void APWatchdog::HandleWarpResponse(nlohmann::json value) {
 	}
 	
 	UnlockWarps(localUnlockedWarps);
+}
+
+void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) {
+	int pNO = ap->get_player_number();
+
+	std::map<std::string, bool> eggsSolvedAccordingToDataStorage = value;
+
+	std::set<int> newRemoteEggs;
+
+	for (auto [entityString, dataStorageSolveStatus] : eggsSolvedAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
+
+		int entityID = std::stoul(entityString, nullptr, 16);
+
+		if (!easterEggToSolveStatus.count(entityID)) {
+			HudManager::get()->queueBannerMessage("Got faulty EasterEgg response for entity " + entityString);
+			continue;
+		}
+
+		solvedEasterEggsDataStorage.insert(entityID);
+
+		if (easterEggToSolveStatus[entityID]) continue;
+
+		easterEggToSolveStatus[entityID] = true;
+		newRemoteEggs.insert(entityID);
+	}
+
+	if (!firstEggResponse) {
+		if (SyncProgress) {
+			ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) });
+		}
+		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+		firstEggShouldSendMessage = newRemoteEggs.empty();
+	}
+	firstEggResponse = true;
+
+	if (newRemoteEggs.empty()) return;
+
+	int eggTotal = 0;
+	for (auto [egg, status] : easterEggToSolveStatus) {
+		if (egg == 0xEE0FF) {
+			continue;
+		}
+		if (status) eggTotal++;
+	}
+
+	bool coop = key == "WitnessEasterEggStatus" + std::to_string(pNO);
+
+	std::string message = "Easter Eggs were ";
+	if (newRemoteEggs.size() == 1) {
+		message = "An Easter Egg was ";
+	}
+	if (coop) {
+		message += "collected remotely (Coop). New total: ";
+	}
+	else {
+		message += "reported as previously collected. Current total: ";
+	}
+	message += std::to_string(eggTotal) + "/" + std::to_string(easterEggToSolveStatus.size() - 1);
+
+	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 }
 
 void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
@@ -2558,6 +2723,27 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		return;
 	}
 
+	if (id > 0xEE200 && id < 0xEE300) {
+		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
+			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+				APAudioPlayer::get()->PlayAudio(APJingle::EasterProgUseful, APJingleBehavior::Queue, false);
+			}
+			else {
+				APAudioPlayer::get()->PlayAudio(APJingle::EasterProgression, APJingleBehavior::Queue, false);
+			}
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EasterUseful, APJingleBehavior::Queue, false);
+		}
+		else if (itemFlags & APClient::ItemFlags::FLAG_TRAP) {
+			APAudioPlayer::get()->PlayAudio(APJingle::EasterTrap, APJingleBehavior::Queue, false);
+		}
+		else {
+			APAudioPlayer::get()->PlayAudio(APJingle::EasterFiller, APJingleBehavior::Queue, false);
+		}
+		return;
+	}
+
 	if (finalRoomMusicTimer != -1) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
@@ -2725,6 +2911,7 @@ void APWatchdog::QueueItemMessages() {
 		__int64 item = it->at(0);
 		__int64 flags = it->at(1);
 		__int64 realitem = it->at(2);
+		__int64 isReducedBonk = it->at(3);
 
 		if (ap->get_item_name(realitem, "The Witness") == "Unknown" || ap->get_item_name(item, "The Witness") == "Unknown") {
 			it++;
@@ -2735,6 +2922,10 @@ void APWatchdog::QueueItemMessages() {
 
 		if (realitem != item && realitem > 0) {
 			name += " (" + ap->get_item_name(realitem, "The Witness") + ")";
+		}
+
+		if (isReducedBonk != 0) {
+			name = "Reduced Bonk";
 		}
 
 		// Track the quantity of this item received in this batch.
@@ -2772,19 +2963,18 @@ void APWatchdog::QueueReceivedItem(std::vector<__int64> item) {
 void APWatchdog::SetStatusMessages() {
 	const InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState interactionState = inputWatchdog->getInteractionState();
+
+	std::string walkStatus = "";
+
 	if (interactionState == InteractionState::Walking) {
 		if (eee && isCompleted) {
 			HudManager::get()->clearWalkStatusMessage();
 		}
 		else {
-			if (isKnockedOut) {
-				int secondsRemainingDeathLink = DEATHLINK_DURATION - DateTime::since(knockOutStartTime).count() / 1000;
-
-				if (secondsRemainingDeathLink <= 0) {
-					HudManager::get()->clearWalkStatusMessage();
-				}
-				else {
-					HudManager::get()->setWalkStatusMessage("Knocked out for " + std::to_string(secondsRemainingDeathLink) + " seconds.");
+			if (bonkTime > 0.0f) {
+				if (bonkTime > 0) {
+					int bonkTimeInt = (int)std::ceil(bonkTime);
+					walkStatus = "Knocked out for " + std::to_string(bonkTimeInt) + " seconds.";
 				}
 			}
 
@@ -2792,16 +2982,16 @@ void APWatchdog::SetStatusMessages() {
 				int speedTimeInt = (int)std::ceil(std::abs(speedTime));
 
 				if (speedTime > 0) {
-					HudManager::get()->setWalkStatusMessage("Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.");
+					walkStatus = "Speed Boost active for " + std::to_string(speedTimeInt) + " seconds.";
 				}
 				else if (speedTime < 0) {
-					HudManager::get()->setWalkStatusMessage("Slowness active for " + std::to_string(speedTimeInt) + " seconds.");
-				}
-				else {
-					HudManager::get()->clearWalkStatusMessage();
+					walkStatus = "Slowness active for " + std::to_string(speedTimeInt) + " seconds.";
 				}
 			}
 		}
+
+		if (walkStatus == "") HudManager::get()->clearWalkStatusMessage();
+		else HudManager::get()->setWalkStatusMessage(walkStatus);
 	}
 	else if (interactionState == InteractionState::Focusing || interactionState == InteractionState::Solving) {
 		// Always show the number of puzzle skips available while in focus mode.
@@ -3172,15 +3362,30 @@ void APWatchdog::LookingAtLockedEntity() {
 	}
 }
 
-void APWatchdog::PettingTheDog(float deltaSeconds) {
+void APWatchdog::UpdateCursorVisual(int cursorVisual) {
+	Memory* memory = Memory::get();
+	
+	if (cursorVisual & cursorVisual::big) {
+		memory->writeCursorSize(2.0f);
+	}
+	else {
+		memory->writeCursorSize(1.0f);
+	}
+
+	if (cursorVisual & cursorVisual::recolored) {
+		memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
+	}
+	else {
+		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
+	}
+}
+
+int APWatchdog::PettingTheDog(float deltaSeconds) {
 	Memory* memory = Memory::get();
 
 	if (!LookingAtTheDog()) {
 		letGoSinceInteractModeOpen = false;
 		dogPettingDuration = 0;
-
-		memory->writeCursorSize(1.0f);
-		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
 
 		if (dogBarkDuration > 0.f) {
 			dogBarkDuration -= deltaSeconds;
@@ -3192,7 +3397,7 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 			HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 		}
 
-		return;
+		return cursorVisual::normal;
 	}
 	else if (dogBarkDuration > 0.f) {
 		dogBarkDuration -= deltaSeconds;
@@ -3200,17 +3405,11 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 			HudManager::get()->clearInformationalMessage(InfoMessageCategory::Dog);
 		}
 
-		return;
+		return cursorVisual::normal;
 	}
-
-	memory->writeCursorColor({ 1.0f, 0.5f, 1.0f });
 
 	if (dogPettingDuration >= 4.0f) {
 		HudManager::get()->showInformationalMessage(InfoMessageCategory::Dog, "Woof Woof!");
-
-		Memory::get()->writeCursorSize(1.0f);
-		memory->writeCursorColor({ 1.0f, 1.0f, 1.0f });
-
 
 		dogPettingDuration = 0.f;
 		dogBarkDuration = 4.f;
@@ -3223,16 +3422,12 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 	if (!InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) && !InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN)) {
 		letGoSinceInteractModeOpen = true;
 
-		Memory::get()->writeCursorSize(2.0f);
-		return;
+		return cursorVisual::big | cursorVisual::recolored;
 	}
 
 	if (!letGoSinceInteractModeOpen) {
-		Memory::get()->writeCursorSize(2.0f);
-		return;
+		return cursorVisual::big | cursorVisual::recolored;
 	}
-
-	Memory::get()->writeCursorSize(1.0f);
 
 	const Vector3& currentMouseDirection = InputWatchdog::get()->getMouseDirection();
 	if (lastMouseDirection != currentMouseDirection)
@@ -3241,6 +3436,8 @@ void APWatchdog::PettingTheDog(float deltaSeconds) {
 	}
 
 	lastMouseDirection = currentMouseDirection;
+
+	return cursorVisual::recolored;
 }
 
 bool APWatchdog::LookingAtTheDog() const {
@@ -3280,6 +3477,129 @@ bool APWatchdog::LookingAtTheDog() const {
 	}
 
 	return true;
+}
+
+int APWatchdog::LookingAtEasterEgg()
+{
+	Vector3 headPosition = Vector3(Memory::get()->ReadPlayerPosition());
+
+	for (auto [easterEggID, solveStatus] : easterEggToSolveStatus) {
+		auto positionAndBrightness = easterEggs[easterEggID];
+		Vector3 position = positionAndBrightness.first;
+		if (easterEggToSolveStatus[easterEggID]) continue;
+		if ((position - headPosition).length() > 6) continue;
+
+		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f)) {
+			for (Vector3 mouseRay : InputWatchdog::get()->getCone()) {
+				Vector3 v = eggSphere.position - headPosition;
+				float t = mouseRay * v;
+				Vector3 p = headPosition + mouseRay * t;
+				float distance = (p - eggSphere.position).length();
+				if (distance < eggSphere.radius) {
+					return easterEggID;
+				}
+			}
+		}
+	}
+
+	return -1;
+}
+
+int APWatchdog::HandleEasterEgg()
+{
+	int pNO = ap->get_player_number();
+	if (!firstActionDone) {
+		ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()) });
+		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+	}
+
+	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
+	if (interactionState != InteractionState::Focusing) {
+		letGoOfLeftClickSinceEnteringFocusMode = false;
+		return cursorVisual::normal;
+	}
+
+	bool holdingLeftClick = InputWatchdog::get()->getButtonState(InputButton::MOUSE_BUTTON_LEFT) || InputWatchdog::get()->getButtonState(InputButton::CONTROLLER_FACEBUTTON_DOWN);
+	if (!holdingLeftClick) {
+		letGoOfLeftClickSinceEnteringFocusMode = true;
+	}
+
+	int lookingAtEgg = LookingAtEasterEgg();
+
+	if (lookingAtEgg == -1) return cursorVisual::normal;
+	/*
+	Vector3 position = easterEggs[lookingAtEgg].first;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_H)) position.X += 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_F)) position.X -= 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_T)) position.Y += 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_G)) position.Y -= 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_R)) position.Z += 0.001f;
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_Z)) position.Z -= 0.001f;
+	easterEggs[lookingAtEgg].first = position;
+
+	float current_brightness = std::max(std::max(easterEggs[lookingAtEgg].second.R, easterEggs[lookingAtEgg].second.G), easterEggs[lookingAtEgg].second.B);
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_N)) {
+		easterEggs[lookingAtEgg].second.R += 0.01f * easterEggs[lookingAtEgg].second.R / current_brightness;
+		easterEggs[lookingAtEgg].second.G += 0.01f * easterEggs[lookingAtEgg].second.G / current_brightness;
+		easterEggs[lookingAtEgg].second.B += 0.01f * easterEggs[lookingAtEgg].second.B / current_brightness;
+	}
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_V)) {
+		easterEggs[lookingAtEgg].second.R -= 0.01f * easterEggs[lookingAtEgg].second.R / current_brightness;
+		easterEggs[lookingAtEgg].second.G -= 0.01f * easterEggs[lookingAtEgg].second.G / current_brightness;
+		easterEggs[lookingAtEgg].second.B -= 0.01f * easterEggs[lookingAtEgg].second.B / current_brightness;
+	}
+	if (InputWatchdog::get()->getButtonState(InputButton::KEY_B)) {
+		std::vector<RgbColor> color = { EGG_WHITE, EGG_RED, EGG_BLUE, EGG_GREEN, EGG_PINK, EGG_MAGENTA, EGG_CYAN, EGG_YELLOW, EGG_PURPLE, EGG_ORANGE };
+		easterEggs[lookingAtEgg].second = color[std::rand() % 10] * current_brightness;
+	}
+
+	std::wstringstream s;
+	s << position.X << ", " << position.Y << ", " << position.Z << "\n" << current_brightness << "\n";
+	OutputDebugStringW(s.str().c_str());
+	*/
+
+	if (holdingLeftClick) {
+		if (letGoOfLeftClickSinceEnteringFocusMode) {
+			easterEggToSolveStatus[lookingAtEgg] = true;
+			if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Plop, APJingleBehavior::PlayImmediate);
+
+			std::string lookingAtEggString = Utilities::entityStringRepresentation(lookingAtEgg);
+			std::map<std::string, bool> newEgg = {{ lookingAtEggString, true }};
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newEgg } });
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), false, { { "update" , newEgg } });
+		
+			int eggCount = 0;
+			int eggTotal = 0;
+			for (auto [egg, status] : easterEggToSolveStatus) {
+				if (egg == 0xEE0FF) {
+					if (status) eggCount += 5;
+					continue;
+				}
+				eggTotal++;
+				if (status) eggCount++;
+			}
+
+			if (firstEggShouldSendMessage) {
+				HudManager::get()->queueNotification("Found an Easter Egg! There are " + std::to_string(eggTotal) + " total eggs to find.");
+				HudManager::get()->queueNotification("Every " + std::to_string(EggHuntStep) + " Easter Eggs, a check will be sent.");
+
+				if (HighestRealEggCheck != -1 && HighestRealEggCheck != HighestEggCheck) {
+					HudManager::get()->queueNotification("Collecting Easter Eggs beyond " + std::to_string(HighestRealEggCheck) + " will only award filler.");
+				}
+
+				HudManager::get()->queueNotification("Good Luck!", RgbColor(110 / 255.0, 99 / 255.0, 192 / 255.0));
+			}
+			firstEggShouldSendMessage = false;
+
+			if (lookingAtEgg == 0xEE0FF) HudManager::get()->queueNotification("Found Rever's special egg! It is worth 5 eggs. New Total: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal), getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT | APClient::ItemFlags::FLAG_NEVER_EXCLUDE));
+			else HudManager::get()->queueNotification("Easter Eggs: " + std::to_string(eggCount) + "/" + std::to_string(eggTotal));
+		}
+		else {
+			return cursorVisual::recolored;
+		}
+	}
+
+	return cursorVisual::big | cursorVisual::recolored;
 }
 
 APServerPoller::APServerPoller(APClient* client) : Watchdog(0.1f) {
@@ -3354,7 +3674,7 @@ void APWatchdog::SendDeathLink(int panelId)
 void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string source) {
 	if (eee || DeathLinkAmnesty == -1) return;
 
-	TriggerBonk();
+	bool wasReduced = TriggerBonk(true) < DEATHLINK_DURATION;
 
 	double a = -1;
 
@@ -3370,6 +3690,7 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 	}
 
 	std::string firstSentence = "Received death.";
+
 	std::string secondSentence = "";
 
 	if (cause != "") {
@@ -3379,7 +3700,16 @@ void APWatchdog::ProcessDeathLink(double time, std::string cause, std::string so
 		firstSentence = "Received death from " + source + ".";
 	}
 
-	HudManager::get()->queueNotification(firstSentence + secondSentence, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+	std::string full = firstSentence + secondSentence;
+
+	if (wasReduced) {
+		if (full.back() != '.' && full.back() != '!' && full.back() != '?' && full.back() != ')') {
+			full += ".";
+		}
+
+		full += " (Duration reduced due to already being knocked out)";
+	}
+	HudManager::get()->queueNotification(full, getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
 }
 
 void APWatchdog::UpdateInfiniteChallenge() {
@@ -3472,15 +3802,22 @@ void APWatchdog::HandleReceivedItems() {
 
 		if (mostRecentItemId >= item.index + 1) continue;
 
+		bool isReducedBonk = false;
+
 		if (unlockLater) {
-			unlockItem(realitem);
+			if (item.item == ITEM_BONK_TRAP) {
+				isReducedBonk = TriggerBonk(false) < DEATHLINK_DURATION;
+			}
+			else {
+				unlockItem(realitem);
+			}
 		}
 
 		mostRecentItemId = item.index + 1;
 
 		Memory::get()->WritePanelData<int>(0x0064, VIDEO_STATUS_COLOR + 12, { mostRecentItemId });
 
-		QueueReceivedItem({ item.item, advancement, realitem });
+		QueueReceivedItem({ item.item, advancement, realitem, isReducedBonk });
 		if (item.item != ITEM_BONK_TRAP && item.player != ap->get_player_number()) PlayReceivedJingle(item.flags);
 	}
 }
@@ -3510,7 +3847,6 @@ void APWatchdog::unlockItem(int item) {
 
 		//Traps
 	case ITEM_POWER_SURGE:							TriggerPowerSurge();						break;
-	case ITEM_BONK_TRAP:							TriggerBonk();						  break;
 	case ITEM_TEMP_SPEED_REDUCTION:				ApplyTemporarySlow();						break;
 	}
 }
@@ -3794,6 +4130,27 @@ void APWatchdog::DrawSpheres(float deltaSeconds) {
 		spheresToDraw.push_back(WitnessDrawnSphere({ actualPosition, radius, color, cull }));
 	}
 
+	for (auto [easterEggID, solveStatus] : easterEggToSolveStatus) {
+		if (solveStatus) continue;
+		Vector3 position = easterEggs[easterEggID].first;
+		if ((position - headPosition).length() > 60) continue;
+
+		float scale = 1.0f;
+
+		for (WitnessDrawnSphere eggSphere : makeEgg(position, 1.0f, easterEggs[easterEggID].second)) {
+			spheresToDraw.push_back(eggSphere);
+		}
+	}
+
+	/*
+	//Mouse visualisation
+	float distanceMod = std::fmod(timePassedSinceRandomisation, 3);
+
+	for (Vector3 rayDirection : InputWatchdog::get()->getCone()) {
+		Vector3 position = headPosition + (rayDirection * (distanceMod * 10));
+		spheresToDraw.push_back(WitnessDrawnSphere({ position, 0.005f * distanceMod, RgbColor(distanceMod * 0.33f, 0.0f, 1.0f, 1.0f), true }));
+	}
+	*/
 	drawManager->drawSpheres(spheresToDraw);
 }
 
@@ -3840,7 +4197,7 @@ void APWatchdog::ToggleSleep() {
 	InputWatchdog* inputWatchdog = InputWatchdog::get();
 	InteractionState iState = inputWatchdog->getInteractionState();
 
-	if (isKnockedOut || iState == InteractionState::Cutscene || eee) {
+	if (bonkTime > 0.0f || iState == InteractionState::Cutscene || eee) {
 		HudManager::get()->displayBannerMessageIfQueueEmpty("Can't go into sleep mode right now.");
 		return;
 	}

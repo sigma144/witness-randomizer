@@ -124,6 +124,18 @@ void APAudioPlayer::PlayJingleBlocking(int resource) {
 }
 
 void APAudioPlayer::PlayAppropriateJingle(APJingle jingle, std::any extraFlag, bool async) {
+	if (jingle == APJingle::Plop) {
+		while (true) {
+			std::uniform_int_distribution<int> uid(0, jingleVersions[jingle].size() - 1);
+			int index = uid(rng); // use rng as a generator
+			if (lastPlopIndex == index) continue;
+			lastPlopIndex = index;
+			break;
+		}
+		PlayJingle(jingleVersions[jingle][lastPlopIndex], async);
+		return;
+	}
+
 	auto now = std::chrono::system_clock::now();
 
 	if (jingle == APJingle::EntityHunt) {

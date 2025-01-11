@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+class ApSettings;
+class FixedClientSettings;
+
 class APRandomizer {
 	public:
 		APRandomizer();
@@ -30,6 +33,7 @@ class APRandomizer {
 		int PanelHuntPostgame = 0;
 		bool DeathLink;
 		int DeathLinkAmnesty = 0;
+		int EggHuntDifficulty = 0;
 		std::set<std::string> ElevatorsComeToYou = {};
 
 		int mostRecentItemId = -1;
@@ -91,6 +95,9 @@ class APRandomizer {
 		void PreventSnipes();
 
 		void setPuzzleLocks();
+
+		ApSettings GetAPSettings();
+		FixedClientSettings GetFixedClientSettings();
 
 		std::string buildUri(std::string& server);
 };

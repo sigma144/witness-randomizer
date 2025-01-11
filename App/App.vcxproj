@@ -217,6 +217,11 @@
     <Media Include="..\Music\Dog ProgUseful.wav" />
     <Media Include="..\Music\Dog Trap.wav" />
     <Media Include="..\Music\Dog Useful.wav" />
+    <Media Include="..\Music\Easter Filler.wav" />
+    <Media Include="..\Music\Easter Progression.wav" />
+    <Media Include="..\Music\Easter ProgUseful.wav" />
+    <Media Include="..\Music\Easter Trap.wav" />
+    <Media Include="..\Music\Easter Useful.wav" />
     <Media Include="..\Music\EP Filler 2.wav" />
     <Media Include="..\Music\EP Filler.wav" />
     <Media Include="..\Music\EP Progression 2.wav" />
@@ -289,9 +294,17 @@
     <Media Include="..\Music\Pillars Useful Bmaj.wav" />
     <Media Include="..\Music\Pillars Useful EbMin.wav" />
     <Media Include="..\Music\Pillars Useful Emaj.wav" />
+    <Media Include="..\Music\Plop 1.wav" />
+    <Media Include="..\Music\Plop 2.wav" />
+    <Media Include="..\Music\Plop 3.wav" />
+    <Media Include="..\Music\Plop 4.wav" />
+    <Media Include="..\Music\Plop 5.wav" />
     <Media Include="..\Music\Randomized.wav" />
     <Media Include="..\Music\Victory Understated.wav" />
     <Media Include="..\Music\Victory.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="wave82.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
