@@ -5,6 +5,7 @@
 #include "Memory.h"
 #include "ClientWindow.h"
 #include <cassert>
+#include <algorithm>
 
 
 #define STRING_DATA_SIZE 0x80
