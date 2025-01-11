@@ -3527,7 +3527,7 @@ int APWatchdog::HandleEasterEgg()
 	int lookingAtEgg = LookingAtEasterEgg();
 
 	if (lookingAtEgg == -1) return cursorVisual::normal;
-
+	/*
 	Vector3 position = easterEggs[lookingAtEgg].first;
 	if (InputWatchdog::get()->getButtonState(InputButton::KEY_H)) position.X += 0.001f;
 	if (InputWatchdog::get()->getButtonState(InputButton::KEY_F)) position.X -= 0.001f;
@@ -3556,6 +3556,7 @@ int APWatchdog::HandleEasterEgg()
 	std::wstringstream s;
 	s << position.X << ", " << position.Y << ", " << position.Z << "\n" << current_brightness << "\n";
 	OutputDebugStringW(s.str().c_str());
+	*/
 
 	if (holdingLeftClick) {
 		if (letGoOfLeftClickSinceEnteringFocusMode) {
