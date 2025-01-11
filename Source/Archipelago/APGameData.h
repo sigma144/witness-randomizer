@@ -2497,13 +2497,13 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE005, {{-104.693, -127.221, 3.721}, EGG_CYAN * 1.2f}}, // Tree near Outpost Entry, Exempt-Medic
 
 	// Outpost
-	{ 0xEE006, {{-105.663, -122.064, 7.53495}, EGG_WHITE * 6.0f}}, // Outpost Wall
+	{ 0xEE006, {{-105.663, -122.064, 7.53495}, EGG_PURPLE * 6.0f}}, // Outpost Wall
 
 	// Orchard 1
 	{ 0xEE007, {{-94.907, 28.318, 16.696}, EGG_YELLOW * 2.0f}}, // Near Flower Cross, NewSoupVi
 
 	// Orchard 2
-	{ 0xEE008, {{-104.46, 25.2631, 17.149}, EGG_WHITE * 0.5f}}, // Wedged under Table, Rever
+	{ 0xEE008, {{-104.46, 25.2631, 17.149}, EGG_BLUE * 0.64f}}, // Wedged under Table, Rever
 
 	// Glass Factory
 	{ 0xEE009, {{-197.448, -35.103, 1.306}, EGG_PURPLE * 0.8f}}, // Glass Factory Furnace, Exempt-Medic
@@ -2525,7 +2525,7 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE013, {{-201.321, 238.077, 0.648001}, EGG_PINK * 0.5f}}, // Desert Shore Right, NewSoupVi
 
 	// Desert Vault
-	{ 0xEE014, {{-230.669, 199.455, 0.852001}, EGG_WHITE * 0.55f}}, // Desert Vault, NewSoupVi
+	{ 0xEE014, {{-230.669, 199.455, 0.852001}, EGG_BLUE * 0.55f}}, // Desert Vault, NewSoupVi
 
 	// Desert Pond Room
 	{ 0xEE015, {{-164.225, 163.973, -0.683999}, EGG_BLUE * 1.0f}}, // Staircase to Pond Room, NewSoupVi
@@ -2553,9 +2553,9 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE021, {{-7.836, 191.667, 0.343001}, EGG_PURPLE * 0.25f}}, // Quarry Boathouse Lower Path, NewSoupVi
 
 	// Stoneworks
-	{ 0xEE022, {{-74.42, 138.859, 4.972}, EGG_WHITE * 0.2f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic
-	{ 0xEE023, {{-69.412, 133.404, 4.419}, EGG_WHITE * 0.15f}}, // Quarry Stoneworks Furnace Inside, NewSoupVi
-	{ 0xEE0FF, {{-63.958, 133.729, 2.01}, EGG_WHITE * 0.14f}}, // The meanest egg to ever exist, Rever
+	{ 0xEE022, {{-74.42, 138.859, 4.972}, EGG_MAGENTA * 0.2f}}, // Quarry Stoneworks Crevace Behind Control Room, Exempt-Medic
+	{ 0xEE023, {{-69.412, 133.404, 4.419}, EGG_ORANGE * 0.28f}}, // Quarry Stoneworks Furnace Inside, NewSoupVi
+	{ 0xEE0FF, {{-63.958, 133.729, 2.01}, EGG_YELLOW * 0.14f}}, // The meanest egg to ever exist, Rever
 
 	// Shadows
 	{ 0xEE024, {{-9.02006, 88.7752, 13.46}, EGG_CYAN * 6.0f}}, // Near Butterfly Tree, Exempt-Medic
@@ -2576,8 +2576,8 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE02B, {{20.574, 91.622, 21.911}, EGG_PURPLE * 2.0f}}, // Keep SW Tower, NewSoupVi
 
 	// Keep Pressure Plates 2
-	{ 0xEE02C, {{68.464, 189.053, 20.3061}, EGG_WHITE * 2.0f}}, // PP2 Broken Wall, NewSoupVi
-	{ 0xEE02D, {{65.588, 184.168, 22.756}, EGG_WHITE * 4.0f}}, // PP2->PP3 Walkable Wall, NewSoupVi
+	{ 0xEE02C, {{68.464, 189.053, 20.3061}, EGG_GREEN * 2.0f}}, // PP2 Broken Wall, NewSoupVi
+	{ 0xEE02D, {{65.588, 184.168, 22.756}, EGG_MAGENTA * 5.0f}}, // PP2->PP3 Walkable Wall, NewSoupVi
 
 	// Keep Pressure Plates 3
 	{ 0xEE02E, {{50.212, 184.124, 16.395}, EGG_YELLOW * 7.0f}}, // Keep PP3 Hand Guy, NewSoupVi
@@ -2586,8 +2586,8 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE02F, {{55.794, 163.02, 17.4661}, EGG_ORANGE * 3.0f}}, // Keep PP4 Hand Guy, Rever
 
 	// Keep Tower
-	{ 0xEE030, {{31.071, 142.541, 22.764}, EGG_WHITE * 1.2f}}, // Keep Center West Tower, Exempt-Medic
-	{ 0xEE031, {{53.061, 145.743, 33.222}, EGG_WHITE * 1.0f}}, // Keep Tower Shooty Hole, NewSoupVi
+	{ 0xEE030, {{31.071, 142.541, 22.764}, EGG_PURPLE * 1.2f}}, // Keep Center West Tower, Exempt-Medic
+	{ 0xEE031, {{53.061, 145.743, 33.222}, EGG_MAGENTA * 1.0f}}, // Keep Tower Shooty Hole, NewSoupVi
 
 	// Shipwreck
 	{ 0xEE032, {{108.048, 209.634, 10.2499}, EGG_CYAN * 0.7f}}, // Shipwreck Under Entrance, NewSoupVi
@@ -2600,7 +2600,7 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE037, {{18.01, -35.491, 18.1371}, EGG_WHITE * 0.96f}}, // Inside Tree, NewSoupVi
 
 	// Monastery North Shutters
-	{ 0xEE038, {{19.0049, -27.2742, 17.1458}, EGG_WHITE * 1.0f}}, // Monastery North Shutters, Exempt-Medic
+	{ 0xEE038, {{19.0049, -27.2742, 17.1458}, EGG_PINK * 1.0f}}, // Monastery North Shutters, Exempt-Medic
 
 	// Monastery Garden
 	{ 0xEE039, {{37.982, -45.8769, 15.3241}, EGG_MAGENTA * 0.54f}}, // Garden, NewSoupVi
@@ -2620,7 +2620,7 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE041, {{-51.692, -19.692, 12.086}, EGG_CYAN * 0.66f}}, // Town Wooden Rooftop, NewSoupVi
 
 	// Town Tower 4th
-	{ 0xEE042, {{-41.219, -12.284, 22.861}, EGG_WHITE * 0.76f}}, // Under Town Laser, Rever
+	{ 0xEE042, {{-41.219, -12.284, 22.861}, EGG_PURPLE * 0.76f}}, // Under Town Laser, Rever
 
 	// Windmill
 	{ 0xEE043, {{-92.465, 27.214, 12.699}, EGG_RED * 0.4f}}, // Windmill Behind Entry Door, Scipio
@@ -2644,7 +2644,7 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE04D, {{57.877, -56.289, 19.314}, EGG_RED * 0.62f}}, // Under Popup Wall, Exempt-Medic
 
 	// Jungle Vault
-	{ 0xEE04E, {{49.991, -70.988, 9.02993}, EGG_WHITE * 0.33f} }, // Jungle Vault, NewSoupVi
+	{ 0xEE04E, {{49.991, -70.988, 9.02993}, EGG_ORANGE * 0.33f} }, // Jungle Vault, NewSoupVi
 
 	// Outside Bunker
 	{ 0xEE04F, {{160.996, -102.079, 7.226}, EGG_CYAN * 0.716498f}}, // Entry under Stairs, Scipio
@@ -2652,13 +2652,13 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE051, {{159.529, -89.596, 25.0892}, EGG_GREEN * 2.0f}}, // Near Elevator Crevace
 
 	// Bunker Glass Room
-	{ 0xEE052, {{173.028, -105.652, 8.36382}, EGG_WHITE * 2.0f}}, // Back Left Behind Panel
+	{ 0xEE052, {{173.028, -105.652, 8.36382}, EGG_ORANGE * 2.0f}}, // Back Left Behind Panel
 
 	// Bunker Under Elevator
-	{ 0xEE053, {{158.945, -87.1297, 7.237}, EGG_WHITE * 0.25f}}, // Bottom Floor behind Elevator, Exempt-Medic // Better color?
+	{ 0xEE053, {{158.945, -87.1297, 7.237}, EGG_PINK * 0.25f}}, // Bottom Floor behind Elevator, Exempt-Medic // Better color?
 
 	// Bunker Green Room
-	{ 0xEE054, {{156.901, -87.1712, 21.391}, EGG_WHITE * 0.09f}}, // Green Room behind Elevator, Exempt-Medic // Better color?
+	{ 0xEE054, {{156.901, -87.1712, 21.391}, EGG_GREEN * 0.07f}}, // Green Room behind Elevator, Exempt-Medic // Better color?
 
 	// Outside Swamp
 	{ 0xEE055, {{92.508, 9.21898, 18.746}, EGG_WHITE * 9.0f}}, // Painter, NewSoupVi
@@ -2671,38 +2671,38 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE058, {{134.71, 55.0499, 0.944997}, EGG_PURPLE * 1.43f}}, // Under Stairs to Platform, Scipio
 
 	// Swamp Cyan Underwater
-	{ 0xEE059, {{134.658, 48.614, -3.16699}, EGG_WHITE * 0.47f}}, // Cyan Underwater Corner, Scipio
+	{ 0xEE059, {{134.658, 48.614, -3.16699}, EGG_GREEN * 0.47f}}, // Cyan Underwater Corner, Scipio
 
 	// Swamp Beyond Bridge
 	{ 0xEE05A, {{207.84, 7.99, 2.482}, EGG_PINK * 4.0f}}, // Cage, Scipio
 
 	// Swamp 
-	{ 0xEE05B, {{146.63, 17.653, 0.304}, EGG_WHITE * 6.0f}}, // Behind Red Maze, Scipio
+	{ 0xEE05B, {{146.63, 17.653, 0.304}, EGG_YELLOW * 6.0f}}, // Behind Red Maze, Scipio
 
 	// Treehouse Beach
 	{ 0xEE05C, {{134.795, 144.177, 0.367002}, EGG_MAGENTA * 1.0f}}, // Beach Right Path, NewSoupVi
 
 	// Treehouse Yellow Bridge
-	{ 0xEE05D, {{155.323, 140.275, 12.5139}, EGG_WHITE * 2.0f}}, // Ontop of door, NewSoupVi
+	{ 0xEE05D, {{155.323, 140.275, 12.5139}, EGG_RED * 2.0f}}, // Ontop of door, NewSoupVi
 
 	// Treehouse Junction
-	{ 0xEE05E, {{128.683, 147.598, 12.2289}, EGG_WHITE * 0.8f}}, // Junction Weird Tree, NewSoupVi
-	{ 0xEE05F, {{117.915, 142.597, 16.746}, EGG_WHITE * 0.18f}}, // Timer Platform Corner, NewSoupVi
+	{ 0xEE05E, {{128.683, 147.598, 12.2289}, EGG_BLUE * 1.58f}}, // Junction Weird Tree, NewSoupVi
+	{ 0xEE05F, {{117.915, 142.597, 16.746}, EGG_PINK * 0.18f}}, // Timer Platform Corner, NewSoupVi
 
 	// Treehouse Second Purple Bridge
-	{ 0xEE060, {{134.06, 118.917, 15.183}, EGG_WHITE * 2.0f}}, // Between Purple Bridges Stairs House, NewSoupVi
+	{ 0xEE060, {{134.06, 118.917, 15.183}, EGG_YELLOW * 2.0f}}, // Between Purple Bridges Stairs House, NewSoupVi
 
 	// Treehouse Green Bridge Left House
-	{ 0xEE061, {{125.683, 159.287, 16.526}, EGG_WHITE * 0.37f}}, // Plank near Right Bridge EP, NewSoupVi
+	{ 0xEE061, {{125.683, 159.287, 16.526}, EGG_MAGENTA * 0.37f}}, // Plank near Right Bridge EP, NewSoupVi
 
 	// Treehouse Laser Room Back Platform
-	{ 0xEE062, {{107.055, 133.771, 19.626}, EGG_WHITE * 2.0f} }, // Treehouse Laser House Roof, hatkirby
+	{ 0xEE062, {{107.055, 133.771, 19.626}, EGG_MAGENTA * 2.0f} }, // Treehouse Laser House Roof, hatkirby
 
 	// Treehouse Burned House
 	{ 0xEE063, {{113.961, 120.549, 18.8394}, EGG_WHITE * 2.0f}}, // Shoulder of Burnt House Tree Guy, NewSoupVi
 
 	// Treehouse Drawbridge Platform
-	{ 0xEE064, {{102.569, 149.464, 16.2631}, EGG_WHITE * 1.0f}}, // Under Bridge End, NewSoupVi
+	{ 0xEE064, {{102.569, 149.464, 16.2631}, EGG_RED * 1.0f}}, // Under Bridge End, NewSoupVi
 
 	// Mountainside
 	{ 0xEE065, {{160.928, -19.2877, 38.1159}, EGG_CYAN * 4.0f}}, // Giant statue elbow, NewSoupVi
@@ -2717,11 +2717,11 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE06A, {{155.68, -53.735, 49.9621}, EGG_WHITE * 0.83f}}, // Trash Pile, NewSoupVi
 
 	// Inside Mountain Back Section
-	{ 0xEE06B, {{161.232, -63.2361, 48.2401}, EGG_WHITE * 0.55f}}, // Back Section Trash Can, NewSoupVi
+	{ 0xEE06B, {{161.232, -63.2361, 48.2401}, EGG_BLUE * 0.95f}}, // Back Section Trash Can, NewSoupVi
 
 	// Mountain Floor 2
-	{ 0xEE06C, {{138.55, -35.988, 36.668}, EGG_WHITE * 0.73f}}, // Model Windmills inside Treehouse house, Rever
-	{ 0xEE06D, {{204.421, -41.8059, 0.757003}, EGG_WHITE * 5.0f}}, // Final Room Statue, NewSoupVi
+	{ 0xEE06C, {{138.55, -35.988, 36.668}, EGG_PINK * 0.73f}}, // Model Windmills inside Treehouse house, Rever
+	{ 0xEE06D, {{204.421, -41.8059, 0.757003}, EGG_ORANGE * 5.0f}}, // Final Room Statue, NewSoupVi
 
 	// Caves
 	{ 0xEE06E, {{140.332, -43.302, 3.53}, EGG_YELLOW * 1.0f}}, // Caves Entry Door, NewSoupVi
