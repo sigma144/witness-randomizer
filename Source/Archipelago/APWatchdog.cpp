@@ -3540,17 +3540,17 @@ int APWatchdog::HandleEasterEgg()
 	float current_brightness = std::max(std::max(easterEggs[lookingAtEgg].second.R, easterEggs[lookingAtEgg].second.G), easterEggs[lookingAtEgg].second.B);
 	if (InputWatchdog::get()->getButtonState(InputButton::KEY_N)) {
 		easterEggs[lookingAtEgg].second.R += 0.01f * easterEggs[lookingAtEgg].second.R / current_brightness;
-		easterEggs[lookingAtEgg].second.R += 0.01f * easterEggs[lookingAtEgg].second.G / current_brightness;
-		easterEggs[lookingAtEgg].second.R += 0.01f * easterEggs[lookingAtEgg].second.B / current_brightness;
+		easterEggs[lookingAtEgg].second.G += 0.01f * easterEggs[lookingAtEgg].second.G / current_brightness;
+		easterEggs[lookingAtEgg].second.B += 0.01f * easterEggs[lookingAtEgg].second.B / current_brightness;
 	}
 	if (InputWatchdog::get()->getButtonState(InputButton::KEY_V)) {
 		easterEggs[lookingAtEgg].second.R -= 0.01f * easterEggs[lookingAtEgg].second.R / current_brightness;
-		easterEggs[lookingAtEgg].second.R -= 0.01f * easterEggs[lookingAtEgg].second.G / current_brightness;
-		easterEggs[lookingAtEgg].second.R -= 0.01f * easterEggs[lookingAtEgg].second.B / current_brightness;
+		easterEggs[lookingAtEgg].second.G -= 0.01f * easterEggs[lookingAtEgg].second.G / current_brightness;
+		easterEggs[lookingAtEgg].second.B -= 0.01f * easterEggs[lookingAtEgg].second.B / current_brightness;
 	}
 	if (InputWatchdog::get()->getButtonState(InputButton::KEY_B)) {
-		std::vector<RgbColor> color = { EGG_WHITE, EGG_RED, EGG_BLUE, EGG_GREEN, EGG_PINK, EGG_MAGENTA, EGG_CYAN, EGG_YELLOW };
-		easterEggs[lookingAtEgg].second = color[std::rand() % 8] * current_brightness;
+		std::vector<RgbColor> color = { EGG_WHITE, EGG_RED, EGG_BLUE, EGG_GREEN, EGG_PINK, EGG_MAGENTA, EGG_CYAN, EGG_YELLOW, EGG_PURPLE, EGG_ORANGE };
+		easterEggs[lookingAtEgg].second = color[std::rand() % 10] * current_brightness;
 	}
 
 	std::wstringstream s;
