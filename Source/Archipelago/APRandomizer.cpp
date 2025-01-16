@@ -576,6 +576,22 @@ void APRandomizer::PreGeneration() {
 	}
 }
 
+void APRandomizer::GetOrCreateSaveGame()
+{
+	Memory* memory = Memory::get();
+
+	GUID defaultPanelValue = { 0x3f333333, 0x9999, 0x3f19, {'\x99', '\x99', '\x19', '\x3e', '\x00', '\x00', '\x80', '\x3f'}};
+
+	GUID reportedGUID = memory->ReadPanelData<GUID>(0x00182, VIDEO_STATUS_COLOR);
+	if (reportedGUID != defaultPanelValue) {
+		savegameGUID = reportedGUID;
+		return;
+	}
+
+	CoCreateGuid(&savegameGUID);
+	memory->WritePanelData<GUID>(0x00182, VIDEO_STATUS_COLOR, { savegameGUID });
+}
+
 
 
 void APRandomizer::PostGeneration() {

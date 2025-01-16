@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <windows.h>
+
 class ApSettings;
 class FixedClientSettings;
 
@@ -45,6 +47,7 @@ class APRandomizer {
 
 		bool Connect(std::string& server, std::string& user, std::string& password);
 		void PreGeneration();
+		void GetOrCreateSaveGame();
 		void PostGeneration();
 
 		void GenerateNormal();
@@ -100,6 +103,8 @@ class APRandomizer {
 		FixedClientSettings GetFixedClientSettings();
 
 		std::string buildUri(std::string& server);
+
+		GUID savegameGUID;
 };
 
 #define DATAPACKAGE_CACHE "ap_datapackage.json"

@@ -116,7 +116,6 @@ Decoration::Color color;
 int currentShape;
 int currentDir;
 int lastSeed;
-int lastPuzzleRandomisation;
 std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24, SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
 std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }; //L-shape
 std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
@@ -226,7 +225,6 @@ void Main::randomize() {
 
 			memory->WritePanelData<float>(0x0064, VIDEO_STATUS_COLOR + 8, { 0.0f });
 		}
-		lastPuzzleRandomisation = memory->ReadPanelData<int>(0x00182, VIDEO_STATUS_COLOR + 8);
 	}
 
 	//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
@@ -262,6 +260,9 @@ void Main::randomize() {
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->RestoreOriginals();
 
+	clientWindow->setStatusMessage("Get or create savegame");
+	apRandomizer->GetOrCreateSaveGame();
+
 	clientWindow->setStatusMessage("Randomizing puzzles...");
 	if (puzzleRando == SIGMA_EXPERT)
 		randomizer->GenerateHard();
@@ -285,7 +286,6 @@ void Main::randomize() {
 		apRandomizer->GenerateVariety();
 
 	memory->WritePanelData(0x00064, VIDEO_STATUS_COLOR + 8, seed);
-	memory->WritePanelData(0x00182, VIDEO_STATUS_COLOR + 8, puzzleRando);
 
 	if (clientWindow->getSetting(ClientToggleSetting::HighContrast)) {
 		clientWindow->logLine("Setting up High Contrast Mode.");

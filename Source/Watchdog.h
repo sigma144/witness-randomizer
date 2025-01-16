@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 #include "Memory.h"
 
 class Watchdog
