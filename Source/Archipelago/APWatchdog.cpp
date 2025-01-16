@@ -2020,7 +2020,7 @@ void APWatchdog::CheckAudioLogHints() {
 	}
 
 	if (!ops.empty()) {
-		ap->Set("WitnessSolvedEPs" + std::to_string(pNO), nlohmann::json::object(), false, ops);
+		ap->Set("WitnessActivatedAudioLogs" + std::to_string(pNO), nlohmann::json::object(), false, ops);
 	}
 }
 
@@ -2191,7 +2191,7 @@ void APWatchdog::CheckHuntEntities() {
 void APWatchdog::CheckDoors() {
 	int pNO = ap->get_player_number();
 
-	if (openedDoors.empty()) {
+	if (!firstStorageCheckDone) {
 		ap->SetNotify({ "WitnessOpenedDoors" + std::to_string(pNO) });
 		ap->Set("WitnessOpenedDoors" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
 	}

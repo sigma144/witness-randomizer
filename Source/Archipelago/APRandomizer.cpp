@@ -893,6 +893,7 @@ FixedClientSettings APRandomizer::GetFixedClientSettings() {
 	fixedClientSettings.DisabledEPsBehavior = DisabledEPsBehavior;
 	fixedClientSettings.SolveModeSpeedFactor = solveModeSpeedFactor;
 	fixedClientSettings.SyncProgress = SyncProgress;
+	fixedClientSettings.saveGameID = savegameGUID;
 	return fixedClientSettings;
 }
 
