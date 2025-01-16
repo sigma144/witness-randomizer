@@ -432,10 +432,10 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			return;
 		}
 
-		if (key.find("WitnessLaserHint") != std::string::npos) async->HandleLaserHintResponse(key, value);
+		if (key.find("WitnessSeenLaserHints") != std::string::npos) async->HandleLaserHintResponse(key, value);
 		else if (key.find("WitnessActivatedLasers") != std::string::npos) async->HandleLaserResponse(key, value);
 		else if (key.find("WitnessSolvedEPs") != std::string::npos) async->HandleEPResponse(key, value);
-		else if (key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value);
+		else if (key.find("WitnessActivatedAudioLogs") != std::string::npos) async->HandleAudioLogResponse(key, value);
 		else if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value);
 		else if (key.find("WitnessHuntEntityStatus") != std::string::npos) async->HandleHuntEntityResponse(value);
 		else if (key.find("WitnessEasterEggStatus") != std::string::npos) async->HandleEasterEggResponse(key, value);

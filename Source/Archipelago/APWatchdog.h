@@ -302,6 +302,8 @@ private:
 	// Returns the number of skips currently available to the player.
 	int GetAvailablePuzzleSkips() const;
 
+	void CheckLaserHints();
+	void CheckAudioLogHints();
 	void CheckLasers();
 	void CheckEPs();
 	void CheckPanels();

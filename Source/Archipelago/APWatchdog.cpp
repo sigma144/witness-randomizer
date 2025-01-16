@@ -229,21 +229,15 @@ void APWatchdog::action() {
 
 		panelLocker->UpdatePPEPPuzzleLocks(*state);
 
-		if (storageCheckCounter <= 0) {
-			CheckLasers();
-			CheckEPs();
-			CheckPanels();
-			CheckDoors();
-			CheckHuntEntities();
+		CheckLaserHints();
+		CheckAudioLogHints();
+		CheckLasers();
+		CheckEPs();
+		CheckPanels();
+		CheckDoors();
+		CheckHuntEntities();
 
-			firstStorageCheckDone = true;
-
-			storageCheckCounter = 20;
-		}
-		else
-		{
-			storageCheckCounter--;
-		}
+		firstStorageCheckDone = true;
 	}
 
 	CheckImportantCollisionCubes();
@@ -1745,21 +1739,17 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 		}
 	}
 
+	if (allLasers.contains(currentLaser)) {
+		bool laserHasBeenSeen = ReadPanelData<float>(currentLaser, 0x108) > 1;
+		if (!laserHasBeenSeen) WritePanelData<float>(currentLaser, 0x108, { 1.0001f });
+	}
 
 	for (int laserID : allLasers) {
 		if (inGameHints.count(laserID)) {
 			bool laserHasBeenSeen = ReadPanelData<float>(laserID, 0x108) > 1;
-			bool laserIsCurrentlyNearby = currentLaser == laserID;
 			
-			if (laserHasBeenSeen || laserIsCurrentlyNearby) {
+			if (laserHasBeenSeen) {
 				seenMessages.insert(inGameHints[laserID]);
-				if (!seenLasers.count(laserID)) {
-					WritePanelData<float>(laserID, 0x108, { 1.0001f });
-					int64_t locationId = inGameHints[laserID].locationID;
-					if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({locationId}, 2);
-					ap->Set("WitnessLaserHint" + std::to_string(pNO) + "-" + std::to_string(laserID), NULL, false, { {"replace", true} });
-					seenLasers.insert(laserID);
-				}
 			}
 		}
 	}
@@ -1771,12 +1761,6 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 
 		if (audioLogHasBeenPlayed || logPlaying) {
 			seenMessages.insert(inGameHints[logId]);
-			if (!seenAudioLogs.count(logId)) {
-				int64_t locationId = inGameHints[logId].locationID;
-				if (locationId != -1 && inGameHints[logId].playerNo == pNO && inGameHints[logId].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({ locationId }, 2);
-				ap->Set("WitnessAudioLog" + std::to_string(pNO) + "-" + std::to_string(logId), NULL, false, { {"replace", true} });
-				seenAudioLogs.insert(logId);
-			}
 		}
 		if (logPlaying) {
 			currentAudioLog = logId;
@@ -1999,6 +1983,83 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 	}
 
 	ClientWindow::get()->displaySeenAudioHints(seenMessagesStrings, fullyClearedAreas, deadChecks, otherPeoplesDeadChecks);
+}
+
+void APWatchdog::CheckAudioLogHints() {
+	int pNO = ap->get_player_number();
+
+	std::list<APClient::DataStorageOperation> ops = {};
+
+	if (!firstStorageCheckDone) {
+		ap->SetNotify({ "WitnessActivatedAudioLogs" + std::to_string(pNO) });
+		ops.push_back({ "default", nlohmann::json::object() });
+	}
+
+	std::map<std::string, bool> newlyActivatedAudioLogs = {};
+
+	for (int audioLog : audioLogs) {
+		if (seenAudioLogs.count(audioLog)) continue;
+
+		bool audioLogHasBeenPlayed = ReadPanelData<int>(audioLog, AUDIO_LOG_PLAYED);
+		bool logPlaying = ReadPanelData<int>(audioLog, AUDIO_LOG_IS_PLAYING) != 0;
+		if (audioLogHasBeenPlayed || logPlaying) {
+			if (inGameHints.contains(audioLog)) {
+				int64_t locationId = inGameHints[audioLog].locationID;
+				if (locationId != -1 && inGameHints[audioLog].playerNo == pNO && inGameHints[audioLog].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({ locationId }, 2);
+			}
+
+			std::string log_str = Utilities::entityStringRepresentation(audioLog);
+
+			newlyActivatedAudioLogs[log_str] = true;
+			seenAudioLogs.insert(audioLog);
+		}
+	}
+
+	if (newlyActivatedAudioLogs.size()) {
+		ops.push_back({ "update" , newlyActivatedAudioLogs });
+	}
+
+	if (!ops.empty()) {
+		ap->Set("WitnessSolvedEPs" + std::to_string(pNO), nlohmann::json::object(), false, ops);
+	}
+}
+
+void APWatchdog::CheckLaserHints() {
+	int pNO = ap->get_player_number();
+
+	std::list<APClient::DataStorageOperation> ops = {};
+
+	if (!firstStorageCheckDone) {
+		ap->SetNotify({ "WitnessSeenLaserHints" + std::to_string(pNO) });
+		ops.push_back({ "default", nlohmann::json::object() });
+	}
+
+	std::map<std::string, bool> newlySeenLasers = {};
+
+	for (int laserID : allLasers) {
+		if (seenAudioLogs.count(laserID)) continue;
+
+		bool laserHasBeenSeen = ReadPanelData<float>(laserID, 0x108) > 1;
+		if (laserHasBeenSeen) {
+			if (inGameHints.contains(laserID)) {
+				int64_t locationId = inGameHints[laserID].locationID;
+				if (locationId != -1 && inGameHints[laserID].playerNo == pNO && inGameHints[laserID].allowScout && !checkedLocations.count(locationId)) ap->LocationScouts({ locationId }, 2);
+			}
+
+			std::string log_str = Utilities::entityStringRepresentation(laserID);
+
+			newlySeenLasers[log_str] = true;
+			seenLasers.insert(laserID);
+		}
+	}
+
+	if (newlySeenLasers.size()) {
+		ops.push_back({ "update" , newlySeenLasers });
+	}
+
+	if (!ops.empty()) {
+		ap->Set("WitnessSeenLaserHints" + std::to_string(pNO), nlohmann::json::object(), false, ops);
+	}
 }
 
 void APWatchdog::CheckEPs() {
@@ -2353,28 +2414,39 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value) {
 }
 
 void APWatchdog::HandleAudioLogResponse(std::string logIDstr, nlohmann::json value) {
-	bool audioLogSeen = value == true;
-	int logID = stoi(logIDstr.substr(logIDstr.find("-") + 1));
+	std::map<std::string, bool> audiologsSeenAccordingToDataStorage = value;
 
-	if (!audioLogSeen) return;
+	for (auto [entityString, dataStorageSolveStatus] : audiologsSeenAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
 
-	if (SyncProgress)
-	{
-		WritePanelData<int>(logID, AUDIO_LOG_PLAYED, { 1 });
-		seenAudioLogs.insert(logID);
+		int entityID = std::stoul(entityString, nullptr, 16);
+
+		bool audioLogHasBeenPlayed = ReadPanelData<int>(entityID, AUDIO_LOG_PLAYED);
+		bool logPlaying = ReadPanelData<int>(entityID, AUDIO_LOG_IS_PLAYING) != 0;
+
+		if (!(audioLogHasBeenPlayed || logPlaying) && (SyncProgress))
+		{
+			WritePanelData<int>(entityID, AUDIO_LOG_PLAYED, { 1 });
+			seenAudioLogs.insert(entityID);
+		}
 	}
 }
 
 void APWatchdog::HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value) {
-	bool laserHintSeen = value == true;
-	int laserID = stoi(laserIDstr.substr(laserIDstr.find("-") + 1));
+	std::map<std::string, bool> laserHintsSeenAccordingToDataStorage = value;
 
-	if (!laserHintSeen) return;
+	for (auto [entityString, dataStorageSolveStatus] : laserHintsSeenAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
 
-	if (SyncProgress)
-	{
-		WritePanelData<float>(laserID, 0x108, { 1.0001 });
-		seenLasers.insert(laserID);
+		int entityID = std::stoul(entityString, nullptr, 16);
+
+		bool laserHasBeenSeen = ReadPanelData<float>(entityID, 0x108) > 1;
+
+		if (!laserHasBeenSeen && (SyncProgress))
+		{
+			WritePanelData<float>(entityID, 0x108, { 1.0001 });
+			seenLasers.insert(entityID);
+		}
 	}
 }
 
