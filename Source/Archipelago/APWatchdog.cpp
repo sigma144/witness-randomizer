@@ -60,6 +60,10 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 	itemIdToDoorSet = apSettings->itemIdToDoorSet;
 	SyncProgress = fixedClientSettings->SyncProgress;
 	EggHuntStep = apSettings->EggHuntStep;
+
+	wchar_t guidString[39];
+	StringFromGUID2(fixedClientSettings->saveGameID, guidString, 39);
+	savegameGUID = guidString;
 	
 	for (int huntEntity : apSettings->huntEntites) {
 		huntEntityToSolveStatus[huntEntity] = false;
@@ -213,6 +217,7 @@ void APWatchdog::action() {
 
 		CheckFinalRoom();
 
+		CheckObeliskSides();
 		CheckSolvedPanels();
 
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
@@ -363,6 +368,47 @@ std::vector<int> APWatchdog::CheckCompletedHuntEntities() {
 	return completedHuntEntities;
 }
 
+void APWatchdog::CheckObeliskSides()
+{
+	for (auto& [obeliskID, EPSet] : obeliskHexToEPHexes) {
+		if (!panelIdToLocationId.contains(obeliskID)) continue;
+		int locationID = panelIdToLocationId[obeliskID];
+
+		bool anyNew = false;
+
+		for (auto it2 = EPSet.begin(); it2 != EPSet.end();) {
+			if (ReadPanelData<int>(*it2, EP_SOLVED))
+			{
+				anyNew = true;
+				it2 = EPSet.erase(it2);
+			}
+			else
+			{
+				it2++;
+			}
+		}
+
+		if (EPSet.empty())
+		{
+			if (FirstEverLocationCheckDone) HudManager::get()->queueBannerMessage(ap->get_location_name(locationID, "The Witness") + " Completed!");
+		}
+		else
+		{
+			if (anyNew) {
+				int total = obeliskHexToAmountOfEPs[obeliskID];
+				int done = total - EPSet.size();
+
+				if (FirstEverLocationCheckDone) {
+					std::string message = ap->get_location_name(locationID, "The Witness");
+					message += " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")";
+					HudManager::get()->queueBannerMessage(message);
+				}
+			}
+		}
+		continue;
+	}
+}
+
 void APWatchdog::CheckSolvedPanels() {
 	std::vector<int> toRemove = {};
 	for (int id : recolorWhenSolved) {
@@ -455,42 +501,9 @@ void APWatchdog::CheckSolvedPanels() {
 	{
 		if (obeliskHexToEPHexes.count(entityID)) {
 			std::set<int> EPSet = obeliskHexToEPHexes[entityID];
-
-			bool anyNew = false;
-
-			for (auto it2 = EPSet.begin(); it2 != EPSet.end();) {
-				if (ReadPanelData<int>(*it2, EP_SOLVED))
-				{
-					anyNew = true;
-					ap->Set("WitnessEP" + std::to_string(ap->get_player_number()) + "-" + std::to_string(*it2), NULL, false, { {"replace", true} });
-
-					it2 = EPSet.erase(it2);
-				}
-				else
-				{
-					it2++;
-				}
-			}
-
-			obeliskHexToEPHexes[entityID] = EPSet;
-
 			if (EPSet.empty())
 			{
-				if(FirstEverLocationCheckDone) HudManager::get()->queueBannerMessage(ap->get_location_name(locationID, "The Witness") + " Completed!");
 				solvedEntityIDs.push_back(entityID);
-			}
-			else
-			{
-				if (anyNew) {
-					int total = obeliskHexToAmountOfEPs[entityID];
-					int done = total - EPSet.size();
-
-					if (FirstEverLocationCheckDone) {
-						std::string message = ap->get_location_name(locationID, "The Witness");
-						message += " Progress (" + std::to_string(done) + "/" + std::to_string(total) + ")";
-						HudManager::get()->queueBannerMessage(message);
-					}
-				}
 			}
 			continue;
 		}
@@ -1989,114 +2002,76 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 }
 
 void APWatchdog::CheckEPs() {
+	int pNO = ap->get_player_number();
+
+	std::list<APClient::DataStorageOperation> ops = {};
+
 	if (!firstStorageCheckDone) {
-		int pNO = ap->get_player_number();
-
-		for (int ep : allEPs) {
-			std::string epID = "WitnessEP" + std::to_string(pNO) + "-" + std::to_string(ep);
-
-			EPIDsToEPs[epID] = ep;
-			EPStates[ep] = false;
-			EPIDs.push_back(epID);
-
-			APClient::DataStorageOperation operation;
-			operation.operation = "default";
-			operation.value = false;
-
-			std::list<APClient::DataStorageOperation> operations;
-
-			operations.push_back(operation);
-
-
-			nlohmann::json a;
-
-			ap->Set(epID, a, false, operations);
-
-			EPIDs.push_back(epID);
-		}
-
-		ap->SetNotify(EPIDs);
-		ap->Get(EPIDs);
+		ap->SetNotify({ "WitnessSolvedEPs" + std::to_string(pNO) });
+		ops.push_back({ "default", nlohmann::json::object() });
 	}
 
-	for (auto [epID, ep] : EPIDsToEPs) {
-		if (ReadPanelData<int>(ep, EP_SOLVED)) {
-			if (!EPStates[ep]) {
-				EPStates[ep] = true;
+	std::map<std::string, bool> newlySolvedEPs = {};
 
-				APClient::DataStorageOperation operation;
-				operation.operation = "replace";
-				operation.value = true;
+	for (int EP : allEPs) {
+		if (solvedEPs.count(EP)) continue;
 
-				std::list<APClient::DataStorageOperation> operations;
-				operations.push_back(operation);
+		if (ReadPanelData<int>(EP, EP_SOLVED)) {
+			std::string EP_str = Utilities::entityStringRepresentation(EP);
 
-				ap->Set(epID, NULL, false, operations);
-			}
+			newlySolvedEPs[EP_str] = true;
+			solvedEPs.insert(EP);
 		}
+	}
+
+	if (newlySolvedEPs.size()) {
+		ops.push_back({ "update" , newlySolvedEPs });
+	}
+
+	if (!ops.empty()) {
+		ap->Set("WitnessSolvedEPs" + std::to_string(pNO), nlohmann::json::object(), false, ops);
 	}
 }
 
 void APWatchdog::CheckLasers() {
+	int pNO = ap->get_player_number();
+
+	std::list<APClient::DataStorageOperation> ops = {};
+
 	if (!firstStorageCheckDone) {
-		int pNO = ap->get_player_number();
-
-		for (int laser : allLasers) {
-			std::string laserID = "WitnessLaser" + std::to_string(pNO) + "-" + std::to_string(laser);
-
-			laserIDsToLasers[laserID] = laser;
-			laserStates[laser] = false;
-			laserIDs.push_back(laserID);
-
-			APClient::DataStorageOperation operation;
-			operation.operation = "default";
-			operation.value = false;
-
-			std::list<APClient::DataStorageOperation> operations;
-
-			operations.push_back(operation);
-
-
-			nlohmann::json a;
-
-			ap->Set(laserID, a, false, operations);
-
-			laserIDs.push_back(laserID);
-		}
-
-		ap->SetNotify(laserIDs);
-		ap->Get(laserIDs);
+		ap->SetNotify({ "WitnessActivatedLasers" + std::to_string(pNO) });
+		ops.push_back({ "default", nlohmann::json::object() });
 	}
 
+	std::map<std::string, bool> newlyActivatedLasers = {};
+
 	int laserCount = 0;
-	
-	for (auto [laserID, laser] : laserIDsToLasers) {
+
+	for (int laser : allLasers) {
 		if (ReadPanelData<int>(laser, LASER_TARGET)) {
-			laserCount += 1;
+			laserCount++;
 
-			if (!laserStates[laser]) {
-				laserStates[laser] = true;
+			if (activatedLasers.count(laser)) continue;
 
-				APClient::DataStorageOperation operation;
-				operation.operation = "replace";
-				operation.value = true;
+			std::string Laser_str = Utilities::entityStringRepresentation(laser);
 
-				std::list<APClient::DataStorageOperation> operations;
-				operations.push_back(operation);
-
-				ap->Set(laserID, NULL, false, operations);
-			}
+			newlyActivatedLasers[Laser_str] = true;
+			activatedLasers.insert(laser);
 		}
+	}
+
+	if (newlyActivatedLasers.size()) {
+		ops.push_back({ "update" , newlyActivatedLasers });
+	}
+
+	if (!ops.empty()) {
+		ap->Set("WitnessActivatedLasers" + std::to_string(pNO), nlohmann::json::object(), false, ops);
 	}
 
 	if (laserCount != state->activeLasers) {
 		state->activeLasers = laserCount;
 		panelLocker->UpdatePuzzleLock(*state, 0x0A332);
 		panelLocker->UpdatePuzzleLock(*state, 0x3D9A9);
-
-		if (laserCount >= state->requiredChallengeLasers && !laserRequirementMet) {
-			laserRequirementMet = true;
-		}
 	}
 }
 
@@ -2215,18 +2190,20 @@ void APWatchdog::SetValueFromServer(std::string key, nlohmann::json value) {
 }
 
 void APWatchdog::HandleLaserResponse(std::string laserID, nlohmann::json value) {
-	int laserNo = laserIDsToLasers[laserID];
+	std::map<std::string, bool> lasersActivatedAccordingToDataStorage = value;
 
-	bool laserActiveAccordingToDataStore = value == true;
+	for (auto [entityString, dataStorageSolveStatus] : lasersActivatedAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
 
-	bool laserActiveInGame = ReadPanelData<int>(laserNo, LASER_TARGET) != 0;
+		int entityID = std::stoul(entityString, nullptr, 16);
 
-	if (laserActiveInGame == laserActiveAccordingToDataStore) return;
+		bool laserActiveInGame = ReadPanelData<int>(entityID, LASER_TARGET) != 0;
 
-	if(!laserActiveInGame && SyncProgress)
-	{
-		Memory::get()->ActivateLaser(laserNo);
-		HudManager::get()->queueNotification(laserNames[laserNo] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+		if (!laserActiveInGame && (SyncProgress))
+		{
+			Memory::get()->ActivateLaser(entityID);
+			HudManager::get()->queueNotification(laserNames[entityID] + " Laser Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+		}
 	}
 }
 
@@ -2353,22 +2330,24 @@ void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
 }
 
 void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value) {
-	int epNo = EPIDsToEPs[epID];
+	std::map<std::string, bool> epsSolvedAccordingToDataStorage = value;
 
-	bool epActiveAccordingToDataPackage = value == true;
+	for (auto [entityString, dataStorageSolveStatus] : epsSolvedAccordingToDataStorage) {
+		if (!dataStorageSolveStatus) continue;
 
-	bool epActiveInGame = ReadPanelData<int>(epNo, EP_SOLVED) != 0;
+		int entityID = std::stoul(entityString, nullptr, 16);
 
-	if (epActiveInGame == epActiveAccordingToDataPackage) return;
+		bool epActiveInGame = ReadPanelData<int>(entityID, EP_SOLVED) != 0;
 
-	if (!epActiveInGame && (SyncProgress))
-	{
-		Memory::get()->SolveEP(epNo);
-		if (precompletableEpToName.count(epNo) && precompletableEpToPatternPointBytes.count(epNo) && EPShuffle) {
-			Memory::get()->MakeEPGlow(precompletableEpToName.at(epNo), precompletableEpToPatternPointBytes.at(epNo));
-		}
-		if (SyncProgress){
-			HudManager::get()->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
+		if (!epActiveInGame && (SyncProgress))
+		{
+			Memory::get()->SolveEP(entityID);
+			if (precompletableEpToName.count(entityID) && precompletableEpToPatternPointBytes.count(entityID) && EPShuffle) {
+				Memory::get()->MakeEPGlow(precompletableEpToName.at(entityID), precompletableEpToPatternPointBytes.at(entityID));
+			}
+			if (SyncProgress) {
+				HudManager::get()->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
+			}
 		}
 	}
 }
@@ -3509,8 +3488,8 @@ int APWatchdog::HandleEasterEgg()
 {
 	int pNO = ap->get_player_number();
 	if (!firstActionDone) {
-		ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()) });
-		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+		ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID)});
+		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
 	}
 
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
@@ -3566,7 +3545,7 @@ int APWatchdog::HandleEasterEgg()
 			std::string lookingAtEggString = Utilities::entityStringRepresentation(lookingAtEgg);
 			std::map<std::string, bool> newEgg = {{ lookingAtEggString, true }};
 			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newEgg } });
-			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), false, { { "update" , newEgg } });
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , newEgg } });
 		
 			int eggCount = 0;
 			int eggTotal = 0;
@@ -4237,7 +4216,7 @@ void APWatchdog::CheckUnlockedWarps() {
 	int pNO = ap->get_player_number();
 
 	if (!firstActionDone) {
-		ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()) });
+		ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID) });
 
 		if (SyncProgress) {
 			ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) });
@@ -4248,7 +4227,7 @@ void APWatchdog::CheckUnlockedWarps() {
 
 
 		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", startwarp } });
-		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), startwarp, true, { {"default", nlohmann::json::object()} });
+		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), startwarp, true, { {"default", nlohmann::json::object()} });
 	}
 
 	Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
@@ -4313,5 +4292,5 @@ void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
 	int pNO = ap->get_player_number();
 
 	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
-	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
+	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
 }

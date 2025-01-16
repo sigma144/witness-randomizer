@@ -44,6 +44,7 @@ public:
 	std::string DisabledEPsBehavior;
 	float SolveModeSpeedFactor;
 	bool SyncProgress;
+	GUID saveGameID;
 };
 
 
@@ -151,6 +152,8 @@ private:
 	bool desertLaserHasBeenUpWhileConnected = false;
 	int sphereOpacityModifier = 0;
 
+	std::wstring savegameGUID;
+
 	std::queue<APClient::NetworkItem> queuedReceivedItems = {};
 
 	std::chrono::system_clock::time_point lastFrameTime;
@@ -210,8 +213,6 @@ private:
 
 	std::set<double> deathLinkTimestamps;
 
-	bool laserRequirementMet = false;
-
 	std::set<int> disableCollisionList;
 
 	std::set<int> severedDoorsList;
@@ -259,6 +260,7 @@ private:
 
 	void HandleInGameHints(float deltaSeconds);
 
+	void CheckObeliskSides();
 	void CheckSolvedPanels();
 	void HandleMovementSpeed(float deltaSeconds);
 	void HandlePowerSurge();
@@ -351,16 +353,16 @@ private:
 
 	std::map<std::string, int> laserIDsToLasers;
 	std::list<std::string> laserIDs;
-	std::map<int, bool> laserStates;
 	std::map<int, std::string> laserMessages;
 
 	std::set<int> solvedPanels;
+	std::set<int> solvedEPs;
+	std::set<int> activatedLasers;
 	std::set<int> openedDoors;
 	std::set<int> solvedHuntEntitiesDataStorage;
 	std::set<int> solvedEasterEggsDataStorage;
 	std::map<std::string, bool> lastDeadChecks;
 
-	std::map<std::string, int> EPIDsToEPs;
 	std::list<std::string> EPIDs;
 	std::map<int, bool> EPStates;
 

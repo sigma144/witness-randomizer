@@ -421,13 +421,6 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 		}
 	});
 
-	ap->set_retrieved_handler([&](const std::map <std::string, nlohmann::json> response) {
-		for (auto [key, value] : response) {
-			if(key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value);
-			if(key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value);
-		}
-	});
-
 	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
 		if (key.find("WitnessDeathLink") != std::string::npos) {
 			async->SetValueFromServer(key, value);
@@ -439,9 +432,9 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 			return;
 		}
 
-		if (key.find("WitnessLaserHint") != std::string::npos) async->HandleLaserHintResponse(key, value); // Do not flip
-		else if (key.find("WitnessLaser") != std::string::npos) async->HandleLaserResponse(key, value); // Do not flip
-		else if (key.find("WitnessEP") != std::string::npos) async->HandleEPResponse(key, value);
+		if (key.find("WitnessLaserHint") != std::string::npos) async->HandleLaserHintResponse(key, value);
+		else if (key.find("WitnessActivatedLasers") != std::string::npos) async->HandleLaserResponse(key, value);
+		else if (key.find("WitnessSolvedEPs") != std::string::npos) async->HandleEPResponse(key, value);
 		else if (key.find("WitnessAudioLog") != std::string::npos) async->HandleAudioLogResponse(key, value);
 		else if (key.find("WitnessSolvedPanels") != std::string::npos) async->HandleSolvedPanelsResponse(value);
 		else if (key.find("WitnessHuntEntityStatus") != std::string::npos) async->HandleHuntEntityResponse(value);
@@ -591,7 +584,6 @@ void APRandomizer::GetOrCreateSaveGame()
 	CoCreateGuid(&savegameGUID);
 	memory->WritePanelData<GUID>(0x00182, VIDEO_STATUS_COLOR, { savegameGUID });
 }
-
 
 
 void APRandomizer::PostGeneration() {
