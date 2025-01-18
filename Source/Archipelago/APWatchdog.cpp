@@ -2403,6 +2403,8 @@ void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
 void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value) {
 	std::map<std::string, bool> epsSolvedAccordingToDataStorage = value;
 
+	std::vector<int> newlySolvedEPs;
+
 	for (auto [entityString, dataStorageSolveStatus] : epsSolvedAccordingToDataStorage) {
 		if (!dataStorageSolveStatus) continue;
 
@@ -2416,10 +2418,18 @@ void APWatchdog::HandleEPResponse(std::string epID, nlohmann::json value) {
 			if (precompletableEpToName.count(entityID) && precompletableEpToPatternPointBytes.count(entityID) && EPShuffle) {
 				Memory::get()->MakeEPGlow(precompletableEpToName.at(entityID), precompletableEpToPatternPointBytes.at(entityID));
 			}
-			if (SyncProgress) {
-				HudManager::get()->queueNotification("EP Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
-			}
+			newlySolvedEPs.push_back(entityID);
 		}
+	}
+
+	if (newlySolvedEPs.size() == 0) return;
+	if (newlySolvedEPs.size() <= 3) {
+		for (int ep : newlySolvedEPs) {
+			HudManager::get()->queueNotification(entityToName[ep] + " Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
+		}
+	}
+	else {
+		HudManager::get()->queueNotification(std::to_string(newlySolvedEPs.size()) + " EPs Activated Remotely (Coop)", getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT)); //TODO: Names
 	}
 }
 
