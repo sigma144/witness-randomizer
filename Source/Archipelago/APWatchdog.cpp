@@ -1854,8 +1854,8 @@ void APWatchdog::HandleInGameHints(float deltaSeconds) {
 			return false;
 		}
 		
-		if (a.locationID > b.locationID) {
-			return true;
+		if (a.locationID != b.locationID) {
+			return a.locationID > b.locationID;
 		}
 		
 		return a.message.compare(b.message) < 0;
