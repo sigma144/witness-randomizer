@@ -2338,6 +2338,16 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 	message += std::to_string(eggTotal) + "/" + std::to_string(easterEggToSolveStatus.size() - 1);
 
 	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+
+	if (coop) {
+		std::map<std::string, bool> newEggs = {};
+		for (int egg : newRemoteEggs) {
+			std::string entity_string = Utilities::entityStringRepresentation(egg);
+
+			newEggs[entity_string] = true;
+		}
+		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , newEggs } });
+	}
 }
 
 void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
