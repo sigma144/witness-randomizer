@@ -10,7 +10,7 @@ const std::string& GetCreditsHint() {
 const std::vector<std::string>& GetJokeHints() {
   static const std::vector<std::string> jokeHints = {
     "Have you tried Adventure?\n...Holy crud, that game is 17 years older than me.",
-    reinterpret_cast<const char*>(u8"Have you tried Aquaria?\nAdmittedly, singing is a much cooler interaction mechanic than \"drawing lines on stuff\"™."),
+    u8"Have you tried Aquaria?\nAdmittedly, singing is a much cooler interaction mechanic than \"drawing lines on stuff\"™.",
     "Have you tried A Hat in Time?\nThere's an actual metro in that game, not just one on the tracker.",
     "Have you tried A Link to the Past?\nThe Archipelago game that started it all!",
     "Waiting to get your items?\nTry APSudoku! Make progress even while stuck.",
@@ -169,7 +169,7 @@ const std::vector<std::string>& GetJokeHints() {
     "A non-edge start point is similar to a cat.\nIt must be either inside or outside, it can't be both.",
     "What if we kissed on the Bunker Laser Platform?\nJk... unless?",
     "You don't have Boat? Invisible boat time!\nYou do have boat? Boat clipping time!",
-    reinterpret_cast <const char*>(u8"Cet indice est en français. Nous nous excusons de tout inconvénients engendrés par cela."),
+    u8"Cet indice est en français. Nous nous excusons de tout inconvénients engendrés par cela.",
     "How many of you have personally witnessed a total solar eclipse?",
     "In the Treehouse area, you will find 69 progression items.\nNice.\n(Source: Just trust me)",
     "Lingo\nLingoing\nLingone",
