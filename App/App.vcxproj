@@ -101,7 +101,7 @@
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:__cplusplus /Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -120,7 +120,7 @@
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:__cplusplus /Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
@@ -143,7 +143,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:__cplusplus /Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -167,7 +167,7 @@
       <AdditionalIncludeDirectories>..\Source;..\Source\Archipelago\Client\asio\include;..\Source\Archipelago\Client\websocketpp;..\Source\Archipelago\Client\wswrap\include;..\Source\Archipelago\Client\json\include;..\Source\Archipelago\Client\valijson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:__cplusplus /Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
