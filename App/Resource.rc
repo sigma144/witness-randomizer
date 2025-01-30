@@ -50,187 +50,187 @@ END
 // WAVE
 //
 
-IDR_WAVE1               WAVE                    "..\\Music\\EP Filler.wav"
+IDR_WAVE1               WAVE                    "..\\Music\\EP Filler.ogg"
 
-IDR_WAVE2               WAVE                    "..\\Music\\EP Progression.wav"
+IDR_WAVE2               WAVE                    "..\\Music\\EP Progression.ogg"
 
-IDR_WAVE3               WAVE                    "..\\Music\\EP Trap.wav"
+IDR_WAVE3               WAVE                    "..\\Music\\EP Trap.ogg"
 
-IDR_WAVE4               WAVE                    "..\\Music\\EP Useful.wav"
+IDR_WAVE4               WAVE                    "..\\Music\\EP Useful.ogg"
 
-IDR_WAVE5               WAVE                    "..\\Music\\Panel Filler 1.wav"
+IDR_WAVE5               WAVE                    "..\\Music\\Panel Filler 1.ogg"
 
-IDR_WAVE6               WAVE                    "..\\Music\\Panel Filler 2.wav"
+IDR_WAVE6               WAVE                    "..\\Music\\Panel Filler 2.ogg"
 
-IDR_WAVE7               WAVE                    "..\\Music\\Panel Filler Epic.wav"
+IDR_WAVE7               WAVE                    "..\\Music\\Panel Filler Epic.ogg"
 
-IDR_WAVE8               WAVE                    "..\\Music\\Panel Progression 1.wav"
+IDR_WAVE8               WAVE                    "..\\Music\\Panel Progression 1.ogg"
 
-IDR_WAVE9               WAVE                    "..\\Music\\Panel Progression 2.wav"
+IDR_WAVE9               WAVE                    "..\\Music\\Panel Progression 2.ogg"
 
-IDR_WAVE10              WAVE                    "..\\Music\\Panel Progression 3.wav"
+IDR_WAVE10              WAVE                    "..\\Music\\Panel Progression 3.ogg"
 
-IDR_WAVE11              WAVE                    "..\\Music\\Panel Progression Epic.wav"
+IDR_WAVE11              WAVE                    "..\\Music\\Panel Progression Epic.ogg"
 
-IDR_WAVE12              WAVE                    "..\\Music\\Panel Trap 1.wav"
+IDR_WAVE12              WAVE                    "..\\Music\\Panel Trap 1.ogg"
 
-IDR_WAVE13              WAVE                    "..\\Music\\Panel Trap 2.wav"
+IDR_WAVE13              WAVE                    "..\\Music\\Panel Trap 2.ogg"
 
-IDR_WAVE14              WAVE                    "..\\Music\\Panel Trap Epic.wav"
+IDR_WAVE14              WAVE                    "..\\Music\\Panel Trap Epic.ogg"
 
-IDR_WAVE15              WAVE                    "..\\Music\\Panel Useful 1.wav"
+IDR_WAVE15              WAVE                    "..\\Music\\Panel Useful 1.ogg"
 
-IDR_WAVE16              WAVE                    "..\\Music\\Panel Useful 2.wav"
+IDR_WAVE16              WAVE                    "..\\Music\\Panel Useful 2.ogg"
 
-IDR_WAVE17              WAVE                    "..\\Music\\Panel Useful Epic.wav"
+IDR_WAVE17              WAVE                    "..\\Music\\Panel Useful Epic.ogg"
 
-IDR_WAVE18              WAVE                    "..\\Music\\EP Filler 2.wav"
+IDR_WAVE18              WAVE                    "..\\Music\\EP Filler 2.ogg"
 
-IDR_WAVE19              WAVE                    "..\\Music\\EP Progression 2.wav"
+IDR_WAVE19              WAVE                    "..\\Music\\EP Progression 2.ogg"
 
-IDR_WAVE20              WAVE                    "..\\Music\\EP Trap 2.wav"
+IDR_WAVE20              WAVE                    "..\\Music\\EP Trap 2.ogg"
 
-IDR_WAVE21              WAVE                    "..\\Music\\EP Useful 2.wav"
+IDR_WAVE21              WAVE                    "..\\Music\\EP Useful 2.ogg"
 
-IDR_WAVE22              WAVE                    "..\\Music\\Panel Filler 3.wav"
+IDR_WAVE22              WAVE                    "..\\Music\\Panel Filler 3.ogg"
 
-IDR_WAVE23              WAVE                    "..\\Music\\Panel Filler 4.wav"
+IDR_WAVE23              WAVE                    "..\\Music\\Panel Filler 4.ogg"
 
-IDR_WAVE24              WAVE                    "..\\Music\\Incoming Filler.wav"
+IDR_WAVE24              WAVE                    "..\\Music\\Incoming Filler.ogg"
 
-IDR_WAVE25              WAVE                    "..\\Music\\Incoming Progression.wav"
+IDR_WAVE25              WAVE                    "..\\Music\\Incoming Progression.ogg"
 
-IDR_WAVE26              WAVE                    "..\\Music\\Incoming Trap.wav"
+IDR_WAVE26              WAVE                    "..\\Music\\Incoming Trap.ogg"
 
-IDR_WAVE27              WAVE                    "..\\Music\\Incoming Useful.wav"
+IDR_WAVE27              WAVE                    "..\\Music\\Incoming Useful.ogg"
 
-IDR_WAVE28              WAVE                    "..\\Music\\Panel Progression 4.wav"
+IDR_WAVE28              WAVE                    "..\\Music\\Panel Progression 4.ogg"
 
-IDR_WAVE29              WAVE                    "..\\Music\\Panel Progression 5.wav"
+IDR_WAVE29              WAVE                    "..\\Music\\Panel Progression 5.ogg"
 
-IDR_WAVE30              WAVE                    "..\\Music\\Victory.wav"
+IDR_WAVE30              WAVE                    "..\\Music\\Victory.ogg"
 
-IDR_WAVE31              WAVE                    "..\\Music\\Panel Trap 3.wav"
+IDR_WAVE31              WAVE                    "..\\Music\\Panel Trap 3.ogg"
 
-IDR_WAVE32              WAVE                    "..\\Music\\Panel Useful 3.wav"
+IDR_WAVE32              WAVE                    "..\\Music\\Panel Useful 3.ogg"
 
-IDR_WAVE33              WAVE                    "..\\Music\\Panel Useful 4.wav"
+IDR_WAVE33              WAVE                    "..\\Music\\Panel Useful 4.ogg"
 
-IDR_WAVE34              WAVE                    "..\\Music\\Dog Trap.wav"
+IDR_WAVE34              WAVE                    "..\\Music\\Dog Trap.ogg"
 
-IDR_WAVE35              WAVE                    "..\\Music\\Dog Filler.wav"
+IDR_WAVE35              WAVE                    "..\\Music\\Dog Filler.ogg"
 
-IDR_WAVE36              WAVE                    "..\\Music\\Dog Progression.wav"
+IDR_WAVE36              WAVE                    "..\\Music\\Dog Progression.ogg"
 
-IDR_WAVE37              WAVE                    "..\\Music\\Dog Useful.wav"
+IDR_WAVE37              WAVE                    "..\\Music\\Dog Useful.ogg"
 
-IDR_WAVE38              WAVE                    "..\\Music\\Pillars Filler Bmaj.wav"
+IDR_WAVE38              WAVE                    "..\\Music\\Pillars Filler Bmaj.ogg"
 
-IDR_WAVE39              WAVE                    "..\\Music\\Pillars Filler EbMin.wav"
+IDR_WAVE39              WAVE                    "..\\Music\\Pillars Filler EbMin.ogg"
 
-IDR_WAVE40              WAVE                    "..\\Music\\Pillars Filler Emaj.wav"
+IDR_WAVE40              WAVE                    "..\\Music\\Pillars Filler Emaj.ogg"
 
-IDR_WAVE41              WAVE                    "..\\Music\\Pillars Progression Bmaj.wav"
+IDR_WAVE41              WAVE                    "..\\Music\\Pillars Progression Bmaj.ogg"
 
-IDR_WAVE42              WAVE                    "..\\Music\\Pillars Progression EbMin.wav"
+IDR_WAVE42              WAVE                    "..\\Music\\Pillars Progression EbMin.ogg"
 
-IDR_WAVE43              WAVE                    "..\\Music\\Pillars Progression Emaj.wav"
+IDR_WAVE43              WAVE                    "..\\Music\\Pillars Progression Emaj.ogg"
 
-IDR_WAVE44              WAVE                    "..\\Music\\Pillars Trap Bmaj.wav"
+IDR_WAVE44              WAVE                    "..\\Music\\Pillars Trap Bmaj.ogg"
 
-IDR_WAVE45              WAVE                    "..\\Music\\Pillars Trap EbMin.wav"
+IDR_WAVE45              WAVE                    "..\\Music\\Pillars Trap EbMin.ogg"
 
-IDR_WAVE46              WAVE                    "..\\Music\\Pillars Trap Emaj.wav"
+IDR_WAVE46              WAVE                    "..\\Music\\Pillars Trap Emaj.ogg"
 
-IDR_WAVE47              WAVE                    "..\\Music\\Pillars Useful Bmaj.wav"
+IDR_WAVE47              WAVE                    "..\\Music\\Pillars Useful Bmaj.ogg"
 
-IDR_WAVE48              WAVE                    "..\\Music\\Pillars Useful EbMin.wav"
+IDR_WAVE48              WAVE                    "..\\Music\\Pillars Useful EbMin.ogg"
 
-IDR_WAVE49              WAVE                    "..\\Music\\Pillars Useful Emaj.wav"
+IDR_WAVE49              WAVE                    "..\\Music\\Pillars Useful Emaj.ogg"
 
-IDR_WAVE51              WAVE                    "..\\Music\\Bonk.wav"
+IDR_WAVE51              WAVE                    "..\\Music\\Bonk.ogg"
 
-IDR_WAVE50              WAVE                    "..\\Music\\Randomized.wav"
+IDR_WAVE50              WAVE                    "..\\Music\\Randomized.ogg"
 
-IDR_WAVE52              WAVE                    "..\\Music\\Panel Hunt 1.wav"
+IDR_WAVE52              WAVE                    "..\\Music\\Panel Hunt 1.ogg"
 
-IDR_WAVE53              WAVE                    "..\\Music\\Panel Hunt 2.wav"
+IDR_WAVE53              WAVE                    "..\\Music\\Panel Hunt 2.ogg"
 
-IDR_WAVE54              WAVE                    "..\\Music\\Panel Hunt 3.wav"
+IDR_WAVE54              WAVE                    "..\\Music\\Panel Hunt 3.ogg"
 
-IDR_WAVE55              WAVE                    "..\\Music\\Panel Hunt 4.wav"
+IDR_WAVE55              WAVE                    "..\\Music\\Panel Hunt 4.ogg"
 
-IDR_WAVE56              WAVE                    "..\\Music\\Panel Hunt 5.wav"
+IDR_WAVE56              WAVE                    "..\\Music\\Panel Hunt 5.ogg"
 
-IDR_WAVE57              WAVE                    "..\\Music\\Panel Hunt 6.wav"
+IDR_WAVE57              WAVE                    "..\\Music\\Panel Hunt 6.ogg"
 
-IDR_WAVE58              WAVE                    "..\\Music\\Panel Hunt 7.wav"
+IDR_WAVE58              WAVE                    "..\\Music\\Panel Hunt 7.ogg"
 
-IDR_WAVE59              WAVE                    "..\\Music\\Panel Useful 5.wav"
+IDR_WAVE59              WAVE                    "..\\Music\\Panel Useful 5.ogg"
 
-IDR_WAVE60              WAVE                    "..\\Music\\Panel Hunt Understated.wav"
+IDR_WAVE60              WAVE                    "..\\Music\\Panel Hunt Understated.ogg"
 
-IDR_WAVE61              WAVE                    "..\\Music\\Panel Hunt 8.wav"
+IDR_WAVE61              WAVE                    "..\\Music\\Panel Hunt 8.ogg"
 
-IDR_WAVE62              WAVE                    "..\\Music\\Panel Hunt 9.wav"
+IDR_WAVE62              WAVE                    "..\\Music\\Panel Hunt 9.ogg"
 
-IDR_WAVE63              WAVE                    "..\\Music\\Panel Hunt 10.wav"
+IDR_WAVE63              WAVE                    "..\\Music\\Panel Hunt 10.ogg"
 
-IDR_WAVE64              WAVE                    "..\\Music\\Panel Hunt 11.wav"
+IDR_WAVE64              WAVE                    "..\\Music\\Panel Hunt 11.ogg"
 
-IDR_WAVE65              WAVE                    "..\\Music\\Panel ProgUseful Epic.wav"
+IDR_WAVE65              WAVE                    "..\\Music\\Panel ProgUseful Epic.ogg"
 
-IDR_WAVE66              WAVE                    "..\\Music\\Pillars ProgUseful Bmaj.wav"
+IDR_WAVE66              WAVE                    "..\\Music\\Pillars ProgUseful Bmaj.ogg"
 
-IDR_WAVE67              WAVE                    "..\\Music\\Pillars ProgUseful EbMin.wav"
+IDR_WAVE67              WAVE                    "..\\Music\\Pillars ProgUseful EbMin.ogg"
 
-IDR_WAVE68              WAVE                    "..\\Music\\Pillars ProgUseful Emaj.wav"
+IDR_WAVE68              WAVE                    "..\\Music\\Pillars ProgUseful Emaj.ogg"
 
-IDR_WAVE69              WAVE                    "..\\Music\\Victory Understated.wav"
+IDR_WAVE69              WAVE                    "..\\Music\\Victory Understated.ogg"
 
-IDR_WAVE70              WAVE                    "..\\Music\\Dog ProgUseful.wav"
+IDR_WAVE70              WAVE                    "..\\Music\\Dog ProgUseful.ogg"
 
-IDR_WAVE71              WAVE                    "..\\Music\\EP ProgUseful 2.wav"
+IDR_WAVE71              WAVE                    "..\\Music\\EP ProgUseful 2.ogg"
 
-IDR_WAVE72              WAVE                    "..\\Music\\EP ProgUseful.wav"
+IDR_WAVE72              WAVE                    "..\\Music\\EP ProgUseful.ogg"
 
-IDR_WAVE73              WAVE                    "..\\Music\\Incoming ProgUseful.wav"
+IDR_WAVE73              WAVE                    "..\\Music\\Incoming ProgUseful.ogg"
 
-IDR_WAVE75              WAVE                    "..\\Music\\Panel Hunt 12.wav"
+IDR_WAVE75              WAVE                    "..\\Music\\Panel Hunt 12.ogg"
 
-IDR_WAVE76              WAVE                    "..\\Music\\Panel Hunt 13.wav"
+IDR_WAVE76              WAVE                    "..\\Music\\Panel Hunt 13.ogg"
 
-IDR_WAVE77              WAVE                    "..\\Music\\Panel ProgUseful 1.wav"
+IDR_WAVE77              WAVE                    "..\\Music\\Panel ProgUseful 1.ogg"
 
-IDR_WAVE78              WAVE                    "..\\Music\\Panel ProgUseful 2.wav"
+IDR_WAVE78              WAVE                    "..\\Music\\Panel ProgUseful 2.ogg"
 
-IDR_WAVE79              WAVE                    "..\\Music\\Panel ProgUseful 3.wav"
+IDR_WAVE79              WAVE                    "..\\Music\\Panel ProgUseful 3.ogg"
 
-IDR_WAVE80              WAVE                    "..\\Music\\Panel ProgUseful 4.wav"
+IDR_WAVE80              WAVE                    "..\\Music\\Panel ProgUseful 4.ogg"
 
-IDR_WAVE81              WAVE                    "..\\Music\\Panel ProgUseful 5.wav"
+IDR_WAVE81              WAVE                    "..\\Music\\Panel ProgUseful 5.ogg"
 
-IDR_WAVE74              WAVE                    "..\\Music\\Panel Hunt 14.wav"
+IDR_WAVE74              WAVE                    "..\\Music\\Panel Hunt 14.ogg"
 
-IDR_WAVE82              WAVE                    "..\\Music\\Plop 1.wav"
+IDR_WAVE82              WAVE                    "..\\Music\\Plop 1.ogg"
 
-IDR_WAVE83              WAVE                    "..\\Music\\Plop 2.wav"
+IDR_WAVE83              WAVE                    "..\\Music\\Plop 2.ogg"
 
-IDR_WAVE84              WAVE                    "..\\Music\\Plop 3.wav"
+IDR_WAVE84              WAVE                    "..\\Music\\Plop 3.ogg"
 
-IDR_WAVE85              WAVE                    "..\\Music\\Plop 4.wav"
+IDR_WAVE85              WAVE                    "..\\Music\\Plop 4.ogg"
 
-IDR_WAVE86              WAVE                    "..\\Music\\Plop 5.wav"
+IDR_WAVE86              WAVE                    "..\\Music\\Plop 5.ogg"
 
-IDR_WAVE87              WAVE                    "..\\Music\\Easter Filler.wav"
+IDR_WAVE87              WAVE                    "..\\Music\\Easter Filler.ogg"
 
-IDR_WAVE88              WAVE                    "..\\Music\\Easter Progression.wav"
+IDR_WAVE88              WAVE                    "..\\Music\\Easter Progression.ogg"
 
-IDR_WAVE89              WAVE                    "..\\Music\\Easter ProgUseful.wav"
+IDR_WAVE89              WAVE                    "..\\Music\\Easter ProgUseful.ogg"
 
-IDR_WAVE90              WAVE                    "..\\Music\\Easter Trap.wav"
+IDR_WAVE90              WAVE                    "..\\Music\\Easter Trap.ogg"
 
-IDR_WAVE91              WAVE                    "..\\Music\\Easter Useful.wav"
+IDR_WAVE91              WAVE                    "..\\Music\\Easter Useful.ogg"
 
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
