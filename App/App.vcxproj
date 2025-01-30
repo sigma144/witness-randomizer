@@ -127,7 +127,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>winmm.lib;..\Source\Archipelago\Client\zlib\x64-windows-dbg\zlibd.lib;..\Source\Archipelago\Client\openssl\x64-windows-dbg\libcrypto_static.lib;..\Source\Archipelago\Client\openssl\x64-windows-dbg\libssl_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;..\Source\Archipelago\Client\zlib\x64-windows-dbg\zlibd.lib;..\Source\Archipelago\Client\openssl\x64-windows-dbg\libcrypto_static.lib;..\Source\Archipelago\Client\openssl\x64-windows-dbg\libssl_static.lib;crypt32.lib;msvcrtd.lib;libcpmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
