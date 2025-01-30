@@ -333,7 +333,7 @@
    /* If building or using zlib as a DLL, define ZLIB_DLL.
     * This is not mandatory, but it offers a little performance increase.
     */
-#  if 1
+#  if 0
 #    if defined(WIN32) && (!defined(__BORLANDC__) || (__BORLANDC__ >= 0x500))
 #      ifdef ZLIB_INTERNAL
 #        define ZEXTERN extern __declspec(dllexport)
@@ -366,7 +366,7 @@
 #endif
 
 #if defined (__BEOS__)
-#  if 1
+#  if 0
 #    ifdef ZLIB_INTERNAL
 #      define ZEXPORT   __declspec(dllexport)
 #      define ZEXPORTVA __declspec(dllexport)
