@@ -117,7 +117,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>false</TreatWarningAsError>
       <EnablePREfast>true</EnablePREfast>
-      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;soloud20200207\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;soloud20200207\include;..\Source\Archipelago\Client\zlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -161,7 +161,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <TreatWarningAsError>false</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;Archipelago\Client\openssl\include;soloud20200207\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Archipelago\Client\asio\include;Archipelago\Client\websocketpp;Archipelago\Client\wswrap\include;Archipelago\Client\json\include;Archipelago\Client\valijson\include;Archipelago\Client\openssl\include;soloud20200207\include;Archipelago\Client\zlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
