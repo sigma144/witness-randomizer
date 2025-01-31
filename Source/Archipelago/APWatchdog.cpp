@@ -2847,6 +2847,11 @@ void APWatchdog::CheckEPSkips() {
 			continue;
 		}
 
+		if (panel == 0x03629 && finalPanel == 0x03629) {  // Expert + Panel Hunt Edge Case for Tutorial Gate Open
+			panelsToRemoveSilently.insert(panel);
+			continue;
+		}
+
 		if (panel == 0x09E86 || panel == 0x09ED8) {
 			if (ReadPanelData<int>(0x09E86, FLASH_MODE) == 1 && ReadPanelData<int>(0x09ED8, FLASH_MODE) == 1) { 
 				int num_front_traced_edges = ReadPanelData<int>(0x09ED8, TRACED_EDGES);
