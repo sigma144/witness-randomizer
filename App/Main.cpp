@@ -291,6 +291,10 @@ void Main::randomize() {
 		clientWindow->logLine("Setting up High Contrast Mode.");
 		apRandomizer->HighContrastMode();
 	}
+	if (clientWindow->getSetting(ClientToggleSetting::ColorblindMode)) {
+		clientWindow->logLine("Making other colorblind adjustments.");
+		apRandomizer->ColorBlindAdjustments();
+	}
 
 	clientWindow->logLine("Start PostGeneration.");
 	apRandomizer->PostGeneration();

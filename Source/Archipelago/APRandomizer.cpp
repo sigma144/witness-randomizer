@@ -786,6 +786,43 @@ void APRandomizer::PostGeneration() {
 	ap->LocationScouts(allLocationsList);
 }
 
+void APRandomizer::AdjustPP4Colors() {
+	Memory* memory = Memory::get();
+
+	int pp4NumDecorations = memory->ReadPanelData<int>(0x01D3F, NUM_DECORATIONS);
+	std::vector<int> pp4Decorations = memory->ReadArray<int>(0x01D3F, DECORATIONS, pp4NumDecorations);
+
+	bool adjustColors = false;
+	for (int i = 0; i < pp4Decorations.size(); i++) {
+		int decoration = pp4Decorations[i];
+		if ((decoration & 0x700) == Decoration::Shape::Poly && (decoration & 0x2000) == Decoration::Negative) {
+			adjustColors = true;
+			decoration &= ~0xF;
+			decoration |= Decoration::Color::Blue;
+			pp4Decorations[i] = decoration;
+		}
+	}
+
+	memory->WriteArray(0x01D3F, DECORATIONS, pp4Decorations);
+
+	if (adjustColors) {
+		std::vector<float> swampRedOuter = memory->ReadPanelData<float>(0x00001, OUTER_BACKGROUND, 4);
+		std::vector<float> swampRedInner = memory->ReadPanelData<float>(0x00001, BACKGROUND_REGION_COLOR, 4);
+
+		swampRedOuter[0] *= 1.3f;
+		swampRedInner[0] *= 1.3f;
+
+		memory->WritePanelData<float>(0x01D3F, OUTER_BACKGROUND, swampRedOuter);
+		memory->WritePanelData<float>(0x01D3F, BACKGROUND_REGION_COLOR, swampRedInner);
+	}
+
+	memory->WritePanelData<int>(0x01D3F, NEEDS_REDRAW, {1});
+}
+
+void APRandomizer::ColorBlindAdjustments() {
+	AdjustPP4Colors();
+}
+
 void APRandomizer::HighContrastMode() {
 	Memory* memory = Memory::get();
 
@@ -813,6 +850,8 @@ void APRandomizer::HighContrastMode() {
 		memory->WritePanelData<float>(id, PATH_COLOR, pathColor);
 		memory->WritePanelData<float>(id, ACTIVE_COLOR, activeColor);
 	}
+
+	AdjustPP4Colors();
 }
 
 void APRandomizer::DisableColorCycle(bool revert) {
