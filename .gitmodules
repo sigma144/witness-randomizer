@@ -7,3 +7,6 @@
 [submodule "Source/Archipelago/Client/apclientpp"]
 	path = Source/Archipelago/Client/apclientpp
 	url = https://github.com/NewSoupVi/apclientpp.git
+[submodule "Music/WitnessJingles"]
+	path = Music/WitnessJingles
+	url = https://github.com/NewSoupVi/WitnessJingles
