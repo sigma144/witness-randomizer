@@ -426,7 +426,7 @@ void APWatchdog::CheckSolvedPanels() {
 			HudManager::get()->queueBannerMessage("Victory!");
 
 			if (timePassedSinceRandomisation > 10.0f) {
-				if (ClientWindow::get()->getJinglesSettingSafe() == "Understated" || ClientWindow::get()->getJinglesSettingSafe() == "Understated + Special") {
+				if (ClientWindow::get()->getJinglesSettingSafe() == "Minimal" || ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
 					APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedVictory, APJingleBehavior::PlayImmediate);
 				}
 				else if (ClientWindow::get()->getJinglesSettingSafe() == "Full") {
@@ -2683,7 +2683,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		return;
 	}
 
-	if (id == 0xFFF80 && (jingles != "Understated")) {
+	if (id == 0xFFF80 && (jingles != "Minimal")) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 				APAudioPlayer::get()->PlayAudio(APJingle::DogProgUseful, APJingleBehavior::Queue, false);
@@ -2704,7 +2704,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		return;
 	}
 
-	if (id > 0xEE200 && id < 0xEE300 && (jingles != "Understated")) {
+	if (id > 0xEE200 && id < 0xEE300 && (jingles != "Minimal")) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 				APAudioPlayer::get()->PlayAudio(APJingle::EasterProgUseful, APJingleBehavior::Queue, false);
@@ -2725,7 +2725,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		return;
 	}
 
-	if (finalRoomMusicTimer != -1 && (jingles != "Understated")) {
+	if (finalRoomMusicTimer != -1 && (jingles != "Minimal")) {
 		if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
 			if (itemFlags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE) {
 				APAudioPlayer::get()->PlayFinalRoomJingle("proguseful", APJingleBehavior::Queue, finalRoomMusicTimer);
@@ -2829,7 +2829,7 @@ void APWatchdog::PlayEntityHuntJingle(const int& huntEntity) {
 
 	float percentage = (float) state->solvedHuntEntities / (float) state->requiredHuntEntities;
 
-	if (ClientWindow::get()->getJinglesSettingSafe() == "Understated") {
+	if (ClientWindow::get()->getJinglesSettingSafe() == "Minimal") {
 		APAudioPlayer::get()->PlayAudio(APJingle::UnderstatedEntityHunt, APJingleBehavior::Queue);
 	}
 	else {

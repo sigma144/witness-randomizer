@@ -170,7 +170,7 @@ private:
 
 	APClient* ap = NULL;
 
-	std::string currentJingles = "Understated";
+	std::string currentJingles = "Minimal";
 	bool finalizedWarps = false;
 };
 
