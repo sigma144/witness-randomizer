@@ -2764,6 +2764,7 @@ void APWatchdog::PlaySentJingle(const int& id, const int& itemFlags) {
 		else {
 			APAudioPlayer::get()->PlayAudio(APJingle::PanelFiller, APJingleBehavior::Queue, epicVersion);
 		}
+		return;
 	}
 
 	if (itemFlags & APClient::ItemFlags::FLAG_ADVANCEMENT) {
