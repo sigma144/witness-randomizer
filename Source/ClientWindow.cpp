@@ -19,7 +19,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 10
+#define SAVE_VERSION 11
 
 #define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -126,7 +126,7 @@ void ClientWindow::loadSettings()
 		int saveVersion = data.contains("saveVersion") ? data["saveVersion"].get<int>() : 0;
 		if (saveVersion == SAVE_VERSION) {
 			// Load game settings.
-			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Understated");
+			setSetting(ClientDropdownSetting::Jingles, data.contains("jingles") ? data["jingles"].get<std::string>() : "Understated + Special");
 			setSetting(ClientToggleSetting::ChallengeTimer, data.contains("challengeTimer") ? data["challengeTimer"].get<bool>() : false);
 
 			setSetting(ClientToggleSetting::SyncProgress, data.contains("syncprogress") ? data["syncprogress"].get<bool>() : false);
@@ -156,7 +156,7 @@ void ClientWindow::loadSettings()
 
 	if (!loadedSettings) {
 		// Set defaults.
-		setSetting(ClientDropdownSetting::Jingles, "Understated");
+		setSetting(ClientDropdownSetting::Jingles, "Understated + Special");
 		setSetting(ClientToggleSetting::ChallengeTimer, false);
 
 		setSetting(ClientToggleSetting::SyncProgress, false);
