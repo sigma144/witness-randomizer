@@ -19,7 +19,7 @@ using json = nlohmann::json;
 
 ClientWindow* ClientWindow::_singleton = nullptr;
 
-#define SAVE_VERSION 9
+#define SAVE_VERSION 10
 
 #define CLIENT_WINDOW_WIDTH 700
 #define CLIENT_MENU_CLASS_NAME L"WitnessRandomizer"
@@ -807,8 +807,9 @@ void ClientWindow::addGameOptions(int& currentY) {
 
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Off");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated");
+	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Understated + Special");
 	SendMessage(hwndOptionJingles, CB_ADDSTRING, 0, (LPARAM)L"Full");
-	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Understated");
+	SendMessage(hwndOptionJingles, CB_SELECTSTRING, 0, (LPARAM)L"Understated + Special");
 
 	// Connect button. In line with the load credentials button.
 	hwndDisableDeathlink = CreateWindow(L"BUTTON", L"Disable DeathLink",
