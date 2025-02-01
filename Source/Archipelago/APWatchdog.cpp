@@ -4249,8 +4249,6 @@ void APWatchdog::CheckUnlockedWarps() {
 		}
 
 		std::map<std::string, bool> startwarp = { };
-		if (unlockableWarps.contains(startingWarp)) startwarp = { { startingWarp, true } };
-
 
 		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", startwarp } });
 		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(Utilities::GetUUID()), startwarp, true, { {"default", nlohmann::json::object()} });
@@ -4261,6 +4259,11 @@ void APWatchdog::CheckUnlockedWarps() {
 
 	for (auto [warpname, unlocked] : unlockableWarps) {
 		if (unlocked) continue;
+
+		if (warpname == startingWarp) {
+			UnlockWarps({ warpname });
+			return;
+		}
 
 		Vector3 warpPosition = warpLookup[warpname].playerPosition;
 		if (warpPositionUnlockPointOverrides.contains(warpname)) warpPosition = warpPositionUnlockPointOverrides[warpname];
