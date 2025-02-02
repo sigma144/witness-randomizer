@@ -60,6 +60,7 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 	itemIdToDoorSet = apSettings->itemIdToDoorSet;
 	SyncProgress = fixedClientSettings->SyncProgress;
 	EggHuntStep = apSettings->EggHuntStep;
+	EggHuntDifficulty = apSettings->EggHuntDifficulty;
 	
 	for (int huntEntity : apSettings->huntEntites) {
 		huntEntityToSolveStatus[huntEntity] = false;
@@ -95,6 +96,15 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 		for (int entity : entities) {
 			if (apSettings->huntEntites.count(entity)) {
 				huntEntitiesPerArea[area_name].insert(entity);
+			}
+			if (easterEggs.contains(entity) && !unsolvedEasterEggsPerArea.contains(area_name)) {
+				unsolvedEasterEggsPerArea[area_name] = {};
+			}
+			if (easterEggToSolveStatus.contains(entity)) {
+				if (entity == 0xEE0FF) continue;
+
+				unsolvedEasterEggsPerArea[area_name].insert(entity);
+				easterEggToAreaName[entity] = area_name;
 			}
 		}
 	}
@@ -192,6 +202,8 @@ void APWatchdog::action() {
 	UpdatePuzzleSkip(frameDuration);
 
 	CheckDeathLink();
+
+	ClearEmptyEggAreasAndSendNotification();
 
 	CheckUnlockedWarps();
 	DrawSpheres(frameDuration);
@@ -1543,50 +1555,56 @@ void APWatchdog::HandleKeyTaps() {
 		}
 		else if (interactionState == InteractionState::Walking) {
 			if (tappedButton == inputWatchdog->getCustomKeybind(CustomKey::SKIP_PUZZLE) && !easterEggToSolveStatus.empty()) {
-				int eggsNearby = 0;
-				float lowestDist = 1000000000;
-				bool nearbyButAbove = false;
-				bool nearbyButBelow = false;
-				Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
-				for (auto [egg, solveStatus] : easterEggToSolveStatus) {
-					if (solveStatus) {
-						continue;
-					}
-					if (egg == 0xEE0FF) continue;
+				if (EggHuntDifficulty >= 4) {
+					HudManager::get()->displayBannerMessageIfQueueEmpty("The Egg Radar is disabled on this difficulty.");
+				}
+				else
+				{
+					int eggsNearby = 0;
+					float lowestDist = 1000000000;
+					bool nearbyButAbove = false;
+					bool nearbyButBelow = false;
+					Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
+					for (auto [egg, solveStatus] : easterEggToSolveStatus) {
+						if (solveStatus) {
+							continue;
+						}
+						if (egg == 0xEE0FF) continue;
 
-					Vector3 eggPosition = easterEggs[egg].first;
-					float distance = (playerPosition - eggPosition).length();
-					float verticalDistance = playerPosition.Z - eggPosition.Z;
-					bool tooLow = verticalDistance > 3.5;
-					bool tooHigh = verticalDistance < -1;
-					bool withinVerticalRange = !tooLow && !tooHigh;
-					if (distance < 20 && withinVerticalRange) {
-						eggsNearby++;
+						Vector3 eggPosition = easterEggs[egg].first;
+						float distance = (playerPosition - eggPosition).length();
+						float verticalDistance = playerPosition.Z - eggPosition.Z;
+						bool tooLow = verticalDistance > 3.5;
+						bool tooHigh = verticalDistance < -1;
+						bool withinVerticalRange = !tooLow && !tooHigh;
+						if (distance < 20 && withinVerticalRange) {
+							eggsNearby++;
+						}
+						if (distance < lowestDist) {
+							lowestDist = distance;
+							nearbyButAbove = distance < 20 && tooHigh;
+							nearbyButBelow = distance < 20 && tooLow;
+						}
 					}
-					if (distance < lowestDist) {
-						lowestDist = distance;
-						nearbyButAbove = distance < 20 && tooHigh;
-						nearbyButBelow = distance < 20 && tooLow;
-					}
-				}
 
-				if (eggsNearby >= 2) {
-					HudManager::get()->displayBannerMessageIfQueueEmpty("There are multiple Easter Eggs nearby.");
-				}
-				else if (eggsNearby == 1) {
-					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby.");
-				}
-				else if (nearbyButAbove) {
-					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit above you.");
-				}
-				else if (nearbyButBelow) {
-					HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit below you.");
-				}
-				else if (lowestDist < 40) {
-					HudManager::get()->displayBannerMessageIfQueueEmpty("The nearest Easter Egg is a bit further away.");
-				}
-				else {
-					HudManager::get()->displayBannerMessageIfQueueEmpty("There are no Easter Eggs nearby.");
+					if (eggsNearby >= 2) {
+						HudManager::get()->displayBannerMessageIfQueueEmpty("There are multiple Easter Eggs nearby.");
+					}
+					else if (eggsNearby == 1) {
+						HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby.");
+					}
+					else if (nearbyButAbove) {
+						HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit above you.");
+					}
+					else if (nearbyButBelow) {
+						HudManager::get()->displayBannerMessageIfQueueEmpty("There is an Easter Egg nearby, and a bit below you.");
+					}
+					else if (lowestDist < 40) {
+						HudManager::get()->displayBannerMessageIfQueueEmpty("The nearest Easter Egg is a bit further away.");
+					}
+					else {
+						HudManager::get()->displayBannerMessageIfQueueEmpty("There are no Easter Eggs nearby.");
+					}
 				}
 			}
 		}
@@ -2241,6 +2259,71 @@ void APWatchdog::HandleWarpResponse(nlohmann::json value) {
 	UnlockWarps(localUnlockedWarps);
 }
 
+void APWatchdog::UpdateAreaEgg(int entityID) {
+	if (entityID != 0xEE0FF) {
+		if (easterEggToAreaName.contains(entityID)) {
+			unsolvedEasterEggsPerArea[easterEggToAreaName[entityID]].erase(entityID);
+		}
+		else
+		{
+			HudManager::get()->queueNotification("The client is missing info for this Easter Egg. Please report this to NewSoupVi.", getColorByItemFlag(APClient::ItemFlags::FLAG_TRAP));
+		}
+	}
+}
+
+void APWatchdog::ClearEmptyEggAreasAndSendNotification(int specificCollectedEggID) {
+	if (!firstEggResponse || !queuedItems.empty()) return;
+
+	std::vector<std::string> finished_areas = {};
+
+	bool just_found = false;
+	std::string specific_area_name = "";
+	if (easterEggToAreaName.contains(specificCollectedEggID)) specific_area_name = easterEggToAreaName[specificCollectedEggID];
+
+	for (auto [area_name, eggs] : unsolvedEasterEggsPerArea) {
+		if (eggs.empty()) {
+			finished_areas.push_back(area_name);
+		}
+		else {
+			if (area_name == specific_area_name) {
+				just_found = true;
+				if (EggHuntDifficulty == 2) {
+					HudManager::get()->queueNotification("There are more Easter Eggs to find in the " + area_name + " area.");
+				}
+				else if (EggHuntDifficulty == 1) {
+					HudManager::get()->queueNotification("There are " + std::to_string(eggs.size()) + " more Easter Eggs to find in the " + area_name + " area.");
+				}
+			}
+		}
+	}
+
+	if (finished_areas.empty()) return;
+
+	for (std::string finished_area : finished_areas) {
+		unsolvedEasterEggsPerArea.erase(finished_area);
+	}
+
+	if (EggHuntDifficulty != 5) {
+		std::string message = "There are no more Easter Eggs in the " + finished_areas[0] + " area.";
+		if (just_found) {
+			message = "You've found every Easter Egg in the " + finished_areas[0] + " area.";
+		}
+
+		if (finished_areas.size() == 2) {
+			message = "There are no more Easter Eggs in the " + finished_areas[0] + " and " + finished_areas[1] + " areas.";
+		}
+		else if (finished_areas.size() > 2) {
+			message = "There are no more Easter Eggs in the ";
+			for (int i = 0; i < finished_areas.size() - 1; i++) {
+				message += finished_areas[i] + ", ";
+			}
+			message += "and " + finished_areas[finished_areas.size() - 1] + " areas.";
+		}
+
+		HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+	}
+}
+
 void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) {
 	int pNO = ap->get_player_number();
 
@@ -2263,6 +2346,8 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 		if (easterEggToSolveStatus[entityID]) continue;
 
 		easterEggToSolveStatus[entityID] = true;
+		UpdateAreaEgg(entityID);
+		
 		newRemoteEggs.insert(entityID);
 	}
 
@@ -2275,7 +2360,20 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 	}
 	firstEggResponse = true;
 
-	if (newRemoteEggs.empty()) return;
+	if (newRemoteEggs.empty()) {
+		// "Silently" clear empty areas if no eggs have ever been found, then exit
+		std::vector<std::string> empty_areas = {};
+		for (auto [area_name, eggs] : unsolvedEasterEggsPerArea) {
+			if (eggs.empty()) {
+				empty_areas.push_back(area_name);
+			}
+		}
+
+		for (std::string finished_area : empty_areas) {
+			unsolvedEasterEggsPerArea.erase(finished_area);
+		}
+		return;
+	}
 
 	int eggTotal = 0;
 	for (auto [egg, status] : easterEggToSolveStatus) {
@@ -2300,6 +2398,7 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 	message += std::to_string(eggTotal) + "/" + std::to_string(easterEggToSolveStatus.size() - 1);
 
 	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
+	ClearEmptyEggAreasAndSendNotification();
 }
 
 void APWatchdog::HandleHuntEntityResponse(nlohmann::json value) {
@@ -3594,7 +3693,13 @@ int APWatchdog::HandleEasterEgg()
 				if (HighestRealEggCheck != -1 && HighestRealEggCheck != HighestEggCheck) {
 					HudManager::get()->queueNotification("Collecting Easter Eggs beyond " + std::to_string(HighestRealEggCheck) + " will only award filler.");
 				}
-
+				if (EggHuntDifficulty <= 4) {
+					HudManager::get()->queueNotification("You have an Egg Radar that can be pinged using the " + InputWatchdog::get()->getNameForInputButton(InputWatchdog::get()->getCustomKeybind(CustomKey::SKIP_PUZZLE)) + " key.", RgbColor(110 / 255.0, 99 / 255.0, 192 / 255.0));
+				}
+			}
+			UpdateAreaEgg(lookingAtEgg);
+			ClearEmptyEggAreasAndSendNotification(lookingAtEgg);
+			if (firstEggShouldSendMessage) {
 				HudManager::get()->queueNotification("Good Luck!", RgbColor(110 / 255.0, 99 / 255.0, 192 / 255.0));
 			}
 			firstEggShouldSendMessage = false;

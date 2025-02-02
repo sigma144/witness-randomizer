@@ -930,6 +930,7 @@ ApSettings APRandomizer::GetAPSettings() {
 	apSettings.warps = UnlockableWarps;
 	apSettings.DeathLinkAmnesty = DeathLinkAmnesty;
 	apSettings.EggHuntStep = EggHuntStep;
+	apSettings.EggHuntDifficulty = EggHuntDifficulty;
 	return apSettings;
 }
 
