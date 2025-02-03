@@ -60,7 +60,7 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 	itemIdToDoorSet = apSettings->itemIdToDoorSet;
 	SyncProgress = fixedClientSettings->SyncProgress;
 	EggHuntStep = apSettings->EggHuntStep;
-	EggHuntDifficulty = apSettings->EggHuntDifficulty;
+	EggHuntDifficulty = apSettings->EggHuntDifficulty; // TODO: UNDO DEBUG MODE
 	
 	for (int huntEntity : apSettings->huntEntites) {
 		huntEntityToSolveStatus[huntEntity] = false;
@@ -203,8 +203,6 @@ void APWatchdog::action() {
 
 	CheckDeathLink();
 
-	ClearEmptyEggAreasAndSendNotification();
-
 	CheckUnlockedWarps();
 	DrawSpheres(frameDuration);
 
@@ -226,6 +224,7 @@ void APWatchdog::action() {
 		CheckFinalRoom();
 
 		CheckSolvedPanels();
+		ClearEmptyEggAreasAndSendNotification();
 
 		if(PuzzleRandomization != NO_PUZZLE_RANDO) CheckEPSkips();
 
@@ -2291,7 +2290,12 @@ void APWatchdog::ClearEmptyEggAreasAndSendNotification(int specificCollectedEggI
 					HudManager::get()->queueNotification("There are more Easter Eggs to find in the " + area_name + " area.");
 				}
 				else if (EggHuntDifficulty == 1) {
-					HudManager::get()->queueNotification("There are " + std::to_string(eggs.size()) + " more Easter Eggs to find in the " + area_name + " area.");
+					if (eggs.size() == 1) {
+						HudManager::get()->queueNotification("There is one more Easter Egg to find in the " + area_name + " area.");
+					}
+					else {
+						HudManager::get()->queueNotification("There are " + std::to_string(eggs.size()) + " more Easter Eggs to find in the " + area_name + " area.");
+					}
 				}
 			}
 		}
