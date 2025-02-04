@@ -2254,7 +2254,10 @@ void APWatchdog::HandleWarpResponse(nlohmann::json value) {
 	for (auto [warp, val] : warpsAcquiredAccordingToDataStorage) {
 		localUnlockedWarps.push_back(warp);
 	}
-	
+
+	if (unlockableWarps.contains(startingWarp)) {
+		localUnlockedWarps.push_back(startingWarp);
+	}
 	UnlockWarps(localUnlockedWarps);
 }
 
@@ -4371,11 +4374,6 @@ void APWatchdog::CheckUnlockedWarps() {
 
 	for (auto [warpname, unlocked] : unlockableWarps) {
 		if (unlocked) continue;
-
-		if (warpname == startingWarp) {
-			UnlockWarps({ warpname });
-			return;
-		}
 
 		Vector3 warpPosition = warpLookup[warpname].playerPosition;
 		if (warpPositionUnlockPointOverrides.contains(warpname)) warpPosition = warpPositionUnlockPointOverrides[warpname];
