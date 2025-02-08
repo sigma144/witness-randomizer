@@ -785,9 +785,7 @@ void PuzzleList::GenerateMountainN()
 	generator->setSymbol(Decoration::Exit, 10, 10);
 	generator->setSymmetry(Panel::Symmetry::Rotational);
 	generator->generate(0x09FD8, Decoration::Dot_Intersection | Decoration::Color::Blue, 4, Decoration::Dot_Intersection | Decoration::Color::Orange, 4);
-	//Normally, we have to load a package before we can edit texture.
-	//But this texture is in same package as bunker textures, which happens before this
-	//its already loaded. There is no need to load it again
+	Memory::get()->LoadPackage("save_58472");
 	TextureLoader::get()->generateTexture(0x09FD8);
 	generator->resetConfig();
 
@@ -2102,6 +2100,7 @@ void PuzzleList::GenerateMountainH()
 	generator->blockPos = { {1, 1}, {1, 5}, {3, 3}, {5, 3}, {5, 5}, {5, 7}, {7, 1}, {7, 5}, {7, 9}, {9, 1}, {9, 5}, {9, 9} };
 	generator->generate(0x09FD8, Decoration::Star | Decoration::Color::Green, 4, Decoration::Star | Decoration::Color::Magenta, 5,
 	Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Green, 1, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Magenta, 1, Decoration::Eraser | Decoration::Color::Magenta, 1);
+	Memory::get()->LoadPackage("save_58472");
 	TextureLoader::get()->generateTexture(0x09FD8);
 	generator->resetConfig();
 
