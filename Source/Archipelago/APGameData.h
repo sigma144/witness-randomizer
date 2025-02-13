@@ -871,6 +871,7 @@ const inline std::set<int> notThatBadSwampPanels = {
 	0x00474,
 	0x00553,
 	0x0056F,
+	0x009A6, // Purple Underwater
 };
 
 const inline std::map<int, std::string> precompletableEpToName = {
