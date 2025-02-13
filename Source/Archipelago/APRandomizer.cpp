@@ -854,30 +854,14 @@ void APRandomizer::HighContrastMode() {
 	AdjustPP4Colors();
 }
 
-void APRandomizer::DisableColorCycle(bool revert) {
+void APRandomizer::DisableColorCycle() {
 	Memory* memory = Memory::get();
 
-	if (revert) {
-		for (auto [id, name] : mountainOffset) {
-			std::vector<char> data(name.begin(), name.end());
-			data.push_back(0);
-			memory->WriteArray<char>(id, PATTERN_NAME, data, true);
-		}
+	for (int id : allPanels) {
+		memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
 	}
-	else {
-		for (int id : allPanels) {
-			memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
-		}
 
-		for (auto [id, name] : mountainOffset) {
-			if (id == 0x09e79) {
-				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x00089, PATTERN_NAME));
-			}
-			else {
-				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x0008a, PATTERN_NAME));
-			}
-		}
-	}
+	memory->EnableKhatzEffects(false);
 }
 
 void APRandomizer::setPuzzleLocks() {

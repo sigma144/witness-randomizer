@@ -254,8 +254,11 @@ void Main::randomize() {
 	clientWindow->setStatusMessage("Initialising puzzles...");
 	apRandomizer->InitPanels();
 
-	clientWindow->logLine("Disabling/Enabling color cycle effects.");
-	apRandomizer->DisableColorCycle(!clientWindow->getSetting(ClientToggleSetting::PanelEffects));
+	if (clientWindow->getSetting(ClientToggleSetting::PanelEffects)) {
+		// Could actually make this togglable at any time. Both of the patches are reversible
+		clientWindow->logLine("Disabling/Enabling color cycle effects.");
+		apRandomizer->DisableColorCycle();
+	}
 
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->RestoreOriginals();
