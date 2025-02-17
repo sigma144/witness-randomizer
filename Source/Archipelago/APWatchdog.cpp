@@ -61,11 +61,7 @@ APWatchdog::APWatchdog(APClient* client, PanelLocker* panelLocker, APState* stat
 	itemIdToDoorSet = apSettings->itemIdToDoorSet;
 	SyncProgress = fixedClientSettings->SyncProgress;
 	EggHuntStep = apSettings->EggHuntStep;
-
-	wchar_t guidString[39];
-	StringFromGUID2(fixedClientSettings->saveGameID, guidString, 39);
-	savegameGUID = guidString;
-	EggHuntDifficulty = apSettings->EggHuntDifficulty; // TODO: UNDO DEBUG MODE
+	EggHuntDifficulty = apSettings->EggHuntDifficulty;
 	
 	for (int huntEntity : apSettings->huntEntites) {
 		huntEntityToSolveStatus[huntEntity] = false;
@@ -2313,7 +2309,7 @@ void APWatchdog::UpdateAreaEgg(int entityID) {
 }
 
 void APWatchdog::ClearEmptyEggAreasAndSendNotification(int specificCollectedEggID) {
-	if (!firstEggResponse || !queuedItems.empty()) return;
+	if (!firstDataStoreResponse || !queuedItems.empty()) return;
 
 	std::vector<std::string> finished_areas = {};
 
@@ -2389,25 +2385,23 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 
 		solvedEasterEggsDataStorage.insert(entityID);
 
-		if (easterEggToSolveStatus[entityID]) continue;
-
-		easterEggToSolveStatus[entityID] = true;
-		UpdateAreaEgg(entityID);
-		
 		newRemoteEggs.insert(entityID);
 	}
+	UnlockEggs(newRemoteEggs, false);
+}
 
-	if (!firstEggResponse) {
-		if (SyncProgress) {
-			ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) });
-		}
-		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
-		firstEggShouldSendMessage = newRemoteEggs.empty();
+void APWatchdog::UnlockEggs(std::set<int> eggs, bool local){
+	std::set<int> newEggs;
+
+	for (int egg : eggs) {
+		if (easterEggToSolveStatus[egg]) continue;
+		easterEggToSolveStatus[egg] = true;
+		newEggs.insert(egg);
+		UpdateAreaEgg(egg);
 	}
-	firstEggResponse = true;
 
-	if (newRemoteEggs.empty()) {
-		// "Silently" clear empty areas if no eggs have ever been found, then exit
+	if (local) {
+		// "Silently" clear empty areas if this is the save load
 		std::vector<std::string> empty_areas = {};
 		for (auto [area_name, eggs] : unsolvedEasterEggsPerArea) {
 			if (eggs.empty()) {
@@ -2418,7 +2412,19 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 		for (std::string finished_area : empty_areas) {
 			unsolvedEasterEggsPerArea.erase(finished_area);
 		}
-		return;
+	}
+
+	if (newEggs.empty()) return;
+
+	if (local) {
+		// Send to datastorage just in case
+		int pNO = ap->get_player_number();
+		std::map<std::string, bool> newEggsDataStore = {};
+		for (int egg : newEggs) {
+			std::string lookingAtEggString = Utilities::entityStringRepresentation(egg);
+			newEggsDataStore[lookingAtEggString] = true;
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newEggsDataStore } });
+		}
 	}
 
 	int eggTotal = 0;
@@ -2429,31 +2435,19 @@ void APWatchdog::HandleEasterEggResponse(std::string key, nlohmann::json value) 
 		if (status) eggTotal++;
 	}
 
-	bool coop = key == "WitnessEasterEggStatus" + std::to_string(pNO);
-
 	std::string message = "Easter Eggs were ";
-	if (newRemoteEggs.size() == 1) {
+	if (newEggs.size() == 1) {
 		message = "An Easter Egg was ";
 	}
-	if (coop) {
+	if (!local) {
 		message += "collected remotely (Coop). New total: ";
 	}
 	else {
-		message += "reported as previously collected. Current total: ";
+		message += "previously collected. Current total: ";
 	}
 	message += std::to_string(eggTotal) + "/" + std::to_string(easterEggToSolveStatus.size() - 1);
 
 	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
-
-	if (coop) {
-		std::map<std::string, bool> newEggs = {};
-		for (int egg : newRemoteEggs) {
-			std::string entity_string = Utilities::entityStringRepresentation(egg);
-
-			newEggs[entity_string] = true;
-		}
-		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , newEggs } });
-	}
 
 	ClearEmptyEggAreasAndSendNotification();
 }
@@ -3694,10 +3688,17 @@ int APWatchdog::LookingAtEasterEgg()
 
 int APWatchdog::HandleEasterEgg()
 {
-	int pNO = ap->get_player_number();
 	if (!firstActionDone) {
-		ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID)});
-		ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), true, { { "default", nlohmann::json::object() } });
+		std::set<int> previouslyUnlockedEggs = CustomSaveGameManager::get().readValue<std::set<int>>("EasterEggs", {});
+
+		UnlockEggs(previouslyUnlockedEggs, true);
+
+		int pNO = ap->get_player_number();
+		if (SyncProgress) {
+			ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) });
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object()  } });
+		}
+		firstEggShouldSendMessage = previouslyUnlockedEggs.empty();
 	}
 
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();
@@ -3750,11 +3751,14 @@ int APWatchdog::HandleEasterEgg()
 			easterEggToSolveStatus[lookingAtEgg] = true;
 			if (ClientWindow::get()->getJinglesSettingSafe() != "Off") APAudioPlayer::get()->PlayAudio(APJingle::Plop, APJingleBehavior::PlayImmediate);
 
+			std::set<int> newEgg = { lookingAtEgg };
+			CustomSaveGameManager::get().updateValue("EasterEggs", newEgg);
+
+			int pNO = ap->get_player_number();
 			std::string lookingAtEggString = Utilities::entityStringRepresentation(lookingAtEgg);
-			std::map<std::string, bool> newEgg = {{ lookingAtEggString, true }};
-			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newEgg } });
-			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , newEgg } });
-		
+			std::map<std::string, bool> newEggMap = { { lookingAtEggString, true } };
+			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , newEggMap } });
+
 			int eggCount = 0;
 			int eggTotal = 0;
 			for (auto [egg, status] : easterEggToSolveStatus) {
@@ -4430,7 +4434,7 @@ void APWatchdog::CheckUnlockedWarps() {
 	int pNO = ap->get_player_number();
 
 	if (!firstActionDone) {
-		std::vector<std::string> previouslyUnlockedWarps = CustomSaveGameManager::get().readValue<std::vector<std::string>>("WitnessUnlockedWarps", {});
+		std::vector<std::string> previouslyUnlockedWarps = CustomSaveGameManager::get().readValue<std::vector<std::string>>("UnlockedWarps", {});
 		UnlockWarps(previouslyUnlockedWarps, true);
 
 		if (SyncProgress) {
@@ -4513,5 +4517,5 @@ void APWatchdog::UnlockWarps(std::vector<std::string> warps, bool local) {
 
 	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
 
-	CustomSaveGameManager::get().updateValue("WitnessUnlockedWarps", warpsToSaveInSavegame);
+	CustomSaveGameManager::get().updateValue("UnlockedWarps", warpsToSaveInSavegame);
 }

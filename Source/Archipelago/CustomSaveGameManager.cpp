@@ -61,7 +61,7 @@ void CustomSaveGameManager::write()
 	int num_items = size / SAVEGAME_ITEM_SIZE + (size % SAVEGAME_ITEM_SIZE != 0);
 
 	int next_power_of_2 = 1;
-	while (next_power_of_2 < num_items)
+	while (next_power_of_2 < 0x100000)
 		next_power_of_2 *= 2;
 
 	Memory::get()->WritePanelData<int>(SAVE_PANEL, SAVEGAME_ALLOCATION_SIZE, { next_power_of_2 });
@@ -71,21 +71,8 @@ void CustomSaveGameManager::write()
 bool CustomSaveGameManager::byte_index_is_safe(int i)
 {
 	int within_block = i % SAVEGAME_ITEM_SIZE;
-	if (within_block >= 0x10 && within_block < 0x18) {
+	/*if (within_block >= 0x10 && within_block < 0x18) {
 		return false;
-	}
-	return within_block < 0x30;
-}
-
-void CustomSaveGameManager::updateValue(std::string key, std::set<std::string> value)
-{
-	std::set<std::string> current = {};
-	if (store.contains(key)) current = store[key].get<std::set<std::string>>();
-
-	for (std::string s : value) {
-		current.insert(s);
-	}
-
-	store[key] = current;
-	write();
+	}*/
+	return within_block >= 0x18 && within_block < 0x30;
 }

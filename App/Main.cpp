@@ -263,9 +263,6 @@ void Main::randomize() {
 	clientWindow->setStatusMessage("Restoring vanilla puzzles...");
 	apRandomizer->RestoreOriginals();
 
-	clientWindow->setStatusMessage("Get or create savegame");
-	apRandomizer->GetOrCreateSaveGame();
-
 	clientWindow->setStatusMessage("Randomizing puzzles...");
 	if (puzzleRando == SIGMA_EXPERT)
 		randomizer->GenerateHard();

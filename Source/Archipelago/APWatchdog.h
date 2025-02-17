@@ -45,7 +45,6 @@ public:
 	std::string DisabledEPsBehavior;
 	float SolveModeSpeedFactor;
 	bool SyncProgress;
-	GUID saveGameID;
 };
 
 
@@ -110,6 +109,7 @@ public:
 	void HandleLaserHintResponse(std::string laserIDstr, nlohmann::json value);
 	void HandleSolvedPanelsResponse(nlohmann::json value);
 	void HandleEasterEggResponse(std::string key, nlohmann::json value);
+	void UnlockEggs(std::set<int> eggs, bool local);
 	void HandleHuntEntityResponse(nlohmann::json value);
 	void HandleOpenedDoorsResponse(nlohmann::json value);
 	void setLocationItemFlag(int64_t location, unsigned int flags);
@@ -124,6 +124,7 @@ public:
 	void ProcessDeathLink(double time, std::string cause, std::string source);
 
 	bool newItemsJustIn = false;
+	bool firstDataStoreResponse = false;
 
 	void QueueReceivedItem(std::vector<__int64> item);
 
@@ -152,8 +153,6 @@ private:
 	bool eee = false;
 	bool desertLaserHasBeenUpWhileConnected = false;
 	int sphereOpacityModifier = 0;
-
-	std::wstring savegameGUID;
 
 	std::queue<APClient::NetworkItem> queuedReceivedItems = {};
 
@@ -196,7 +195,6 @@ private:
 	std::map<int, bool> easterEggToSolveStatus;
 	std::map<std::string, std::set<int>> unsolvedEasterEggsPerArea;
 	std::map<int, std::string> easterEggToAreaName;
-	bool firstEggResponse = false;
 	bool firstEggShouldSendMessage = false;
 	int EggHuntStep = 0;
 	int EggHuntDifficulty = 0;

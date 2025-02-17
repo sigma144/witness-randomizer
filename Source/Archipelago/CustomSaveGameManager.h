@@ -33,7 +33,32 @@ public:
 		static CustomSaveGameManager INSTANCE;
 		return INSTANCE;
 	}
-	void updateValue(std::string key, std::set<std::string> value);
+
+	void updateValue(std::string key, std::set<std::string> value)
+	{
+		std::set<std::string> current = {};
+		if (store.contains(key)) current = store[key].get<std::set<std::string>>();
+
+		for (std::string s : value) {
+			current.insert(s);
+		}
+
+		store[key] = current;
+		write();
+	}
+
+	void updateValue(std::string key, std::set<int> value)
+	{
+		std::set<int> current = {};
+		if (store.contains(key)) current = store[key].get<std::set<int>>();
+
+		for (int i : value) {
+			current.insert(i);
+		}
+
+		store[key] = current;
+		write();
+	}
 
 	template <class T>
 	T readValue(std::string key, T defaultValue) {

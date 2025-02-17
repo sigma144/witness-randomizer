@@ -422,6 +422,8 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	});
 
 	ap->set_set_reply_handler([&](const std::string key, const nlohmann::json value, nlohmann::json original_value) {
+		async->firstDataStoreResponse = true;
+
 		if (key.find("WitnessDeathLink") != std::string::npos) {
 			async->SetValueFromServer(key, value);
 			return;
@@ -567,22 +569,6 @@ void APRandomizer::PreGeneration() {
 		inGameHint& hint = inGameHints.at(jokeHints.at(Random::rand() % jokeHints.size()));
 		hint.message = GetCreditsHint();
 	}
-}
-
-void APRandomizer::GetOrCreateSaveGame()
-{
-	Memory* memory = Memory::get();
-
-	GUID defaultPanelValue = { 0x3f333333, 0x9999, 0x3f19, {'\x99', '\x99', '\x19', '\x3e', '\x00', '\x00', '\x80', '\x3f'}};
-
-	GUID reportedGUID = memory->ReadPanelData<GUID>(0x00182, VIDEO_STATUS_COLOR);
-	if (reportedGUID != defaultPanelValue) {
-		savegameGUID = reportedGUID;
-		return;
-	}
-
-	CoCreateGuid(&savegameGUID);
-	memory->WritePanelData<GUID>(0x00182, VIDEO_STATUS_COLOR, { savegameGUID });
 }
 
 
@@ -917,7 +903,6 @@ FixedClientSettings APRandomizer::GetFixedClientSettings() {
 	fixedClientSettings.DisabledEPsBehavior = DisabledEPsBehavior;
 	fixedClientSettings.SolveModeSpeedFactor = solveModeSpeedFactor;
 	fixedClientSettings.SyncProgress = SyncProgress;
-	fixedClientSettings.saveGameID = savegameGUID;
 	return fixedClientSettings;
 }
 
