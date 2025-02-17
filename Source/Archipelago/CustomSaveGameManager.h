@@ -37,7 +37,7 @@ public:
 
 	template <class T>
 	T readValue(std::string key, T defaultValue) {
-		if (!store.contains[key]) {
+		if (!store.contains(key)) {
 			store[key] = defaultValue;
 			write();
 		}
