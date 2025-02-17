@@ -364,6 +364,20 @@ bool Memory::SetInfiniteChallenge(bool enable) {
 	return true;
 }
 
+void Memory::EnableKhatzEffects(bool enable)
+{
+	// 1400C39F0 in humble version
+	// Noting this down because with a few jne -> nop replacements you can make EVERY PANEL IN THE GAME DO ONE OF THE MOVING BACKGROUND EFFECTS
+	if (enable) {
+		char originalBytes[] = "\x0F\x85"; // jne
+		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(khatzJumpInstruction), originalBytes, sizeof(originalBytes) - 1, NULL);
+	}
+	else {
+		char patchedbytes[] = "\x90\xE9"; // nop jmp
+		WriteProcessMemory(_handle, reinterpret_cast<LPVOID>(khatzJumpInstruction), patchedbytes, sizeof(patchedbytes) - 1, NULL);
+	}
+}
+
 void Memory::ForceStopChallenge()
 {
 	uint64_t entityManager;
@@ -491,6 +505,16 @@ void Memory::findImportantFunctionAddresses(){
 	executeSigScan({ 0x44, 0x89, 0x4C, 0x24, 0x20, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->loadPackageFunction = _baseAddress + offset + index;
 		return true;
+	});
+
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x48, 0x83, 0xEC, 0x70, 0x0F }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		for (; index < data.size(); index++) {
+			if (data[index - 2] == 0x85 && data[index - 1] == 0xC0 && data[index] == 0x0F && data[index + 1] == 0x85) {
+				this->khatzJumpInstruction = _baseAddress + offset + index;
+				return true;
+			}
+		}
+		return false;
 	});
 
 	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0xEA, 0x4C, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {

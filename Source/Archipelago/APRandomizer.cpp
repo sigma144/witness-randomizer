@@ -46,7 +46,7 @@ bool APRandomizer::Connect(std::string& server, std::string& user, std::string& 
 	ap->set_room_info_handler([&]() {
 		const int item_handling_flags_all = 7;
 
-		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 5, 1});
+		ap->ConnectSlot(user, password, item_handling_flags_all, {}, {0, 6, 0});
 	});
 
 	ap->set_location_checked_handler([&](const std::list<int64_t>& locations) {
@@ -778,6 +778,43 @@ void APRandomizer::PostGeneration() {
 	ap->LocationScouts(allLocationsList);
 }
 
+void APRandomizer::AdjustPP4Colors() {
+	Memory* memory = Memory::get();
+
+	int pp4NumDecorations = memory->ReadPanelData<int>(0x01D3F, NUM_DECORATIONS);
+	std::vector<int> pp4Decorations = memory->ReadArray<int>(0x01D3F, DECORATIONS, pp4NumDecorations);
+
+	bool adjustColors = false;
+	for (int i = 0; i < pp4Decorations.size(); i++) {
+		int decoration = pp4Decorations[i];
+		if ((decoration & 0x700) == Decoration::Shape::Poly && (decoration & 0x2000) == Decoration::Negative) {
+			adjustColors = true;
+			decoration &= ~0xF;
+			decoration |= Decoration::Color::Blue;
+			pp4Decorations[i] = decoration;
+		}
+	}
+
+	memory->WriteArray(0x01D3F, DECORATIONS, pp4Decorations);
+
+	if (adjustColors) {
+		std::vector<float> swampRedOuter = memory->ReadPanelData<float>(0x00001, OUTER_BACKGROUND, 4);
+		std::vector<float> swampRedInner = memory->ReadPanelData<float>(0x00001, BACKGROUND_REGION_COLOR, 4);
+
+		swampRedOuter[0] *= 1.3f;
+		swampRedInner[0] *= 1.3f;
+
+		memory->WritePanelData<float>(0x01D3F, OUTER_BACKGROUND, swampRedOuter);
+		memory->WritePanelData<float>(0x01D3F, BACKGROUND_REGION_COLOR, swampRedInner);
+	}
+
+	memory->WritePanelData<int>(0x01D3F, NEEDS_REDRAW, {1});
+}
+
+void APRandomizer::ColorBlindAdjustments() {
+	AdjustPP4Colors();
+}
+
 void APRandomizer::HighContrastMode() {
 	Memory* memory = Memory::get();
 
@@ -805,32 +842,18 @@ void APRandomizer::HighContrastMode() {
 		memory->WritePanelData<float>(id, PATH_COLOR, pathColor);
 		memory->WritePanelData<float>(id, ACTIVE_COLOR, activeColor);
 	}
+
+	AdjustPP4Colors();
 }
 
-void APRandomizer::DisableColorCycle(bool revert) {
+void APRandomizer::DisableColorCycle() {
 	Memory* memory = Memory::get();
 
-	if (revert) {
-		for (auto [id, name] : mountainOffset) {
-			std::vector<char> data(name.begin(), name.end());
-			data.push_back(0);
-			memory->WriteArray<char>(id, PATTERN_NAME, data, true);
-		}
+	for (int id : allPanels) {
+		memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
 	}
-	else {
-		for (int id : allPanels) {
-			memory->WritePanelData<int>(id, COLOR_CYCLE_INDEX, -1);
-		}
 
-		for (auto [id, name] : mountainOffset) {
-			if (id == 0x09e79) {
-				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x00089, PATTERN_NAME));
-			}
-			else {
-				memory->WritePanelData<uint64_t>(id, PATTERN_NAME, memory->ReadPanelData<uint64_t>(0x0008a, PATTERN_NAME));
-			}
-		}
-	}
+	memory->EnableKhatzEffects(false);
 }
 
 void APRandomizer::setPuzzleLocks() {
@@ -883,6 +906,7 @@ ApSettings APRandomizer::GetAPSettings() {
 	apSettings.warps = UnlockableWarps;
 	apSettings.DeathLinkAmnesty = DeathLinkAmnesty;
 	apSettings.EggHuntStep = EggHuntStep;
+	apSettings.EggHuntDifficulty = EggHuntDifficulty;
 	return apSettings;
 }
 

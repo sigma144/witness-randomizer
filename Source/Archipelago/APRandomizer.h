@@ -55,7 +55,9 @@ class APRandomizer {
 		void GenerateHard();
 
 		void HighContrastMode();
-		void DisableColorCycle(bool revert);
+		void AdjustPP4Colors();
+		void ColorBlindAdjustments();
+		void DisableColorCycle();
 
 		void SkipPuzzle();
 

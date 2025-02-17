@@ -101,6 +101,11 @@ inline std::map<int, std::vector<std::string>> canonicalAudioFileNames = {
 	{ IDR_WAVE85, { "Plop 4.wav", "Plop.wav"}},
 	{ IDR_WAVE86, { "Plop 5.wav", "Plop.wav"}},
 
+	{ IDR_WAVE87, { "Plop 1.wav", "Easter Filler.wav"}},
+	{ IDR_WAVE88, { "Plop 2.wav", "Easter Progression.wav"}},
+	{ IDR_WAVE89, { "Plop 3.wav", "Easter ProgUseful.wav"}},
+	{ IDR_WAVE90, { "Plop 4.wav", "Easter Trap.wav"}},
+	{ IDR_WAVE91, { "Plop 5.wav", "Easter Useful.wav"}},
 
 	{ -2, {"Challenge.wav"}},
 };

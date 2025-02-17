@@ -269,6 +269,7 @@ public:
 
 	void StopDesertLaserPropagation();
 	bool SetInfiniteChallenge(bool enable);
+	void EnableKhatzEffects(bool enable);
 	void ForceStopChallenge();
 
 	void RemoveMesh(int id);
@@ -349,6 +350,7 @@ public:
 	uint64_t windmillMaxTurnSpeed;
 	uint64_t windmillCurrentTurnSpeed;
 	uint64_t stopChallengeFunction;
+	uint64_t khatzJumpInstruction;
 
 	uint64_t globalTextureCatalog;
 	uint64_t acquireByNameFunction;

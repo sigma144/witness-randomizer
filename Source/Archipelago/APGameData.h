@@ -871,6 +871,7 @@ const inline std::set<int> notThatBadSwampPanels = {
 	0x00474,
 	0x00553,
 	0x0056F,
+	0x009A6, // Purple Underwater
 };
 
 const inline std::map<int, std::string> precompletableEpToName = {
@@ -2740,8 +2741,8 @@ inline std::map<int, std::pair<Vector3, RgbColor>> easterEggs = {
 	{ 0xEE075, {{-64.948, -4.648, 1.964}, EGG_MAGENTA * 0.44f}}, // Walkway Tiles, hatkirby
 
 	// Boat
-	{ 0xEEE76, {{-170.391, 32.1132, 0.0269997}, EGG_ORANGE * 4.0f}}, // Glass Factory Optional Path, NewSoupVi
-	{ 0xEEE77, {{164.824, 181.399, 0.653992}, EGG_GREEN * 7.0f}}, // Treehouse Optional Path, NewSoupVi
+	{ 0xEE076, {{-170.391, 32.1132, 0.0269997}, EGG_ORANGE * 4.0f}}, // Glass Factory Optional Path, NewSoupVi
+	{ 0xEE077, {{164.824, 181.399, 0.653992}, EGG_GREEN * 7.0f}}, // Treehouse Optional Path, NewSoupVi
 };
 
 RgbColor getColorByItemIdOrFlag(const __int64 itemId, const __int64 flags);

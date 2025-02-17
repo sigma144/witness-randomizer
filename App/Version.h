@@ -3,11 +3,11 @@
 #define TO_STRING2(s) #s
 #define TO_STRING(s) TO_STRING2(s)
 
-#define MAJOR 7
-#define MINOR 1
+#define MAJOR 8
+#define MINOR 0
 #define PATCH 0
 
-#define VERSION_STR     "7.1.0"
+#define VERSION_STR     "8.0.0 Beta 2"
 #define VERSION			MAJOR, MINOR, PATCH
 
 #define AP_VERSION_STR	"0.6.0"

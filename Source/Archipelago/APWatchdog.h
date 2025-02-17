@@ -35,6 +35,7 @@ public:
 	std::vector<std::string> warps;
 	int DeathLinkAmnesty;
 	int EggHuntStep;
+	int EggHuntDifficulty;
 };
 
 class FixedClientSettings {
@@ -193,9 +194,12 @@ private:
 	std::map<int, float> huntEntityKeepActive;
 
 	std::map<int, bool> easterEggToSolveStatus;
+	std::map<std::string, std::set<int>> unsolvedEasterEggsPerArea;
+	std::map<int, std::string> easterEggToAreaName;
 	bool firstEggResponse = false;
 	bool firstEggShouldSendMessage = false;
 	int EggHuntStep = 0;
+	int EggHuntDifficulty = 0;
 	int HighestRealEggCheck = 0; // Not excluded
 	int HighestEggCheck = 0;
 
@@ -309,6 +313,9 @@ private:
 	void CheckPanels();
 	void CheckHuntEntities();
 	void CheckDoors();
+
+	void UpdateAreaEgg(int entityID);
+	void ClearEmptyEggAreasAndSendNotification(int specificCollectedEggID = -1);
 
 	void CheckImportantCollisionCubes();
 
