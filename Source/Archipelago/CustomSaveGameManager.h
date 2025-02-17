@@ -1,0 +1,40 @@
+#include <cstdint>
+#include <string>
+#include <map>
+#include <nlohmann/json.hpp>
+#include <set>
+#include <any>
+
+#define SAVEGAME_NUM_ITEMS 0x488
+#define SAVEGAME_ALLOCATION_SIZE 0x48C
+#define SAVEGAME_ARRAY_POINTER 0x490
+
+#define SAVE_PANEL 0x03505  // Tutorial Gate Close - This panel can't be seen by the player.
+
+#define SAVEGAME_ITEM_SIZE 0x34
+
+class Memory;
+
+class CustomSaveGameManager
+{
+private:
+	CustomSaveGameManager();
+
+	nlohmann::json store;
+
+	void load();
+	void write();
+	bool byte_index_is_safe(int i);
+
+	uint64_t savegameAllocationPointer = -1;
+public:
+	static CustomSaveGameManager& get() {
+		static CustomSaveGameManager INSTANCE;
+		return INSTANCE;
+	}
+
+	void initialize() {
+		load();
+	};
+	void updateValue(std::string key, std::set<std::string> value);
+};

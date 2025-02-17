@@ -24,6 +24,7 @@
 #include "ASMPayloadManager.h"
 #include "../Utilities.h"
 #include "LockablePuzzle.h"
+#include "CustomSaveGameManager.h"
 
 
 #define CHEAT_KEYS_ENABLED 0
@@ -4385,4 +4386,6 @@ void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
 
 	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
 	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
+
+	CustomSaveGameManager::get().writeValue("WitnessUnlockedWarps", warpsToSignalToDataStore);
 }
