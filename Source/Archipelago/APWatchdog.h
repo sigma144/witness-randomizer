@@ -335,7 +335,7 @@ private:
 
 	void CheckUnlockedWarps();
 
-	void UnlockWarps(std::vector<std::string> warps);
+	void UnlockWarps(std::vector<std::string> warps, bool local);
 
 	std::string startingWarp = "Tutorial First Hallway";
 	std::map<std::string, bool> unlockableWarps = {};

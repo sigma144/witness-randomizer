@@ -180,6 +180,7 @@
     <ClInclude Include="Archipelago\APWitnessData.h" />
     <ClInclude Include="Archipelago\ASMPayloadManager.h" />
     <ClInclude Include="Archipelago\CanonicalAudioFileNames.h" />
+    <ClInclude Include="Archipelago\CustomSaveGameManager.h" />
     <ClInclude Include="Archipelago\DrawIngameManager.h" />
     <ClInclude Include="Archipelago\Hints.h" />
     <ClInclude Include="Archipelago\OriginalPanelData.h" />
@@ -223,6 +224,7 @@
     <ClCompile Include="Archipelago\APRandomizer.cpp" />
     <ClCompile Include="Archipelago\APWatchdog.cpp" />
     <ClCompile Include="Archipelago\ASMPayloadManager.cpp" />
+    <ClCompile Include="Archipelago\CustomSaveGameManager.cpp" />
     <ClCompile Include="Archipelago\DrawIngameManager.cpp" />
     <ClCompile Include="Archipelago\Hints.cpp" />
     <ClCompile Include="Archipelago\PanelRestore.cpp" />

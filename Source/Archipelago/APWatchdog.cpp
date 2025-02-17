@@ -2297,7 +2297,7 @@ void APWatchdog::HandleWarpResponse(nlohmann::json value) {
 	if (unlockableWarps.contains(startingWarp)) {
 		localUnlockedWarps.push_back(startingWarp);
 	}
-	UnlockWarps(localUnlockedWarps);
+	UnlockWarps(localUnlockedWarps, false);
 }
 
 void APWatchdog::UpdateAreaEgg(int entityID) {
@@ -4430,7 +4430,8 @@ void APWatchdog::CheckUnlockedWarps() {
 	int pNO = ap->get_player_number();
 
 	if (!firstActionDone) {
-		ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID) });
+		std::vector<std::string> previouslyUnlockedWarps = CustomSaveGameManager::get().readValue<std::vector<std::string>>("WitnessUnlockedWarps", {});
+		UnlockWarps(previouslyUnlockedWarps, true);
 
 		if (SyncProgress) {
 			ap->SetNotify({ "WitnessUnlockedWarps" + std::to_string(pNO) });
@@ -4439,7 +4440,6 @@ void APWatchdog::CheckUnlockedWarps() {
 		std::map<std::string, bool> startwarp = { };
 
 		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", startwarp } });
-		ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), startwarp, true, { {"default", nlohmann::json::object()} });
 	}
 
 	Vector3 playerPosition = Vector3(Memory::get()->ReadPlayerPosition());
@@ -4453,12 +4453,12 @@ void APWatchdog::CheckUnlockedWarps() {
 		
 		if ((playerPosition - warpPosition).length() > WARP_SPHERE_RADIUS + 1.2f) continue;
 
-		UnlockWarps({ warpname });
+		UnlockWarps({ warpname }, true);
 		return;
 	}
 }
 
-void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
+void APWatchdog::UnlockWarps(std::vector<std::string> warps, bool local) {
 	std::vector<std::string> newWarps = {};
 	
 	for (auto warp : warps) {
@@ -4480,6 +4480,12 @@ void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
 
 	std::string message = "Unlocked Warp";
 	if (newWarps.size() > 1) message += "s";
+
+	if (!local) {
+		message = "Unlocked Warp (Coop)";
+		if (newWarps.size() > 1) message = "Unlocked Warps (Coop)";
+	}
+
 	message += ":";
 	for (auto warp : newWarps) {
 		message += " " + warp + ",";
@@ -4497,14 +4503,15 @@ void APWatchdog::UnlockWarps(std::vector<std::string> warps) {
 	HudManager::get()->queueNotification(message, getColorByItemFlag(APClient::ItemFlags::FLAG_ADVANCEMENT));
 
 	std::map<std::string, bool> warpsToSignalToDataStore;
+	std::set<std::string> warpsToSaveInSavegame;
 	for (std::string warp : newWarps) {
 		warpsToSignalToDataStore[warp] = true;
+		warpsToSaveInSavegame.insert(warp);
 	}
 
 	int pNO = ap->get_player_number();
 
 	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
-	ap->Set("WitnessUnlockedWarps" + std::to_string(pNO) + "_" + Utilities::wstring_to_utf8(savegameGUID), nlohmann::json::object(), false, { { "update" , warpsToSignalToDataStore } });
 
-	CustomSaveGameManager::get().writeValue("WitnessUnlockedWarps", warpsToSignalToDataStore);
+	CustomSaveGameManager::get().updateValue("WitnessUnlockedWarps", warpsToSaveInSavegame);
 }

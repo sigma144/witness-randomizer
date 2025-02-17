@@ -1,16 +1,17 @@
 #include "../Memory.h"
 #include "CustomSaveGameManager.h"
+#include <vector>
+#include <string>
 
-void CustomSaveGameManager::load()
+void CustomSaveGameManager::initialize()
 {
 	int num_items = Memory::get()->ReadPanelData<int>(SAVE_PANEL, SAVEGAME_NUM_ITEMS);
 
 	if (num_items == 0) return;
 
-	std::vector<byte> savegame_vector = Memory::get()->ReadPanelData<byte>(SAVE_PANEL, SAVEGAME_ARRAY_POINTER, SAVEGAME_ITEM_SIZE * num_items);
-	std::vector<byte> cleaned_savegame_vector = {};
+	std::vector<uint8_t> savegame_vector = Memory::get()->ReadArray<uint8_t>(SAVE_PANEL, SAVEGAME_ARRAY_POINTER, SAVEGAME_ITEM_SIZE * num_items);
+	std::vector<uint8_t> cleaned_savegame_vector = {};
 	for (int i = 0; i < savegame_vector.size(); i++) {
-		int byte_index_within_block = i % SAVEGAME_ITEM_SIZE;
 		if (!byte_index_is_safe(i)) continue;
 	
 		if (savegame_vector[i] == 0x00) break;
@@ -30,8 +31,9 @@ void CustomSaveGameManager::load()
 void CustomSaveGameManager::write()
 {
 	std::string savegame_string = store.dump();
-	std::vector<byte> savegame_vector(savegame_string.begin(), savegame_string.end());
-	std::vector<byte> safe_savegame_vector = {};
+	std::vector<uint8_t> savegame_vector(savegame_string.begin(), savegame_string.end());
+
+	std::vector<uint8_t> safe_savegame_vector = {};
 	
 	int vector_index = 0;
 	int savegame_index = 0;
@@ -46,15 +48,17 @@ void CustomSaveGameManager::write()
 		}
 		savegame_index++;
 	}
+	safe_savegame_vector.push_back(0x00);
 
 	if (savegameAllocationPointer == -1) {
 		savegameAllocationPointer = (uint64_t)VirtualAllocEx(Memory::get()->getHandle(), NULL, 0x100000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 		Memory::get()->WritePanelData<uint64_t>(SAVE_PANEL, SAVEGAME_ARRAY_POINTER, { savegameAllocationPointer });
 	}
 
-	Memory::get()->WriteArray<byte>(SAVE_PANEL, SAVEGAME_ARRAY_POINTER, safe_savegame_vector);
+	WriteProcessMemory(Memory::get()->getHandle(), reinterpret_cast<LPVOID>(savegameAllocationPointer), safe_savegame_vector.data(), safe_savegame_vector.size(), nullptr);
 
-	int num_items = num_items / SAVEGAME_ITEM_SIZE + (num_items % SAVEGAME_ITEM_SIZE != 0);
+	int size = safe_savegame_vector.size();
+	int num_items = size / SAVEGAME_ITEM_SIZE + (size % SAVEGAME_ITEM_SIZE != 0);
 
 	int next_power_of_2 = 1;
 	while (next_power_of_2 < num_items)
@@ -66,10 +70,11 @@ void CustomSaveGameManager::write()
 
 bool CustomSaveGameManager::byte_index_is_safe(int i)
 {
-	if (i >= 0x10 && i < 0x18) {
+	int within_block = i % SAVEGAME_ITEM_SIZE;
+	if (within_block >= 0x10 && within_block < 0x18) {
 		return false;
 	}
-	return i < 0x30;
+	return within_block < 0x30;
 }
 
 void CustomSaveGameManager::updateValue(std::string key, std::set<std::string> value)

@@ -18,11 +18,12 @@ class Memory;
 class CustomSaveGameManager
 {
 private:
-	CustomSaveGameManager();
+	CustomSaveGameManager() {
+		initialize();
+	};
 
 	nlohmann::json store;
 
-	void load();
 	void write();
 	bool byte_index_is_safe(int i);
 
@@ -32,9 +33,16 @@ public:
 		static CustomSaveGameManager INSTANCE;
 		return INSTANCE;
 	}
-
-	void initialize() {
-		load();
-	};
 	void updateValue(std::string key, std::set<std::string> value);
+
+	template <class T>
+	T readValue(std::string key, T defaultValue) {
+		if (!store.contains[key]) {
+			store[key] = defaultValue;
+			write();
+		}
+		return store[key].get<T>();
+	}
+
+	void initialize();
 };
