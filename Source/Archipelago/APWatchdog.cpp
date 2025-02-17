@@ -2416,6 +2416,9 @@ void APWatchdog::UnlockEggs(std::set<int> eggs, bool local){
 
 	if (newEggs.empty()) return;
 
+	// This function is not called when an egg is picked up manually.
+	firstEggShouldSendMessage = false;
+
 	if (local) {
 		// Send to datastorage just in case
 		int pNO = ap->get_player_number();
@@ -3698,7 +3701,6 @@ int APWatchdog::HandleEasterEgg()
 			ap->SetNotify({ "WitnessEasterEggStatus" + std::to_string(pNO) });
 			ap->Set("WitnessEasterEggStatus" + std::to_string(pNO), nlohmann::json::object(), true, { { "default", nlohmann::json::object()  } });
 		}
-		firstEggShouldSendMessage = previouslyUnlockedEggs.empty();
 	}
 
 	InteractionState interactionState = InputWatchdog::get()->getInteractionState();

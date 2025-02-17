@@ -195,7 +195,7 @@ private:
 	std::map<int, bool> easterEggToSolveStatus;
 	std::map<std::string, std::set<int>> unsolvedEasterEggsPerArea;
 	std::map<int, std::string> easterEggToAreaName;
-	bool firstEggShouldSendMessage = false;
+	bool firstEggShouldSendMessage = true;
 	int EggHuntStep = 0;
 	int EggHuntDifficulty = 0;
 	int HighestRealEggCheck = 0; // Not excluded
