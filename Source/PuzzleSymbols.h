@@ -13,6 +13,11 @@ struct PuzzleSymbols {
 		for (auto& pair : symbols[symbolType]) total += pair.second;
 		return total;
 	}
+	int getNumColors(int symbolType) {
+		int total = 0;
+		for (auto& pair : symbols[symbolType]) total += 1;
+		return total;
+	}
 	bool any(int symbolType) { return symbols[symbolType].size() > 0; }
 	int popRandomSymbol() {
 		std::vector<int> types;
