@@ -42,8 +42,10 @@ public:
 			return 0;
 		}
 	};
+	std::vector<uint8_t> generate_blank_texture();
 	std::vector<uint8_t> generate_color_panel_grid(std::vector<std::vector<int>> grid, int id, std::vector<Color> colors, bool specular = false);
 	std::vector<uint8_t> generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness, bool symmetry);
+
 
 };
 
