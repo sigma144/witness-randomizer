@@ -166,6 +166,7 @@ TextureLoader* TextureLoader::get()
 void TextureLoader::forceLoadBunkerTextures() {
 	Memory* memory = Memory::get();
 	memory->LoadPackage("save_58472"); //tells game to load the color bunker assets into memory, so we can edit them
+	//this package *also* contains texture for Mountain Rainbow 5 which is convenient.
 }
 
 void TextureLoader::forceLoadDesertTextures() {
@@ -211,6 +212,17 @@ void TextureLoader::generateTexture(int32_t panelid)
 	case 0x17E67:
 	case 0x0A079:
 		generateColorBunkerTexture(panelid);
+		break;
+	case 0x09FD8: //mountain rainbow 5 just needs a solid white texture on it.
+		TextureMaker tm(512, 512);
+		auto wtxBuffer = tm.generate_blank_texture();
+		Memory* memory = Memory::get();
+
+		auto texturename = textureNames[panelid];
+		// corresponding package is always loaded. shared with bunker textures, which get preloaded before this does.
+		memory->LoadTexture(memory->GetTextureMapFromCatalog(texturename), wtxBuffer);
+		memory->WritePanelData(panelid, NEEDS_REDRAW, 1);
+		break;
 	}
 	
 }

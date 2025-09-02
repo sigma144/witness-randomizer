@@ -339,6 +339,21 @@ void TextureMaker::flip_image_vertically(cairo_surface_t* image)
 }
 
 
+// blank white texture. patches blue squares on mountain rainbow 5
+std::vector<uint8_t> TextureMaker::generate_blank_texture() {
+	auto background = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+	//flip_image_vertically(background); //doesn't *really* matter, but texture loads upside down to what game displays.
+
+	auto cr = cairo_create(background);
+	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+	cairo_paint(cr);
+	cairo_surface_flush(background);
+	auto finalTexture = convert_cairo_surface_to_wtx(background, 1, 0x00);
+	cairo_destroy(cr);
+	cairo_surface_destroy(background);
+	return finalTexture;
+}
+
 std::vector<uint8_t> TextureMaker::generate_color_panel_grid(std::vector<std::vector<int>> grid, int id, std::vector<Color> colors, bool specular)
 {
 	auto gridheight = grid.size();

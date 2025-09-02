@@ -28,6 +28,12 @@ public:
 	void generateSpecTextureSpecial(int32_t panelid, bool inverted, bool walls);
 };
 
+
+// map of panel ids->texture names.
+// there isn't always a 1:1 match. Some panels have multiple textures. (Town triple has 4 textures total that affect the puzzle)
+// desert panels don't use this list, they just grab SPECULAR_TEXTURE directly from the panel.
+// see the following doc if you need a texture name thats not on this list.
+// https://docs.google.com/spreadsheets/d/1sB6TIPzc-YMfQGDvOE3h-Tg8HitVkAwhnw_qoZkvbmE/edit?usp=sharing
 inline std::unordered_map<int32_t, std::string> textureNames = {
 	{0x09F7D, "obj_panels_color_tricolor_1"},
 	{0x09FDC, "obj_panels_color_tricolor_2"},
@@ -44,4 +50,5 @@ inline std::unordered_map<int32_t, std::string> textureNames = {
 	{0x17E63, "obj_panels_color_coloredlight_1"},
 	{0x17E67, "obj_panels_color_coloredlight_2"},
 	{0x0A079, "obj_panels_color_tricolorNew_Elevator"},
+	{0x09FD8, "cc_pretty_mask"}
 };

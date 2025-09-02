@@ -786,6 +786,8 @@ void PuzzleList::GenerateMountainN()
 	generator->setSymbol(Decoration::Exit, 10, 10);
 	generator->setSymmetry(Panel::Symmetry::Rotational);
 	generator->generate(0x09FD8, Decoration::Dot_Intersection | Decoration::Color::Blue, 4, Decoration::Dot_Intersection | Decoration::Color::Orange, 4);
+	Memory::get()->LoadPackage("save_58472");
+	TextureLoader::get()->generateTexture(0x09FD8);
 	generator->resetConfig();
 
 	specialCase->generateMultiPuzzle({ 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2 }, {
@@ -2099,9 +2101,10 @@ void PuzzleList::GenerateMountainH()
 	generator->generate(0x09FD7, Decoration::Star | Decoration::Color::Yellow, 6, Decoration::Star | Decoration::Color::Green, 6,
 		Decoration::Star | Decoration::Color::Cyan, 6, Decoration::Star | Decoration::Color::Magenta, 6);
 	generator->setGridSize(5, 5);
-	generator->blockPos = { {1, 1}, {1, 5}, {3, 3}, {5, 3}, {5, 5}, {5, 7}, {7, 1}, {7, 5}, {7, 9}, {9, 1}, {9, 5}, {9, 9} };
 	generator->generate(0x09FD8, Decoration::Star | Decoration::Color::Green, 4, Decoration::Star | Decoration::Color::Magenta, 5,
 	Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Green, 1, Decoration::Poly | Decoration::Can_Rotate | Decoration::Color::Magenta, 1, Decoration::Eraser | Decoration::Color::Magenta, 1);
+	Memory::get()->LoadPackage("save_58472");
+	TextureLoader::get()->generateTexture(0x09FD8);
 	generator->resetConfig();
 
 	specialCase->generateMultiPuzzle({ 0x09FCC, 0x09FCE, 0x09FCF, 0x09FD0, 0x09FD1, 0x09FD2 }, {
