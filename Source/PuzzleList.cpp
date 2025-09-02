@@ -5,6 +5,7 @@
 #include "PuzzleList.h"
 #include "Watchdog.h"
 #include "TextureLoader.h"
+#include "Quaternion.h"
 
 void PuzzleList::GenerateAllN()
 {
@@ -1014,19 +1015,22 @@ void PuzzleList::GenerateDesertN()
 	//Final Room
 	specialCase->generateSpecularPuzzle(0x0A15C); //Concave
 	specialCase->generateSpecularPuzzle(0x09FFF); //Convex
-	generate.setSymbol(Decoration::Start, 0, 0);
-	generate.setSymbol(Decoration::Exit, 12, 6);
-	generate.setGridSize(6, 3);
-	generate.generate(0x0A15F);
-	generate.initPanel(0x0A15F);
-	generate._panel->minx = 0.05f;
-	generate._panel->maxx = 0.9f;
-	generate.generate(0x0A15F);
+	generator->setSymbol(Decoration::Start, 0, 0);
+	generator->setSymbol(Decoration::Exit, 12, 6);
+	generator->setGridSize(6, 3);
+	generator->generate(0x0A15F);
+	generator->initPanel(0x0A15F);
+	generator->_panel->minx = 0.05f;
+	generator->_panel->maxx = 0.9f;
+	generator->generate(0x0A15F);
 	specialCase->generateSpecularPuzzle(0x0A15F); //Tall
 	specialCase->generateSpecularPuzzle(0x17C31); //Glass
 	specialCase->generateSpecularPuzzle(0x012D7); //Final
 	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
-	
+	//Disable latch skip
+	memory->WriteArray<int>(0x03608, DOT_FLAGS, { STARTPOINT, 0, 0 });
+	(new DesertLatchWatchdog())->start();
+
 	//Ensure textures are preserved
 	memory->LoadPackage("save_58392");
 	memory->LoadPackage("save_58473");
@@ -1384,7 +1388,7 @@ void PuzzleList::GenerateQuarryH()
 		Decoration::Triangle | Decoration::Color::White, 3, Decoration::Triangle | Decoration::Color::Black, 3, Decoration::Eraser | Decoration::Color::Green, 1);
 	//Optional Puzzle
 	generator->resetConfig();
-	generator->setFlagOnce(Generate::Config::FalseParity);
+	//generator->setFlagOnce(Generate::Config::FalseParity);
 	generator->setGridSize(8, 8);
 	generator->setSymbol(Decoration::Exit, 0, 0);
 	generator->setSymbol(Decoration::Exit, 16, 0);
@@ -1852,7 +1856,7 @@ void PuzzleList::GenerateTownH()
 	generator->generate(0x28AC0, Decoration::Dot_Intersection, 36, Decoration::Triangle | Decoration::Color::Orange, 6, Decoration::Start, 1);
 	generator->generate(0x28AC1, Decoration::Dot_Intersection, 36, Decoration::Triangle | Decoration::Color::Orange, 8, Decoration::Start, 1);
 	generator->setSymbol(Decoration::Start, 0, 10);
-	generator->setFlagOnce(Generate::FalseParity);
+	//generator->setFlagOnce(Generate::FalseParity);
 	generator->generate(0x28AD9, Decoration::Dot_Intersection, 36, Decoration::Triangle | Decoration::Color::Orange, 7, Decoration::Eraser | Decoration::Color::White, 1);
 	//Blue Symmetry
 	generator->setFlag(Generate::Config::RequireCombineShapes);
@@ -2342,12 +2346,173 @@ void PuzzleList::GenerateOrchardH()
 
 void PuzzleList::GenerateDesertH()
 {
+	//Surface
+	specialCase->setOrientation(0x00698, -20, -40, 0);
+	specialCase->generateSpecularPuzzle(0x00698, TRIANGLE_GRID_3x3);
+	Memory::get()->WritePanelData<int>(0x00698, POWER_OFF_ON_FAIL, { 0 });
+
 	specialCase->setPosition(0x2752B, -174.4f, 173.8f, 15.3f);
 	specialCase->setPosition(0x2752F, -174.7f, 173.73f, 15.32f);
 	specialCase->setPosition(0x27530, -174.7f, 173.4f, 15.34f);
 	specialCase->setOrientation(0x0048F, -23, 5, 0);
 	specialCase->generateSpecularPuzzle(0x0048F, GRID_4x4, { {0,5},{15,20},{1,6},{11,16},{16,21},{17,22},{3,8},{8,13},
 		{0,1},{1,2},{2,3},{3,4},{5,6},{10,11},{11,12},{12,13},{13,14},{15,16},{16,17},{20,21},{21,22},{22,23} });
+	Memory::get()->WritePanelData<int>(0x0048F, POWER_OFF_ON_FAIL, { 0 });
+
+	specialCase->setPosition(0x274F8, -174.3, 163.12f, 18.2f);
+	Quaternion rot(10, 80, 90);
+	specialCase->setOrientation(0x274F8, rot.x, rot.y, rot.z, rot.w * 3.0f);
+	specialCase->generateSpecularPuzzle(0x09F92, TRIANGLE_GRID_4x4);
+	Memory::get()->WritePanelData<int>(0x09F92, POWER_OFF_ON_FAIL, { 0 });
+	Memory::get()->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.2f });  // Desert Surface 3 Control, 2x
+
+	specialCase->generateSpecularPuzzle(0x0A036, TRIANGLE_GRID_3x3);
+	switch (Random::rand() % 3) {
+	case 0: specialCase->setOrientation(0x0A036, -22, -60, 0); break;
+	case 1: specialCase->setOrientation(0x0A036, -9, -55, 0); break;
+	case 2: specialCase->setOrientation(0x0A036, -7, -78, 0); break;
+	}
+	specialCase->generateSpecularPuzzle(0x09DA6, TRIANGLE_GRID_3x3);
+	switch (Random::rand() % 3) {
+	case 0: specialCase->setOrientation(0x09DA6, -17, -15, 0); break;
+	case 1: specialCase->setOrientation(0x09DA6, -20, -15, 0); break;
+	case 2: specialCase->setOrientation(0x09DA6, -30, -15, 0); break;
+	}
+	specialCase->generateSpecularPuzzle(0x0A049, TRIANGLE_GRID_3x3);
+	switch (Random::rand() % 3) {
+	case 0: specialCase->setOrientation(0x0A049, -25, 5, 0); break;
+	case 1: specialCase->setOrientation(0x0A049, -17, 0, 0); break;
+	case 2: specialCase->setOrientation(0x0A049, 20, 10, 0); break;
+	}
+
+	specialCase->generateSpecularPuzzle(0x0A053, TRIANGLE_GRID_3x3); //What to do?
+
+	specialCase->generateSpecularPuzzle(0x09F94);
+	specialCase->setPower(0x09F94, false); // Turn off desert surface 8
+	Memory::get()->WritePanelData<float>(0x09F95, OPEN_RATE, { 1000.0f });  // Desert Surface Final Control, 100000x
+
+	//Light Room (TODO: Rework this area)
+
+	generator->setFlag(Generate::Config::StartEdgeOnly);
+	generator->setFlag(Generate::Config::WriteInvisible);
+	generator->setSymmetry(Panel::Rotational);
+	generator->setGridSize(5, 5);
+	generator->generate(0x00422, Decoration::Start, 1, Decoration::Exit, 1);
+	generator->initPanel(0x00422);
+	specialCase->generateSpecularPuzzle(0x00422);
+	specialCase->setOrientation(0x00422, -44, -8, 0);
+
+	generator->setSymmetry(Panel::Vertical);
+	generator->generate(0x006E3, Decoration::Start, 1, Decoration::Exit, 1);
+	generator->initPanel(0x006E3);
+	specialCase->generateSpecularPuzzle(0x006E3);
+	specialCase->setOrientation(0x006E3, -10, -40, 0);
+
+	generator->setGridSize(6, 6);
+	generator->setSymmetry(Panel::Horizontal);
+	generator->generate(0x0A02D, Decoration::Start, 1, Decoration::Exit, 1);
+	generator->initPanel(0x0A02D);
+	specialCase->generateSpecularPuzzle(0x0A02D);
+	generator->resetConfig();
+
+	//Pond Room
+
+	generator->setFlag(Generate::Config::WriteSpecular);
+	generator->setGridSize(4, 4);
+	generator->setSymbol(Decoration::Start, 0, 8);
+	generator->setSymbol(Decoration::Exit, 8, 0);
+	generator->generate(0x00C72, Decoration::Stone | Decoration::Color::Black, 6, Decoration::Stone | Decoration::Color::Green, 6);
+	generator->setSymbol(Decoration::Start, 0, 8);
+	generator->setSymbol(Decoration::Exit, 8, 0);
+	generator->generate(0x0129D, Decoration::Star | Decoration::Color::Red, 6, Decoration::Star | Decoration::Color::Green, 6, Decoration::Star | Decoration::Color::Black, 4);
+	generator->setSymbol(Decoration::Start, 0, 8);
+	generator->setSymbol(Decoration::Exit, 8, 0);
+	generator->generate(0x008BB, Decoration::Poly | Decoration::Color::Black, 1, Decoration::Poly | Decoration::Color::Red, 2);
+	generator->setSymbol(Decoration::Start, 0, 8);
+	generator->setSymbol(Decoration::Exit, 8, 0);
+	generator->blockPos = { { 3, 7 } };
+	generator->generate(0x0078D, Decoration::Triangle | Decoration::Color::Black, 4, Decoration::Triangle | Decoration::Color::Red, 5, Decoration::Triangle | Decoration::Color::Green, 1);
+	generator->setSymbol(Decoration::Start, 0, 8);
+	generator->setSymbol(Decoration::Exit, 8, 0);
+	generator->generate(0x18313, Decoration::Eraser | Decoration::Color::Black, 1, Decoration::Poly | Decoration::Color::Red, 3);
+	generator->resetConfig();
+
+	//Flood Room
+
+	Memory::get()->WritePanelData<float>(0x01300, OPEN_RATE, { 0.06f });  // Desert Flood Water Level, 2x
+	specialCase->generateSpecularPuzzleSpecial(0x04D18, GRID_3x3, true, false);
+	specialCase->generateSpecularPuzzleSpecial(0x01205, GRID_3x3, true, true);
+	specialCase->generateSpecularPuzzleSpecial(0x181AB, GRID_3x3, true, false);
+	specialCase->generateSpecularPuzzleSpecial(0x0117A, GRID_3x3, true, true);
+	specialCase->generateSpecularPuzzleSpecial(0x17ECA, GRID_3x3, true, false);
+	std::vector<float> positions = Memory::get()->ReadArray<float>(0x18076, DOT_POSITIONS, 38);
+	if (positions[1] > 0.9f) {
+		for (int i = 1; i < positions.size() - 1; i += 2) {
+			positions[i] -= 0.03f;
+		}
+		Memory::get()->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
+	}
+	specialCase->generateSpecularPuzzleSpecial(0x18076, true, false); //Rectangular
+	specialCase->setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
+
+	//Final Room
+
+	generator->setFlag(Generate::Config::GridOnly);
+
+	generator->setGridSize(6, 2);
+	generator->setSymmetry(Panel::SlideL);
+	generator->setSymbol(Decoration::Start, 0, 0);
+	generator->setSymbol(Decoration::Start, 2, 0);
+	generator->setSymbol(Decoration::Exit, 10, 4);
+	generator->setSymbol(Decoration::Exit, 12, 4);
+	generator->generate(0x0A15C);
+	specialCase->generateSpecularPuzzle(0x0A15C);
+
+	generator->setGridSize(6, 2);
+	generator->setSymmetry(Panel::SlideLFlip);
+	generator->setSymbol(Decoration::Start, 0, 0);
+	generator->setSymbol(Decoration::Start, 2, 4);
+	generator->setSymbol(Decoration::Exit, 10, 4);
+	generator->setSymbol(Decoration::Exit, 12, 0);
+	generator->generate(0x09FFF);
+	specialCase->generateSpecularPuzzle(0x09FFF);
+
+	generator->setGridSize(6, 3);
+	generator->setSymmetry(Panel::SlideLFlip);
+	generator->setSymbol(Decoration::Start, 0, 0);
+	generator->setSymbol(Decoration::Start, 2, 6);
+	generator->setSymbol(Decoration::Exit, 10, 6);
+	generator->setSymbol(Decoration::Exit, 12, 0);
+	generator->generate(0x0A15F);
+	specialCase->generateSpecularPuzzle(0x0A15F);
+
+	specialCase->generateSpecularPuzzle(0x17C31); //Glass (TODO: Get custom mesh)
+
+	generator->setGridSize(4, 4);
+	generator->setSymmetry(Panel::RotateLeft);
+	generator->setSymbol(Decoration::Start, 0, 0);
+	generator->setSymbol(Decoration::Start, 0, 8);
+	generator->setSymbol(Decoration::Start, 8, 0);
+	generator->setSymbol(Decoration::Start, 8, 8);
+	generator->setSymbol(Decoration::Exit, 0, 4);
+	generator->setSymbol(Decoration::Exit, 4, 8);
+	generator->setSymbol(Decoration::Exit, 8, 4);
+	generator->setSymbol(Decoration::Exit, 4, 0);
+	generator->generate(0x012D7);
+	specialCase->generateSpecularPuzzle(0x012D7);
+
+	Memory::get()->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
+
+	//Disable latch skip
+	Memory::get()->WriteArray<int>(0x03608, DOT_FLAGS, { STARTPOINT, 0, 0 });
+	(new DesertLatchWatchdog())->start();
+
+	//Ensure textures are preserved
+	Memory::get()->LoadPackage("save_58392");
+	Memory::get()->LoadPackage("save_58473");
+	Memory::get()->LoadPackage("save_58413");
+	Memory::get()->LoadPackage("save_58440");
+	Memory::get()->LoadPackage("globals");
 }
 
 void PuzzleList::GenerateKeepH()

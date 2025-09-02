@@ -357,7 +357,7 @@ void Memory::applyDestructivePatches() {
 	WriteProcessMemory(_handle, addressPointer, asmBuff, sizeof(asmBuff) - 1, NULL);
 }
 
-void Memory::findImportantFunctionAddresses(){
+void Memory::findImportantFunctionAddresses() {
 
 
 	executeSigScan({ 0x44, 0x89, 0x4C, 0x24, 0x20, 0x55, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x48, 0x8D, 0x6C, 0x24 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
@@ -406,11 +406,17 @@ void Memory::findImportantFunctionAddresses(){
 
 				this->loadTextureMapFunction = addressOfRelativePointer + relativePointer + 4;
 
+				//We can find the MemoryInputStream VFTable *in* this loadTextureMapFunction
+				//we need it elsewhere
+				int relativePointer2;
+				ReadAbsolute(reinterpret_cast<LPCVOID>(this->loadTextureMapFunction + 0x36), &relativePointer2, 4);
+
+				this->memoryInputStreamVFTable = relativePointer2 + this->loadTextureMapFunction + 0x33 + 0x7; // 33 is start of that instruction, its 7 bytes long
 				return true;
 			}
 		}
 		return false;
-	});	
+	});
 
 	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x57, 0x48, 0x81, 0xEC, 0x10, 0x01, 0x00, 0x00, 0x48, 0x8B }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
@@ -479,7 +485,7 @@ void Memory::findImportantFunctionAddresses(){
 
 	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x48, 0x89, 0x6C, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7C, 0x24, 0x20, 0x41, 0x56, 0x48, 0x63 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->getEntityByName = _baseAddress + offset + index;
-		
+
 		return true;
 	});
 
@@ -510,7 +516,7 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
-	executeSigScan ({0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x20, 0x48, 0x89, 0x48, 0x08, 0x55, 0x56, 0x57, 0x41, 0x54}, [this](__int64 offset, int index, const std::vector<byte>& data) {
+	executeSigScan({ 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x20, 0x48, 0x89, 0x48, 0x08, 0x55, 0x56, 0x57, 0x41, 0x54 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0x78 && data[index - 1] == 0x10 && data[index] == 0xE8) { // need to find actual function, which I could not get a sigscan to work for, so I did the function right before it
 				uint64_t pointerLocation = _baseAddress + offset + index + 1;
@@ -520,7 +526,7 @@ void Memory::findImportantFunctionAddresses(){
 				ReadAbsolute(reinterpret_cast<void*>(pointerLocation), &function, sizeof(int));
 
 				removeFromPatternMapFunction = pointerLocation + function + 4;
-				
+
 				// stop game from trying to delete previous pattern map
 
 				uint64_t testInstruction = pointerLocation + 0x10;
@@ -531,7 +537,7 @@ void Memory::findImportantFunctionAddresses(){
 				//This will cause memory leaks because the object is now not deleted. But that's preferrable to the game crashing.
 				//The memory leaks are about on the order of 0.1kB per "Resolving an already solved EP", an action the player shouldn't do too often.
 
-				WriteAbsolute(testInstructionPointer, buf, sizeof(buf) -1); // Write the new relative address into the "movss xmm0 [address]" statement.
+				WriteAbsolute(testInstructionPointer, buf, sizeof(buf) - 1); // Write the new relative address into the "movss xmm0 [address]" statement.
 
 
 				break;
@@ -589,7 +595,7 @@ void Memory::findImportantFunctionAddresses(){
 		return true;
 	});
 
-	
+
 
 	executeSigScan({ 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0xE9, 0xB3 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->_recordPlayerUpdate = _baseAddress + offset + index - 0x0C;
@@ -598,7 +604,7 @@ void Memory::findImportantFunctionAddresses(){
 	});
 
 	//open door
-	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {	
+	executeSigScan({ 0x0F, 0x57, 0xC9, 0x48, 0x8B, 0xCB, 0x48, 0x83, 0xC4, 0x20 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 2] == 0xF3 && data[index - 1] == 0x0F) {
 				this->openDoorFunction = _baseAddress + offset + index - 2;
@@ -649,7 +655,7 @@ void Memory::findImportantFunctionAddresses(){
 	});
 
 	//find a spot to inject payload
-	executeSigScan({0x0F, 0x5B, 0xC0, 0x0F, 0x2E, 0xC1, 0x74}, [this](__int64 offset, int index, const std::vector<byte>& data) {
+	executeSigScan({ 0x0F, 0x5B, 0xC0, 0x0F, 0x2E, 0xC1, 0x74 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		for (; index < data.size(); index++) {
 			if (data[index - 5] == 0xE8 && data[index] == 0xE8 && data[index + 5] == 0xE8 && data[index + 5] == 0xE8 && data[index + 10] == 0xE8) {
 				this->gameLoop3CallsInARow = _baseAddress + offset + index;
@@ -749,11 +755,11 @@ void Memory::findImportantFunctionAddresses(){
 
 	//Boat speed
 	//Find Entity_Boat::set_speed
-	executeSigScan({0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x40, 0x0F, 0x29, 0x74, 0x24, 0x30, 0x8B, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+	executeSigScan({ 0x48, 0x89, 0x5C, 0x24, 0x08, 0x57, 0x48, 0x83, 0xEC, 0x40, 0x0F, 0x29, 0x74, 0x24, 0x30, 0x8B, 0xFA }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		this->setBoatSpeed = _baseAddress + offset + index;
 
 		for (; index < data.size(); index++) { // We now need to look for "cmp edi 04", "cmp edi 03", "cmp edi 02", and "cmp edi 01"
-			  
+
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x04) { // find cmp edi 04 (Will only comment the rest once as it's the same for the other 3)
 				this->boatSpeed4 = _baseAddress + offset + index + 7; // movss xmm0 ->register<- is 7 bytes later
 
@@ -800,7 +806,7 @@ void Memory::findImportantFunctionAddresses(){
 					WriteAbsolute(addressPointer, &urelativeBoatSpeed3Address, sizeof(urelativeBoatSpeed3Address));
 
 					return true;
-					}, boatSpeed3Address);
+				}, boatSpeed3Address);
 			}
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x02) { // find cmp edi 02
 				this->boatSpeed2 = _baseAddress + offset + index + 7;
@@ -824,7 +830,7 @@ void Memory::findImportantFunctionAddresses(){
 					WriteAbsolute(addressPointer, &urelativeBoatSpeed2Address, sizeof(urelativeBoatSpeed2Address));
 
 					return true;
-					}, boatSpeed2Address);
+				}, boatSpeed2Address);
 			}
 			if (data[index - 2] == 0x83 && data[index - 1] == 0xFF && data[index] == 0x01) { // find cmp edi 01
 				this->boatSpeed1 = _baseAddress + offset + index + 7;
@@ -848,7 +854,7 @@ void Memory::findImportantFunctionAddresses(){
 					WriteAbsolute(addressPointer, &urelativeBoatSpeed1Address, sizeof(urelativeBoatSpeed1Address));
 
 					return true;
-					}, boatSpeed1Address);
+				}, boatSpeed1Address);
 				break;
 			}
 		}
@@ -929,7 +935,7 @@ void Memory::findImportantFunctionAddresses(){
 		for (; index < data.size(); index++) {
 			if (data[index] == 0x48 && data[index - 5] == 0xE8 && data[index - 10] == 0xE8 && data[index + 7] == 0xE8 && (data[index + 12] == 0x39 || data[index + 12] == 0x83)) {
 				this->GESTURE_MANAGER = _baseAddress + offset + index + 3;
-				
+
 				int addOffset = 0;
 				ReadAbsolute(reinterpret_cast<LPVOID>(this->GESTURE_MANAGER), &addOffset, 0x4);
 
@@ -939,6 +945,31 @@ void Memory::findImportantFunctionAddresses(){
 
 		return true;
 	});
+
+
+	executeSigScan({ 0x48, 0x89, 0x5c, 0x24, 0x08, 0x48, 0x89, 0x74, 0x24, 0x10, 0x57, 0x48, 0x83, 0xec, 0x40, 0x41 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		//if(data[index + 15] == 0x41){
+		this->loadMeshFunction = _baseAddress + offset + index;
+		return true;
+		//} else {
+			//return false;
+		//}
+	});
+
+	executeSigScan({ 0x40, 0x53, 0x56, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xec, 0x20, 0x4c, 0x8b, 0xf2 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		this->deserializeMeshAssetFunction = _baseAddress + offset + index;
+		return true;
+	});
+
+	//TODO these should be sigscans
+	//this catalog address contains a pointer to the catalog, manually read this and get actual location.
+	this->globalSoundDataCatalog = _baseAddress + 0x62d508;
+	int64_t soundcatalogpointer = 0;
+	ReadAbsolute((LPCVOID)this->globalSoundDataCatalog, &soundcatalogpointer, sizeof(int64_t));
+	this->globalSoundDataCatalog = soundcatalogpointer;
+	//this->acquireByNameFunctionSound = _baseAddress + 0x2e9de0; // acquire by name - why doesn't this work when i call it? game definitely calls this during initial load 
+	this->acquireByNameFunctionSound = _baseAddress + 0x1c1f30; // acquire raw pointer - actually works? 
+	this->loadSoundDataFunction = _baseAddress + 0x32edc0;
 }
 
 void Memory::findActivePanel() {
@@ -1539,4 +1570,313 @@ void Memory::LoadPackage(std::string packagename) {
 	WaitForSingleObject(thread, INFINITE);
 
 
+}
+
+std::vector<uint8_t> Memory::ReadFileToVector(const std::string& filename) {
+	std::ifstream file(filename, std::ios::binary | std::ios::ate);
+	if (file.is_open()) {
+		std::streamsize size = file.tellg();
+		file.seekg(0, std::ios::beg);
+		std::vector<uint8_t> data;
+		data.resize(size);
+		if (file.read(reinterpret_cast<char*>(data.data()), size)) {
+			return data;
+		}
+	}
+}
+
+uint64_t Memory::GetSoundData(std::string texturename)
+{
+	//first, we need to alloc some space in the game's process for the char* that will have the texture name
+	//std::string texturename = "bird_interrupt_gong";
+	char buffer1[100];
+	memset(buffer1, 0, sizeof(buffer1)); //fills with 0s
+	strcpy_s(buffer1, texturename.c_str());
+	//__int64 buffer1pointer = CallMallocFunction(sizeof(buffer1));
+	auto buffer1pointer = reinterpret_cast<uint64_t>(VirtualAllocEx(_handle, NULL, sizeof(buffer1), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+
+	auto resultpointer = reinterpret_cast<uint64_t>(VirtualAllocEx(_handle, NULL, sizeof(uint64_t), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+
+	WriteProcessMemory(_handle, (LPVOID)buffer1pointer, buffer1, sizeof(buffer1), NULL);
+
+	unsigned char asmBuff[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address] // address of acquire_by_name
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address] // address of the catalog
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx [address] // address of our char* buffer with the texture name
+		"\x41\xB0\x01" //mov r8b 1 //unknown bool, but game sets this to 1 when it calls this
+		"\x41\xB1\x00" //mov r9b 0 //unknown bool, but game sets this to 0 when it calls this
+		"\x48\x83\xEC\x48"// sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\x48\xA3\x00\x00\x00\x00\x00\x00\x00\x00" //movabs [pointer], rax // hold full 64 bit result somewhere
+		"\xC3"; //ret
+	asmBuff[2] = acquireByNameFunctionSound & 0xff;
+	asmBuff[3] = (acquireByNameFunctionSound >> 8) & 0xff;
+	asmBuff[4] = (acquireByNameFunctionSound >> 16) & 0xff;
+	asmBuff[5] = (acquireByNameFunctionSound >> 24) & 0xff;
+	asmBuff[6] = (acquireByNameFunctionSound >> 32) & 0xff;
+	asmBuff[7] = (acquireByNameFunctionSound >> 40) & 0xff;
+	asmBuff[8] = (acquireByNameFunctionSound >> 48) & 0xff;
+	asmBuff[9] = (acquireByNameFunctionSound >> 56) & 0xff;
+	asmBuff[12] = globalSoundDataCatalog & 0xff;
+	asmBuff[13] = (globalSoundDataCatalog >> 8) & 0xff;
+	asmBuff[14] = (globalSoundDataCatalog >> 16) & 0xff;
+	asmBuff[15] = (globalSoundDataCatalog >> 24) & 0xff;
+	asmBuff[16] = (globalSoundDataCatalog >> 32) & 0xff;
+	asmBuff[17] = (globalSoundDataCatalog >> 40) & 0xff;
+	asmBuff[18] = (globalSoundDataCatalog >> 48) & 0xff;
+	asmBuff[19] = (globalSoundDataCatalog >> 56) & 0xff;
+	asmBuff[22] = buffer1pointer & 0xff;
+	asmBuff[23] = (buffer1pointer >> 8) & 0xff;
+	asmBuff[24] = (buffer1pointer >> 16) & 0xff;
+	asmBuff[25] = (buffer1pointer >> 24) & 0xff;
+	asmBuff[26] = (buffer1pointer >> 32) & 0xff;
+	asmBuff[27] = (buffer1pointer >> 40) & 0xff;
+	asmBuff[28] = (buffer1pointer >> 48) & 0xff;
+	asmBuff[29] = (buffer1pointer >> 56) & 0xff;
+	asmBuff[48] = resultpointer & 0xff;
+	asmBuff[49] = (resultpointer >> 8) & 0xff;
+	asmBuff[50] = (resultpointer >> 16) & 0xff;
+	asmBuff[51] = (resultpointer >> 24) & 0xff;
+	asmBuff[52] = (resultpointer >> 32) & 0xff;
+	asmBuff[53] = (resultpointer >> 40) & 0xff;
+	asmBuff[54] = (resultpointer >> 48) & 0xff;
+	asmBuff[55] = (resultpointer >> 56) & 0xff;
+
+	SIZE_T asm_allocation = sizeof(asmBuff);
+	auto asm_alloc_start = VirtualAllocEx(_handle, NULL, asm_allocation, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, asm_alloc_start, asmBuff, asm_allocation, NULL);
+	auto thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)asm_alloc_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+
+	// now as much as i'd like to just call GetExitCodeThread() to grab the result directly from the thread
+	// the value tends to be greater than 32 bits, and does not fit in the DWORD that the thread can return.
+	// the thread manually stores the result at resultpointer, so we can retrieve it here
+	uint64_t result = 0;
+	ReadAbsolute((LPCVOID)resultpointer, &result, sizeof(uint64_t));
+	return result;
+}
+
+uint64_t Memory::CreateInMemoryMeshAsset(std::vector<uint8_t> buffer) {
+	auto rawAssetBuffer = reinterpret_cast<uint64_t>(VirtualAllocEx(_handle, NULL, buffer.size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+	//then copy the texture there
+	WriteProcessMemory(_handle, (LPVOID)rawAssetBuffer, &buffer[0], buffer.size(), NULL);
+	auto rawAssetSize = buffer.size();
+
+	auto pointerToBuffer = reinterpret_cast<uint64_t>(VirtualAllocEx(_handle, NULL, 16, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+	WriteProcessMemory(_handle, (LPVOID)pointerToBuffer, &rawAssetBuffer, 16, NULL);
+
+
+	//the function we are calling here takes a "MemoryInputStream" object.
+	//this object looks as follows
+	//8 byte pointer to a function table
+	//8 byte bool. indicating endianness of the stream/data buffer
+	//two 8 byte pointers that both point to the buffer in question
+	//another 8 bytes, indicating the size of the buffer in question. Might really be an int32 then padding.
+
+	//we could probably build that object in a separate buffer and be load a pointer to it and stuff. but in game usually the object is on the stack
+	//so we may as well do the same.
+
+
+	unsigned char asmBuff[] =
+		"\x6A\x00" //push 0 //push some padding for MemoryInputStream object on stack
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //load 16 bit address to rax //fill in this to be size of MeshAsset buffer
+		"\x50" //push rax
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //load 16 bit address to rax //fill in this to point to raw MeshAsset buffer
+		"\x50" //push rax	//MemoryInputstream holds two pointers. Push them here. One is start of buffer, one is 'current location in buffer'.
+		"\x50" //push rax
+		"\x68\x00\x00\x00\x00" //push 0x01000000 //bool indicates endianness? //last should be 01. Game always has this bool set, but our endianness is swapped i guess.
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //load 16 bit address to rax //fill in virtual function table for MemoryInputStream object.
+		"\x50" //push rax //finish constructing in-stack MemoryInputStream object
+		"\x6A\x00" //push 0
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //load 16 bit address to rax //fill in this with a "pointer to pointer to buffer"
+		"\x50" //push rax
+
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" // mov rdx, [address] - address of resulting Mesh_Asset buffer. Should be 0x68 bytes long (104 bytes).
+		"\x41\xB8\xFF\xFF\xFF\xFF"                 // mov r8d, [const] - 0xFFFFFFFF not sure what for but i dont wanna touch it
+		"\x41\xB9\x01\x00\x00\x00"                 // mov r9d, [const] - 0x1 not sure what this is either
+
+		//"\x48\x8D\x4C\x24\x30"                     // lea rcx, [rsp+30] // lea not mov. place the "register+30" *address* into rcx. don't follow pointer in stack.
+		"\x48\x8D\x4C\x24\x10"                     // lea rcx, [rsp+0x10] // lea not mov. place the "register+30" *address* into rcx. don't follow pointer in stack.
+		"\x48\x83\xEC\x20"                         // sub rsp, 20 (align stack for call)
+
+		//"\x48\xB8\x30\x5d\x33\x40\x01\x00\x00\x00" // mov rbx, [address] - so we can call rax.
+		//"\xFF\xD0"                                 // call rbx //i think we really want a direct long, with rax set to same function pointer we have in rcx
+		"\x48\xBB\x00\x00\x00\x00\x00\x00\x00\x00" // mov rbx, [address] - so we can call rax.
+		"\xFF\xD3"                                 // call rbx //i think we really want a direct long, with rax set to same function pointer we have in rcx
+		"\x48\x83\xC4\x60"                         // add rsp, 0x28
+		"\xC3";
+	auto result_buffer_address = reinterpret_cast<uint64_t>(VirtualAllocEx(_handle, NULL, 0x78, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+
+
+	asmBuff[4] = rawAssetSize & 0xff;
+	asmBuff[5] = (rawAssetSize >> 8) & 0xff;
+	asmBuff[6] = (rawAssetSize >> 16) & 0xff;
+	asmBuff[7] = (rawAssetSize >> 24) & 0xff;
+	asmBuff[8] = (rawAssetSize >> 32) & 0xff;
+	asmBuff[9] = (rawAssetSize >> 40) & 0xff;
+	asmBuff[10] = (rawAssetSize >> 48) & 0xff;
+	asmBuff[11] = (rawAssetSize >> 56) & 0xff;
+
+	asmBuff[15] = rawAssetBuffer & 0xff;
+	asmBuff[16] = (rawAssetBuffer >> 8) & 0xff;
+	asmBuff[17] = (rawAssetBuffer >> 16) & 0xff;
+	asmBuff[18] = (rawAssetBuffer >> 24) & 0xff;
+	asmBuff[19] = (rawAssetBuffer >> 32) & 0xff;
+	asmBuff[20] = (rawAssetBuffer >> 40) & 0xff;
+	asmBuff[21] = (rawAssetBuffer >> 48) & 0xff;
+	asmBuff[22] = (rawAssetBuffer >> 56) & 0xff;
+
+	asmBuff[32] = this->memoryInputStreamVFTable & 0xff;
+	asmBuff[33] = (this->memoryInputStreamVFTable >> 8) & 0xff;
+	asmBuff[34] = (this->memoryInputStreamVFTable >> 16) & 0xff;
+	asmBuff[35] = (this->memoryInputStreamVFTable >> 24) & 0xff;
+	asmBuff[36] = (this->memoryInputStreamVFTable >> 32) & 0xff;
+	asmBuff[37] = (this->memoryInputStreamVFTable >> 40) & 0xff;
+	asmBuff[38] = (this->memoryInputStreamVFTable >> 48) & 0xff;
+	asmBuff[39] = (this->memoryInputStreamVFTable >> 56) & 0xff;
+
+	asmBuff[45] = pointerToBuffer & 0xff;
+	asmBuff[46] = (pointerToBuffer >> 8) & 0xff;
+	asmBuff[47] = (pointerToBuffer >> 16) & 0xff;
+	asmBuff[48] = (pointerToBuffer >> 24) & 0xff;
+	asmBuff[49] = (pointerToBuffer >> 32) & 0xff;
+	asmBuff[50] = (pointerToBuffer >> 40) & 0xff;
+	asmBuff[51] = (pointerToBuffer >> 48) & 0xff;
+	asmBuff[52] = (pointerToBuffer >> 56) & 0xff;
+
+	asmBuff[56] = result_buffer_address & 0xff;
+	asmBuff[57] = (result_buffer_address >> 8) & 0xff;
+	asmBuff[58] = (result_buffer_address >> 16) & 0xff;
+	asmBuff[59] = (result_buffer_address >> 24) & 0xff;
+	asmBuff[60] = (result_buffer_address >> 32) & 0xff;
+	asmBuff[61] = (result_buffer_address >> 40) & 0xff;
+	asmBuff[62] = (result_buffer_address >> 48) & 0xff;
+	asmBuff[63] = (result_buffer_address >> 56) & 0xff;
+
+	asmBuff[87] = this->deserializeMeshAssetFunction & 0xff;
+	asmBuff[88] = (this->deserializeMeshAssetFunction >> 8) & 0xff;
+	asmBuff[89] = (this->deserializeMeshAssetFunction >> 16) & 0xff;
+	asmBuff[90] = (this->deserializeMeshAssetFunction >> 24) & 0xff;
+	asmBuff[91] = (this->deserializeMeshAssetFunction >> 32) & 0xff;
+	asmBuff[92] = (this->deserializeMeshAssetFunction >> 40) & 0xff;
+	asmBuff[93] = (this->deserializeMeshAssetFunction >> 48) & 0xff;
+	asmBuff[94] = (this->deserializeMeshAssetFunction >> 56) & 0xff;
+
+	SIZE_T asm_allocation = sizeof(asmBuff);
+	auto asm_alloc_start = VirtualAllocEx(_handle, NULL, asm_allocation, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, asm_alloc_start, asmBuff, asm_allocation, NULL);
+	auto thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)asm_alloc_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+
+
+	return result_buffer_address;
+}
+
+void Memory::LoadMesh(uint64_t meshToReplacePointer, uint64_t meshAssetPointer) {
+	unsigned char asmBuff[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address] // load texture function
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address] //address of texture map
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx [address] //address of texture to load
+		"\x41\xB8\x00\x00\x00\x01" //mov r8d, [const] // size of the texture
+		"\x48\x83\xEC\x48"// sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+	//uint32_t size_parameter = (uint32_t)wtxbuffer.size();
+	asmBuff[2] = loadMeshFunction & 0xff;
+	asmBuff[3] = (loadMeshFunction >> 8) & 0xff;
+	asmBuff[4] = (loadMeshFunction >> 16) & 0xff;
+	asmBuff[5] = (loadMeshFunction >> 24) & 0xff;
+	asmBuff[6] = (loadMeshFunction >> 32) & 0xff;
+	asmBuff[7] = (loadMeshFunction >> 40) & 0xff;
+	asmBuff[8] = (loadMeshFunction >> 48) & 0xff;
+	asmBuff[9] = (loadMeshFunction >> 56) & 0xff;
+	asmBuff[12] = meshToReplacePointer & 0xff;
+	asmBuff[13] = (meshToReplacePointer >> 8) & 0xff;
+	asmBuff[14] = (meshToReplacePointer >> 16) & 0xff;
+	asmBuff[15] = (meshToReplacePointer >> 24) & 0xff;
+	asmBuff[16] = (meshToReplacePointer >> 32) & 0xff;
+	asmBuff[17] = (meshToReplacePointer >> 40) & 0xff;
+	asmBuff[18] = (meshToReplacePointer >> 48) & 0xff;
+	asmBuff[19] = (meshToReplacePointer >> 56) & 0xff;
+	asmBuff[22] = meshAssetPointer & 0xff;
+	asmBuff[23] = (meshAssetPointer >> 8) & 0xff;
+	asmBuff[24] = (meshAssetPointer >> 16) & 0xff;
+	asmBuff[25] = (meshAssetPointer >> 24) & 0xff;
+	asmBuff[26] = (meshAssetPointer >> 32) & 0xff;
+	asmBuff[27] = (meshAssetPointer >> 40) & 0xff;
+	asmBuff[28] = (meshAssetPointer >> 48) & 0xff;
+	asmBuff[29] = (meshAssetPointer >> 56) & 0xff;
+
+	SIZE_T asm_allocation = sizeof(asmBuff);
+	auto asm_alloc_start = VirtualAllocEx(_handle, NULL, asm_allocation, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, asm_alloc_start, asmBuff, asm_allocation, NULL);
+	auto thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)asm_alloc_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+}
+
+void Memory::LoadSound(uint64_t sound_data_pointer, std::vector<uint8_t> wav_buffer) {
+	//prepend the header to the wav buffer
+	//the load function we call also looks like it can take an OGG file. pretty sure header is still same in those cases.
+	//i didn't look at *all* sounds, but all the ones i did look at used exact same asset header here.
+	std::vector<uint8_t> sound_buffer = { 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	uint32_t wavlength = (uint32_t)wav_buffer.size();
+	sound_buffer.push_back(wavlength & 0xff);
+	sound_buffer.push_back((wavlength >> 0x08) & 0xff);
+	sound_buffer.push_back((wavlength >> 0x10) & 0xff);
+	sound_buffer.push_back((wavlength >> 0x18) & 0xff);
+
+	sound_buffer.insert(sound_buffer.end(), wav_buffer.begin(), wav_buffer.end());
+	auto wavfileAlloc = reinterpret_cast<uint64_t>(VirtualAllocEx(_handle, NULL, sound_buffer.size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+	WriteProcessMemory(_handle, (LPVOID)wavfileAlloc, &sound_buffer[0], sound_buffer.size(), NULL);
+
+	unsigned char asmBuff[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address] // load texture function
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address] //address of texture map object we are loading into.
+		"\x48\xBA\x00\x00\x00\x00\x00\x00\x00\x00" //mov rdx [address] //address of texture to load
+		"\x41\xB8\x00\x00\x00\x00" //mov r8d, [const] // size of the texture
+		"\x48\x81\xEC\x90\x00\x00\x00" // sub rsp,90 //might be unnecessary but at one point i thought this was an issue.
+		"\xFF\xD0" //call rax
+		"\x48\x81\xC4\x90\x00\x00\x00"// add rsp,90
+		"\xC3"; //ret
+	uint32_t size_parameter = (uint32_t)sound_buffer.size();
+	asmBuff[2] = loadSoundDataFunction & 0xff;
+	asmBuff[3] = (loadSoundDataFunction >> 8) & 0xff;
+	asmBuff[4] = (loadSoundDataFunction >> 16) & 0xff;
+	asmBuff[5] = (loadSoundDataFunction >> 24) & 0xff;
+	asmBuff[6] = (loadSoundDataFunction >> 32) & 0xff;
+	asmBuff[7] = (loadSoundDataFunction >> 40) & 0xff;
+	asmBuff[8] = (loadSoundDataFunction >> 48) & 0xff;
+	asmBuff[9] = (loadSoundDataFunction >> 56) & 0xff;
+	asmBuff[12] = sound_data_pointer & 0xff;
+	asmBuff[13] = (sound_data_pointer >> 8) & 0xff;
+	asmBuff[14] = (sound_data_pointer >> 16) & 0xff;
+	asmBuff[15] = (sound_data_pointer >> 24) & 0xff;
+	asmBuff[16] = (sound_data_pointer >> 32) & 0xff;
+	asmBuff[17] = (sound_data_pointer >> 40) & 0xff;
+	asmBuff[18] = (sound_data_pointer >> 48) & 0xff;
+	asmBuff[19] = (sound_data_pointer >> 56) & 0xff;
+	asmBuff[22] = wavfileAlloc & 0xff;
+	asmBuff[23] = (wavfileAlloc >> 8) & 0xff;
+	asmBuff[24] = (wavfileAlloc >> 16) & 0xff;
+	asmBuff[25] = (wavfileAlloc >> 24) & 0xff;
+	asmBuff[26] = (wavfileAlloc >> 32) & 0xff;
+	asmBuff[27] = (wavfileAlloc >> 40) & 0xff;
+	asmBuff[28] = (wavfileAlloc >> 48) & 0xff;
+	asmBuff[29] = (wavfileAlloc >> 56) & 0xff;
+	asmBuff[32] = size_parameter & 0xff;
+	asmBuff[33] = (size_parameter >> 8) & 0xff;
+	asmBuff[34] = (size_parameter >> 16) & 0xff;
+	asmBuff[35] = (size_parameter >> 24) & 0xff;
+
+	SIZE_T asm_allocation = sizeof(asmBuff);
+	auto asm_alloc_start = VirtualAllocEx(_handle, NULL, asm_allocation, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, asm_alloc_start, asmBuff, asm_allocation, NULL);
+	auto thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)asm_alloc_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
 }

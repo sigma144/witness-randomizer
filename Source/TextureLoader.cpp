@@ -59,8 +59,6 @@ void TextureLoader::generateColorBunkerTexture(int32_t panelid)
 	TextureMaker tm(1024, 1024);
 	auto wtxBuffer = tm.generate_color_panel_grid(p->_grid, p->id, colorarray);
 
-	
-	//storedTextures[textureNames[id]] = wtxBuffer;
 	auto texturename = textureNames[p->id];
 
 	memory->LoadTexture(memory->GetTextureMapFromCatalog(texturename), wtxBuffer);
@@ -94,7 +92,65 @@ void TextureLoader::generateSpecTexture(int32_t id)
 	TextureMaker tm(512, 512);
 	auto wtxBuffer2 = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 35, dotscale * 26, symmetry != 0);
 
-	//storedTextures[textureNames[id]] = wtxBuffer;
+	memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer2);
+	memory->WritePanelData(id, NEEDS_REDRAW, 1);
+}
+
+void TextureLoader::generateSpecTextureSpecial(int32_t id, bool inverted, bool walls)
+{
+	Memory* memory = Memory::get();
+	std::vector<int> solution = memory->ReadArray<int>(id, SEQUENCE, memory->ReadPanelData<int>(id, SEQUENCE_LEN));
+	std::set<std::pair<int, int>> segments;
+	for (int i = 0; i < solution.size() - 1; i++) {
+		segments.insert({ solution[i], solution[i + 1] });
+	}
+
+	std::vector<float> allPoints = memory->ReadArray<float>(id, DOT_POSITIONS, memory->ReadPanelData<int>(id, NUM_DOTS) * 2);
+	std::vector<float> linePointsX;
+	std::vector<float> linePointsY;
+	for (int i : solution) {
+		linePointsX.emplace_back(allPoints[i * 2]);
+		linePointsY.emplace_back(allPoints[i * 2 + 1]);
+	}
+
+	std::vector<std::pair<float, float>> unusedSegments;
+	std::vector<int> connectionsA = memory->ReadArray<int>(id, DOT_CONNECTION_A, memory->ReadPanelData<int>(id, NUM_CONNECTIONS));
+	std::vector<int> connectionsB = memory->ReadArray<int>(id, DOT_CONNECTION_B, memory->ReadPanelData<int>(id, NUM_CONNECTIONS));
+	for (int i = 0; i < connectionsA.size(); i++) {
+		int a = connectionsA[i]; int b = connectionsB[i];
+		if (inverted && (!segments.count({ a, b }) && !segments.count({ b, a })) ||
+			!inverted && (segments.count({ a, b }) || segments.count({ b, a }))) {
+			if (walls) {
+				std::pair<float, float> testp1 = { allPoints[a * 2], allPoints[a * 2 + 1] };
+				std::pair<float, float> testp2 = { allPoints[b * 2], allPoints[b * 2 + 1] };
+				float dx = (allPoints[a * 2] - allPoints[b * 2]) / 2;
+				float dy = (allPoints[a * 2 + 1] - allPoints[b * 2 + 1]) / 2;
+				//std::pair<float, float> newp1 = { allPoints[a * 2] - dx - dy, allPoints[a * 2 + 1] + dx - dy };
+				//std::pair<float, float> newp2 = { allPoints[b * 2] + dx + dy, allPoints[b * 2 + 1] - dx + dy };
+				unusedSegments.push_back({ allPoints[a * 2] - dx - dy, allPoints[a * 2 + 1] + dx - dy });
+				unusedSegments.push_back({ allPoints[b * 2] + dx + dy, allPoints[b * 2 + 1] - dx + dy });
+			}
+			else {
+				unusedSegments.push_back({ allPoints[a * 2], allPoints[a * 2 + 1] });
+				unusedSegments.push_back({ allPoints[b * 2], allPoints[b * 2 + 1] });
+			}
+		}
+	}
+	std::vector<std::pair<float, float>> unusedStartpoints;
+	std::vector<int> flags = memory->ReadArray<int>(id, DOT_FLAGS, allPoints.size() / 2);
+	for (int i = 0; i < flags.size(); i++) {
+		if (i == solution[0]) continue;
+		if ((flags[i] & 0xF) == 2) {
+			unusedStartpoints.push_back({ allPoints[i * 2], allPoints[i * 2 + 1] });
+		}
+	}
+
+	float scale = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	float dotscale = memory->ReadPanelData<float>(id, STARTPOINT_SCALE);
+
+	TextureMaker tm(512, 512);
+	auto wtxBuffer2 = tm.generate_desert_spec_segments(unusedSegments, unusedStartpoints, scale * 35, dotscale * 26);
+
 	memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer2);
 	memory->WritePanelData(id, NEEDS_REDRAW, 1);
 }

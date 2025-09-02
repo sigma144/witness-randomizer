@@ -176,6 +176,56 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	return finalTexture;
 }
 
+//Write the segments using pairs of points rather than one continuous line.
+std::vector<uint8_t> TextureMaker::generate_desert_spec_segments(std::vector<std::pair<float, float>> segments, std::vector<std::pair<float, float>> startpoints, float thickness, float dotthickness)
+{
+	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+	auto background = cairo_image_surface_create_from_png("./images/desertspecpanel_square_bg.png");
+	//auto status = surface->get_status();
+
+	auto cr = cairo_create(surface);
+
+
+	//fill background (idk if this is necessary)
+	cairo_set_source_rgba(cr, 0, 0, 0, 0);
+	cairo_paint(cr);
+
+	//draw starting circles
+	for (auto xy : startpoints) {
+		cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1);
+		cairo_arc(cr, width * xy.first, height * xy.second, dotthickness, 0.0, 360.0);
+		cairo_fill(cr);
+	}
+
+	//draw lines
+	cairo_set_line_width(cr, thickness);
+	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+	cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+
+	for (int i = 0; i < segments.size(); i += 2) {
+		auto xy1 = segments[i];
+		auto xy2 = segments[i + 1];
+		cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1);
+		cairo_move_to(cr, width * xy1.first, height * xy1.second);
+		cairo_line_to(cr, width * xy2.first, height * xy2.second);
+	}
+	cairo_stroke(cr);
+
+	auto pattern = cairo_pattern_create_for_surface(surface);
+
+	auto bgcr = cairo_create(background);
+	cairo_set_source(bgcr, pattern);
+	cairo_paint(bgcr);
+
+	auto finalTexture = convert_cairo_surface_to_wtx(background, 1, 0x05);
+	cairo_pattern_destroy(pattern);
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
+	cairo_destroy(bgcr);
+	cairo_surface_destroy(background);
+	return finalTexture;
+}
+
 void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor, bool specular) {
 	if (customcolor.has_value() && customcolor.value().a == 0)
 		return;

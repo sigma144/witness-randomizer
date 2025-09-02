@@ -25,6 +25,7 @@ public:
 	void loadTextures();
 	void generateTexture(int32_t panelid);
 	void generateSpecTexture(int32_t panelid);
+	void generateSpecTextureSpecial(int32_t panelid, bool inverted, bool walls);
 };
 
 inline std::unordered_map<int32_t, std::string> textureNames = {

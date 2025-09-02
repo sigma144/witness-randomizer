@@ -1558,7 +1558,7 @@ void Special::generateCenterPerspective(int id, const std::vector<std::pair<int,
 	generator->write(id);
 }
 
-void Special::generateSpecularPuzzle(int id, int gridShape, std::vector<std::pair<int, int>> shadows)
+void Special::generateSpecularPuzzle(int id, int gridShape, std::vector<std::pair<int, int>> shadows, bool inverted, bool walls)
 {
 	Memory* memory = Memory::get();
 	std::vector<float> positions;
@@ -1574,6 +1574,13 @@ void Special::generateSpecularPuzzle(int id, int gridShape, std::vector<std::pai
 		//flags = { 0x400002, 0x400002, 0x400002, 0x400002, 0x400002, 0x400002, 0x400002,
 		//	0x400001, 0x000001, 0x000001, 0x400001, 0x000001, 0x000001 };
 		flags = { 2,2,2,2,2,2,2, 1,1,1,1,1,1 };
+	}
+	if (gridShape == GRID_3x3) {
+		positions = { .1f, .1f, .1f, .366f, .1f, .633f, .1f, .9f, .366f, .1f, .366f, .366f, .366f, .633f, .366f, .9f,
+			.633f, .1f, .633f, .366f, .633f, .633f, .633f, .9f, .9f, .1f, .9f, .366f, .9f, .633f, .9f, .9f, .95f, .95f };
+		connectionsA = { 0,1,2,4,5,6,8,9,10,12,13,14,0,4,8,1,5,9,2,6,10,3,7,11,15 };
+		connectionsB = { 1,2,3,5,6,7,9,10,11,13,14,15,4,8,12,5,9,13,6,10,14,7,11,15,16 };
+		flags = { 2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 1 };
 	}
 	if (gridShape == TRIANGLE_GRID_3x3) {
 		positions = { .1f, .1f, .1f, .366f, .1f, .633f, .1f, .9f, .366f, .1f, .366f, .366f, .366f, .633f, .366f, .9f,
@@ -1632,7 +1639,23 @@ void Special::generateSpecularPuzzle(int id, int gridShape, std::vector<std::pai
 	std::vector<int> solution = generatePathByConnections(connectionsA, connectionsB, flags, symmetry, shadows);
 	memory->WriteArray<int>(id, SEQUENCE, solution, true);
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, solution.size());
-	TextureLoader::get()->generateSpecTexture(id);
+	if (inverted || walls) TextureLoader::get()->generateSpecTextureSpecial(id, inverted, walls);
+	else TextureLoader::get()->generateSpecTexture(id);
+	if (!inverted && walls) {
+		flags[solution[0]] |= Decoration::Dot_Intersection;
+		memory->WriteArray<int>(id, DOT_FLAGS, flags);
+	}
+}
+
+void Special::generateSymPerspectivePuzzle(int id, std::vector<int> meshes, float x, float dx, float y, float dy, float z, float dz, int copyMeshFrom)
+{
+	std::vector<int> heights = { 1, 2, 3, 2, 3 };
+	for (int i = 0; i < meshes.size(); i++) {
+		setPosition(meshes[i], x + dx * i, y + dy * i, z + dz * heights[i]);
+		if (copyMeshFrom) {
+			copyValueFromPanel(meshes[i], MESH, copyMeshFrom);
+		}
+	}
 }
 
 void Special::setPosition(int id, float x, float y, float z)
@@ -1655,8 +1678,58 @@ void Special::setOrientation(int id, float x, float y, float z, float w)
 
 void Special::setScale(int id, float scale)
 {
-	Quaternion rot = Memory::get()->ReadPanelData<Quaternion>(id, ORIENTATION);
-	Memory::get()->WritePanelData<Quaternion>(id, ORIENTATION, {rot.w * scale, rot.x * scale, rot.y * scale, rot.z * scale } );
+	Memory::get()->WritePanelData<float>(id, SCALE, scale);
+	ASMPayloadManager::get()->UpdateEntityPosition(id);
+}
+
+void Special::setCustomMesh(int id, const std::string filename)
+{
+	uint64_t oldmesh = Memory::get()->ReadPanelData<uint64_t>(id, MESH);
+	std::vector<byte> newmesh;
+	if (customAssets.count(filename))
+		newmesh = customAssets[filename];
+	else {
+		newmesh = Memory::get()->ReadFileToVector("./meshes/" + filename);
+		customAssets[filename] = newmesh;
+	}
+	uint64_t newmesh_asset = Memory::get()->CreateInMemoryMeshAsset(newmesh);
+	Memory::get()->LoadMesh(oldmesh, newmesh_asset);
+}
+
+void Special::setCustomSound(std::string oldSound, const std::string newSound)
+{
+	uint64_t soundData = Memory::get()->GetSoundData(oldSound);
+	std::vector<byte> customSound;
+	if (customAssets.count(newSound))
+		customSound = customAssets[newSound];
+	else {
+		customSound = Memory::get()->ReadFileToVector("./sounds/" + newSound);
+		customAssets[newSound] = customSound;
+	}
+	Memory::get()->LoadSound(soundData, customSound);
+}
+
+void Special::setCustomSoundSequence(std::string oldSound, const std::vector<std::string> sequence)
+{
+	uint64_t soundData = Memory::get()->GetSoundData(oldSound);
+	std::vector<byte> customSound;
+	for (std::string newSound : sequence) {
+		std::vector<byte> soundPart;
+		if (customAssets.count(newSound))
+			soundPart = customAssets[newSound];
+		else {
+			soundPart = Memory::get()->ReadFileToVector("./sounds/" + newSound);
+			customAssets[newSound] = soundPart;
+		}
+		customSound.insert(customSound.end(), soundPart.begin(), soundPart.end());
+	}
+	Memory::get()->LoadSound(soundData, customSound);
+}
+
+void Special::copyValueFromPanel(int id, int offset, int copyFromID)
+{
+	long val = Memory::get()->ReadPanelData<long>(copyFromID, offset);
+	Memory::get()->WritePanelData<long>(id, offset, val);
 	ASMPayloadManager::get()->UpdateEntityPosition(id);
 }
 
@@ -1670,36 +1743,47 @@ std::vector<int> Special::generatePathByConnections(std::vector<int>& connection
 		connections[connectionsA[i]].emplace_back(connectionsB[i]);
 		connections[connectionsB[i]].emplace_back(connectionsA[i]);
 	}
+	std::vector<int> symmetryInv = symmetry;
+	for (int i = 0; i < symmetry.size(); i++) {
+		symmetryInv[symmetry[i]] = i;
+	}
 	for (int i = 0; i < flags.size(); i++) {
-		if ((flags[i] & 0xF) == IntersectionFlags::STARTPOINT && (symmetry.size() == 0 || symmetry[i] > i)) {
+		if ((flags[i] & 0xF) == IntersectionFlags::STARTPOINT && (symmetry.size() == 0 || symmetry[i] != i)) {
+			//paths.push_back({ i });
 			paths.push_back({ i });
 		}
 	}
 	int pi = 0;
-	int MAX_PATHS = 50000;
+	int MAX_PATHS = 5000;
 	while (pi < paths.size()) {
 		std::vector<int> path = paths[pi];
 		path.emplace_back(-1);
-		std::vector<int> next = connections[path[path.size() - 2]];
+		int current = path[path.size() - 2];
+		std::vector<int> next = connections[current];
 		if (pi == MAX_PATHS && shadows.size() == 0)
 			solutions.clear();
 		if (pi >= MAX_PATHS && shadows.size() == 0) {
 			next = { next[Random::rand() % next.size()] };
 		}
 		for (int n : next) {
-			if ((flags[n] & 0xF) == IntersectionFlags::ENDPOINT) {
-				path[path.size() - 1] = n;
+			if (std::find(path.begin(), path.end(), n) != path.end())
+				continue; //Intersected line
+			if (symmetry.size() > 0) {
+				if (n == symmetry[n] || std::find(path.begin(), path.end(), symmetryInv[n]) != path.end())
+					continue; //Intersected symmetry line
+				std::vector<int> symNext = connections[symmetry[current]];
+				if (std::find(symNext.begin(), symNext.end(), symmetry[n]) == symNext.end())
+					continue; //Symmetry connection doesn't exist
+			}
+			path[path.size() - 1] = n;
+			if ((flags[n] & 0xF) == IntersectionFlags::ENDPOINT)
 				solutions.push_back(path);
-			}
-			else if (std::find(path.begin(), path.end(), n) == path.end() &&
-				(symmetry.size() == 0 || n != symmetry[n] && std::find(path.begin(), path.end(), symmetry[n]) == path.end())) {
-				path[path.size() - 1] = n;
-				paths.push_back(path);
-			}
+			else paths.push_back(path);
 		}
 		pi++;
 	}
-	if (solutions.size() == 0) return generatePathByConnections(connectionsA, connectionsB, flags, symmetry, shadows);
+	if (solutions.size() == 0)
+		return generatePathByConnections(connectionsA, connectionsB, flags, symmetry, shadows);
 	std::vector<int> sol = solutions[Random::rand() % solutions.size()];
 	while (shadows.size() > 0 && isAmbiguous(sol, solutions, shadows)) {
 		sol = solutions[Random::rand() % solutions.size()];
@@ -1963,6 +2047,7 @@ void Special::flipPanelHorizontally(int id) {
 }
 
 std::map<int, int> Special::correctShapesById = {};
+std::map<std::string, std::vector<uint8_t>> Special::customAssets = {};
 int sed = 0;
 //For testing/debugging purposes only
 void Special::test() {
@@ -1973,138 +2058,10 @@ void Special::test() {
 	//texloader->forceLoadDesertTextures();
 	//memory->LoadPackage("globals");
 
-
-
 	return;
 
-	//Surface
-	setOrientation(0x00698, -20, -40, 0);
-	generateSpecularPuzzle(0x00698, TRIANGLE_GRID_3x3);
-	memory->WritePanelData<int>(0x00698, POWER_OFF_ON_FAIL, { 0 });
+	//memory->LoadPackage("save_58413"); //force load the desert glass panel so we can swap its mesh out.
+	//setCustomMesh(0x17C31, "obj_panels_ruins_transparent_4x4.dmesh");
+	//generateSpecularPuzzle(0x17C31, GRID_4x4); //Glass
 
-	setPosition(0x2752B, -174.4f, 173.8f, 15.3f);
-	setPosition(0x2752F, -174.7f, 173.73f, 15.32f);
-	setPosition(0x27530, -174.7f, 173.4f, 15.34f);
-	setOrientation(0x0048F, -23, 5, 0);
-	generateSpecularPuzzle(0x0048F, GRID_4x4, { {0,5},{15,20},{1,6},{11,16},{16,21},{17,22},{3,8},{8,13},
-		{0,1},{1,2},{2,3},{3,4},{5,6},{10,11},{11,12},{12,13},{13,14},{15,16},{16,17},{20,21},{21,22},{22,23} });
-	memory->WritePanelData<int>(0x0048F, POWER_OFF_ON_FAIL, { 0 });
-
-	setPosition(0x274F8, -174.3, 163.12f, 18.2f);
-	Quaternion rot(10, 80, 90);
-	setOrientation(0x274F8, rot.x, rot.y, rot.z, rot.w * 3.0f);
-	generateSpecularPuzzle(0x09F92, TRIANGLE_GRID_4x4);
-	memory->WritePanelData<int>(0x09F92, POWER_OFF_ON_FAIL, { 0 });
-	memory->WritePanelData<float>(0x09FA1, OPEN_RATE, { 0.2f });  // Desert Surface 3 Control, 2x
-
-	generateSpecularPuzzle(0x0A036, TRIANGLE_GRID_3x3);
-	switch (Random::rand() % 3) {
-		case 0: setOrientation(0x0A036, -22, -60, 0); break;
-		case 1: setOrientation(0x0A036, -9, -55, 0); break;
-		case 2: setOrientation(0x0A036, -7, -78, 0); break;
-	}
-	generateSpecularPuzzle(0x09DA6, TRIANGLE_GRID_3x3);
-	switch (Random::rand() % 3) {
-		case 0: setOrientation(0x09DA6, -17, -15, 0); break;
-		case 1: setOrientation(0x09DA6, -20, -15, 0); break;
-		case 2: setOrientation(0x09DA6, -30, -15, 0); break;
-	}
-	generateSpecularPuzzle(0x0A049, TRIANGLE_GRID_3x3);
-	switch (Random::rand() % 3) {
-		case 0: setOrientation(0x0A049, -25, 5, 0); break;
-		case 1: setOrientation(0x0A049, -17, 0, 0); break;
-		case 2: setOrientation(0x0A049, 20, 10, 0); break;
-	}
-
-	generateSpecularPuzzle(0x0A053, TRIANGLE_GRID_3x3); //What to do?
-
-	generateSpecularPuzzle(0x09F94);
-	setPower(0x09F94, false); // Turn off desert surface 8
-	memory->WritePanelData<float>(0x09F95, OPEN_RATE, { 1000.0f });  // Desert Surface Final Control, 100000x
-
-	//Light Room
-	
-	generate.setFlag(Generate::Config::StartEdgeOnly);
-	generate.setFlag(Generate::Config::WriteInvisible);
-	generate.setSymmetry(Panel::Rotational);
-	generate.setGridSize(5, 5);
-	generate.generate(0x00422, Decoration::Start, 1, Decoration::Exit, 1);
-	generate.initPanel(0x00422);
-	generateSpecularPuzzle(0x00422);
-	setOrientation(0x00422, -44, -8, 0);
-
-	generate.setSymmetry(Panel::Vertical);
-	generate.generate(0x006E3, Decoration::Start, 1, Decoration::Exit, 1);
-	generate.initPanel(0x006E3);
-	generateSpecularPuzzle(0x006E3);
-	setOrientation(0x006E3, -10, -40, 0);
-
-	generate.setGridSize(6, 6);
-	generate.setSymmetry(Panel::Horizontal);
-	generate.generate(0x0A02D, Decoration::Start, 1, Decoration::Exit, 1);
-	generate.initPanel(0x0A02D);
-	generateSpecularPuzzle(0x0A02D);
-	generate.resetConfig();
-
-	//Pond Room
-
-	generate.setFlag(Generate::Config::WriteSpecular);
-	generate.setGridSize(4, 4);
-	generate.setSymbol(Decoration::Start, 0, 8);
-	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.generate(0x00C72, Decoration::Stone | Decoration::Color::Black, 6, Decoration::Stone | Decoration::Color::Green, 6);
-	generate.setSymbol(Decoration::Start, 0, 8);
-	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.generate(0x0129D, Decoration::Star | Decoration::Color::Red, 6, Decoration::Star | Decoration::Color::Green, 6, Decoration::Star | Decoration::Color::Black, 4);
-	generate.setSymbol(Decoration::Start, 0, 8);
-	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.generate(0x008BB, Decoration::Poly | Decoration::Color::Black, 1, Decoration::Poly | Decoration::Color::Red, 2);
-	generate.setSymbol(Decoration::Start, 0, 8);
-	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.blockPos = { { 3, 7 } };
-	generate.generate(0x0078D, Decoration::Triangle | Decoration::Color::Black, 4, Decoration::Triangle | Decoration::Color::Red, 5, Decoration::Triangle | Decoration::Color::Green, 1);
-	generate.setSymbol(Decoration::Start, 0, 8);
-	generate.setSymbol(Decoration::Exit, 8, 0);
-	generate.generate(0x18313, Decoration::Eraser | Decoration::Color::Black, 1, Decoration::Poly | Decoration::Color::Red, 3);
-	return;
-
-	//Flood Room
-
-	memory->WritePanelData<float>(0x01300, OPEN_RATE, { 0.09f });  // Desert Flood Water Level, 3x
-	generateSpecularPuzzle(0x04D18);
-	generateSpecularPuzzle(0x01205);
-	generateSpecularPuzzle(0x181AB);
-	generateSpecularPuzzle(0x0117A);
-	generateSpecularPuzzle(0x17ECA);
-	std::vector<float> positions = memory->ReadArray<float>(0x18076, DOT_POSITIONS, 38);
-	if (positions[1] > 0.9f) {
-		for (int i = 1; i < positions.size() - 1; i += 2) {
-			positions[i] -= 0.03f;
-		}
-		memory->WriteArray<float>(0x18076, DOT_POSITIONS, positions);
-	}
-	generateSpecularPuzzle(0x18076); //Rectangular
-	//setTargetAndDeactivate(0x17ECA, 0x18076); // Change desert floating target to desert flood final
-	//Final Room
-	generateSpecularPuzzle(0x0A15C); //Concave
-	generateSpecularPuzzle(0x09FFF); //Convex
-	generate.setSymbol(Decoration::Start, 0, 0);
-	generate.setSymbol(Decoration::Exit, 12, 6);
-	generate.setGridSize(6, 3);
-	generate.generate(0x0A15F);
-	generate.initPanel(0x0A15F);
-	generate._panel->minx = 0.05f;
-	generate._panel->maxx = 0.9f;
-	generate.generate(0x0A15F);
-	generateSpecularPuzzle(0x0A15F); //Tall
-	generateSpecularPuzzle(0x17C31); //Glass
-	generateSpecularPuzzle(0x012D7); //Final
-	memory->WritePanelData<float>(0x012C8, OPEN_RATE, { 0.06f });  // Desert Final Far Control, 2x	
-
-	//Ensure textures are preserved
-	memory->LoadPackage("save_58392");
-	memory->LoadPackage("save_58473");
-	memory->LoadPackage("save_58413");
-	memory->LoadPackage("save_58440");
-	memory->LoadPackage("globals");
 }

@@ -170,7 +170,8 @@ public:
 	enum Symmetry { //NOTE - Not all of these are valid symmetries for certain puzzles
 		None, Horizontal, Vertical, Rotational,
 		RotateLeft, RotateRight, FlipXY, FlipNegXY, ParallelH, ParallelV, ParallelHFlip, ParallelVFlip,
-		PillarParallel, PillarHorizontal, PillarVertical, PillarRotational
+		PillarParallel, PillarHorizontal, PillarVertical, PillarRotational,
+		SlideL, SlideLFlip //For expert desert only
 	};
 	Symmetry symmetry;
 
@@ -207,6 +208,8 @@ private:
 		case Symmetry::PillarHorizontal: return Point(x + _width / 2, _height - 1 - y);
 		case Symmetry::PillarVertical: return Point( _width / 2 - x, y);
 		case Symmetry::PillarRotational: return Point(_width / 2 - x, _height - 1 - y);
+		case Symmetry::SlideL: return x == 0 ? Point(_width - 1, y) : Point(x - 2, y);
+		case Symmetry::SlideLFlip: return x == 0 ? Point(_width - 1, _height - 1 - y) : Point(x - 2, _height - 1 - y);
 		}
 		return Point(x, y);
 	}

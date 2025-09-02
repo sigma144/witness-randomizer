@@ -218,7 +218,7 @@ void Generate::setSymmetry(Panel::Symmetry symmetry)
 void Generate::write(int id)
 {
 	std::vector<std::vector<int>> backupGrid;
-	if (hasFlag(Config::DisableReset)) backupGrid = _panel->_grid; //Allows panel data to be preserved after writing. Normally writing erases the panel data.
+	if (hasFlag(Config::DisableReset) || hasFlag(Config::GridOnly)) backupGrid = _panel->_grid; //Allows panel data to be preserved after writing. Normally writing erases the panel data.
 
 	erase_path();
 
@@ -302,9 +302,7 @@ void Generate::resetConfig()
 	setGridSize(0, 0);
 	_symmetry = Panel::Symmetry::None;
 	pathWidth = 1;
-	if (hasFlag(Config::DisableReset)) {
-		resetVars();
-	}
+	resetVars();
 	_config = 0;
 	_oneTimeAdd = Config::None;
 	_oneTimeRemove = Config::None;
@@ -546,6 +544,11 @@ bool Generate::generate(int id, PuzzleSymbols symbols)
 	if (symbols.any(Decoration::Start)) place_start(symbols.getNum(Decoration::Start));
 	if (symbols.any(Decoration::Exit)) place_exit(symbols.getNum(Decoration::Exit));
 
+	if (hasFlag(Generate::Config::GridOnly)) {
+		write(id);
+		return true;
+	}
+
 	//Make a random path unless a fixed one has been defined
 	if (customPath.size() == 0) {
 		int fails = 0;
@@ -584,7 +587,10 @@ bool Generate::place_all_symbols(PuzzleSymbols & symbols)
 	for (std::pair<int, int> s : symbols[Decoration::Eraser]) {
 		for (int i = 0; i < s.second; i++) {
 			eraserColors.push_back(s.first & 0xf);
-			eraseSymbols.push_back(hasFlag(Config::FalseParity) ? Decoration::Dot_Intersection : symbols.popRandomSymbol());
+			eraseSymbols.push_back(symbols.popRandomSymbol());
+			if (_parity != -1 && eraseSymbols[0] == Decoration::Dot)
+				_falseparity = true;
+			//eraseSymbols.push_back(hasFlag(Config::FalseParity) ? Decoration::Dot_Intersection : symbols.popRandomSymbol());
 		}
 	}
 
@@ -747,7 +753,7 @@ bool Generate::generate_longest_path()
 	Point exit = adjust_point(pick_random(_exits));
 	if (off_edge(pos) || off_edge(exit)) return false;
 	Point block(-10, -10);
-	if (hasFlag(Config::FalseParity)) { //If false parity, one dot must be left uncovered
+	if (_falseparity) { //If false parity, one dot must be left uncovered
 		if (get_parity(pos + exit) == _panel->get_parity())
 			return false;
 		block = Point(Random::rand() % (_panel->_width / 2 + 1) * 2, Random::rand() % (_panel->_height / 2 + 1) * 2);
@@ -1786,7 +1792,7 @@ bool Generate::place_erasers(const std::vector<int>& colors, const std::vector<i
 				for (Point dir : _8DIRECTIONS1) {
 					if (toErase == Decoration::Dot_Intersection && (dir.first == 0 || dir.second == 0)) continue;
 					Point p2 = p + dir;
-					if (get(p2) == 0 && (hasFlag(Config::FalseParity) || can_place_dot(p2, false))) {
+					if (get(p2) == 0 && (_falseparity || can_place_dot(p2, false))) {
 						openEdge.insert(p2);
 					}
 				}

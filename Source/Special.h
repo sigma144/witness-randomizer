@@ -11,11 +11,12 @@ typedef std::set<Point> Shape;
 #define DEFAULT_GRID 0
 #define HEXAGON_GRID 1
 #define TRIANGLE_GRID_3x3 2
-#define GRID_4x4 3
-#define TRIANGLE_GRID_4x4 4
-#define GRID_4x4_3START 5
-#define GRID_4x4_4START 6
-#define GRID_5x5_3START 7
+#define GRID_3x3 3
+#define GRID_4x4 4
+#define TRIANGLE_GRID_4x4 5
+#define GRID_4x4_3START 6
+#define GRID_4x4_4START 7
+#define GRID_5x5_3START 8
 
 //Functions to handle special case puzzles
 
@@ -30,6 +31,7 @@ class Special {
 
 public:
 	static std::map<int, int> correctShapesById;
+	static std::map<std::string, std::vector<uint8_t>> customAssets;
 
 	Special(std::shared_ptr<Generate> generator) {
 		this->generator = generator;
@@ -71,12 +73,19 @@ public:
 	void createArrowPuzzle(int id, int x, int y, int dir, int ticks, const std::vector<Point>& gaps);
 	void createArrowSecretDoor(int id);
 	void generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType);
-	void generateSpecularPuzzle(int id, int gridShape = DEFAULT_GRID, std::vector<std::pair<int, int>> shadows = {});
+	void generateSpecularPuzzle(int id, int gridShape = DEFAULT_GRID, std::vector<std::pair<int, int>> shadows = {}, bool inverted = false, bool walls = false);
 	void generateSpecularPuzzle(int id, std::vector<std::pair<int, int>> shadows) { generateSpecularPuzzle(id, DEFAULT_GRID, shadows); }
+	void generateSpecularPuzzleSpecial(int id, bool inverted, bool walls) { generateSpecularPuzzle(id, DEFAULT_GRID, {}, inverted, walls); }
+	void generateSpecularPuzzleSpecial(int id, int gridShape, bool inverted, bool walls) { generateSpecularPuzzle(id, gridShape, {}, inverted, walls); }
+	void generateSymPerspectivePuzzle(int id, std::vector<int> meshes, float x, float dx, float y, float dy, float z, float dz, int copyMeshFrom);
 	void setPosition(int id, float x, float y, float z);
 	void setOrientation(int id, float yaw, float pitch, float roll);
 	void setOrientation(int id, float x, float y, float z, float w);
 	void setScale(int id, float scale);
+	void setCustomMesh(int id, std::string filename);
+	void setCustomSound(std::string oldSound, const std::string newSound);
+	void setCustomSoundSequence(std::string oldSound, const std::vector<std::string> sequence);
+	void copyValueFromPanel(int id, int offset, int copyFromId);
 	std::vector<int> generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags, std::vector<int>& symmetry, std::vector<std::pair<int, int>> shadows);
 	bool isAmbiguous(std::vector<int>& path, std::vector<std::vector<int>>& solutions, std::vector<std::pair<int, int>> shadows);
 	static void createText(int id, std::string text, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB,

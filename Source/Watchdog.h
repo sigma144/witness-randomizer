@@ -153,3 +153,9 @@ public:
 	TownDoorWatchdog() : Watchdog(0.2f) { }
 	virtual void action();
 };
+
+class DesertLatchWatchdog : public Watchdog {
+public:
+	DesertLatchWatchdog() : Watchdog(0.2f) { }
+	virtual void action();
+};

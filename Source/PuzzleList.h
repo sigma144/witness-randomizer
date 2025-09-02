@@ -52,7 +52,7 @@ public:
 
 	//Environmental areas - unless I can figure out how to mess with the game's assets, randomizing most of these puzzles isn't happening anytime soon
 	void GenerateOrchardN();
-	void GenerateDesertN(); //Just scramble the positions for now
+	void GenerateDesertN();
 	void GenerateShadowsN(); //Can't randomize
 	void GenerateKeepN();
 	void GenerateMonasteryN(); //Can't randomize
@@ -74,7 +74,7 @@ public:
 
 	//Environmental areas - unless I can figure out how to mess with the game's assets, randomizing some of these puzzles isn't happening anytime soon
 	void GenerateOrchardH();
-	void GenerateDesertH(); //Just scramble the positions for now
+	void GenerateDesertH(); //WIP
 	void GenerateShadowsH(); //Can't randomize
 	void GenerateKeepH();
 	void GenerateMonasteryH(); //Can't randomize

@@ -135,6 +135,16 @@ public:
 		WriteArray(panel, offset, data);
 	}
 
+	//Copies the array at the given address (to prevent data being shared)
+	template <class T>
+	void CopyArray(int panel, int offset, int size) {
+		std::lock_guard<std::recursive_mutex> lock(mtx);
+
+		std::vector<T> data = ReadArray<T>(panel, offset, size);
+		_arraySizes[std::make_pair(panel, offset)] = 0;
+		WriteArray<T>(panel, offset, data);
+	}
+
 	template <class T>
 	std::vector<T> ReadPanelData(int panel, int offset, size_t size, bool forceRecalculatePointer) {
 		if (size == 0) return std::vector<T>();
@@ -237,7 +247,12 @@ public:
 
 	uint64_t GetTextureMapFromCatalog(std::string texturename);
 	void LoadTexture(uint64_t texturemappointer, std::vector<uint8_t> wtxbuffer);
+	void LoadMesh(uint64_t meshToReplacePointer, uint64_t meshAssetPointer);
+	void LoadSound(uint64_t sound_data_pointer, std::vector<uint8_t> wav_buffer);
 	void LoadPackage(std::string packagename);
+	std::vector<uint8_t> ReadFileToVector(const std::string& filename);
+	uint64_t GetSoundData(std::string texturename);
+	uint64_t CreateInMemoryMeshAsset(std::vector<uint8_t> buffer);
 
 	void StopDesertLaserPropagation();
 	void SetInfiniteChallenge(bool enable);
@@ -316,9 +331,15 @@ public:
 	uint64_t windmillMaxTurnSpeed;
 	uint64_t windmillCurrentTurnSpeed;
 	uint64_t globalTextureCatalog;
+	uint64_t globalSoundDataCatalog;
 	uint64_t acquireByNameFunction;
+	uint64_t acquireByNameFunctionSound;
 	uint64_t loadTextureMapFunction;
+	uint64_t loadSoundDataFunction;
 	uint64_t loadPackageFunction;
+	uint64_t deserializeMeshAssetFunction;
+	uint64_t loadMeshFunction;
+	uint64_t memoryInputStreamVFTable;
 
 	std::vector<int> ACTIVEPANELOFFSETS;
 	int ACCELERATION;
@@ -394,8 +415,6 @@ private:
 	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
 		WriteData(offsets, data, false);
 	}
-
-
 
 	void ThrowError(std::string message);
 	void ThrowError(const std::vector<int>& offsets, bool rw_flag);

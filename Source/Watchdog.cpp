@@ -278,3 +278,11 @@ void TownDoorWatchdog::action()
 		terminate = true;
 	}
 }
+
+void DesertLatchWatchdog::action() //Disable latch skip
+{
+	if (ReadPanelData<int>(0x0A15F, SOLVED) && ReadPanelData<int>(0x17C31, SOLVED)) {
+		WriteArray<int>(0x03608, DOT_FLAGS, { STARTPOINT, 0, ENDPOINT });
+		terminate = true;
+	}
+}

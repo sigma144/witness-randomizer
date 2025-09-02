@@ -44,6 +44,6 @@ public:
 	};
 	std::vector<uint8_t> generate_color_panel_grid(std::vector<std::vector<int>> grid, int id, std::vector<Color> colors, bool specular = false);
 	std::vector<uint8_t> generate_desert_spec_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness, bool symmetry);
-
+	std::vector<uint8_t> generate_desert_spec_segments(std::vector<std::pair<float, float>> segments, std::vector<std::pair<float, float>> startpoints, float thickness, float dotthickness);
 };
 

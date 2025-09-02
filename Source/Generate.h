@@ -22,6 +22,7 @@ public:
 		_handle = NULL;
 		_panel = NULL;
 		_parity = -1;
+		_falseparity = false;
 		colorblind = false;
 		_seed = Random::rand();
 		arrowColor = backgroundColor = successColor = { 0, 0, 0, 0 };
@@ -31,7 +32,7 @@ public:
 		None = 0, FullGaps = 0x1, StartEdgeOnly = 0x2, DisableWrite = 0x4, PreserveStructure = 0x8, MakeStonesUnsolvable = 0x10, SmallShapes = 0x20, DisconnectShapes = 0x40, ResetColors = 0x80,
 		DisableCancelShapes = 0x100, RequireCancelShapes = 0x200, BigShapes = 0x400, SplitShapes = 0x800, RequireCombineShapes = 0x1000, TreehouseLayout = 0x2000, TreehouseColors = 0x4000,
 		AlternateColors = 0x8000, WriteColors = 0x10000, Write2Color = 0x20000, FixBackground = 0x40000, WriteSpecular = 0x80000, LongPath = 0x100000, ShortPath = 0x200000, EnableFlash = 0x400000,
-		DecorationsOnly = 0x800000, FalseParity = 0x1000000, DisableDotIntersection = 0x2000000, WriteDotColor = 0x4000000, WriteDotColor2 = 0x8000000, LongestPath = 0x10000000, WriteInvisible = 0x20000000,
+		DecorationsOnly = 0x800000, GridOnly = 0x1000000, DisableDotIntersection = 0x2000000, WriteDotColor = 0x4000000, WriteDotColor2 = 0x8000000, LongestPath = 0x10000000, WriteInvisible = 0x20000000,
 		DisableReset = 0x40000000, MountainFloorH = 0x80000000
 	};
 	
@@ -154,6 +155,7 @@ private:
 	std::vector<Point> _splitPoints;
 	bool _allowNonMatch; //Used for multi-generator
 	int _parity;
+	bool _falseparity;
 	std::vector<std::vector<Point>> _obstructions;
 	bool colorblind;
 
