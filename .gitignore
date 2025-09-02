@@ -333,3 +333,4 @@ ASALocalRun/
 enc_temp_folder/
 /Witness Save Data.lnk
 vcpkg_installed/
+/App/FindProcessErrorLog.txt
