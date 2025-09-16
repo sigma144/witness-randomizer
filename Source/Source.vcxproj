@@ -184,6 +184,7 @@
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="Randomizer.h" />
+    <ClInclude Include="Sounds.h" />
     <ClInclude Include="Special.h" />
     <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="TextureMaker.h" />
@@ -200,6 +201,7 @@
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Randomizer.cpp" />
+    <ClCompile Include="Sounds.cpp" />
     <ClCompile Include="Special.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="TextureMaker.cpp" />

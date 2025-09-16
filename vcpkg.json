@@ -1,6 +1,10 @@
 {
   "dependencies": [
     "directxtex",
-    "cairo"
+    "cairo",
+    {
+      "name": "libsndfile",
+      "default-features": false
+    }
   ]
 }

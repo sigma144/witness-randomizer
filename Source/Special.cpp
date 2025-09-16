@@ -254,6 +254,100 @@ void Special::generateColorfulColorFilterPuzzle(int id, Point size, const std::v
 	generator->resetConfig();
 }
 
+void Special::generateSoundWavesPuzzle(int id, int numShort, int numLong)
+{
+	std::vector<Note> sequence = generate_sound_sequence(numShort, numLong);
+	generateSoundWavesPuzzle(id, sequence);
+}
+
+void Special::generateSoundWavesPuzzle(int id, std::vector<Note>& notes)
+{
+	int len = static_cast<int>(notes.size());
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<float> intersections;
+	std::vector<int> intersectionFlags;
+	std::vector<int> solution = { len * 7, 3 };
+	float curve = 0.2f;
+	float height = 1.2f;
+	float pad = 0.1f;
+	float x = 0;
+	for (int i = 0; i < len; i++, x++) {
+		//Add wave
+		int isLong = notes[i].is_long;
+		std::vector<float> points = { x + isLong + 1 - curve, -height, x + curve, -height, x, -height + curve,
+			x, 0, x, height - curve, x + curve, height, x + isLong + 1 - curve, height };
+		for (float f : points) {
+			intersections.emplace_back(f);
+		}
+		std::vector<int> ca = { 9, 0, 1, 2, 3, 4, 5, 6, 3 };
+		std::vector<int> cb = { 0, 1, 2, 3, 4, 5, 6, 11, 10 };
+		for (int i2 = 0; i2 < ca.size(); i2++) {
+			connectionsA.emplace_back(ca[i2] + i * 7);
+			connectionsB.emplace_back(cb[i2] + i * 7);
+		}
+		for (int i2 = 0; i2 < 7; i2++) {
+			intersectionFlags.emplace_back(INTERSECTION);
+		}
+		//Add to solution
+		std::vector<int> seq = { 10 };
+		if (notes[i].note == Low) {
+			if (i + 1 < len && notes[i].note == notes[i + 1].note)
+				seq = { 2, 1, 0 }; //Straight across bottom
+			else seq = { 2, 1, 0, 9, 10 }; //Back to center
+		}
+		else if (notes[i].note == High) {
+			if (i + 1 < len && notes[i].note == notes[i + 1].note)
+				seq = { 4, 5, 6 }; //Straight across top
+			else seq = { 4, 5, 6, 11, 10 }; //Back to center
+		}
+		for (int i2 : seq) solution.emplace_back(i2 + i * 7);
+		if (isLong) x++;
+	}
+	//Add final set of connections
+	std::vector<float> points = { -0.5f, 0, x + 0.5f, 0, x, -height + curve, x, 0, x, height - curve };
+	for (float f : points) {
+		intersections.emplace_back(f);
+	}
+	for (int i : {len * 7, len * 7 + 1, len * 7 + 2, len * 7 + 3}) {
+		connectionsA.emplace_back(i);
+	}
+	for (int i : {3, len * 7 + 3, len * 7 + 3, len * 7 + 4}) {
+		connectionsB.emplace_back(i);
+	}
+	for (int f : {(int)IntersectionFlags::STARTPOINT, (int)IntersectionFlags::ENDPOINT, 0, 0, 0}) {
+		intersectionFlags.emplace_back(f | IntersectionFlags::INTERSECTION);
+	}
+	solution.emplace_back(len * 7 + 1);
+	//Rescale coordinates
+	float minX = -0.5f; float maxX = x + 0.5f;
+	float minY = -height; float maxY = height;
+	float scale = 1 / (maxX - minX) * (1 - pad * 2);
+	for (int i = 0; i < intersections.size(); i += 2) {
+		intersections[i] = (intersections[i] - minX) * scale + pad;
+		intersections[i + 1] = intersections[i + 1] * scale + 0.5f;
+	}
+	//Write to RAM
+	Panel panel;
+	Memory::get()->WritePanelData<float>(id, PATH_WIDTH_SCALE, {scale * 4});
+	Memory::get()->WritePanelData<int>(id, NUM_DOTS, { static_cast<int>(intersectionFlags.size()) });
+	Memory::get()->WriteArray<float>(id, DOT_POSITIONS, intersections);
+	Memory::get()->WriteArray<int>(id, DOT_FLAGS, intersectionFlags);
+	Memory::get()->WriteArray<int>(id, DOT_CONNECTION_A, connectionsA);
+	Memory::get()->WriteArray<int>(id, DOT_CONNECTION_B, connectionsB);
+	Memory::get()->WritePanelData<int>(id, NUM_CONNECTIONS, { static_cast<int>(connectionsA.size()) });
+	Memory::get()->WriteArray<int>(id, SEQUENCE, solution);
+	Memory::get()->WritePanelData<int>(id, SEQUENCE_LEN, { static_cast<int>(solution.size()) });
+	Memory::get()->WritePanelData<int>(id, POWER_OFF_ON_FAIL, { 0 });
+	Memory::get()->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
+	//Write sounds
+	std::vector<uint8_t> data = build_sound(notes);
+	for (std::string s : panel_sound_map[id]) {
+		uint64_t soundData = Memory::get()->GetSoundData(s);
+		Memory::get()->LoadSound(soundData, data);
+	}
+}
+
 void Special::generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSequence, bool writeSequence) {
 	generator->setFlag(Generate::Config::DisableReset);
 	generateSoundDotPuzzle(id1, { 5, 5 }, dotSequence, writeSequence);
@@ -1696,6 +1790,15 @@ void Special::setCustomMesh(int id, const std::string filename)
 	Memory::get()->LoadMesh(oldmesh, newmesh_asset);
 }
 
+void Special::setCustomSound(int id, const std::string newSound, int distractNum)
+{
+	//TODO: Distraction sounds
+	std::vector<std::string> oldSound = panel_sound_map[id];
+	for (std::string& s : oldSound) {
+		setCustomSound(s, newSound);
+	}
+}
+
 void Special::setCustomSound(std::string oldSound, const std::string newSound)
 {
 	uint64_t soundData = Memory::get()->GetSoundData(oldSound);
@@ -1705,23 +1808,6 @@ void Special::setCustomSound(std::string oldSound, const std::string newSound)
 	else {
 		customSound = Memory::get()->ReadFileToVector("./sounds/" + newSound);
 		customAssets[newSound] = customSound;
-	}
-	Memory::get()->LoadSound(soundData, customSound);
-}
-
-void Special::setCustomSoundSequence(std::string oldSound, const std::vector<std::string> sequence)
-{
-	uint64_t soundData = Memory::get()->GetSoundData(oldSound);
-	std::vector<byte> customSound;
-	for (std::string newSound : sequence) {
-		std::vector<byte> soundPart;
-		if (customAssets.count(newSound))
-			soundPart = customAssets[newSound];
-		else {
-			soundPart = Memory::get()->ReadFileToVector("./sounds/" + newSound);
-			customAssets[newSound] = soundPart;
-		}
-		customSound.insert(customSound.end(), soundPart.begin(), soundPart.end());
 	}
 	Memory::get()->LoadSound(soundData, customSound);
 }
@@ -2046,6 +2132,44 @@ void Special::flipPanelHorizontally(int id) {
 	memory->WriteArray<float>(id, DOT_POSITIONS, intersections);
 }
 
+std::vector<Note> Special::generate_sound_sequence(int numShort, int numLong)
+{
+	std::vector<Note> seq = { {Bird, Low, false}, { Bird, Mid, false }, { Bird, High, false } };
+	while (seq.size() < numShort + numLong)
+		seq.push_back({ Bird, static_cast<Note_Value>(Random::rand() % 3 + 1), false });
+	shuffle(seq);
+	for (int i = 0; i < numLong; i++) {
+		seq[i].is_long = true;
+	}
+	shuffle(seq);
+	return seq;
+}
+std::vector<std::vector<Note>> Special::generate_sound_distractions(std::vector<Note>& pattern, int distractions)
+{
+	std::vector<std::vector<Note>> seqs;
+	int numShort = 0, numLong = 0;
+	for (Note s : pattern) {
+		if (s.is_long) numLong++;
+		else numShort++;
+	}
+	while (seqs.size() < distractions + 1) {
+		int newShort = numShort + (Random::rand() % 2) * (Random::rand() % 2 * 2 - 1);
+		int newLong = numLong + (Random::rand() % 2) * (Random::rand() % 2 * 2 - 1);
+		std::vector<Note> distraction = generate_sound_sequence(newShort, newLong);
+		if (numShort == newShort && numLong == newLong) {
+			//Make sure rhythm doesn't match
+			for (int i = 0; i < distraction.size(); i++) {
+				if (distraction[i].is_long ^ pattern[i].is_long) {
+					seqs.emplace_back(distraction);
+					break;
+				}
+			}
+		}
+		else seqs.emplace_back(distraction);
+	}
+	return seqs;
+}
+
 std::map<int, int> Special::correctShapesById = {};
 std::map<std::string, std::vector<uint8_t>> Special::customAssets = {};
 int sed = 0;
@@ -2057,6 +2181,8 @@ void Special::test() {
 	//auto texloader = TextureLoader::get();
 	//texloader->forceLoadDesertTextures();
 	//memory->LoadPackage("globals");
+
+	generateSoundWavesPuzzle(0x002C4, 5, 1);
 
 	return;
 

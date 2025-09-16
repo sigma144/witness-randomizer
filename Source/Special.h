@@ -5,6 +5,7 @@
 #include "Generate.h"
 #include "Memory.h"
 #include "Panel.h"
+#include "Sounds.h"
 
 typedef std::set<Point> Shape;
 
@@ -42,6 +43,8 @@ public:
 	void generateAntiPuzzle(int id);
 	void generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind);
 	void generateColorfulColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind);
+	void generateSoundWavesPuzzle(int id, int numShort, int numLong);
+	void generateSoundWavesPuzzle(int id, std::vector<Note>& notes);
 	void generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSequence, bool writeSequence);
 	void generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSequence, bool writeSequence);
 	void generateSoundDotReflectionPuzzle(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored, bool writeSequence);
@@ -84,7 +87,8 @@ public:
 	void setScale(int id, float scale);
 	void setCustomMesh(int id, std::string filename);
 	void setCustomSound(std::string oldSound, const std::string newSound);
-	void setCustomSoundSequence(std::string oldSound, const std::vector<std::string> sequence);
+	void setCustomSound(int id, const std::string newSound, int distractNum);
+	void setCustomSound(int id, const std::string newSound) { setCustomSound(id, newSound, 0); }
 	void copyValueFromPanel(int id, int offset, int copyFromId);
 	std::vector<int> generatePathByConnections(std::vector<int>& connectionsA, std::vector<int>& connectionsB, std::vector<int>& flags, std::vector<int>& symmetry, std::vector<std::pair<int, int>> shadows);
 	bool isAmbiguous(std::vector<int>& path, std::vector<std::vector<int>>& solutions, std::vector<std::pair<int, int>> shadows);
@@ -213,4 +217,11 @@ private:
 		set.erase(item);
 		return item;
 	}
+	template <class T> void shuffle(std::vector<T>& vec) {
+		for (int i = 0; i < vec.size(); i++) {
+			std::swap(vec[i], vec[Random::rand() % vec.size()]);
+		}
+	}
+	std::vector<Note> generate_sound_sequence(int numShort, int numLong);
+	std::vector<std::vector<Note>> generate_sound_distractions(std::vector<Note>& pattern, int distractions);
 };

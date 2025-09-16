@@ -202,14 +202,6 @@
     <None Include="meshes\obj_panels_ruins_transparent_4x4.dmesh" />
     <None Include="meshes\obj_panels_ruins_transparent_filled.dmesh" />
   </ItemGroup>
-  <ItemGroup>
-    <Media Include="sounds\highlong.wav" />
-    <Media Include="sounds\highshort.wav" />
-    <Media Include="sounds\lowlong.wav" />
-    <Media Include="sounds\lowshort.wav" />
-    <Media Include="sounds\medshort.wav" />
-    <Media Include="sounds\midlong.wav" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

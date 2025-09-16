@@ -111,9 +111,9 @@ std::vector<uint8_t> TextureMaker::convert_cairo_surface_to_wtx(cairo_surface_t*
 	if (0 != handle_errors(DirectX::SaveToDDSMemory(raw_converted, compressed_dds_image.get()->GetImageCount(), compressed_dds_image.get()->GetMetadata(), DirectX::DDS_FLAGS::DDS_FLAGS_NONE, *resulting_blob), "Makin a blob")) {
 		//return -1;
 	}
-	if (0 != handle_errors(DirectX::SaveToDDSFile(raw_converted, compressed_dds_image.get()->GetImageCount(), compressed_dds_image.get()->GetMetadata(), DirectX::DDS_FLAGS::DDS_FLAGS_NONE, L"D:\\mipmaps.dds"), "Makin a blob")) {
+	//if (0 != handle_errors(DirectX::SaveToDDSFile(raw_converted, compressed_dds_image.get()->GetImageCount(), compressed_dds_image.get()->GetMetadata(), DirectX::DDS_FLAGS::DDS_FLAGS_NONE, L"D:\\mipmaps.dds"), "Makin a blob")) {
 		//return -1;
-	}
+	//}
 	auto blob_pointer = reinterpret_cast<uint8_t*>(resulting_blob.get()->GetBufferPointer());
 	auto blob_size = resulting_blob.get()->GetBufferSize();
 	auto blob_vec = std::vector<uint8_t>(blob_pointer, blob_pointer + blob_size); //copies the data out of the blob, into a new vec.
