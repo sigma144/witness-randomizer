@@ -43,10 +43,12 @@ public:
 	void generateAntiPuzzle(int id);
 	void generateColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind);
 	void generateColorfulColorFilterPuzzle(int id, Point size, const std::vector<std::pair<int, int>>& symbols, const Color& filter, bool colorblind);
-	void generateSoundWavesPuzzle(int id, int numShort, int numLong);
-	void generateSoundWavesPuzzle(int id, std::vector<Note>& notes);
+	void generateSoundWavePuzzle(int id, int numShort, int numLong);
+	void generateSoundWavePuzzle(int id, std::vector<Note>& notes);
+	void generateSoundDotPuzzle(int id, Point size, int numDots);
+	void generateSoundDotPuzzle(int id, Point size, std::vector<Note>& notes);
 	void generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSequence, bool writeSequence);
-	void generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSequence, bool writeSequence);
+	void generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSequence) { generateSoundDotPuzzle(id, size, dotSequence, true); }
 	void generateSoundDotReflectionPuzzle(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored, bool writeSequence);
 	bool generateSoundDotReflectionSpecial(int id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored);
 	void generateRGBStonePuzzleN(int id);

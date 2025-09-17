@@ -254,13 +254,13 @@ void Special::generateColorfulColorFilterPuzzle(int id, Point size, const std::v
 	generator->resetConfig();
 }
 
-void Special::generateSoundWavesPuzzle(int id, int numShort, int numLong)
+void Special::generateSoundWavePuzzle(int id, int numShort, int numLong)
 {
 	std::vector<Note> sequence = generate_sound_sequence(numShort, numLong);
-	generateSoundWavesPuzzle(id, sequence);
+	generateSoundWavePuzzle(id, sequence);
 }
 
-void Special::generateSoundWavesPuzzle(int id, std::vector<Note>& notes)
+void Special::generateSoundWavePuzzle(int id, std::vector<Note>& notes)
 {
 	int len = static_cast<int>(notes.size());
 	std::vector<int> connectionsA;
@@ -348,12 +348,26 @@ void Special::generateSoundWavesPuzzle(int id, std::vector<Note>& notes)
 	}
 }
 
-void Special::generateSoundDotPuzzle(int id1, int id2, std::vector<int> dotSequence, bool writeSequence) {
-	generator->setFlag(Generate::Config::DisableReset);
-	generateSoundDotPuzzle(id1, { 5, 5 }, dotSequence, writeSequence);
-	generator->write(id2);
-	Memory::get()->WritePanelData(id2, PATTERN_POINT_COLOR, Memory::get()->ReadPanelData<Color>(id2, SUCCESS_COLOR_A));
-	generator->resetConfig();
+void Special::generateSoundDotPuzzle(int id, Point size, int numDots)
+{
+	std::vector<Note> sequence = generate_sound_sequence(numDots, 0);
+	generateSoundDotPuzzle(id, size, sequence);
+}
+
+void Special::generateSoundDotPuzzle(int id, Point size, std::vector<Note>& notes)
+{
+	std::vector<int> sizes;
+	for (Note& n : notes) {
+		if (n.note == High) sizes.emplace_back(DOT_SMALL);
+		else if (n.note == Mid) sizes.emplace_back(DOT_MEDIUM);
+		else if (n.note == Low) sizes.emplace_back(DOT_LARGE);
+	}
+	generateSoundDotPuzzle(id, size, sizes);
+	std::vector<uint8_t> data = build_sound(notes);
+	for (std::string s : panel_sound_map[id]) {
+		uint64_t soundData = Memory::get()->GetSoundData(s);
+		Memory::get()->LoadSound(soundData, data);
+	}
 }
 
 void Special::generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSequence, bool writeSequence) {
@@ -392,7 +406,6 @@ void Special::generateSoundDotPuzzle(int id, Point size, std::vector<int> dotSeq
 			if (dotSequence[i] == DOT_MEDIUM) dotSequence[i] = 2;
 			if (dotSequence[i] == DOT_LARGE) dotSequence[i] = 3;
 		}
-
 		Memory* memory = Memory::get();
 		memory->WritePanelData<int>(id, DOT_SEQUENCE_LEN, { static_cast<int>(dotSequence.size()) });
 		memory->WriteArray(id, DOT_SEQUENCE, dotSequence, true);
@@ -2182,7 +2195,8 @@ void Special::test() {
 	//texloader->forceLoadDesertTextures();
 	//memory->LoadPackage("globals");
 
-	generateSoundWavesPuzzle(0x002C4, 5, 1);
+	//generateSoundWavePuzzle(0x002C4, 4, 2);
+	generateSoundDotPuzzle(0x0026D, { 5, 5 }, 5);
 
 	return;
 
