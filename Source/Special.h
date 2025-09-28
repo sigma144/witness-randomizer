@@ -83,6 +83,7 @@ public:
 	void generateSpecularPuzzleSpecial(int id, bool inverted, bool walls) { generateSpecularPuzzle(id, DEFAULT_GRID, {}, inverted, walls); }
 	void generateSpecularPuzzleSpecial(int id, int gridShape, bool inverted, bool walls) { generateSpecularPuzzle(id, gridShape, {}, inverted, walls); }
 	void generateSymPerspectivePuzzle(int id, std::vector<int> meshes, float x, float dx, float y, float dy, float z, float dz, int copyMeshFrom);
+	void generateShadowPathPuzzle(int id);
 	void setPosition(int id, float x, float y, float z);
 	void setOrientation(int id, float yaw, float pitch, float roll);
 	void setOrientation(int id, float x, float y, float z, float w);

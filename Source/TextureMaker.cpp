@@ -226,6 +226,55 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_segments(std::vector<std
 	return finalTexture;
 }
 
+std::vector<uint8_t> TextureMaker::generate_shadow_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness, bool symmetry)
+{
+	double scaleX = 0.5; double scaleY = 0.5;
+	for (int i = 0; i < xpoints.size(); i++) {
+		xpoints[i] = xpoints[i] * scaleX + (1 - scaleX) / 2;
+		ypoints[i] = ypoints[i] * scaleY + (1 - scaleY) / 2;
+	}
+
+	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+
+	auto cr = cairo_create(surface);
+
+	//fill background
+	cairo_set_source_rgba(cr, 1, 1, 1, 1);
+	cairo_paint(cr);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR); //Draw as alpha cutout
+	
+	//draw starting circle
+	cairo_set_source_rgba(cr, 0, 0, 0, 1);
+	cairo_arc(cr, width * xpoints[0], height * ypoints[0], dotthickness, 0.0, 360.0);
+	cairo_fill(cr);
+
+	//draw line
+	cairo_set_line_width(cr, thickness);
+	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+	cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+	cairo_move_to(cr, width * xpoints[0], height * ypoints[0]);
+	for (int index = 0; index < xpoints.size(); index++) {
+		if (symmetry && index == xpoints.size() / 2) { //Draw start of second (symmetry) line
+			cairo_stroke(cr);
+			cairo_move_to(cr, width * xpoints[index], height * ypoints[index]);
+			cairo_set_source_rgba(cr, 0, 0, 0, 1);
+			cairo_arc(cr, width * xpoints[index], height * ypoints[index], dotthickness, 0.0, 360.0);
+			cairo_fill(cr);
+		}
+		cairo_line_to(cr, width * xpoints[index], height * ypoints[index]);
+	}
+	cairo_stroke(cr);
+
+	auto pattern = cairo_pattern_create_for_surface(surface);
+
+	auto finalTexture = convert_cairo_surface_to_wtx(surface, 1, 0x05);
+	cairo_pattern_destroy(pattern);
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
+	return finalTexture;
+}
+
 void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float y, float scale, int symbolflags, std::optional<Color> customcolor, bool specular) {
 	if (customcolor.has_value() && customcolor.value().a == 0)
 		return;

@@ -66,7 +66,7 @@ void TextureLoader::generateColorBunkerTexture(int32_t panelid)
 
 }
 
-void TextureLoader::generateSpecTexture(int32_t id)
+void TextureLoader::generateTexture(int32_t id, TextureType type)
 {
 	Memory* memory = Memory::get();
 	std::vector<int> solution = memory->ReadArray<int>(id, SEQUENCE, memory->ReadPanelData<int>(id, SEQUENCE_LEN));
@@ -90,10 +90,36 @@ void TextureLoader::generateSpecTexture(int32_t id)
 	}
 
 	TextureMaker tm(512, 512);
-	auto wtxBuffer2 = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 35, dotscale * 26, symmetry != 0);
+	std::vector<uint8_t> buffer;
+	switch (type) {
+		case TextureType::Specular:
+			buffer = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 35, dotscale * 26, symmetry != 0);
+			memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), buffer);
+			memory->WritePanelData(id, NEEDS_REDRAW, 1);
+			break;
+		case TextureType::ShadowPath:
+			buffer = tm.generate_shadow_line(linePointsX, linePointsY, scale * 25, dotscale * 20, symmetry != 0);
+			std::string texturename = shadowTextures[id];
+			memory->LoadTexture(memory->GetTextureMapFromCatalog(texturename), buffer);
+			break;
+	}
+}
 
-	memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), wtxBuffer2);
-	memory->WritePanelData(id, NEEDS_REDRAW, 1);
+void TextureLoader::generateBlankTexture(int32_t panelid)
+{
+	TextureMaker tm(512, 512);
+	auto wtxBuffer = tm.generate_blank_texture();
+	Memory* memory = Memory::get();
+
+	auto texturename = textureNames[panelid];
+	// corresponding package is always loaded. shared with bunker textures, which get preloaded before this does.
+	memory->LoadTexture(memory->GetTextureMapFromCatalog(texturename), wtxBuffer);
+	memory->WritePanelData(panelid, NEEDS_REDRAW, 1);
+}
+
+void TextureLoader::generateSpecTexture(int32_t id)
+{
+	generateTexture(id, TextureType::Specular);
 }
 
 void TextureLoader::generateSpecTextureSpecial(int32_t id, bool inverted, bool walls)
@@ -155,6 +181,11 @@ void TextureLoader::generateSpecTextureSpecial(int32_t id, bool inverted, bool w
 	memory->WritePanelData(id, NEEDS_REDRAW, 1);
 }
 
+void TextureLoader::generateShadowPath(int32_t id)
+{
+	generateTexture(id, TextureType::ShadowPath);
+}
+
 TextureLoader* TextureLoader::get()
 {
 	if (_singleton == nullptr) {
@@ -191,6 +222,7 @@ void TextureLoader::loadTextures()
 	}
 }
 
+/*
 void TextureLoader::generateTexture(int32_t panelid)
 {
 	//this was done in case a similar setup is to be used on other panels
@@ -225,4 +257,4 @@ void TextureLoader::generateTexture(int32_t panelid)
 		break;
 	}
 	
-}
+}*/

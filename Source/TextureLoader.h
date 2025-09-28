@@ -19,13 +19,17 @@ protected:
 
 public:
 
+	enum TextureType { Specular, SpecularInvert, ShadowPath, Symbols };
 	static TextureLoader* get();
 	void forceLoadBunkerTextures();
 	void forceLoadDesertTextures();
 	void loadTextures();
-	void generateTexture(int32_t panelid);
+	//void generateTexture(int32_t panelid);
+	void generateTexture(int32_t panelid, TextureType type);
+	void generateBlankTexture(int32_t panelid);
 	void generateSpecTexture(int32_t panelid);
 	void generateSpecTextureSpecial(int32_t panelid, bool inverted, bool walls);
+	void generateShadowPath(int32_t panelid);
 };
 
 
@@ -51,4 +55,18 @@ inline std::unordered_map<int32_t, std::string> textureNames = {
 	{0x17E67, "obj_panels_color_coloredlight_2"},
 	{0x0A079, "obj_panels_color_tricolorNew_Elevator"},
 	{0x09FD8, "cc_pretty_mask"}
+};
+
+inline std::unordered_map<int32_t, std::string> shadowTextures = {
+	//Shadow Path
+	{0x386FA, "vs_shadowgarden_puzzlepatternw1new_cutout"},
+	{0x1C33F, "vs_shadowgarden_puzzlepatternw1_cutout"},
+	{0x196E2, "vs_shadowgarden_puzzlepatternw2_cutout"},
+	{0x1972A, "vs_shadowgarden_puzzlepatternw3_cutout"},
+	{0x19809, "vs_shadowgarden_puzzlepatternw4n_cutout"},
+	{0x19806, "vs_shadowgarden_puzzlepatternw4_cutout"},
+	{0x196F8, "vs_shadowgarden_puzzlepatternw5_cutout"},
+	{0x1972F, "vs_shadowgarden_puzzlepatternw6_cutout"},
+	//Laser
+	{0x19650, "vs_shadowgarden_puzzlepatternf1_cutout"},
 };

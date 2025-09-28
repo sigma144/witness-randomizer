@@ -1765,6 +1765,30 @@ void Special::generateSymPerspectivePuzzle(int id, std::vector<int> meshes, floa
 	}
 }
 
+void Special::generateShadowPathPuzzle(int id)
+{
+	Memory* memory = Memory::get();
+	std::vector<float> positions;
+	std::vector<int> connectionsA;
+	std::vector<int> connectionsB;
+	std::vector<int> flags;
+	std::vector<int> symmetry;
+	std::vector<std::pair<int, int>> shadows; //Empty
+
+	positions = memory->ReadArray<float>(id, DOT_POSITIONS, memory->ReadPanelData<int>(id, NUM_DOTS));
+	connectionsA = memory->ReadArray<int>(id, DOT_CONNECTION_A, memory->ReadPanelData<int>(id, NUM_CONNECTIONS));
+	connectionsB = memory->ReadArray<int>(id, DOT_CONNECTION_B, memory->ReadPanelData<int>(id, NUM_CONNECTIONS));
+	flags = memory->ReadArray<int>(id, DOT_FLAGS, memory->ReadPanelData<int>(id, NUM_DOTS));
+	int symPointer = memory->ReadPanelData<int>(id, REFLECTION_DATA);
+	if (symPointer) symmetry = memory->ReadArray<int>(id, REFLECTION_DATA, flags.size());
+
+	std::vector<int> solution = generatePathByConnections(connectionsA, connectionsB, flags, symmetry, shadows);
+	memory->WriteArray<int>(id, SEQUENCE, solution, true);
+	memory->WritePanelData<int>(id, SEQUENCE_LEN, solution.size());
+
+	TextureLoader::get()->generateShadowPath(id);
+}
+
 void Special::setPosition(int id, float x, float y, float z)
 {
 	Memory::get()->WritePanelData<float>(id, POSITION, { x, y, z });
@@ -2195,8 +2219,14 @@ void Special::test() {
 	//texloader->forceLoadDesertTextures();
 	//memory->LoadPackage("globals");
 
-	//generateSoundWavePuzzle(0x002C4, 4, 2);
-	generateSoundDotPuzzle(0x0026D, { 5, 5 }, 5);
+	generateShadowPathPuzzle(0x386FA);
+	generateShadowPathPuzzle(0x1C33F);
+	generateShadowPathPuzzle(0x196E2);
+	generateShadowPathPuzzle(0x1972A);
+	generateShadowPathPuzzle(0x19809);
+	generateShadowPathPuzzle(0x19806);
+	generateShadowPathPuzzle(0x196F8);
+	generateShadowPathPuzzle(0x1972F);
 
 	return;
 
