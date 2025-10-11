@@ -149,15 +149,15 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_line(std::vector<float> 
 	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
 	cairo_move_to(cr, width * xpoints[0], height * ypoints[0]);
-	for (int index = 0; index < xpoints.size(); index++) {
-		if (symmetry && index == xpoints.size() / 2) { //Draw start of second (symmetry) line
+	for (int i = 0; i < xpoints.size(); i++) {
+		if (symmetry && i == xpoints.size() / 2) { //Draw start of second (symmetry) line
 			cairo_stroke(cr);
-			cairo_move_to(cr, width * xpoints[index], height * ypoints[index]);
+			cairo_move_to(cr, width * xpoints[i], height * ypoints[i]);
 			cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 1);
-			cairo_arc(cr, width * xpoints[index], height * ypoints[index], dotthickness, 0.0, 360.0);
+			cairo_arc(cr, width * xpoints[i], height * ypoints[i], dotthickness, 0.0, 360.0);
 			cairo_fill(cr);
 		}
-		cairo_line_to(cr, width * xpoints[index], height * ypoints[index]);
+		cairo_line_to(cr, width * xpoints[i], height * ypoints[i]);
 	}
 	cairo_stroke(cr);
 
@@ -226,13 +226,15 @@ std::vector<uint8_t> TextureMaker::generate_desert_spec_segments(std::vector<std
 	return finalTexture;
 }
 
-std::vector<uint8_t> TextureMaker::generate_shadow_line(std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness, bool symmetry)
+std::vector<uint8_t> TextureMaker::generate_shadow_line(int id, std::vector<float> xpoints, std::vector<float> ypoints, float thickness, float dotthickness, bool symmetry)
 {
-	double scaleX = 0.5; double scaleY = 0.5;
+	double scaleX = shadowCoords[id][2]; double scaleY = shadowCoords[id][3];
 	for (int i = 0; i < xpoints.size(); i++) {
-		xpoints[i] = xpoints[i] * scaleX + (1 - scaleX) / 2;
-		ypoints[i] = ypoints[i] * scaleY + (1 - scaleY) / 2;
+		xpoints[i] = xpoints[i] * scaleX + shadowCoords[id][0];
+		ypoints[i] = ypoints[i] * scaleY + shadowCoords[id][1];
 	}
+	thickness *= scaleY;
+	dotthickness *= scaleY;
 
 	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 
@@ -254,17 +256,60 @@ std::vector<uint8_t> TextureMaker::generate_shadow_line(std::vector<float> xpoin
 	cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
 	cairo_move_to(cr, width * xpoints[0], height * ypoints[0]);
-	for (int index = 0; index < xpoints.size(); index++) {
-		if (symmetry && index == xpoints.size() / 2) { //Draw start of second (symmetry) line
+	for (int i = 0; i < xpoints.size(); i++) {
+		if (symmetry && i == xpoints.size() / 2) { //Draw start of second (symmetry) line
 			cairo_stroke(cr);
-			cairo_move_to(cr, width * xpoints[index], height * ypoints[index]);
+			cairo_move_to(cr, width * xpoints[i], height * ypoints[i]);
 			cairo_set_source_rgba(cr, 0, 0, 0, 1);
-			cairo_arc(cr, width * xpoints[index], height * ypoints[index], dotthickness, 0.0, 360.0);
+			cairo_arc(cr, width * xpoints[i], height * ypoints[i], dotthickness, 0.0, 360.0);
 			cairo_fill(cr);
 		}
-		cairo_line_to(cr, width * xpoints[index], height * ypoints[index]);
+		cairo_line_to(cr, width * xpoints[i], height * ypoints[i]);
 	}
 	cairo_stroke(cr);
+
+	auto pattern = cairo_pattern_create_for_surface(surface);
+
+	auto finalTexture = convert_cairo_surface_to_wtx(surface, 1, 0x05);
+	cairo_pattern_destroy(pattern);
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
+	return finalTexture;
+}
+
+//TODO: Figure out why this isn't working.
+std::vector<uint8_t> TextureMaker::generate_shadow_line_new(int id, std::vector<float> xpoints, std::vector<float> ypoints, bool symmetry)
+{
+	double scaleX = 0.5; double scaleY = 0.5; double scaleI = 1;
+	for (int i = 0; i < xpoints.size(); i++) {
+		xpoints[i] = xpoints[i] * scaleX + (1 - scaleX) / 2;
+		ypoints[i] = ypoints[i] * scaleY + (1 - scaleY) / 2;
+	}
+
+	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+
+	auto cr = cairo_create(surface);
+
+	//fill background
+	cairo_set_source_rgba(cr, 1, 1, 1, 1);
+	cairo_paint(cr);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR); //Draw as alpha cutout
+
+	draw_image_on_surface("./images/symbols/h1.png", surface, 0, 0, scaleI);
+
+	for (int i = 0; i < xpoints.size() - 1; i++) {
+		float x1 = xpoints[i]; float x2 = xpoints[i + 1];
+		float y1 = ypoints[i]; float y2 = ypoints[i + 1];
+		if (x1 > x2 and y1 == y2)
+			draw_image_on_surface("./images/symbols/h1.png", surface, x1 * width, y1 * height, scaleI);
+		if (x1 < x2 and y1 == y2)
+			draw_image_on_surface("./images/symbols/h1.png", surface, (x1 - 1) * width, y1 * height, scaleI);
+		if (x1 == x2 and y1 > y2)
+			draw_image_on_surface("./images/symbols/v1.png", surface, x1 * width, y1 * height, scaleI);
+		if (x1 == x2 and y1 < y2)
+			draw_image_on_surface("./images/symbols/v1.png", surface, x1 * width, (y1 - 1) * height, scaleI);
+	}
 
 	auto pattern = cairo_pattern_create_for_surface(surface);
 
@@ -319,9 +364,6 @@ void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float
 	else {
 		filepath = "./images/symbols/spec_stone.png";  //Undefined symbol
 	}
-
-	auto* cr_image = cairo_create(image);
-
 	std::tuple<float, float, float> color = { 0.0, 0.0, 0.0 };
 	switch (symbolflags & 0xF) {
 	case 0x2:
@@ -346,21 +388,29 @@ void TextureMaker::draw_symbol_on_surface(cairo_surface_t* image, float x, float
 	if (customcolor.has_value()) {
 		color = { customcolor.value().r,customcolor.value().g,customcolor.value().b };
 	}
+	draw_image_on_surface(filepath, image, x, y, scale, color);
+}
 
+void TextureMaker::draw_image_on_surface(std::string filepath, cairo_surface_t* surface, float x, float y, float scale)
+{
+	draw_image_on_surface(filepath, surface, x, y, scale, { 0, 0, 0 });
+}
+
+void TextureMaker::draw_image_on_surface(std::string filepath, cairo_surface_t* surface, float x, float y, float scale, std::tuple<float, float, float> color)
+{
+	auto* cr_image = cairo_create(surface);
 	auto mask_image = cairo_image_surface_create_from_png(filepath.c_str());
 	int maskwidth = cairo_image_surface_get_width(mask_image);
 	int maskheight = cairo_image_surface_get_height(mask_image);
-	auto scaled_stone_mask = cairo_surface_create_similar(mask_image, CAIRO_CONTENT_ALPHA, maskwidth * scale, maskheight * scale);
-	auto cr_scaled_mask = cairo_create(scaled_stone_mask);
+	auto scaled_mask = cairo_surface_create_similar(mask_image, CAIRO_CONTENT_ALPHA, maskwidth * scale, maskheight * scale);
+	auto cr_scaled_mask = cairo_create(scaled_mask);
 	cairo_scale(cr_scaled_mask, scale, scale);
 	cairo_set_source_surface(cr_scaled_mask, mask_image, 0, 0);
 	cairo_paint(cr_scaled_mask);
 	cairo_destroy(cr_scaled_mask);
-
 	auto [r, g, b] = color;
 	cairo_set_source_rgb(cr_image, r, g, b);
-	cairo_mask_surface(cr_image, scaled_stone_mask, x - (scale * maskwidth * .5), y - (scale * maskheight * .5));
-
+	cairo_mask_surface(cr_image, scaled_mask, x - (scale * maskwidth * .5), y - (scale * maskheight * .5));
 	cairo_fill(cr_image);
 	cairo_destroy(cr_image);
 }

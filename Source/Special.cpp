@@ -2221,8 +2221,8 @@ void Special::test() {
 
 	generateShadowPathPuzzle(0x386FA);
 	generateShadowPathPuzzle(0x1C33F);
-	generateShadowPathPuzzle(0x196E2);
-	generateShadowPathPuzzle(0x1972A);
+	generateShadowPathPuzzle(0x196E2); //TODO: Cutoff texture
+	generateShadowPathPuzzle(0x1972A); //TODO: Blocking leaf
 	generateShadowPathPuzzle(0x19809);
 	generateShadowPathPuzzle(0x19806);
 	generateShadowPathPuzzle(0x196F8);

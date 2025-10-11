@@ -93,12 +93,13 @@ void TextureLoader::generateTexture(int32_t id, TextureType type)
 	std::vector<uint8_t> buffer;
 	switch (type) {
 		case TextureType::Specular:
-			buffer = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 35, dotscale * 26, symmetry != 0);
+			buffer = tm.generate_desert_spec_line(linePointsX, linePointsY, scale * 40, dotscale * 35, symmetry != 0);
 			memory->LoadTexture(memory->ReadPanelData<uint64_t>(id, SPECULAR_TEXTURE), buffer);
 			memory->WritePanelData(id, NEEDS_REDRAW, 1);
 			break;
 		case TextureType::ShadowPath:
-			buffer = tm.generate_shadow_line(linePointsX, linePointsY, scale * 25, dotscale * 20, symmetry != 0);
+			buffer = tm.generate_shadow_line(id, linePointsX, linePointsY, scale * 40, dotscale * 35, symmetry != 0);
+			//buffer = tm.generate_shadow_line_new(linePointsX, linePointsY, symmetry != 0);
 			std::string texturename = shadowTextures[id];
 			memory->LoadTexture(memory->GetTextureMapFromCatalog(texturename), buffer);
 			break;

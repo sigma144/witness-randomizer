@@ -426,7 +426,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		490, 15, 90, 16, hwnd, NULL, hInstance, NULL);
 
-	CreateWindow(L"STATIC", L"Choose Difficuty:",
+	CreateWindow(L"STATIC", L"Choose Difficulty:",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 15, 120, 16, hwnd, NULL, hInstance, NULL);
 	hwndNormal = CreateWindow(L"BUTTON", L"NORMAL - Puzzles that should be reasonably challenging for most players. Puzzle mechanics are mostly identical to those in the original game.",
