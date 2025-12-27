@@ -6,16 +6,23 @@
 #include <iomanip>
 #include <fstream>
 #include <windows.h>
+#include <array>
+#include <wtypes.h>
 // https://github.com/erayarslan/WriteProcessMemory-Example
 // http://stackoverflow.com/q/32798185
 // http://stackoverflow.com/q/36018838
 // http://stackoverflow.com/q/1387064
 class Memory
 {
-public:
-	Memory(const std::string& processName);
-	int findGlobals();
+private:
+	Memory();
 	~Memory();
+
+	static Memory* _singleton;
+public:
+	static void create();
+	static Memory* get();
+	void invalidateCache();
 
 	Memory(const Memory& memory) = delete;
 	Memory& operator=(const Memory& other) = delete;
@@ -29,6 +36,14 @@ public:
 	template <class T>
 	uintptr_t AllocArray(int id, size_t numItems) {
 		return AllocArray<T>(id, static_cast<int>(numItems));
+	}
+
+	LPVOID getHandle() {
+		return _handle;
+	}
+
+	uint64_t getBaseAddress() {
+		return _baseAddress;
 	}
 
 	bool Read(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
@@ -93,49 +108,60 @@ public:
 	}
 
 	template <class T>
+	void WritePanelData(int panel, int offset, T data) {
+		std::vector<T> dataVector = { data };
+		WritePanelData<T>(panel, offset, dataVector);
+	}
+
+	template <class T>
 	void WritePanelData(int panel, int offset, const std::vector<T>& data) {
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
 	}
 
+	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
-	static int GLOBALS;
-	static bool showMsg;
-	static int globalsTests[3];
+	int GLOBALS;
+	bool showMsg = false;
+	int globalsTests[3] = {
+	0x62D0A0, //Steam and Epic Games
+	0x62B0A0, //Good Old Games
+	0x5B28C0 //Older Versions
+	};
 	bool retryOnFail = true;
 
-private:
-	template<class T>
-	std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
-		std::vector<T> data;
-		data.resize(numItems);
-		if (Read(ComputeOffset(offsets), &data[0], sizeof(T) * numItems)) {
-			return data;
-		}
-		if (!showMsg) throw std::exception();
-		ThrowError(offsets, false);
-		return {};
-	}
+	private:
+		void findGlobals();
 
-	template <class T>
-	void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
-		if (Write(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
-			return;
+		template<class T>
+		std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
+			std::vector<T> data;
+			data.resize(numItems);
+			if (Read(ComputeOffset(offsets), &data[0], sizeof(T) * numItems)) {
+				return data;
+			}
+			ThrowError(offsets, false);
+			return {};
 		}
-		if (!showMsg) throw std::exception();
-		ThrowError(offsets, true);
-	}
-	void ThrowError(std::string message);
-	void ThrowError(const std::vector<int>& offsets, bool rw_flag);
-	void ThrowError();
+
+		template <class T>
+		void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
+			if (Write(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
+				return;
+			}
+			ThrowError(offsets, true);
+		}
+		void ThrowError(std::string message);
+		void ThrowError(const std::vector<int>& offsets, bool rw_flag);
+		void ThrowError();
 
 	void* ComputeOffset(std::vector<int> offsets);
 
-	std::map<uintptr_t, uintptr_t> _computedAddresses;
-	std::map<std::pair<int, int>, int> _arraySizes;
-	uintptr_t _baseAddress = 0;
-	HANDLE _handle = nullptr;
+		std::map<uintptr_t, uintptr_t> _computedAddresses;
+		std::map<std::pair<int, int>, int> _arraySizes;
+		uintptr_t _baseAddress = 0;
+		HANDLE _handle = nullptr;
 
-	friend class Randomizer;
-	friend class Special;
+		friend class Randomizer;
+		friend class Special;
 };

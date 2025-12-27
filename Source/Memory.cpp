@@ -7,22 +7,44 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <iostream>
+#include "Randomizer.h"
 
 #undef PROCESSENTRY32
 #undef Process32Next
 
-Memory::Memory(const std::string& processName) {
+Memory* Memory::_singleton = nullptr;
+
+#define SIGSCAN_STRIDE   0x100000 // 100 KiB. Note that larger reads are not significantly slower than small reads, but have an increased chance of failing, since ReadProcessMemory fails if ANY of the memory is inaccessible.
+#define SIGSCAN_PADDING  0x000800 // The additional amount to scan in order to ensure that a useful amount of data is returned if the found signature is at the end of the buffer.
+#define PROGRAM_SIZE    0x5000000 // 5 MiB. (The application itself is only 4.7 MiB large.)
+
+Memory::Memory() {
+	std::string process32 = "witness_d3d11.exe";
+	std::string process64 = "witness64_d3d11.exe";
+
 	// First, get the handle of the process
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(entry);
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	while (Process32Next(snapshot, &entry)) {
-		if (processName == entry.szExeFile) {
+		if (entry.szExeFile == process64) {
 			_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 			break;
 		}
 	}
+
+	// If we didn't find the process, terminate.
 	if (!_handle) {
+		PROCESSENTRY32 entry;
+		entry.dwSize = sizeof(entry);
+		HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		while (Process32Next(snapshot, &entry)) {
+			if (process32 == entry.szExeFile) {
+				MessageBox(GetActiveWindow(), L"You appear to be running the 32 bit version of The Witness. Please run the 64 bit version instead.", NULL, MB_OK);
+				throw std::exception("Unable to find process!");
+			}
+		}
+
 		MessageBox(GetActiveWindow(), L"Process not found in RAM. Please open The Witness and then try again.", NULL, MB_OK);
 		throw std::exception("Unable to find process!");
 	}
@@ -36,7 +58,7 @@ Memory::Memory(const std::string& processName) {
 	for (DWORD i = 0; i < numModules / sizeof(HMODULE); i++) {
 		int length = GetModuleBaseNameA(_handle, moduleList[i], &name[0], static_cast<DWORD>(name.size()));
 		name.resize(length);
-		if (processName == name) {
+		if (name == process64) {
 			_baseAddress = (uintptr_t)moduleList[i];
 			break;
 		}
@@ -59,7 +81,7 @@ int find(const std::vector<byte> &data, const std::vector<byte> &search) {
 
 	for (int i=0; i<maxI; i++) {
 		bool match = true;
-		for (size_t j=0; j<maxJ; j++) {
+		for (size_t j = 0; j < maxJ; j++) {
 			if (*(dataBegin + i + j) == *(searchBegin + j)) {
 				continue;
 			}
@@ -71,26 +93,72 @@ int find(const std::vector<byte> &data, const std::vector<byte> &search) {
 	return -1;
 }
 
-int Memory::findGlobals() {
-	const std::vector<byte> scanBytes = {0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10};
-	#define BUFFER_SIZE 0x10000 // 10 KB
-	std::vector<byte> buff;
-	buff.resize(BUFFER_SIZE + 0x100); // padding in case the sigscan is past the end of the buffer
+void Memory::create()
+{
+	if (_singleton == nullptr) {
+		_singleton = new Memory();
 
-	for (uintptr_t i = 0; i < 0x500000; i += BUFFER_SIZE) {
-		SIZE_T numBytesWritten;
-		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
-		buff.resize(numBytesWritten);
-		int index = find(buff, scanBytes);
-		if (index == -1) continue;
-
-		index = index + 0x14; // This scan targets a line slightly before the key instruction
-		// (address of next line) + (index interpreted as 4byte int)
-		Memory::GLOBALS = (int)(i + index + 4) + *(int*)&buff[index];
-		break;
+		_singleton->findGlobals();
 	}
+}
 
-	return Memory::GLOBALS;
+Memory* Memory::get()
+{
+	return _singleton;
+}
+
+void Memory::invalidateCache() {
+	_computedAddresses = std::map<uintptr_t, uintptr_t>();
+}
+
+void Memory::findGlobals() {
+	if (!GLOBALS) {
+		// Check to see if this is a version with a known globals pointer.
+		for (int g : globalsTests) {
+			GLOBALS = g;
+			if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
+				return;
+			}
+		}
+
+
+		// Checked for a cached value.
+		std::ifstream file("WRPGglobals.txt");
+		if (file.is_open()) {
+			file >> std::hex >> GLOBALS;
+			file.close();
+		}
+		else {
+			// We had no cached value; scan for it in the process instead.
+			const std::vector<byte> scanBytes = { 0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10 };
+			std::vector<byte> buff;
+			buff.resize(SIGSCAN_STRIDE + 0x100); // padding in case the sigscan is past the end of the buffer
+
+			GLOBALS = 0;
+			for (uintptr_t i = 0; i < PROGRAM_SIZE; i += SIGSCAN_STRIDE) {
+				SIZE_T numBytesWritten;
+				if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
+				buff.resize(numBytesWritten);
+				int index = find(buff, scanBytes);
+				if (index == -1) continue;
+
+				index = index + 0x14; // This scan targets a line slightly before the key instruction
+				// (address of next line) + (index interpreted as 4byte int)
+				GLOBALS = (int)(i + index + 4) + *(int*)&buff[index];
+				break;
+			}
+
+			if (GLOBALS) {
+				// Store the pointer to disk for faster lookup next time.
+				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
+				ofile << std::hex << GLOBALS << std::endl;
+				ofile.close();
+			}
+			else {
+				ThrowError("Unable to find globals pointer.");
+			}
+		}
+	}
 }
 
 void Memory::ThrowError(std::string message) {
@@ -150,12 +218,4 @@ void* Memory::ComputeOffset(std::vector<int> offsets)
 		cumulativeAddress = _computedAddresses[cumulativeAddress];
 	}
 	return reinterpret_cast<void*>(cumulativeAddress + final_offset);
-}
-
-int Memory::GLOBALS = 0;
-bool Memory::showMsg = false;
-int Memory::globalsTests[3] = {
-	0x62D0A0, //Steam and Epic Games
-	0x62B0A0, //Good Old Games
-	0x5B28C0 //Older Versions
 };

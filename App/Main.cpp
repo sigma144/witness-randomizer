@@ -100,6 +100,7 @@ float target;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	Memory* memory = Memory::get();
 	static bool seedIsRNG = false;
 
 	if (message == WM_CLOSE) {
@@ -112,12 +113,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	} else if (message == WM_COMMAND || message == WM_TIMER) {
 		switch (HIWORD(wParam)) {
 			// Seed contents changed
-			case EN_CHANGE:
-				seedIsRNG = false;
+		case EN_CHANGE:
+			seedIsRNG = false;
 		}
 		switch (LOWORD(wParam)) {
 
-		//Test button  - general testing (debug mode only)
+			//Test button  - general testing (debug mode only)
 		case IDC_TEST:
 			generator->resetConfig();
 			generator->seed(static_cast<unsigned int>(time(NULL)));
@@ -126,7 +127,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			specialCase->test();
 			break;
 
-		//Difficulty selection
+			//Difficulty selection
 		case IDC_DIFFICULTY_NORMAL:
 			hard = false;
 			break;
@@ -142,11 +143,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CheckDlgButton(hwnd, IDC_DOUBLE, doubleMode);
 			break;
 
-		//Randomize button
+			//Randomize button
 		case IDC_RANDOMIZE:
 		{
 			bool rerandomize = false;
-			if (Special::ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
+			if (memory->ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
 				if (MessageBox(hwnd, L"Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", NULL, MB_YESNO) == IDYES) {
 					rerandomize = true;
 					seedIsRNG = false;
@@ -173,14 +174,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			else randomizer->seedIsRNG = false;
 
-			randomizer->ClearOffsets();
-			
+			memory->ClearOffsets();
+
 			ShowWindow(hwndLoadingText, SW_SHOW);
 
 			randomizer->AdjustSpeed(); //Makes certain moving objects move faster
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
-			int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+			int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
 			if (lastSeed > 0 && !rerandomize && !DEBUG) {
 				if (seed != lastSeed && !randomizer->seedIsRNG) {
 					if (MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". Are you sure you want to use seed " + std::to_wstring(seed) + L" instead?").c_str(), NULL, MB_YESNO) == IDNO) {
@@ -188,7 +189,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				lastHard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+				lastHard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
 				if (!lastHard && hard) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Normal. Are you sure you want to switch to Expert?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
@@ -205,7 +206,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				bool lastDouble = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+				bool lastDouble = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
 				if (lastDouble && !doubleMode) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Double Mode. Are you sure you want to disable it?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
@@ -229,7 +230,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				else break;
 			}
-			
+
 			EnableWindow(hwndColorblind, false);
 			EnableWindow(hwndDoubleMode, false);
 			if (colorblind) {
@@ -246,9 +247,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			randomizer->doubleMode = doubleMode;
 			if (hard) randomizer->GenerateHard(hwndLoadingText);
 			else randomizer->GenerateNormal(hwndLoadingText);
-			Special::WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-			Special::WritePanelData(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
-			Special::WritePanelData(0x0A3B2, BACKGROUND_REGION_COLOR + 12, doubleMode);
+			memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
+			memory->WritePanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
+			memory->WritePanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12, doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndSeed, std::to_wstring(seed).c_str());
 
@@ -305,7 +306,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			_panel->Write(panel);
 			break;
 
-		//Remove a symbol from the puzzle (debug mode only)
+			//Remove a symbol from the puzzle (debug mode only)
 		case IDC_REMOVE:
 			GetWindowText(hwndCol, &str[0], 30);
 			x = _wtoi(str.c_str());
@@ -328,7 +329,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			_panel->Write(panel);
 			break;
 
-		//Debug mode checkboxes
+			//Debug mode checkboxes
 		case IDC_ROTATED:
 			CheckDlgButton(hwnd, IDC_ROTATED, !IsDlgButtonChecked(hwnd, IDC_ROTATED));
 			break;
@@ -360,7 +361,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else _panel->symmetry = Panel::Symmetry::None;
 			_panel->Write(panel);
 			break;
-		//Tetris shape editing
+			//Tetris shape editing
 		case SHAPE_11: CheckDlgButton(hwnd, SHAPE_11, !IsDlgButtonChecked(hwnd, SHAPE_11)); currentShape ^= SHAPE_11; break;
 		case SHAPE_12: CheckDlgButton(hwnd, SHAPE_12, !IsDlgButtonChecked(hwnd, SHAPE_12)); currentShape ^= SHAPE_12; break;
 		case SHAPE_13: CheckDlgButton(hwnd, SHAPE_13, !IsDlgButtonChecked(hwnd, SHAPE_13)); currentShape ^= SHAPE_13; break;
@@ -377,7 +378,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case SHAPE_42: CheckDlgButton(hwnd, SHAPE_42, !IsDlgButtonChecked(hwnd, SHAPE_42)); currentShape ^= SHAPE_42; break;
 		case SHAPE_43: CheckDlgButton(hwnd, SHAPE_43, !IsDlgButtonChecked(hwnd, SHAPE_43)); currentShape ^= SHAPE_43; break;
 		case SHAPE_44: CheckDlgButton(hwnd, SHAPE_44, !IsDlgButtonChecked(hwnd, SHAPE_44)); currentShape ^= SHAPE_44; break;
-		//Arrow direction selection
+			//Arrow direction selection
 		case ARROW_UP_LEFT: CheckDlgButton(hwnd, ARROW_UP_LEFT, !IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)) currentDir = ARROW_UP_LEFT; break;
 		case ARROW_UP: CheckDlgButton(hwnd, ARROW_UP, !IsDlgButtonChecked(hwnd, ARROW_UP)); if (IsDlgButtonChecked(hwnd, ARROW_UP)) currentDir = ARROW_UP; break;
 		case ARROW_UP_RIGHT: CheckDlgButton(hwnd, ARROW_UP_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)) currentDir = ARROW_UP_RIGHT; break;
@@ -388,58 +389,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ARROW_DOWN_RIGHT: CheckDlgButton(hwnd, ARROW_DOWN_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)) currentDir = ARROW_DOWN_RIGHT; break;
 		}
 	}
-    return DefWindowProc(hwnd, message, wParam, lParam);
+	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
 
 	//Initialize memory globals constant depending on game version
-	Memory memory("witness64_d3d11.exe");
-	Memory::showMsg = false;
-	for (int g : Memory::globalsTests) {
-		try {
-			Memory::GLOBALS = g;
-			if (memory.ReadPanelData<int>(0x17E52, STYLE_FLAGS) != 0xA040) throw std::exception();
-			break;
-		}
-		catch (std::exception) { Memory::GLOBALS = 0; }
-	}
-	if (!Memory::GLOBALS) {
-		std::ifstream file("WRPGglobals.txt");
-		if (file.is_open()) {
-			file >> std::hex >> Memory::GLOBALS;
-			file.close();
-		}
-		else {
-			std::wstring str = L"Globals ptr not found. Press OK to search for globals ptr (may take a minute or two). Please keep The Witness open during this time.";
-			if (MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK) != IDOK) return 0;
-			int address = memory.findGlobals();
-			if (address) {
-				std::wstringstream ss; ss << std::hex << "Address found: 0x" << address << ". This address wil be automatically loaded next time. Please post an issue on Github with this address so that it can be added in the future.";
-				MessageBox(GetActiveWindow(), ss.str().c_str(), NULL, MB_OK);
-				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
-				ofile << std::hex << address << std::endl;
-				ofile.close();
-			}
-			else {
-				str = L"Address could not be found. Please post an issue on the Github page.";
-				MessageBox(GetActiveWindow(), str.c_str(), NULL, MB_OK);
-				return 0;
-			}
-		}
-	}
-	
+	Memory::create();
+	Memory* memory = memory->get();
+
 	if (wcscmp(lpCmdLine, L"-nogui") == 0)
 	{
 		// if -nogui is passed as argument, just keep saved settings and re-randomize using them
 		std::wcout << L"Running in nogui mode" << std::endl;
 		// SEED
-		randomizer->seed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+		randomizer->seed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
 		// HARD
-		hard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+		hard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
 		// DOUBLE
-		randomizer->doubleMode = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+		randomizer->doubleMode = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
 
 		// COLORBLIND
 		std::ifstream configFile("WRPGconfig.txt");
@@ -457,20 +426,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			configFile.close();
 		}
 		randomizer->seedIsRNG = false;
-		
+
 		std::wcout << L"Randomizing..." << std::endl;
-		
-		randomizer->ClearOffsets();
+
+		memory->ClearOffsets();
 		randomizer->AdjustSpeed();
-		
+
 		if (hard) randomizer->GenerateHard(hwndLoadingText);
 		else randomizer->GenerateNormal(hwndLoadingText);
-		
+
 		std::wcout << L"Done !" << std::endl;
-		
+
 		return 0;
 	}
-	
+
 	LoadLibrary(L"Msftedit.dll");
 
 	WNDCLASSW wndClass = {
@@ -488,14 +457,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	RegisterClassW(&wndClass);
 
 	HWND hwnd = CreateWindow(WINDOW_CLASS, PRODUCT_NAME, WS_OVERLAPPEDWINDOW,
-      650, 200, 600, DEBUG ? 700 : 320, nullptr, nullptr, hInstance, nullptr);
+		650, 200, 600, DEBUG ? 700 : 320, nullptr, nullptr, hInstance, nullptr);
 
-	Memory::showMsg = true;
+	memory->showMsg = true;
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
-	int lastSeed = Special::ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-	hard = (Special::ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
-	doubleMode = (Special::ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+	int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+	hard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+	doubleMode = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
 
 	//-------------------------Basic window controls---------------------------
 
@@ -530,8 +499,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 		10, 250, 160, 16, hwnd, NULL, hInstance, NULL);
 	hwndSeed = CreateWindow(MSFTEDIT_CLASS, lastSeed == 0 ? L"" : std::to_wstring(lastSeed).c_str(),
-        WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-        180, 245, 60, 26, hwnd, NULL, hInstance, NULL);
+		WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
+		180, 245, 60, 26, hwnd, NULL, hInstance, NULL);
 	SendMessage(hwndSeed, EM_SETEVENTMASK, NULL, ENM_CHANGE); // Notify on text change
 
 	hwndRandomize = CreateWindow(L"BUTTON", L"Randomize",
@@ -692,12 +661,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
-    MSG msg;
-    while (!GetMessage(&msg, nullptr, 0, 0) == 0)
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
+	MSG msg;
+	while (!GetMessage(&msg, nullptr, 0, 0) == 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
 
-    return (int) msg.wParam;
+	return (int) msg.wParam;
 }
