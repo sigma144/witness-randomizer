@@ -1,8 +1,7 @@
 #pragma once
-#include "Memory.h"
-#include "Panel.h"
 #include "Randomizer.h"
 #include "Generate.h"
+#include "Memory.h"
 
 class Watchdog
 {
@@ -10,7 +9,6 @@ public:
 	Watchdog(float time) {
 		terminate = false;
 		sleepTime = time;
-		_memory = std::make_shared<Memory>("witness64_d3d11.exe");
 	};
 	void start();
 	void run();
@@ -19,24 +17,23 @@ public:
 	bool terminate;
 protected:
 	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
-		return _memory->ReadPanelData<T>(panel, offset, size);
+		return Memory::get()->ReadPanelData<T>(panel, offset, size);
 	}
 	template <class T> T ReadPanelData(int panel, int offset) {
-		return _memory->ReadPanelData<T>(panel, offset);
+		return Memory::get()->ReadPanelData<T>(panel, offset);
 	}
 	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) {
-		return _memory->ReadArray<T>(panel, offset, size);
+		return Memory::get()->ReadArray<T>(panel, offset, size);
 	}
 	template <class T> void WritePanelData(int panel, int offset, const std::vector<T>& data) {
-		return _memory->WritePanelData<T>(panel, offset, data);
+		return Memory::get()->WritePanelData<T>(panel, offset, data);
 	}
 	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data) {
-		return _memory->WriteArray<T>(panel, offset, data, false);
+		return Memory::get()->WriteArray<T>(panel, offset, data, false);
 	}
 	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
-		return _memory->WriteArray<T>(panel, offset, data, force);
+		return Memory::get()->WriteArray<T>(panel, offset, data, force);
 	}
-	std::shared_ptr<Memory> _memory;
 };
 
 class KeepWatchdog : public Watchdog {
@@ -47,24 +44,8 @@ public:
 
 class ArrowWatchdog : public Watchdog {
 public:
-	ArrowWatchdog(int id) : Watchdog(0.1f) {
-		Panel panel(id);
-		this->id = id;
-		grid = backupGrid = panel._grid;
-		width = static_cast<int>(grid.size());
-		height = static_cast<int>(grid[0].size());
-		pillarWidth = tracedLength = 0;
-		complete = false;
-		style = ReadPanelData<int>(id, STYLE_FLAGS);
-		DIRECTIONS = { Point(0, 2), Point(0, -2), Point(2, 0), Point(-2, 0), Point(2, 2), Point(2, -2), Point(-2, -2), Point(-2, 2) };
-		exitPos = panel.xy_to_loc(panel._endpoints[0].GetX(), panel._endpoints[0].GetY());
-		exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
-		exitPoint = (width / 2 + 1) * (height / 2 + 1);
-	}
-	ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
-		this->pillarWidth = pillarWidth;
-		if (pillarWidth > 0) exitPoint = (width / 2) * (height / 2 + 1);
-	}
+	ArrowWatchdog(int id);
+	ArrowWatchdog(int id, int pillarWidth);
 	virtual void action();
 	void initPath();
 	bool checkArrow(int x, int y);
@@ -78,7 +59,7 @@ public:
 	bool complete;
 	int style;
 	int exitPos, exitPosSym, exitPoint;
-	std::vector<Point> DIRECTIONS;
+	std::vector<struct Point> DIRECTIONS;
 };
 
 class BridgeWatchdog : public Watchdog {
@@ -101,17 +82,7 @@ public:
 
 class JungleWatchdog : public Watchdog {
 public:
-	JungleWatchdog(int id, std::vector<int> correctSeq1, std::vector<int> correctSeq2) : Watchdog(0.5f) {
-		this->id = id;
-		int size = ReadPanelData<int>(id, NUM_DOTS);
-		sizes = ReadArray<int>(id, DOT_FLAGS, ReadPanelData<int>(id, NUM_DOTS));
-		this->correctSeq1 = correctSeq1;
-		this->correctSeq2 = correctSeq2;
-		state = false;
-		tracedLength = 0;
-		ptr1 = ReadPanelData<long>(id, DOT_SEQUENCE);
-		ptr2 = ReadPanelData<long>(id, DOT_SEQUENCE_REFLECTION);
-	}
+	JungleWatchdog(int id, std::vector<int> correctSeq1, std::vector<int> correctSeq2);
 	virtual void action();
 	int id;
 	std::vector<int> sizes;
