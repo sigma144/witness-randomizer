@@ -166,24 +166,77 @@ void Memory::fixTriangleNegation() {
 void Memory::setupCustomSymbols() {
 	Memory* memory = Memory::get();
 
-	__int64 drawCounter = 0;
+	int drawCounter = 0;
 	memory->ScanForBytes({ 0x83, 0xF8, 0x05, 0x0F, 0x87, 0x17, 0x02, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
-		drawCounter = offset + index;
+		drawCounter = (int)(offset + index);
 	});
 
 	if (drawCounter == 0) return; // Already injected
 
 	// Remove the cases for 5 and 6 triangles from the switch statement so we have space for our code
-	memory->WriteData<byte>({ (int)(drawCounter) }, {
+	memory->WriteData<byte>({ drawCounter }, {
 		0x83, 0xF8, 0x03,					// cmp eax, 03   ; If the number of triangles is greater than 4
 		0x0F, 0x87, 0x13, 0x01, 0x00, 0x00, // ja 0x00000113 ; jump 0x113 bytes forward (case label 5)
 	});
 
+	// Look up two function pointers we'll need for drawing
+	__int64 im_begin = 0;
+	__int64 im_vertex = 0;
+	memory->ScanForBytes({ 0x4C, 0x8B, 0xF1, 0xB9, 0x03, 0x00, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
+		im_begin = memory->getBaseAddress() + Memory::ReadStaticInt(offset, index + 11, data);
+		im_vertex = memory->getBaseAddress() + Memory::ReadStaticInt(offset, index + 21, data);
+	});
+
 	constexpr int MAX_INSTRUCTIONS = 260;
+
+	// Note: Little endian
+	#define LONG_TO_BYTES(val) \
+		static_cast<byte>((val & 0x00000000000000FF) >> 0x00), \
+		static_cast<byte>((val & 0x000000000000FF00) >> 0x08), \
+		static_cast<byte>((val & 0x0000000000FF0000) >> 0x10), \
+		static_cast<byte>((val & 0x00000000FF000000) >> 0x18), \
+		static_cast<byte>((val & 0x000000FF00000000) >> 0x20), \
+		static_cast<byte>((val & 0x0000FF0000000000) >> 0x28), \
+		static_cast<byte>((val & 0x00FF000000000000) >> 0x30), \
+		static_cast<byte>((val & 0xFF00000000000000) >> 0x38)
+
+	// Note: Little endian
+	#define INT_TO_BYTES(val) \
+		static_cast<byte>((val & 0x000000FF) >> 0x00), \
+		static_cast<byte>((val & 0x0000FF00) >> 0x08), \
+		static_cast<byte>((val & 0x00FF0000) >> 0x10), \
+		static_cast<byte>((val & 0xFF000000) >> 0x18)
 
 	// Here is our assembly code.
 	const byte instructions[] = {
-		0x01, 0x02, 0x03, 0x04,
+		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10						; Stackalloc a "Vector3"
+		0xB9, INT_TO_BYTES(3),										// mov rcx, 3
+		0x48, 0xB8, LONG_TO_BYTES(im_begin),						// mov rax, Device_Context::im_begin
+		0xFF, 0xD0,													// call rax
+		0xC7, 0x04, 0x24,	   INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp], 0x3D4CCCCD		; x coordinate (0.05f)
+		0xC7, 0x44, 0x24, 0x04, INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp+4], 0x3D4CCCCD	; y coordinate (0.05f)
+		0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0x00000000),			// mov dword ptr [rsp+8], 0x00000000	; z coordinate (always 0)
+		0x48, 0x89, 0xE1,											// mov rcx, rsp
+		0xBA, INT_TO_BYTES(0xFFFFA800),								// mov edx, 0xFFFFA800					; ARGB order, this is orange.
+		0x48, 0xB8, LONG_TO_BYTES(im_vertex),						// mov rax, Device_Context::im_vertex
+		0xFF, 0xD0,													// call rax
+		0xC7, 0x04, 0x24,	   INT_TO_BYTES(0xBD4CCCCD),			// mov dword ptr [rsp], 0xBD4CCCCD		; x coordinate (-0.05f)
+		0xC7, 0x44, 0x24, 0x04, INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp+4], 0x3D4CCCCD	; y coordinate (0.05f)
+		0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0x00000000),			// mov dword ptr [rsp+8], 0x00000000	; z coordinate (always 0)
+		0x48, 0x89, 0xE1,											// mov rcx, rsp
+		0xBA, INT_TO_BYTES(0xFFFFA800),								// mov edx, 0xFFFFA800					; ARGB order, this is orange.
+		0x48, 0xB8, LONG_TO_BYTES(im_vertex),						// mov rax, Device_Context::im_vertex
+		0xFF, 0xD0,													// call rax
+		0xC7, 0x04, 0x24,	   INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp], 0x3D4CCCCD		; x coordinate (0.05f)
+		0xC7, 0x44, 0x24, 0x04, INT_TO_BYTES(0xBD4CCCCD),			// mov dword ptr [rsp+4], 0xBD4CCCCD	; y coordinate (-0.05f)
+		0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0x00000000),			// mov dword ptr [rsp+8], 0x00000000	; z coordinate (always 0)
+		0x48, 0x89, 0xE1,											// mov rcx, rsp
+		0xBA, INT_TO_BYTES(0xFFFFA800),								// mov edx, 0xFFFFA800					; ARGB order, this is orange.
+		0x48, 0xB8, LONG_TO_BYTES(im_vertex),						// mov rax, Device_Context::im_vertex
+		0xFF, 0xD0,													// call rax
+		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10							; Restore our stack pointer
+		0x48, 0xB9, LONG_TO_BYTES(0x1401E5F3F),						// mov rax, 0x1401E5F3F					; (end of switch statement)
+		0xFF, 0xE1,													// jmp rax								; This jumps down to an im_flush call at the end of the function.
 	};
 
 	static_assert(sizeof(instructions) < MAX_INSTRUCTIONS, "There are only 260 bytes available in this code cave");
