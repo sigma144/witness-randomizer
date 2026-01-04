@@ -77,6 +77,17 @@ public:
 	}
 
 	template <class T>
+	void WriteToArray(int panel, int offset, T data, int index) {
+		if ((index + 1) > sizeof(T) * _arraySizes[std::make_pair(panel, offset)]) {
+			ThrowError("Out of bound array write");
+		}
+		if (Write(static_cast<void*>(static_cast<char*>(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset, 0 })) + index * sizeof(T)), &data, sizeof(T))) {
+			return;
+		}
+		ThrowError({ GLOBALS, 0x18, panel * 8, offset }, true);
+	}
+
+	template <class T>
 	std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
 		if (size == 0) return std::vector<T>();
 		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, size);

@@ -50,6 +50,12 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f) {
 	exitPos = panel.xy_to_loc(panel._endpoints[0].GetX(), panel._endpoints[0].GetY());
 	exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
 	exitPoint = (width / 2 + 1) * (height / 2 + 1);
+
+	// The sequence array is used to indicate panel validity. A panel with a nonnull SEQUENCE will always fail (since the first two indices cannot both be 0).
+	Memory* memory = Memory::get();
+	memory->WritePanelData<int>(id, SEQUENCE_LEN, { 2 });
+	memory->WriteArray<int>(id, SEQUENCE, { 0, 0 }, true);
+	_sequenceArray = memory->ReadPanelData<int>(id, SEQUENCE);
 }
 
 ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
@@ -69,18 +75,24 @@ void ArrowWatchdog::action() {
 	sleepTime = 0.01f;
 	if (length == tracedLength) return;
 	initPath();
+	bool satisfied = true;
 	if (complete) {
 		for (int x = 1; x < width; x++) {
 			for (int y = 1; y < height; y++) {
 				if (!checkArrow(x, y)) {
-					//OutputDebugStringW(L"No");
-					WritePanelData<int>(id, STYLE_FLAGS, { style | Panel::Style::HAS_TRIANGLES });
-					return;
+					satisfied = false;
 				}
 			}
 		}
-		//OutputDebugStringW(L"Yes");
-		WritePanelData<int>(id, STYLE_FLAGS, { style & ~Panel::Style::HAS_TRIANGLES });
+		if (satisfied) {
+			//OutputDebugStringW(L"Yes");
+			WritePanelData<int>(id, SEQUENCE, { 0 }); // Array is absent; arrow is valid
+		}
+		else {
+			//OutputDebugStringW(L"No");
+			WritePanelData<int>(id, SEQUENCE, { _sequenceArray }); // Array is present; arrow not valid
+		}
+		
 	}
 }
 
@@ -141,17 +153,11 @@ void ArrowWatchdog::initPath()
 
 bool ArrowWatchdog::checkArrow(int x, int y)
 {
+	int backup_x = x;
+	int backup_y = y;
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
-	if ((symbol & 0x700) == Decoration::Triangle && (symbol & 0xf0000) != 0) {
-		int count = 0;
-		if (grid[x - 1][y] == PATH) count++;
-		if (grid[x + 1][y] == PATH) count++;
-		if (grid[x][y - 1] == PATH) count++;
-		if (grid[x][y + 1] == PATH) count++;
-		return count == (symbol >> 16);
-	}
-	if ((symbol & 0x700) != Decoration::Arrow)
+	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;
 	int targetCount = (symbol & 0xf000) >> 12;
 	Point dir = DIRECTIONS[(symbol & 0xf0000) >> 16];
@@ -159,26 +165,24 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 	int count = 0;
 	while (x >= 0 && x < width && y >= 0 && y < height) {
 		if (grid[x][y] == PATH) {
-			if (++count > targetCount)
+			if (++count > targetCount) {
+				setDecorationFlag(backup_x, backup_y, false);
 				return false;
+			}
 		}
 		x += dir.first; y += dir.second;
 	}
-	return count == targetCount;
+	bool result = count == targetCount;
+	setDecorationFlag(backup_x, backup_y, result);
+	return result;
 }
 
 bool ArrowWatchdog::checkArrowPillar(int x, int y)
 {
+	int backup_x = x;
+	int backup_y = y;
 	int symbol = grid[x][y];
-	if ((symbol & 0x700) == Decoration::Triangle && (symbol & 0xf0000) != 0) {
-		int count = 0;
-		if (grid[x - 1][y] == PATH) count++;
-		if (grid[x + 1][y] == PATH) count++;
-		if (grid[x][y - 1] == PATH) count++;
-		if (grid[x][y + 1] == PATH) count++;
-		return count == (symbol >> 16);
-	}
-	if ((symbol & 0x700) != Decoration::Arrow)
+	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;
 	int targetCount = (symbol & 0xf000) >> 12;
 	Point dir = DIRECTIONS[(symbol & 0xf0000) >> 16];
@@ -186,11 +190,24 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 	int count = 0;
 	while (y >= 0 && y < height) {
 		if (grid[x][y] == PATH) {
-			if (++count > targetCount) return false;
+			if (++count > targetCount) {
+				setDecorationFlag(backup_x, backup_y, false);
+				return false;
+			}
 		}
 		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;
 	}
-	return count == targetCount;
+	bool result = count == targetCount;
+	setDecorationFlag(backup_x, backup_y, result);
+	return result;
+}
+
+void ArrowWatchdog::setDecorationFlag(int x, int y, bool satisfied) {
+	Memory* memory = Memory::get();
+	Panel panel(this->id);
+	int index = panel.xy_to_dloc(x, y);
+	int data = satisfied ? 0 : 1;
+	memory->WriteToArray<int>(id, DECORATION_FLAGS, data, index);
 }
 
 void BridgeWatchdog::action()
