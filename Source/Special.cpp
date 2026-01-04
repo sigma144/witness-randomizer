@@ -1568,24 +1568,3 @@ void Special::drawGoodLuckPanel(int id)
 void Special::test() {
 
 }
-
-void Special::FixTriangleNegation() {
-	Memory* memory = Memory::get();
-
-	__int64 drawDecorationHelper = 0;
-	memory->ScanForBytes({ 0x41, 0x81, 0xFE, 0x00, 0x06, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
-		drawDecorationHelper = offset + index;
-	});
-
-	// Replace the line which is reading from &color with &result (the eraser-modified color)
-	memory->WriteData<byte>({ (int)(drawDecorationHelper + 0x41) }, { 0x97 });
-
-}
-
-// void Special::SetupCustomSymbols() {
-//     // TODO: Inject assembly here
-// 
-// 
-// }
-
-

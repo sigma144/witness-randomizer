@@ -116,6 +116,7 @@ public:
 
 	private:
 		void findGlobals();
+		void fixTriangleNegation();
 
 		template<class T>
 		std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
