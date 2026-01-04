@@ -171,6 +171,8 @@ void Memory::setupCustomSymbols() {
 		drawCounter = offset + index;
 	});
 
+	if (drawCounter == 0) return; // Already injected
+
 	// Remove the cases for 5 and 6 triangles from the switch statement so we have space for our code
 	memory->WriteData<byte>({ (int)(drawCounter) }, {
 		0x83, 0xF8, 0x03,					// cmp eax, 03   ; If the number of triangles is greater than 4

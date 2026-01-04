@@ -87,7 +87,7 @@ private:
 	void set(Point pos, int val) { _panel->_grid[pos.first][pos.second] = val; }
 	int get(int x, int y) { return _panel->_grid[x][y]; }
 	void set(int x, int y, int val) { _panel->_grid[x][y] = val; }
-	int get_symbol_type(int flags) { return flags & 0x700; }
+	int get_symbol_type(int flags) { return flags & 0xF00; }
 	void set_path(Point pos);
 	Point get_sym_point(Point pos) { return _panel->get_sym_point(pos); }
 	int get_parity(Point pos) { return (pos.first / 2 + pos.second / 2) % 2; }
