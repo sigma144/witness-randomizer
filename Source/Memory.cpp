@@ -100,6 +100,7 @@ void Memory::create()
 
 		_singleton->findGlobals();
 		_singleton->fixTriangleNegation();
+		_singleton->setupCustomSymbols();
 	}
 }
 
@@ -160,6 +161,37 @@ void Memory::fixTriangleNegation() {
 
 	// Replace the line which is reading from &color with &result (the eraser-modified color)
 	memory->WriteData<byte>({ (int)(drawDecorationHelper + 0x41) }, { 0x97 });
+}
+
+void Memory::setupCustomSymbols() {
+	Memory* memory = Memory::get();
+
+	__int64 drawCounter = 0;
+	memory->ScanForBytes({ 0x83, 0xF8, 0x05, 0x0F, 0x87, 0x17, 0x02, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
+		drawCounter = offset + index;
+	});
+
+	// Remove the cases for 5 and 6 triangles from the switch statement so we have space for our code
+	memory->WriteData<byte>({ (int)(drawCounter) }, {
+		0x83, 0xF8, 0x03,					// cmp eax, 03   ; If the number of triangles is greater than 4
+		0x0F, 0x87, 0x13, 0x01, 0x00, 0x00, // ja 0x00000113 ; jump 0x113 bytes forward (case label 5)
+	});
+
+	constexpr int MAX_INSTRUCTIONS = 260;
+
+	// Here is our assembly code.
+	const byte instructions[] = {
+		0x01, 0x02, 0x03, 0x04,
+	};
+
+	static_assert(sizeof(instructions) < MAX_INSTRUCTIONS, "There are only 260 bytes available in this code cave");
+
+	// Ensure that all of the non-instruction bytes are NOPs
+	std::vector<byte> bytes(MAX_INSTRUCTIONS, 0x90);
+	for (int i = 0; i < sizeof(instructions); i++) bytes[i] = instructions[i];
+
+	// Write the actual instructions into the program.
+	memory->WriteData<byte>({ (int)(drawCounter + 0x11C) }, bytes);
 }
 
 bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {

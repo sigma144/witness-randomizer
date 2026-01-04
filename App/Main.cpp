@@ -398,6 +398,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//Initialize memory globals constant depending on game version
 	Memory::create();
 	Memory* memory = memory->get();
+	generator->setGridSize(3, 3);
+	generator->generate(0x17CF0, Decoration::Arrow | Decoration::Color::Black, 2, Decoration::Eraser | Decoration::Color::Black, 1);
 
 	if (wcscmp(lpCmdLine, L"-nogui") == 0)
 	{
