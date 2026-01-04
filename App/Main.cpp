@@ -398,6 +398,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//Initialize memory globals constant depending on game version
 	Memory::create();
 	Memory* memory = memory->get();
+	specialCase->FixTriangleNegation();
 
 	if (wcscmp(lpCmdLine, L"-nogui") == 0)
 	{

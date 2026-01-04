@@ -63,6 +63,7 @@ public:
 	static void drawText(int id, std::vector<float>& intersections, std::vector<int>& connectionsA, std::vector<int>& connectionsB, const std::vector<float>& finalLine);
 	static void drawSeedAndDifficulty(int id, int seed, bool hard, bool setSeed, bool options);
 	static void drawGoodLuckPanel(int id);
+	static void FixTriangleNegation();
 
 	void test(); //For testing/debugging purposes only
 

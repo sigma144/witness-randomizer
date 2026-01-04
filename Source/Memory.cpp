@@ -116,49 +116,60 @@ void Memory::findGlobals() {
 		// Check to see if this is a version with a known globals pointer.
 		for (int g : globalsTests) {
 			GLOBALS = g;
-			if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
-				return;
+			try {
+				if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
+					return;
+				}
 			}
-		}
-
-
-		// Checked for a cached value.
-		std::ifstream file("WRPGglobals.txt");
-		if (file.is_open()) {
-			file >> std::hex >> GLOBALS;
-			file.close();
-		}
-		else {
-			// We had no cached value; scan for it in the process instead.
-			const std::vector<byte> scanBytes = { 0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10 };
-			std::vector<byte> buff;
-			buff.resize(SIGSCAN_STRIDE + 0x100); // padding in case the sigscan is past the end of the buffer
-
-			GLOBALS = 0;
-			for (uintptr_t i = 0; i < PROGRAM_SIZE; i += SIGSCAN_STRIDE) {
-				SIZE_T numBytesWritten;
-				if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
-				buff.resize(numBytesWritten);
-				int index = find(buff, scanBytes);
-				if (index == -1) continue;
-
-				index = index + 0x14; // This scan targets a line slightly before the key instruction
-				// (address of next line) + (index interpreted as 4byte int)
-				GLOBALS = (int)(i + index + 4) + *(int*)&buff[index];
-				break;
-			}
-
-			if (GLOBALS) {
-				// Store the pointer to disk for faster lookup next time.
-				std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
-				ofile << std::hex << GLOBALS << std::endl;
-				ofile.close();
-			}
-			else {
-				ThrowError("Unable to find globals pointer.");
+			catch (const std::exception&) {
+				// Globals not found
 			}
 		}
 	}
+
+	// Otherwise, checked for a cached value.
+	std::ifstream file("WRPGglobals.txt");
+	if (file.is_open()) {
+		file >> std::hex >> GLOBALS;
+		file.close();
+		return;
+	}
+	
+	// Finally, fall back to sigscanning.
+	ScanForBytes({ 0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
+		// This scan targets a line slightly before the key instruction
+		GLOBALS = (int)Memory::ReadStaticInt(offset, index + 0x14, data);
+	});
+
+	if (!GLOBALS) ThrowError("Unable to find globals pointer.");
+
+	// Store the pointer to disk for faster lookup next time.
+	std::ofstream ofile("WRPGglobals.txt", std::ofstream::app);
+	ofile << std::hex << GLOBALS << std::endl;
+	ofile.close();
+}
+
+bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {
+	std::vector<byte> buff;
+	buff.resize(SIGSCAN_STRIDE + 0x100); // padding in case the sigscan is past the end of the buffer
+	int result = -1;
+	for (uintptr_t i = 0; i < PROGRAM_SIZE; i += SIGSCAN_STRIDE) {
+		SIZE_T numBytesWritten;
+		if (!ReadProcessMemory(_handle, reinterpret_cast<void*>(_baseAddress + i), &buff[0], buff.size(), &numBytesWritten)) continue;
+		buff.resize(numBytesWritten);
+		int index = find(buff, scanBytes);
+		if (index != -1) {
+			scanFunc(i, index, buff);
+			return true;
+		}
+	}
+
+	return false; // Not found
+}
+
+__int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL) {
+	// (address of next line) + (index interpreted as 4byte int)
+	return offset + index + bytesToEOL + *(int*)&data[index];
 }
 
 void Memory::ThrowError(std::string message) {
