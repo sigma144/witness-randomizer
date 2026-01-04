@@ -46,26 +46,6 @@ public:
 		return _baseAddress;
 	}
 
-	bool Read(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
-		if (!retryOnFail) return ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
-		for (int i = 0; i < 10000; i++) {
-			if (ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool Write(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
-		if (!retryOnFail) return WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
-		for (int i = 0; i < 10000; i++) {
-			if (WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	template <class T>
 	std::vector<T> ReadArray(int panel, int offset, int size) {
 		if (size == 0) return std::vector<T>();
@@ -121,17 +101,22 @@ public:
 	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }
 
-	int GLOBALS;
+	using ScanFunc = std::function<void(__int64 offset, int index, const std::vector<byte>& data)>;
+	bool ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc);
+	static __int64 ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL = 4);
+
+	int GLOBALS = 0;
 	bool showMsg = false;
 	int globalsTests[3] = {
-	0x62D0A0, //Steam and Epic Games
-	0x62B0A0, //Good Old Games
-	0x5B28C0 //Older Versions
+		0x62D0A0, //Steam and Epic Games
+		0x62B0A0, //Good Old Games
+		0x5B28C0 //Older Versions
 	};
 	bool retryOnFail = true;
 
 	private:
 		void findGlobals();
+		void fixTriangleNegation();
 
 		template<class T>
 		std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
@@ -144,6 +129,16 @@ public:
 			return {};
 		}
 
+		bool Read(LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize) {
+			if (!retryOnFail) return ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
+			for (int i = 0; i < 10000; i++) {
+				if (ReadProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 		template <class T>
 		void WriteData(const std::vector<int>& offsets, const std::vector<T>& data) {
 			if (Write(ComputeOffset(offsets), &data[0], sizeof(T) * data.size())) {
@@ -151,11 +146,22 @@ public:
 			}
 			ThrowError(offsets, true);
 		}
+
+		bool Write(LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize) {
+			if (!retryOnFail) return WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr);
+			for (int i = 0; i < 10000; i++) {
+				if (WriteProcessMemory(_handle, lpBaseAddress, lpBuffer, nSize, nullptr)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 		void ThrowError(std::string message);
 		void ThrowError(const std::vector<int>& offsets, bool rw_flag);
 		void ThrowError();
 
-	void* ComputeOffset(std::vector<int> offsets);
+		void* ComputeOffset(std::vector<int> offsets);
 
 		std::map<uintptr_t, uintptr_t> _computedAddresses;
 		std::map<std::pair<int, int>, int> _arraySizes;

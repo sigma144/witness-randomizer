@@ -514,7 +514,7 @@ void Special::generateRGBStonePuzzleH(int id) {
 			}
 		}
 		int count = 0;
-		for (Point dir : generator->_DIRECTIONS2) {
+		for (Point dir : Generate::_DIRECTIONS2) {
 			if (!generator->off_edge(eraserPos + dir) && generator->get(eraserPos + dir) == 0) count++;
 		}
 		if (count < 2) continue;
@@ -1568,4 +1568,3 @@ void Special::drawGoodLuckPanel(int id)
 void Special::test() {
 
 }
-
