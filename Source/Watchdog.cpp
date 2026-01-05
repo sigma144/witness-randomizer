@@ -153,8 +153,8 @@ void ArrowWatchdog::initPath()
 
 bool ArrowWatchdog::checkArrow(int x, int y)
 {
-	int backup_x = x;
-	int backup_y = y;
+	int orig_x = x;
+	int orig_y = y;
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
 	if ((symbol & 0xF00) != Decoration::Arrow)
@@ -166,21 +166,21 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 	while (x >= 0 && x < width && y >= 0 && y < height) {
 		if (grid[x][y] == PATH) {
 			if (++count > targetCount) {
-				setDecorationFlag(backup_x, backup_y, false);
+				setDecorationFlag(orig_x, orig_y, false);
 				return false;
 			}
 		}
 		x += dir.first; y += dir.second;
 	}
 	bool result = count == targetCount;
-	setDecorationFlag(backup_x, backup_y, result);
+	setDecorationFlag(orig_x, orig_y, result);
 	return result;
 }
 
 bool ArrowWatchdog::checkArrowPillar(int x, int y)
 {
-	int backup_x = x;
-	int backup_y = y;
+	int orig_x = x;
+	int orig_y = y;
 	int symbol = grid[x][y];
 	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;
@@ -191,14 +191,14 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 	while (y >= 0 && y < height) {
 		if (grid[x][y] == PATH) {
 			if (++count > targetCount) {
-				setDecorationFlag(backup_x, backup_y, false);
+				setDecorationFlag(orig_x, orig_y, false);
 				return false;
 			}
 		}
 		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;
 	}
 	bool result = count == targetCount;
-	setDecorationFlag(backup_x, backup_y, result);
+	setDecorationFlag(orig_x, orig_y, result);
 	return result;
 }
 
