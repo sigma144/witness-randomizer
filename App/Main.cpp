@@ -8,6 +8,8 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include "Version.h"
 #include "Randomizer.h"
@@ -399,9 +401,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	Memory::create();
 	Memory* memory = memory->get();
 	generator->setGridSize(3, 3);
-	generator->generate(0x17CF0, Decoration::Arrow1 | Decoration::Color::Black, 2, Decoration::Stone | Decoration::Color::White, 1, Decoration::Stone | Decoration::Color::Black, 1);
+	generator->generate(0x17CF0, Decoration::Arrow1 | Decoration::Color::Black, 1, Decoration::Stone | Decoration::Color::White, 1, Decoration::Stone | Decoration::Color::Black, 1);
 	ArrowWatchdog watchdog(0x17CF0, 0); // @HACK start a watchdog so we can test arrows.
 	watchdog.start();
+
+	std::this_thread::sleep_for(std::chrono::seconds(100000));
 
 	if (wcscmp(lpCmdLine, L"-nogui") == 0)
 	{

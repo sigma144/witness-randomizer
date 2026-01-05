@@ -629,8 +629,8 @@ void Panel::WriteIntersections() {
 	//Arrows (if applicable)
 	for (int y = 1; y < _height; y += 2) {
 		for (int x = 1; x < _width; x += 2) {
-			if ((_grid[x][y] & 0xF00) == Decoration::Arrow)
-				render_arrow(x, y, (_grid[x][y] & 0xf000) >> 12, (_grid[x][y] & 0xf0000) >> 16, intersections, intersectionFlags, polygons);
+			if ((_grid[x][y] & 0xF00) == Decoration::Arrow) {}
+				// render_arrow(x, y, (_grid[x][y] & 0xf000) >> 12, (_grid[x][y] & 0xf0000) >> 16, intersections, intersectionFlags, polygons);
 		}
 	}
 

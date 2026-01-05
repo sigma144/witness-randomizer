@@ -1699,7 +1699,7 @@ bool Generate::place_arrows(int color, int amount, int targetCount)
 			if (dir.first < 0 && count == (pos.first + 1) / 2 || dir.first > 0 && count == (_panel->_width - pos.first) / 2 ||
 				dir.second < 0 && count == (pos.second + 1) / 2 || dir.second > 0 && count == (_panel->_height - pos.second) / 2 && Random::rand() % 10 > 0)
 				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
-			set(pos, Decoration::Arrow | color | (count << 12) | (choice << 16));
+			set(pos, (0x600 | color | (choice << 16)) + 0x50000);
 			_openpos.erase(pos);
 			amount--;
 			break;

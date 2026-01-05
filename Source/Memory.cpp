@@ -308,9 +308,6 @@ void Memory::setupCustomSymbols() {
 
 	// Write the actual instructions into the program.
 	memory->WriteData<byte>({ (int)(drawCounter + 0x11C) }, bytes);
-
-	// HACK HACK HACK
-	memory->WriteData<int>( { GLOBALS, 0x18, 0x17CF0 * 8, 0x420, 0 }, { 0x0050604, 0x0060603, 0x0070602, 0x0080601 });
 }
 
 bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {

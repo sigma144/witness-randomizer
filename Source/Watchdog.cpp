@@ -149,15 +149,7 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 {
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
-	if ((symbol & 0xF00) == Decoration::Triangle && (symbol & 0xf0000) != 0) {
-		int count = 0;
-		if (grid[x - 1][y] == PATH) count++;
-		if (grid[x + 1][y] == PATH) count++;
-		if (grid[x][y - 1] == PATH) count++;
-		if (grid[x][y + 1] == PATH) count++;
-		return count == (symbol >> 16);
-	}
-	if ((symbol & 0xF00) != Decoration::Arrow)
+	if (((symbol & 0xF00) != 0x600) || symbol <= 0x40000)
 		return true;
 	int targetCount = (symbol & 0xf000) >> 12;
 	Point dir = DIRECTIONS[(symbol & 0xf0000) >> 16];
