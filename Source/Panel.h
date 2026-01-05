@@ -378,10 +378,37 @@ private:
 	}
 
 	void render_arrow(int x, int y, int ticks, int dir, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& polygons) {
-		std::vector<float> positions = { 0.1f, 0.45f, 0.1f, 0.55f, 0.85f, 0.45f, 0.85f, 0.55f,
-			0.9f, 0.5f, 0.75f, 0.5f, 0.45f, 0.2f, 0.6f, 0.2f, 0.45f, 0.8f, 0.6f, 0.8f,
-			0.7f, 0.5f, 0.55f, 0.5f, 0.25f, 0.2f, 0.4f, 0.2f, 0.25f, 0.8f, 0.4f, 0.8f,
-			0.5f, 0.5f, 0.35f, 0.5f, 0.05f, 0.2f, 0.2f, 0.2f, 0.05f, 0.8f, 0.2f, 0.8f, };
+		std::vector<float> positions = {
+			// Body
+			0.10f, 0.45f,
+			0.10f, 0.55f,
+			0.85f, 0.45f,
+			0.85f, 0.55f,
+
+			// 1st arrowhead
+			0.90f, 0.50f,
+			0.75f, 0.50f,
+			0.45f, 0.20f,
+			0.60f, 0.20f,
+			0.45f, 0.80f,
+			0.60f, 0.80f,
+
+			// 2nd arrowhead
+			0.70f, 0.50f,
+			0.55f, 0.50f,
+			0.25f, 0.20f,
+			0.40f, 0.20f,
+			0.25f, 0.80f,
+			0.40f, 0.80f,
+
+			// 3rd arrowhead
+			0.50f, 0.50f,
+			0.35f, 0.50f,
+			0.05f, 0.20f,
+			0.20f, 0.20f,
+			0.05f, 0.80f,
+			0.20f, 0.80f,
+		};
 		std::vector<int> polys = { 0, 1, 2, 0, 1, 2, 3, 0,
 			4, 5, 7, 0, 5, 6, 7, 0, 4, 5, 9, 0, 5, 8, 9, 0,
 			10, 11, 13, 0, 11, 12, 13, 0, 10, 11, 15, 0, 11, 14, 15, 0,

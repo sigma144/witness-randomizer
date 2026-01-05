@@ -8,6 +8,9 @@
 #include <tlhelp32.h>
 #include <iostream>
 #include "Randomizer.h"
+#undef min
+#undef max
+#include "earcut.hpp"
 
 #undef PROCESSENTRY32
 #undef Process32Next
@@ -207,37 +210,95 @@ void Memory::setupCustomSymbols() {
 		static_cast<byte>((val & 0x00FF0000) >> 0x10), \
 		static_cast<byte>((val & 0xFF000000) >> 0x18)
 
-	// Here is our assembly code.
-	const byte instructions[] = {
-		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10						; Stackalloc a "Vector3"
-		0xB9, INT_TO_BYTES(3),										// mov rcx, 3
-		0x48, 0xB8, LONG_TO_BYTES(im_begin),						// mov rax, Device_Context::im_begin
-		0xFF, 0xD0,													// call rax
-		0xC7, 0x04, 0x24,	   INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp], 0x3D4CCCCD		; x coordinate (0.05f)
-		0xC7, 0x44, 0x24, 0x04, INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp+4], 0x3D4CCCCD	; y coordinate (0.05f)
-		0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0x00000000),			// mov dword ptr [rsp+8], 0x00000000	; z coordinate (always 0)
-		0x48, 0x89, 0xE1,											// mov rcx, rsp
-		0xBA, INT_TO_BYTES(0xFFFFA800),								// mov edx, 0xFFFFA800					; ARGB order, this is orange.
-		0x48, 0xB8, LONG_TO_BYTES(im_vertex),						// mov rax, Device_Context::im_vertex
-		0xFF, 0xD0,													// call rax
-		0xC7, 0x04, 0x24,	   INT_TO_BYTES(0xBD4CCCCD),			// mov dword ptr [rsp], 0xBD4CCCCD		; x coordinate (-0.05f)
-		0xC7, 0x44, 0x24, 0x04, INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp+4], 0x3D4CCCCD	; y coordinate (0.05f)
-		0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0x00000000),			// mov dword ptr [rsp+8], 0x00000000	; z coordinate (always 0)
-		0x48, 0x89, 0xE1,											// mov rcx, rsp
-		0xBA, INT_TO_BYTES(0xFFFFA800),								// mov edx, 0xFFFFA800					; ARGB order, this is orange.
-		0x48, 0xB8, LONG_TO_BYTES(im_vertex),						// mov rax, Device_Context::im_vertex
-		0xFF, 0xD0,													// call rax
-		0xC7, 0x04, 0x24,	   INT_TO_BYTES(0x3D4CCCCD),			// mov dword ptr [rsp], 0x3D4CCCCD		; x coordinate (0.05f)
-		0xC7, 0x44, 0x24, 0x04, INT_TO_BYTES(0xBD4CCCCD),			// mov dword ptr [rsp+4], 0xBD4CCCCD	; y coordinate (-0.05f)
-		0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0x00000000),			// mov dword ptr [rsp+8], 0x00000000	; z coordinate (always 0)
-		0x48, 0x89, 0xE1,											// mov rcx, rsp
-		0xBA, INT_TO_BYTES(0xFFFFA800),								// mov edx, 0xFFFFA800					; ARGB order, this is orange.
-		0x48, 0xB8, LONG_TO_BYTES(im_vertex),						// mov rax, Device_Context::im_vertex
-		0xFF, 0xD0,													// call rax
-		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10							; Restore our stack pointer
-		0x48, 0xB9, LONG_TO_BYTES(0x1401E5F3F),						// mov rax, 0x1401E5F3F					; (end of switch statement)
-		0xFF, 0xE1,													// jmp rax								; This jumps down to an im_flush call at the end of the function.
+	#define ARGCOUNT(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value
+
+	#define IF_GE(...) __VA_ARGS__, 0x72 // jb
+	#define IF_LT(...) __VA_ARGS__, 0x73 // jae
+	#define IF_NE(...) __VA_ARGS__, 0x74 // je
+	#define IF_EQ(...) __VA_ARGS__, 0x75 // jne
+	#define IF_GT(...) __VA_ARGS__, 0x76 // jbe
+	#define IF_LE(...) __VA_ARGS__, 0x77 // ja
+	#define THEN(...) ARGCOUNT(__VA_ARGS__), __VA_ARGS__
+	#define DO_WHILE(...) __VA_ARGS__, static_cast<byte>(-1 - ARGCOUNT(__VA_ARGS__))
+	#define DO_WHILE_GT_ZERO(...) __VA_ARGS__, 0x77, static_cast<byte>(-2 - ARGCOUNT(__VA_ARGS__)) // Must end on a 'dec' instruction to set flags.
+
+
+#pragma warning (push)
+#pragma warning (disable: 4305)
+	std::vector<std::array<float, 2>> arrow1 = {
+		{-0.08, 0.01},
+		{-0.08, -0.01},
+		{0.04, -0.01},
+		{-0.01, -0.06},
+		{0.02, -0.06},
+		{0.08, 0.00},
+		{0.02, 0.06},
+		{-0.01, 0.06},
+		{0.04, 0.01},
 	};
+#pragma warning (pop)
+
+	std::vector<float> data(4 * 256, 0.0f);
+	for (int i = 0; i < 4; i++) {
+		// Create a polygon out of the arrow and cut it into triangles
+		std::vector<std::vector<std::array<float, 2>>> polygon;
+		polygon.push_back(arrow1);
+		std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
+
+		// Insert the triangulated polygon into the data array
+		for (int j = 0; j < indices.size(); j++) {
+			data[i * 256 + j * 2]     = polygon[0][indices[j]][0]; // x coordinate
+			data[i * 256 + j * 2 + 1] = polygon[0][indices[j]][1]; // y coordinate
+		}
+
+		// Rotate the polygon clockwise
+		for (int j = 0; j < arrow1.size(); j++) {
+			float tmp = arrow1[j][0];
+			arrow1[j][0] = arrow1[j][1];
+			arrow1[j][1] = -tmp;
+		}
+	}
+
+	uintptr_t dataArray = memory->AllocArray<float>(data.size());
+	memory->Write((void*)dataArray, data.data(), sizeof(data[0]) * data.size());
+
+	__int64 function_end = memory->getBaseAddress() + drawCounter + 0x25D;
+
+	// 44 verts -> 42 tris -> 128 points -> 256 floats
+	int NUM_VERTS = 44; // TODO: HARDCODED! Is this OK?
+
+    // Here is our assembly code.
+    const byte instructions[] = {
+        0x41, 0x51,													// push r9										 
+        0x41, 0x52,													// push r10									 
+		0x49, 0xC7, 0xC1, INT_TO_BYTES(NUM_VERTS),					// mov r9, NUM_VERTS                        ; Set up our loop counter
+		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray                       ; Load the vertex array
+		0x48, 0x83, 0xE8, 0x04,										// sub rax, 4								; Skip the first 4 triangle counts (1-4)
+		0x48, 0xC1, 0xE0, 0x0A,										// shl rax, 0x0A							; Determine the offset into our data array (256 floats allocated per symbol)
+		0x49, 0x01, 0xC2,											// add r10, rax								; Adjust the array start by the offset
+		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; Stackalloc a "Vector3"
+        0xB9, INT_TO_BYTES(3),										// mov rcx, 3
+        0x48, 0xB8, LONG_TO_BYTES(im_begin),						// mov rax, Device_Context::im_begin		; Sadly the immediate context only supports triangles.
+        0xFF, 0xD0,													// call rax									 
+
+		DO_WHILE_GT_ZERO(											//
+			0x49, 0x8B, 0x0A,										// mov rcx,qword ptr ds:[r10]               ; Copy the x and y coordinates into rcx (temp variable)
+			0x48, 0x89, 0x0C, 0x24,									// mov qword ptr ss:[rsp],rcx               ; Copy the x and y coordinates into [rsp] (Vector3.x and Vector3.y)
+			0x49, 0x83, 0xC2, 0x08,									// add r10, 8                               ; Increment the vertex array pointer to point to the next two verticies
+			0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),				// mov dword ptr [rsp+8], 0					; Set z coordinate (always 0)
+			0x48, 0x89, 0xE1,										// mov rcx, rsp								; Argument 1: Vector3 coordinate 
+			0x89, 0xF2,												// mov edx, esi								; Argument 2: ARGB Color (set by the caller, just passed through)
+			0x48, 0xB8, LONG_TO_BYTES(im_vertex),					// mov rax, Device_Context::im_vertex			 
+			0xFF, 0xD0,												// call rax									; im_vertex()
+			0x49, 0xFF, 0xC9 										// dec r9									; Decrease the number of vertices remaining
+		),															//											; Loop if there are more than 0 vertices remaining
+
+		0x48, 0x83, 0xC4, 0x10,										 // add rsp, 10								; Restore our stack pointer
+        0x41, 0x5A,													 // pop r10										 
+        0x41, 0x59,													 // pop r9										 
+        0x48, 0xB8, LONG_TO_BYTES(function_end),					 // mov rax, function_end					; (known offset to end of function)
+        0xFF, 0xE0,													 // jmp rax									; This jumps down to an im_flush call at the end of the function.
+    };
 
 	static_assert(sizeof(instructions) < MAX_INSTRUCTIONS, "There are only 260 bytes available in this code cave");
 
@@ -247,6 +308,9 @@ void Memory::setupCustomSymbols() {
 
 	// Write the actual instructions into the program.
 	memory->WriteData<byte>({ (int)(drawCounter + 0x11C) }, bytes);
+
+	// HACK HACK HACK
+	memory->WriteData<int>( { GLOBALS, 0x18, 0x17CF0 * 8, 0x420, 0 }, { 0x0050604, 0x0060603, 0x0070602, 0x0080601 });
 }
 
 bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {

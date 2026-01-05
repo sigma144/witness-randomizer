@@ -28,14 +28,14 @@ public:
 	Memory& operator=(const Memory& other) = delete;
 
 	template <class T>
-	uintptr_t AllocArray(int id, int numItems) {
+	uintptr_t AllocArray(int numItems) {
 		uintptr_t ptr = reinterpret_cast<uintptr_t>(VirtualAllocEx(_handle, 0, numItems * sizeof(T), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 		return ptr;
 	}
 
 	template <class T>
-	uintptr_t AllocArray(int id, size_t numItems) {
-		return AllocArray<T>(id, static_cast<int>(numItems));
+	uintptr_t AllocArray(size_t numItems) {
+		return AllocArray<T>(static_cast<int>(numItems));
 	}
 
 	LPVOID getHandle() {
@@ -64,7 +64,7 @@ public:
 			//Invalidate cache entry for old array address
 			_computedAddresses.erase(reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset })));
 			//Allocate new array in process memory
-			uintptr_t ptr = AllocArray<T>(panel, data.size());
+			uintptr_t ptr = AllocArray<T>(data.size());
 			WritePanelData<uintptr_t>(panel, offset, { ptr });
 		}
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset, 0 }, data);
