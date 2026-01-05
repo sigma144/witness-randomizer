@@ -63,7 +63,7 @@ public:
 	int exitPos, exitPosSym, exitPoint;
 	std::vector<struct Point> DIRECTIONS;
 private:
-	int _sequenceArray = 0;
+	uintptr_t _sequenceArray = 0;
 };
 
 class BridgeWatchdog : public Watchdog {

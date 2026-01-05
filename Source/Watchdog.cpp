@@ -55,7 +55,7 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f) {
 	Memory* memory = Memory::get();
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, { 2 });
 	memory->WriteArray<int>(id, SEQUENCE, { 0, 0 }, true);
-	_sequenceArray = memory->ReadPanelData<int>(id, SEQUENCE);
+	_sequenceArray = memory->ReadPanelData<uintptr_t>(id, SEQUENCE);
 }
 
 ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
@@ -86,11 +86,11 @@ void ArrowWatchdog::action() {
 		}
 		if (satisfied) {
 			//OutputDebugStringW(L"Yes");
-			WritePanelData<int>(id, SEQUENCE, { 0 }); // Array is absent; arrow is valid
+			WritePanelData<uintptr_t>(id, SEQUENCE, { 0 }); // Array is absent; arrow is valid
 		}
 		else {
 			//OutputDebugStringW(L"No");
-			WritePanelData<int>(id, SEQUENCE, { _sequenceArray }); // Array is present; arrow not valid
+			WritePanelData<uintptr_t>(id, SEQUENCE, { _sequenceArray }); // Array is present; arrow not valid
 		}
 		
 	}

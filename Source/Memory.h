@@ -78,10 +78,12 @@ public:
 
 	template <class T>
 	void WriteToArray(int panel, int offset, T data, int index) {
-		if ((index + 1) > sizeof(T) * _arraySizes[std::make_pair(panel, offset)]) {
+		if ((index + 1) > _arraySizes[std::make_pair(panel, offset)]) {
 			ThrowError("Out of bound array write");
 		}
-		if (Write(static_cast<void*>(static_cast<char*>(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset, 0 })) + index * sizeof(T)), &data, sizeof(T))) {
+		char* base_address = static_cast<char*>(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset, 0 }));
+		void* with_index = static_cast<void*>(base_address + index * sizeof(T));
+		if (Write(with_index, &data, sizeof(T))) {
 			return;
 		}
 		ThrowError({ GLOBALS, 0x18, panel * 8, offset }, true);
