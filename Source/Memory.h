@@ -8,6 +8,28 @@
 #include <windows.h>
 #include <array>
 #include <wtypes.h>
+
+// Note: Little endian
+#define LONG_TO_BYTES(val) \
+	static_cast<byte>((val & 0x00000000000000FF) >> 0x00), \
+	static_cast<byte>((val & 0x000000000000FF00) >> 0x08), \
+	static_cast<byte>((val & 0x0000000000FF0000) >> 0x10), \
+	static_cast<byte>((val & 0x00000000FF000000) >> 0x18), \
+	static_cast<byte>((val & 0x000000FF00000000) >> 0x20), \
+	static_cast<byte>((val & 0x0000FF0000000000) >> 0x28), \
+	static_cast<byte>((val & 0x00FF000000000000) >> 0x30), \
+	static_cast<byte>((val & 0xFF00000000000000) >> 0x38)
+
+// Note: Little endian
+#define INT_TO_BYTES(val) \
+	static_cast<byte>((val & 0x000000FF) >> 0x00), \
+	static_cast<byte>((val & 0x0000FF00) >> 0x08), \
+	static_cast<byte>((val & 0x00FF0000) >> 0x10), \
+	static_cast<byte>((val & 0xFF000000) >> 0x18)
+
+#define ARGCOUNT(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value
+#define DO_WHILE_GT_ZERO(...) __VA_ARGS__, 0x77, static_cast<byte>(-2 - ARGCOUNT(__VA_ARGS__)) // Must end on a 'dec' instruction to set zero flags correclty.
+
 // https://github.com/erayarslan/WriteProcessMemory-Example
 // http://stackoverflow.com/q/32798185
 // http://stackoverflow.com/q/36018838

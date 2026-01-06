@@ -8,9 +8,7 @@
 #include <tlhelp32.h>
 #include <iostream>
 #include "Randomizer.h"
-#undef min
-#undef max
-#include "earcut.hpp"
+#include "SymbolData.h"
 
 #undef PROCESSENTRY32
 #undef Process32Next
@@ -139,7 +137,7 @@ void Memory::findGlobals() {
 		file.close();
 		return;
 	}
-	
+
 	// Finally, fall back to sigscanning.
 	ScanForBytes({ 0x74, 0x41, 0x48, 0x85, 0xC0, 0x74, 0x04, 0x48, 0x8B, 0x48, 0x10 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
 		// This scan targets a line slightly before the key instruction
@@ -155,34 +153,35 @@ void Memory::findGlobals() {
 }
 
 void Memory::fixTriangleNegation() {
-	Memory* memory = Memory::get();
-
-	__int64 drawDecorationHelper = 0;
-	memory->ScanForBytes({ 0x41, 0x81, 0xFE, 0x00, 0x06, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
-		drawDecorationHelper = offset + index;
-	});
-
 	// Replace the line which is reading from &color with &result (the eraser-modified color)
-	memory->WriteData<byte>({ (int)(drawDecorationHelper + 0x41) }, { 0x97 });
+	Memory* memory = Memory::get();
+	memory->ScanForBytes({ 0x41, 0x81, 0xFE, 0x00, 0x06, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
+		memory->WriteData<byte>({ (int)(offset + index + 0x41) }, { 0x97 });
+	});
 }
 
 void Memory::setupCustomSymbols() {
 	Memory* memory = Memory::get();
 
-	int drawCounter = 0;
-	memory->ScanForBytes({ 0x83, 0xF8, 0x05, 0x0F, 0x87, 0x17, 0x02, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
-		drawCounter = (int)(offset + index);
+	// Patch the draw_decoration_helper function to include all values > 0x600 (e.g. arrows 0x700) in the 'draw_counter' case
+	memory->ScanForBytes({ 0x41, 0x81, 0xFE, 0x00, 0x06, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
+		memory->WriteData<byte>({ (int)(offset + index + 7) }, { 0x72 });
 	});
 
-	if (drawCounter == 0) return; // Already injected
-
 	// Remove the cases for 5 and 6 triangles from the switch statement so we have space for our code
-	memory->WriteData<byte>({ drawCounter }, {
+	__int64 drawCounter = 0;
+	memory->ScanForBytes({ 0x83, 0xF8, 0x05, 0x0F, 0x87, 0x17, 0x02, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
+		drawCounter = offset + index;
+	});
+
+	if (drawCounter == 0) return; // Sigscan could not be found, likely already injected
+
+	memory->WriteData<byte>({ (int)drawCounter }, {
 		0x83, 0xF8, 0x03,					// cmp eax, 03   ; If the number of triangles is greater than 4
 		0x0F, 0x87, 0x13, 0x01, 0x00, 0x00, // ja 0x00000113 ; jump 0x113 bytes forward (case label 5)
 	});
 
-	// Look up two function pointers we'll need for drawing
+	// Look up two function pointers we'll need for drawing from another unrelated function
 	__int64 im_begin = 0;
 	__int64 im_vertex = 0;
 	memory->ScanForBytes({ 0x4C, 0x8B, 0xF1, 0xB9, 0x03, 0x00, 0x00, 0x00 }, [&](__int64 offset, int index, const std::vector<byte>& data) {
@@ -192,112 +191,45 @@ void Memory::setupCustomSymbols() {
 
 	constexpr int MAX_INSTRUCTIONS = 260;
 
-	// Note: Little endian
-	#define LONG_TO_BYTES(val) \
-		static_cast<byte>((val & 0x00000000000000FF) >> 0x00), \
-		static_cast<byte>((val & 0x000000000000FF00) >> 0x08), \
-		static_cast<byte>((val & 0x0000000000FF0000) >> 0x10), \
-		static_cast<byte>((val & 0x00000000FF000000) >> 0x18), \
-		static_cast<byte>((val & 0x000000FF00000000) >> 0x20), \
-		static_cast<byte>((val & 0x0000FF0000000000) >> 0x28), \
-		static_cast<byte>((val & 0x00FF000000000000) >> 0x30), \
-		static_cast<byte>((val & 0xFF00000000000000) >> 0x38)
-
-	// Note: Little endian
-	#define INT_TO_BYTES(val) \
-		static_cast<byte>((val & 0x000000FF) >> 0x00), \
-		static_cast<byte>((val & 0x0000FF00) >> 0x08), \
-		static_cast<byte>((val & 0x00FF0000) >> 0x10), \
-		static_cast<byte>((val & 0xFF000000) >> 0x18)
-
-	#define ARGCOUNT(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value
-
-	#define IF_GE(...) __VA_ARGS__, 0x72 // jb
-	#define IF_LT(...) __VA_ARGS__, 0x73 // jae
-	#define IF_NE(...) __VA_ARGS__, 0x74 // je
-	#define IF_EQ(...) __VA_ARGS__, 0x75 // jne
-	#define IF_GT(...) __VA_ARGS__, 0x76 // jbe
-	#define IF_LE(...) __VA_ARGS__, 0x77 // ja
-	#define THEN(...) ARGCOUNT(__VA_ARGS__), __VA_ARGS__
-	#define DO_WHILE(...) __VA_ARGS__, static_cast<byte>(-1 - ARGCOUNT(__VA_ARGS__))
-	#define DO_WHILE_GT_ZERO(...) __VA_ARGS__, 0x77, static_cast<byte>(-2 - ARGCOUNT(__VA_ARGS__)) // Must end on a 'dec' instruction to set flags.
-
-
-#pragma warning (push)
-#pragma warning (disable: 4305)
-	std::vector<std::array<float, 2>> arrow1 = {
-		{-0.08, 0.01},
-		{-0.08, -0.01},
-		{0.04, -0.01},
-		{-0.01, -0.06},
-		{0.02, -0.06},
-		{0.08, 0.00},
-		{0.02, 0.06},
-		{-0.01, 0.06},
-		{0.04, 0.01},
-	};
-#pragma warning (pop)
-
-	std::vector<float> data(4 * 256, 0.0f);
-	for (int i = 0; i < 4; i++) {
-		// Create a polygon out of the arrow and cut it into triangles
-		std::vector<std::vector<std::array<float, 2>>> polygon;
-		polygon.push_back(arrow1);
-		std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
-
-		// Insert the triangulated polygon into the data array
-		for (int j = 0; j < indices.size(); j++) {
-			data[i * 256 + j * 2]     = polygon[0][indices[j]][0]; // x coordinate
-			data[i * 256 + j * 2 + 1] = polygon[0][indices[j]][1]; // y coordinate
-		}
-
-		// Rotate the polygon clockwise
-		for (int j = 0; j < arrow1.size(); j++) {
-			float tmp = arrow1[j][0];
-			arrow1[j][0] = arrow1[j][1];
-			arrow1[j][1] = -tmp;
-		}
-	}
-
+	std::vector<float> data = SymbolData::GenerateData();
 	uintptr_t dataArray = memory->AllocArray<float>(data.size());
 	memory->Write((void*)dataArray, data.data(), sizeof(data[0]) * data.size());
 
 	__int64 function_end = memory->getBaseAddress() + drawCounter + 0x25D;
 
-	// 44 verts -> 42 tris -> 128 points -> 256 floats
-	int NUM_VERTS = 44; // TODO: HARDCODED! Is this OK?
+	int MAX_POINTS = 128; // TODO: How's the perf here? We could break if we find an 'all zero' vertex.
 
-    // Here is our assembly code.
-    const byte instructions[] = {
-        0x41, 0x51,													// push r9										 
-        0x41, 0x52,													// push r10									 
-		0x49, 0xC7, 0xC1, INT_TO_BYTES(NUM_VERTS),					// mov r9, NUM_VERTS                        ; Set up our loop counter
-		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray                       ; Load the vertex array
+	// Here is our assembly code. I've tried to keep this as readable as possible, but 
+	const byte instructions[] = {
+		0x41, 0x51,													// push r9
+		0x41, 0x52,													// push r10									; Reserve a couple of scratch registers to work with,
+		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; and allocate a Vector3 on the stack (would be 0xC bytes, but we pad to keep the stack aligned)
+		0x49, 0xC7, 0xC1, INT_TO_BYTES(MAX_POINTS),					// mov r9, MAX_POINTS						; Set up our loop counter
+		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray						; Load the vertex array
 		0x48, 0x83, 0xE8, 0x04,										// sub rax, 4								; Skip the first 4 triangle counts (1-4)
 		0x48, 0xC1, 0xE0, 0x0A,										// shl rax, 0x0A							; Determine the offset into our data array (256 floats allocated per symbol)
 		0x49, 0x01, 0xC2,											// add r10, rax								; Adjust the array start by the offset
-		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; Stackalloc a "Vector3"
-        0xB9, INT_TO_BYTES(3),										// mov rcx, 3
-        0x48, 0xB8, LONG_TO_BYTES(im_begin),						// mov rax, Device_Context::im_begin		; Sadly the immediate context only supports triangles.
-        0xFF, 0xD0,													// call rax									 
+		0xB9, INT_TO_BYTES(3),										// mov rcx, 3
+		0x48, 0xB8, LONG_TO_BYTES(im_begin),						// mov rax, Device_Context::im_begin		; Initialize the immediate context for triangles. Sadly this is the only supported mode.
+		0xFF, 0xD0,													// call rax
 
-		DO_WHILE_GT_ZERO(											//
-			0x49, 0x8B, 0x0A,										// mov rcx,qword ptr ds:[r10]               ; Copy the x and y coordinates into rcx (temp variable)
-			0x48, 0x89, 0x0C, 0x24,									// mov qword ptr ss:[rsp],rcx               ; Copy the x and y coordinates into [rsp] (Vector3.x and Vector3.y)
-			0x49, 0x83, 0xC2, 0x08,									// add r10, 8                               ; Increment the vertex array pointer to point to the next two verticies
-			0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),				// mov dword ptr [rsp+8], 0					; Set z coordinate (always 0)
+		DO_WHILE_GT_ZERO(											//											; We are going to run the code below for each triangle in our polygon.
+			0x49, 0x8B, 0x0A,										// mov rcx,qword ptr ds:[r10]				; Copy the x and y coordinates into rcx (temp variable)
+			0x48, 0x89, 0x0C, 0x24,									// mov qword ptr ss:[rsp],rcx				; Copy the x and y coordinates into [rsp] (Vector3.x and Vector3.y)
+			0x49, 0x83, 0xC2, 0x08,									// add r10, 8								; Increment the vertex array pointer to point to the next two verticies
+			0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),				// mov dword ptr [rsp+8], 0					; Set Vector3.z coordinate to 0 (to stay on the render plane)
 			0x48, 0x89, 0xE1,										// mov rcx, rsp								; Argument 1: Vector3 coordinate 
 			0x89, 0xF2,												// mov edx, esi								; Argument 2: ARGB Color (set by the caller, just passed through)
-			0x48, 0xB8, LONG_TO_BYTES(im_vertex),					// mov rax, Device_Context::im_vertex			 
-			0xFF, 0xD0,												// call rax									; im_vertex()
+			0x48, 0xB8, LONG_TO_BYTES(im_vertex),					// mov rax, Device_Context::im_vertex
+			0xFF, 0xD0,												// call rax									; Call im_vertex() to add a vertex to our current triangle
 			0x49, 0xFF, 0xC9 										// dec r9									; Decrease the number of vertices remaining
 		),															//											; Loop if there are more than 0 vertices remaining
 
-		0x48, 0x83, 0xC4, 0x10,										 // add rsp, 10								; Restore our stack pointer
-        0x41, 0x5A,													 // pop r10										 
-        0x41, 0x59,													 // pop r9										 
-        0x48, 0xB8, LONG_TO_BYTES(function_end),					 // mov rax, function_end					; (known offset to end of function)
-        0xFF, 0xE0,													 // jmp rax									; This jumps down to an im_flush call at the end of the function.
+		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10								; Restore our stack pointer,
+		0x41, 0x5A,													// pop r10									; and scratch registers
+		0x41, 0x59,													// pop r9
+		0x48, 0xB8, LONG_TO_BYTES(function_end),					// mov rax, function_end					; (known offset to end of function)
+		0xFF, 0xE0,													// jmp rax									; This jumps down to an im_flush call at the end of the function and other end-of-function cleanup.
     };
 
 	static_assert(sizeof(instructions) < MAX_INSTRUCTIONS, "There are only 260 bytes available in this code cave");
@@ -308,6 +240,13 @@ void Memory::setupCustomSymbols() {
 
 	// Write the actual instructions into the program.
 	memory->WriteData<byte>({ (int)(drawCounter + 0x11C) }, bytes);
+
+	// Old version testing -- not needed on latest patch (I hope).
+	constexpr int ARROW1 = 0x50700;
+	constexpr int ARROW2 = 0xD0700;
+	constexpr int ARROW3 = 0x150700;
+    memory->WriteData<int>( { GLOBALS, 0x18, 0x17CF0 * 8, 0x420, 0 }, { ARROW1 | 0x4, ARROW2 | 0x3, ARROW3 | 0x4 });
+	__debugbreak();
 }
 
 bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {
