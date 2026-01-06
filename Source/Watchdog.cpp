@@ -167,8 +167,7 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 		if (grid[x][y] == PATH) {
 			if (++count > targetCount) { 
 				// The arrow already sees too many lines, no need to continue counting
-				setDecorationFlag(orig_x, orig_y, false);
-				return false;
+				break;
 			}
 		}
 		x += dir.first; y += dir.second;
@@ -193,8 +192,7 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 		if (grid[x][y] == PATH) {
 			if (++count > targetCount) {
 				// The arrow already sees too many lines, no need to continue counting
-				setDecorationFlag(orig_x, orig_y, false);
-				return false;
+				break;
 			}
 		}
 		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;

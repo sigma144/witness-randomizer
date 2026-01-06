@@ -81,9 +81,7 @@ public:
 		if ((index + 1) > _arraySizes[std::make_pair(panel, offset)]) {
 			ThrowError("Out of bound array write");
 		}
-		char* base_address = static_cast<char*>(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset, 0 }));
-		void* with_index = static_cast<void*>(base_address + index * sizeof(T));
-		if (Write(with_index, &data, sizeof(T))) {
+		if (Write(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset, index * static_cast<int>(sizeof(T)) }), &data, sizeof(T))) {
 			return;
 		}
 		ThrowError({ GLOBALS, 0x18, panel * 8, offset }, true);
