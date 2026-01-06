@@ -78,7 +78,7 @@ public:
 
 	template <class T>
 	void WriteToArray(int panel, int offset, T data, int index) {
-		if ((index + 1) > _arraySizes[std::make_pair(panel, offset)]) {
+		if ((index + 1) > _arraySizes[std::make_pair(panel, offset)] && _arraySizes[std::make_pair(panel, offset)]!= NULL) {
 			ThrowError("Out of bound array write");
 		}
 		if (Write(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset, index * static_cast<int>(sizeof(T)) }), &data, sizeof(T))) {
