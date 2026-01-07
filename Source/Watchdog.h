@@ -51,8 +51,6 @@ public:
 	bool checkArrow(int x, int y);
 	bool checkArrowPillar(int x, int y);
 
-	void setDecorationFlag(int x, int y, bool satisfied);
-
 	int id;
 	std::vector<std::vector<int>> backupGrid;
 	std::vector<std::vector<int>> grid;

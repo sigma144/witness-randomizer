@@ -101,7 +101,7 @@ public:
 	}
 
 	template <class T>
-	void WriteToArray(int panel, int offset, T data, int index) {
+	void WriteToArray(int panel, int offset, int index, T data) {
 		auto search = _arraySizes.find({panel, offset});
 		if (search != _arraySizes.end() && index >= search->second) {
 			ThrowError("Out of bound array write");

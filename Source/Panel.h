@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <tuple>
 #include <functional>
+#include "SymbolData.h"
 
 struct Point {
 	int first;
@@ -35,9 +36,9 @@ public:
 		Triangle3 = 0x30600,
 		Triangle4 = 0x40600,
 		Arrow =		0x700,
-		Arrow1 =	0x080700,
-		Arrow2 =	0x100700,
-		Arrow3 =	0x180700,
+		Arrow1 =	GetWitnessDecorationId(SymbolId::Arrow1E),
+		Arrow2 =	GetWitnessDecorationId(SymbolId::Arrow2E),
+		Arrow3 =	GetWitnessDecorationId(SymbolId::Arrow3E),
 		Can_Rotate = 0x1000,
 		Negative = 0x2000,
 		Gap = 0x100000,

@@ -87,7 +87,6 @@ void ArrowWatchdog::action() {
 	sleepTime = 0.01f;
 	if (length == tracedLength) return;
 	initPath();
-	bool satisfied = true;
 	if (complete) {
 		bool success = true;
 
@@ -99,13 +98,11 @@ void ArrowWatchdog::action() {
 
 				if (!checkArrow(x, y)) {
 					// LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
-					// TODO: Rever is working on a fix here with WriteArray. Just wait for that.
-					// memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 1 });
+					memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 1);
 					success = false;
 				} else {
 					// LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
-					// TODO: Rever is working on a fix here with WriteArray. Just wait for that.
-					// memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 0 });
+					memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 0);
 				}
 			}
 		}
@@ -190,9 +187,7 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 		}
 		x += dir.first; y += dir.second;
 	}
-	bool result = count == targetCount;
-	setDecorationFlag(orig_x, orig_y, result);
-	return result;
+	return count == targetCount;
 }
 
 bool ArrowWatchdog::checkArrowPillar(int x, int y)
@@ -215,17 +210,7 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 		}
 		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;
 	}
-	bool result = count == targetCount;
-	setDecorationFlag(orig_x, orig_y, result);
-	return result;
-}
-
-void ArrowWatchdog::setDecorationFlag(int x, int y, bool satisfied) {
-	Memory* memory = Memory::get();
-	Panel panel(this->id);
-	int index = panel.xy_to_dloc(x, y);
-	int data = satisfied ? 0 : 1;
-	memory->WriteToArray<int>(id, DECORATION_FLAGS, data, index);
+	return count == targetCount;
 }
 
 void BridgeWatchdog::action()

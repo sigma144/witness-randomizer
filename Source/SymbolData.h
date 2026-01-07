@@ -40,7 +40,7 @@ enum SymbolId {
 	NUM_SYMBOLS, // Must be last
 };
 
-inline int GetWitnessDecorationId(SymbolId symbolId) { return (symbolId << 16) + 0x10700; }
+constexpr int GetWitnessDecorationId(SymbolId symbolId) { return (symbolId << 16) + 0x80700; }
 
 class SymbolData {
 public:
