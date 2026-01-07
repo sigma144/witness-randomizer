@@ -292,21 +292,18 @@ void Panel::WriteDecorations() {
 			decorationColors.push_back(get_color_rgb(_grid[x][y] & 0xf));
 			if (_grid[x][y])
 				any = true;
-			if ((_grid[x][y] & 0x700) == Decoration::Shape::Stone) _style |= HAS_STONES;
-			if ((_grid[x][y] & 0x700) == Decoration::Shape::Star) _style |= HAS_STARS;
-			if ((_grid[x][y] & 0x700) == Decoration::Shape::Poly) _style |= HAS_SHAPERS;
-			if ((_grid[x][y] & 0x700) == Decoration::Shape::Eraser) _style |= HAS_ERASERS;
-			if ((_grid[x][y] & 0x700) == Decoration::Shape::Triangle) _style |= HAS_TRIANGLES;
-			if ((_grid[x][y] & 0x700) == Decoration::Shape::Arrow) {
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Stone) _style |= HAS_STONES;
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Star) _style |= HAS_STARS;
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Poly) _style |= HAS_SHAPERS;
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Eraser) _style |= HAS_ERASERS;
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Triangle) _style |= HAS_TRIANGLES;
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Arrow) {
 				_style |= HAS_TRIANGLES | HAS_STONES;
 				arrows = true;
 			}
 		}
 	}
 	if (arrows) {
-		for (int i = 0; i < decorations.size(); i++) {
-			if (decorations[i] == 0) decorations[i] = Decoration::Triangle; //To force it to be unsolvable
-		}
 		memory->WritePanelData<int>(id, OUTER_BACKGROUND_MODE, { 1 });
 	}
 	if (!any) {
@@ -632,7 +629,7 @@ void Panel::WriteIntersections() {
 	//Arrows (if applicable)
 	for (int y = 1; y < _height; y += 2) {
 		for (int x = 1; x < _width; x += 2) {
-			if ((_grid[x][y] & 0x700) == Decoration::Arrow)
+			if ((_grid[x][y] & 0xF00) == Decoration::Arrow)
 				render_arrow(x, y, (_grid[x][y] & 0xf000) >> 12, (_grid[x][y] & 0xf0000) >> 16, intersections, intersectionFlags, polygons);
 		}
 	}

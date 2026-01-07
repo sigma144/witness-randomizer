@@ -60,11 +60,13 @@ public:
 	template <class T>
 	void WriteArray(int panel, int offset, const std::vector<T>& data) {
 		if (data.size() == 0) return;
-		if (data.size() > _arraySizes[std::make_pair(panel, offset)]) {
+		auto search = _arraySizes.find({panel, offset});
+		if (search == _arraySizes.end() || data.size() > search->second) {
 			//Invalidate cache entry for old array address
 			_computedAddresses.erase(reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, panel * 8, offset })));
 			//Allocate new array in process memory
 			uintptr_t ptr = AllocArray<T>(panel, data.size());
+			_arraySizes[{panel, offset}] = (int)data.size();
 			WritePanelData<uintptr_t>(panel, offset, { ptr });
 		}
 		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset, 0 }, data);
@@ -72,8 +74,17 @@ public:
 
 	template <class T>
 	void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
-		if (force) _arraySizes[std::make_pair(panel, offset)] = 0;
+		if (force) _arraySizes[{panel, offset}] = 0;
 		WriteArray(panel, offset, data);
+	}
+
+	template <class T>
+	void WriteToArray(int panel, int offset, T data, int index) {
+		auto search = _arraySizes.find({panel, offset});
+		if (search != _arraySizes.end() && index >= search->second) {
+			ThrowError("Out of bound array write");
+		}
+		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset, index * static_cast<int>(sizeof(T)) }, { data });
 	}
 
 	template <class T>
