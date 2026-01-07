@@ -51,6 +51,8 @@ public:
 	bool checkArrow(int x, int y);
 	bool checkArrowPillar(int x, int y);
 
+	void setDecorationFlag(int x, int y, bool satisfied);
+
 	int id;
 	std::vector<std::vector<int>> backupGrid;
 	std::vector<std::vector<int>> grid;
@@ -61,7 +63,7 @@ public:
 	int exitPos, exitPosSym, exitPoint;
 private:
 	Panel _panel;
-	int _sequenceArray = 0;
+	uintptr_t _sequenceArray = 0;
 };
 
 class BridgeWatchdog : public Watchdog {

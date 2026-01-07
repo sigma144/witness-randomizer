@@ -53,7 +53,7 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f), _panel(Panel(id)) {
 	Memory* memory = Memory::get();
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, { 2 });
 	memory->WriteArray<int>(id, SEQUENCE, { 0, 0 }, true);
-	_sequenceArray = memory->ReadPanelData<int>(id, SEQUENCE);
+	_sequenceArray = memory->ReadPanelData<uintptr_t>(id, SEQUENCE);
 }
 
 ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
@@ -87,6 +87,7 @@ void ArrowWatchdog::action() {
 	sleepTime = 0.01f;
 	if (length == tracedLength) return;
 	initPath();
+	bool satisfied = true;
 	if (complete) {
 		bool success = true;
 
@@ -109,7 +110,7 @@ void ArrowWatchdog::action() {
 			}
 		}
 		// LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
-		WritePanelData<int>(id, SEQUENCE, { success ? 0 : _sequenceArray });
+		WritePanelData<uintptr_t>(id, SEQUENCE, { success ? 0 : _sequenceArray });
 	}
 }
 
@@ -170,6 +171,8 @@ void ArrowWatchdog::initPath()
 
 bool ArrowWatchdog::checkArrow(int x, int y)
 {
+	int orig_x = x;
+	int orig_y = y;
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
 	if ((symbol & 0xF00) != Decoration::Arrow)
@@ -180,16 +183,22 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 	int count = 0;
 	while (x >= 0 && x < width && y >= 0 && y < height) {
 		if (grid[x][y] == PATH) {
-			if (++count > targetCount)
-				return false;
+			if (++count > targetCount) { 
+				// The arrow already sees too many lines, no need to continue counting
+				break;
+			}
 		}
 		x += dir.first; y += dir.second;
 	}
-	return count == targetCount;
+	bool result = count == targetCount;
+	setDecorationFlag(orig_x, orig_y, result);
+	return result;
 }
 
 bool ArrowWatchdog::checkArrowPillar(int x, int y)
 {
+	int orig_x = x;
+	int orig_y = y;
 	int symbol = grid[x][y];
 	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;
@@ -199,11 +208,24 @@ bool ArrowWatchdog::checkArrowPillar(int x, int y)
 	int count = 0;
 	while (y >= 0 && y < height) {
 		if (grid[x][y] == PATH) {
-			if (++count > targetCount) return false;
+			if (++count > targetCount) {
+				// The arrow already sees too many lines, no need to continue counting
+				break;
+			}
 		}
 		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;
 	}
-	return count == targetCount;
+	bool result = count == targetCount;
+	setDecorationFlag(orig_x, orig_y, result);
+	return result;
+}
+
+void ArrowWatchdog::setDecorationFlag(int x, int y, bool satisfied) {
+	Memory* memory = Memory::get();
+	Panel panel(this->id);
+	int index = panel.xy_to_dloc(x, y);
+	int data = satisfied ? 0 : 1;
+	memory->WriteToArray<int>(id, DECORATION_FLAGS, data, index);
 }
 
 void BridgeWatchdog::action()
