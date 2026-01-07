@@ -97,16 +97,18 @@ void ArrowWatchdog::action() {
 				if ((symbol & 0xF00) != Decoration::Arrow) continue;
 
 				if (!checkArrow(x, y)) {
-					LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
+					// LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
+					// TODO: Rever is working on a fix here with WriteArray. Just wait for that.
+					// memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 1 });
 					success = false;
-					memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 1 });
 				} else {
-					LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
-					memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 0 });
+					// LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
+					// TODO: Rever is working on a fix here with WriteArray. Just wait for that.
+					// memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 0 });
 				}
 			}
 		}
-		LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+		// LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 		WritePanelData<int>(id, SEQUENCE, { success ? 0 : _sequenceArray });
 	}
 }

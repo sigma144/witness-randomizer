@@ -10,8 +10,6 @@
 #include "Randomizer.h"
 #include "SymbolData.h"
 
-#include "Panel.h" // Hack
-
 #undef PROCESSENTRY32
 #undef Process32Next
 
@@ -190,12 +188,14 @@ void Memory::setupCustomSymbols() {
 		im_begin = memory->getBaseAddress() + Memory::ReadStaticInt(offset, index + 11, data);
 		im_vertex = memory->getBaseAddress() + Memory::ReadStaticInt(offset, index + 21, data);
 	});
+	// We also need the address of the end of the function where normal cleanup happens.
+	// Note that this location is after the usual triangle handling code; we're making our own (below).
+	__int64 function_end = memory->getBaseAddress() + drawCounter + 0x25D;
 
+	// Generate the float data which represents all of our custom symbols, and write it into the binary.
 	std::vector<float> data = SymbolData::GenerateData();
 	uintptr_t dataArray = memory->AllocArray<float>(data.size());
 	memory->Write((void*)dataArray, data.data(), sizeof(data[0]) * data.size());
-
-	__int64 function_end = memory->getBaseAddress() + drawCounter + 0x25D;
 
 	constexpr int MAX_POINTS = 126; // See math in SymbolData::GenerateData -- there will be at most 42 triangles == 126 points per custom shape.
 
@@ -235,24 +235,12 @@ void Memory::setupCustomSymbols() {
 	constexpr int MAX_INSTRUCTIONS = 260;
 	static_assert(sizeof(instructions) < MAX_INSTRUCTIONS, "There are only 260 bytes available in this code cave");
 
-	// Ensure that all of the non-instruction bytes are NOPs
+	// Ensure that all of the non-instruction bytes are NOPs, then fill in our instructions
 	std::vector<byte> bytes(MAX_INSTRUCTIONS, 0x90);
 	for (int i = 0; i < sizeof(instructions); i++) bytes[i] = instructions[i];
 
 	// Write the actual instructions into the program.
 	memory->WriteData<byte>({ (int)(drawCounter + 0x11C) }, bytes);
-
-	// Old version testing -- not needed on latest patch (I hope).
-	// constexpr int ARROW1 = 0x50700;
-	// constexpr int ARROW2 = 0xD0700;
-	// constexpr int ARROW3 = 0x150700;
-	// #define DECORATIONS 0x420
-    // memory->WriteData<int>( { GLOBALS, 0x18, 0x17CF0 * 8, DECORATIONS, 0 }, {
-	//     Decoration::Arrow | Decoration::Blue   | (0 << 16) | (1 << 19),
-	//     Decoration::Arrow | Decoration::Purple | (3 << 16) | (2 << 19),
-	//     Decoration::Arrow | Decoration::Red    | (6 << 16) | (3 << 19),
-	// });
-	// __debugbreak();
 }
 
 bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {

@@ -136,7 +136,7 @@ public:
 	};
 	bool retryOnFail = true;
 
-	// private:
+	private:
 		void findGlobals();
 		void fixTriangleNegation();
 		void setupCustomSymbols();

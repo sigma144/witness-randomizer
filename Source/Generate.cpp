@@ -613,9 +613,11 @@ bool Generate::place_all_symbols(PuzzleSymbols & symbols)
 		if (!place_stones(s.first & 0xf, s.second)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Decoration::Triangle]) {
+		// If the caller specified a triangle count, shift to get that count and pass it to place_triangles.
 		if (!place_triangles(s.first & 0xf, s.second, s.first >> 16)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Decoration::Arrow]) {
+		// If the caller specified an arrow count , shift to get that count and pass it to place_arrows.
 		if (!place_arrows(s.first & 0xf, s.second, s.first >> 19)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Decoration::Star]) {
@@ -1710,7 +1712,7 @@ bool Generate::place_arrows(int color, int amount, int targetCount)
 			if (dir.first < 0 && count == (pos.first + 1) / 2 || dir.first > 0 && count == (_panel->_width - pos.first) / 2 ||
 				dir.second < 0 && count == (pos.second + 1) / 2 || dir.second > 0 && count == (_panel->_height - pos.second) / 2 && Random::rand() % 10 > 0)
 				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
-			set(pos, Decoration::Arrow | color | (choice << 16) | (count << 19)); // TODO: Test me!
+			set(pos, Decoration::Arrow | color | (choice << 16) | (count << 19));
 			_openpos.erase(pos);
 			amount--;
 			break;
