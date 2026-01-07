@@ -617,7 +617,7 @@ bool Generate::place_all_symbols(PuzzleSymbols & symbols)
 		if (!place_triangles(s.first & 0xf, s.second, s.first >> 16)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Decoration::Arrow]) {
-		// If the caller specified an arrow count , shift to get that count and pass it to place_arrows.
+		// If the caller specified an arrow count, shift to get that count and pass it to place_arrows.
 		if (!place_arrows(s.first & 0xf, s.second, s.first >> 19)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Decoration::Star]) {
