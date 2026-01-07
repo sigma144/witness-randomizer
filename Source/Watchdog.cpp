@@ -64,13 +64,13 @@ ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
 #define LOG_DEBUG(fmt, ...) LogDebug(__FILE__, __LINE__, fmt, __VA_ARGS__)
 void LogDebug(const char* function, int line, const char* fmt, ...) {
 	char message[1024] = "\0";
-	char message2[1024] = "\0";
 
 	va_list args;
 	va_start(args, fmt);
 	vsprintf_s(&message[0], sizeof(message) / sizeof(message[0]), fmt, args);
 	va_end(args);
 
+	char message2[1024] = "\0";
 	snprintf(&message2[0], sizeof(message2) / sizeof(message2[0]), "[%s:%d] %s\n", function, line, message);
 	OutputDebugStringA(message2);
 }

@@ -37,7 +37,7 @@ enum SymbolId {
 	Arrow3N  = 0x16,
 	Arrow3NE = 0x17,
 
-	NUM_SYMBOLS,
+	NUM_SYMBOLS, // Must be last
 };
 
 inline int GetWitnessDecorationId(SymbolId symbolId) { return (symbolId << 16) + 0x10700; }

@@ -228,7 +228,7 @@ void Panel::ReadAllData() {
 	std::vector<int> decorationFlags = memory->ReadArray<int>(id, DECORATION_FLAGS, numDecorations);
 	float width = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
 	int seqLen = memory->ReadPanelData<int>(id, SEQUENCE_LEN);
-	// std::vector<int> seq = memory->ReadArray<int>(id, SEQUENCE, seqLen);
+	//std::vector<int> seq = memory->ReadArray<int>(id, SEQUENCE, seqLen);
 	std::vector<float> power = memory->ReadPanelData<float>(id, POWER, 2);
 	float openRate = memory->ReadPanelData<float>(id, OPEN_RATE);
 	int cptr = memory->ReadPanelData<int>(id, DECORATION_COLORS);
