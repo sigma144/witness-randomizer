@@ -1445,7 +1445,7 @@ void Special::createArrowPuzzle(int id, int x, int y, int dir, int ticks, const 
 {
 	generator->initPanel(id);
 	generator->clear();
-	generator->set(x, y, Decoration::Arrow1 | (dir << 16) | (ticks << 19));
+	generator->set(x, y, Decoration::Arrow | (dir << 16) | (ticks << 19));
 	for (Point p : gaps) {
 		generator->set(p, p.first % 2 ? Decoration::Gap_Row : Decoration::Gap_Column);
 	}
