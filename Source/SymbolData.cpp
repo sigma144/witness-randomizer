@@ -22,18 +22,18 @@ SymbolData::Shape SymbolData::RotateClockwise(const Shape& shape, int degrees) {
 	return rotated;
 }
 
-// To make the assembly simpler, we assume all symbols have a fixed size.
-// Excess polygons will just be empty triangles (all coordinates set to 0)
-constexpr int VERTICES_PER_SYMBOL = 44;
-constexpr int TRIANGLES_PER_SYMBOL = 42;
-constexpr int POINTS_PER_SYMBOL = 128;
-constexpr int FLOATS_PER_SYMBOL = 256;
-
 std::vector<float> SymbolData::GenerateData() {
-	std::vector<Shape> allShapes = GetAllShapes();
+	// To make the assembly simpler, we assume all symbols have a fixed size.
+	// Excess polygons will just be empty triangles (all coordinates set to 0)
+	constexpr int VERTICES_PER_SYMBOL = 44;
+	constexpr int TRIANGLES_PER_SYMBOL = 42;
+	constexpr int POINTS_PER_SYMBOL = 128;
+	constexpr int FLOATS_PER_SYMBOL = 256;
+
+	std::array<Shape, NUM_SYMBOLS> allShapes = GetAllShapes();
 
 	std::vector<float> data(allShapes.size() * FLOATS_PER_SYMBOL, 0.0f);
-	for (int i = 0; i < allShapes.size(); i++) {
+	for (int i = 0; i < NUM_SYMBOLS; i++) {
 		assert(allShapes[i].size() <= VERTICES_PER_SYMBOL);
 
 		// Use the earcut library to divide the polygon into triangles.
@@ -51,7 +51,7 @@ std::vector<float> SymbolData::GenerateData() {
 	return data;
 }
 
-std::vector<SymbolData::Shape> SymbolData::GetAllShapes() {
+std::array<SymbolData::Shape, NUM_SYMBOLS> SymbolData::GetAllShapes() {
 	// Sigma's arrows
 	Shape arrow1 = {
 		{ 0.04,  0.01},
@@ -113,32 +113,33 @@ std::vector<SymbolData::Shape> SymbolData::GetAllShapes() {
 		{-0.08,  0.01},
 	};
 
-	return {
-		RotateClockwise(arrow1, 0),
-		RotateClockwise(arrow1, 45),
-		RotateClockwise(arrow1, 90),
-		RotateClockwise(arrow1, 135),
-		RotateClockwise(arrow1, 180),
-		RotateClockwise(arrow1, 225),
-		RotateClockwise(arrow1, 270),
-		RotateClockwise(arrow1, 315),
+	std::array<Shape, NUM_SYMBOLS> data;
+	data[Arrow1E ] = RotateClockwise(arrow1, 0);
+	data[Arrow1SE] = RotateClockwise(arrow1, 45);
+	data[Arrow1S ] = RotateClockwise(arrow1, 90);
+	data[Arrow1SW] = RotateClockwise(arrow1, 135);
+	data[Arrow1W ] = RotateClockwise(arrow1, 180);
+	data[Arrow1NW] = RotateClockwise(arrow1, 225);
+	data[Arrow1N ] = RotateClockwise(arrow1, 270);
+	data[Arrow1NE] = RotateClockwise(arrow1, 315);
 
-		RotateClockwise(arrow2, 0),
-		RotateClockwise(arrow2, 45),
-		RotateClockwise(arrow2, 90),
-		RotateClockwise(arrow2, 135),
-		RotateClockwise(arrow2, 180),
-		RotateClockwise(arrow2, 225),
-		RotateClockwise(arrow2, 270),
-		RotateClockwise(arrow2, 315),
+	data[Arrow2E ] = RotateClockwise(arrow2, 0);
+	data[Arrow2SE] = RotateClockwise(arrow2, 45);
+	data[Arrow2S ] = RotateClockwise(arrow2, 90);
+	data[Arrow2SW] = RotateClockwise(arrow2, 135);
+	data[Arrow2W ] = RotateClockwise(arrow2, 180);
+	data[Arrow2NW] = RotateClockwise(arrow2, 225);
+	data[Arrow2N ] = RotateClockwise(arrow2, 270);
+	data[Arrow2NE] = RotateClockwise(arrow2, 315);
 
-		RotateClockwise(arrow3, 0),
-		RotateClockwise(arrow3, 45),
-		RotateClockwise(arrow3, 90),
-		RotateClockwise(arrow3, 135),
-		RotateClockwise(arrow3, 180),
-		RotateClockwise(arrow3, 225),
-		RotateClockwise(arrow3, 270),
-		RotateClockwise(arrow3, 315),
-	};
+	data[Arrow3E ] = RotateClockwise(arrow3, 0);
+	data[Arrow3SE] = RotateClockwise(arrow3, 45);
+	data[Arrow3S ] = RotateClockwise(arrow3, 90);
+	data[Arrow3SW] = RotateClockwise(arrow3, 135);
+	data[Arrow3W ] = RotateClockwise(arrow3, 180);
+	data[Arrow3NW] = RotateClockwise(arrow3, 225);
+	data[Arrow3N ] = RotateClockwise(arrow3, 270);
+	data[Arrow3NE] = RotateClockwise(arrow3, 315);
+
+	return data;
 }

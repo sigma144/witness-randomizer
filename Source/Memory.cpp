@@ -10,6 +10,8 @@
 #include "Randomizer.h"
 #include "SymbolData.h"
 
+#include "Panel.h" // Hack
+
 #undef PROCESSENTRY32
 #undef Process32Next
 
@@ -189,24 +191,22 @@ void Memory::setupCustomSymbols() {
 		im_vertex = memory->getBaseAddress() + Memory::ReadStaticInt(offset, index + 21, data);
 	});
 
-	constexpr int MAX_INSTRUCTIONS = 260;
-
 	std::vector<float> data = SymbolData::GenerateData();
 	uintptr_t dataArray = memory->AllocArray<float>(data.size());
 	memory->Write((void*)dataArray, data.data(), sizeof(data[0]) * data.size());
 
 	__int64 function_end = memory->getBaseAddress() + drawCounter + 0x25D;
 
-	int MAX_POINTS = 128; // TODO: How's the perf here? We could break if we find an 'all zero' vertex.
+	constexpr int MAX_POINTS = 126; // See math in SymbolData::GenerateData -- there will be at most 42 triangles == 126 points per custom shape.
 
-	// Here is our assembly code. I've tried to keep this as readable as possible, but 
+	// Here is our assembly code. I've tried to keep this as readable as possible, but I would generally not recommend changing this.
 	const byte instructions[] = {
 		0x41, 0x51,													// push r9
 		0x41, 0x52,													// push r10									; Reserve a couple of scratch registers to work with,
 		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; and allocate a Vector3 on the stack (would be 0xC bytes, but we pad to keep the stack aligned)
 		0x49, 0xC7, 0xC1, INT_TO_BYTES(MAX_POINTS),					// mov r9, MAX_POINTS						; Set up our loop counter
 		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray						; Load the vertex array
-		0x48, 0x83, 0xE8, 0x04,										// sub rax, 4								; Skip the first 4 triangle counts (1-4)
+		0x48, 0x83, 0xE8, 0x07,										// sub rax, 7								; Skip the first 7 entries so that the first custom symbol is 0x00080700 (space is required for the original triangles)
 		0x48, 0xC1, 0xE0, 0x0A,										// shl rax, 0x0A							; Determine the offset into our data array (256 floats allocated per symbol)
 		0x49, 0x01, 0xC2,											// add r10, rax								; Adjust the array start by the offset
 		0xB9, INT_TO_BYTES(3),										// mov rcx, 3
@@ -232,6 +232,7 @@ void Memory::setupCustomSymbols() {
 		0xFF, 0xE0,													// jmp rax									; This jumps down to an im_flush call at the end of the function and other end-of-function cleanup.
     };
 
+	constexpr int MAX_INSTRUCTIONS = 260;
 	static_assert(sizeof(instructions) < MAX_INSTRUCTIONS, "There are only 260 bytes available in this code cave");
 
 	// Ensure that all of the non-instruction bytes are NOPs
@@ -242,11 +243,16 @@ void Memory::setupCustomSymbols() {
 	memory->WriteData<byte>({ (int)(drawCounter + 0x11C) }, bytes);
 
 	// Old version testing -- not needed on latest patch (I hope).
-	constexpr int ARROW1 = 0x50700;
-	constexpr int ARROW2 = 0xD0700;
-	constexpr int ARROW3 = 0x150700;
-    memory->WriteData<int>( { GLOBALS, 0x18, 0x17CF0 * 8, 0x420, 0 }, { ARROW1 | 0x4, ARROW2 | 0x3, ARROW3 | 0x4 });
-	__debugbreak();
+	// constexpr int ARROW1 = 0x50700;
+	// constexpr int ARROW2 = 0xD0700;
+	// constexpr int ARROW3 = 0x150700;
+	// #define DECORATIONS 0x420
+    // memory->WriteData<int>( { GLOBALS, 0x18, 0x17CF0 * 8, DECORATIONS, 0 }, {
+	//     Decoration::Arrow | Decoration::Blue   | (0 << 16) | (1 << 19),
+	//     Decoration::Arrow | Decoration::Purple | (3 << 16) | (2 << 19),
+	//     Decoration::Arrow | Decoration::Red    | (6 << 16) | (3 << 19),
+	// });
+	// __debugbreak();
 }
 
 bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& scanFunc) {

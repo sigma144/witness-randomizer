@@ -1445,7 +1445,7 @@ void Special::createArrowPuzzle(int id, int x, int y, int dir, int ticks, const 
 {
 	generator->initPanel(id);
 	generator->clear();
-	generator->set(x, y, Decoration::Arrow | (ticks << 12) | (dir << 16));
+	generator->set(x, y, Decoration::Arrow1 | (dir << 16) | (ticks << 19));
 	for (Point p : gaps) {
 		generator->set(p, p.first % 2 ? Decoration::Gap_Row : Decoration::Gap_Column);
 	}
@@ -1459,12 +1459,12 @@ void Special::createArrowSecretDoor(int id)
 	generator->successColor = { 1, 0.6f, 0, 1 };
 	generator->initPanel(id);
 	generator->clear();
-	generator->set(1, 1, Decoration::Arrow | (3 << 12) | (4 << 16));
-	generator->set(1, 5, Decoration::Arrow | (3 << 12) | (2 << 16));
-	generator->set(1, 9, Decoration::Arrow | (3 << 12) | (5 << 16));
-	generator->set(9, 1, Decoration::Arrow | (3 << 12) | (7 << 16));
-	generator->set(9, 5, Decoration::Arrow | (3 << 12) | (3 << 16));
-	generator->set(9, 9, Decoration::Arrow | (3 << 12) | (6 << 16));
+	generator->set(1, 1, Decoration::Arrow | (4 << 16) | (3 << 19));
+	generator->set(1, 5, Decoration::Arrow | (2 << 16) | (3 << 19));
+	generator->set(1, 9, Decoration::Arrow | (5 << 16) | (3 << 19));
+	generator->set(9, 1, Decoration::Arrow | (7 << 16) | (3 << 19));
+	generator->set(9, 5, Decoration::Arrow | (3 << 16) | (3 << 19));
+	generator->set(9, 9, Decoration::Arrow | (6 << 16) | (3 << 19));
 	generator->write(id);
 }
 

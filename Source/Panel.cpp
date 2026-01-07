@@ -228,7 +228,7 @@ void Panel::ReadAllData() {
 	std::vector<int> decorationFlags = memory->ReadArray<int>(id, DECORATION_FLAGS, numDecorations);
 	float width = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
 	int seqLen = memory->ReadPanelData<int>(id, SEQUENCE_LEN);
-	std::vector<int> seq = memory->ReadArray<int>(id, SEQUENCE, seqLen);
+	// std::vector<int> seq = memory->ReadArray<int>(id, SEQUENCE, seqLen);
 	std::vector<float> power = memory->ReadPanelData<float>(id, POWER, 2);
 	float openRate = memory->ReadPanelData<float>(id, OPEN_RATE);
 	int cptr = memory->ReadPanelData<int>(id, DECORATION_COLORS);
@@ -297,10 +297,7 @@ void Panel::WriteDecorations() {
 			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Poly) _style |= HAS_SHAPERS;
 			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Eraser) _style |= HAS_ERASERS;
 			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Triangle) _style |= HAS_TRIANGLES;
-			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Arrow) {
-				_style |= HAS_TRIANGLES | HAS_STONES;
-				arrows = true;
-			}
+			if ((_grid[x][y] & 0xF00) == Decoration::Shape::Arrow) arrows = true;
 		}
 	}
 	if (arrows) {
@@ -623,14 +620,6 @@ void Panel::WriteIntersections() {
 					symmetryData.push_back(static_cast<int>(intersectionFlags.size()) - 2);
 				}
 			}
-		}
-	}
-
-	//Arrows (if applicable)
-	for (int y = 1; y < _height; y += 2) {
-		for (int x = 1; x < _width; x += 2) {
-			if ((_grid[x][y] & 0xF00) == Decoration::Arrow) {}
-				// render_arrow(x, y, (_grid[x][y] & 0xf000) >> 12, (_grid[x][y] & 0xf0000) >> 16, intersections, intersectionFlags, polygons);
 		}
 	}
 

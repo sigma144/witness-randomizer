@@ -81,6 +81,8 @@ public:
 	std::set<Point> customPath; 
 	Color arrowColor, backgroundColor, successColor; //For the arrow puzzles
 
+	static std::vector<struct Point> ArrowDirections;
+
 private:
 
 	int get(Point pos) { return _panel->_grid[pos.first][pos.second]; }

@@ -401,7 +401,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	Memory::create();
 	Memory* memory = memory->get();
 	generator->setGridSize(3, 3);
-	generator->generate(0x17CF0, Decoration::Arrow1 | Decoration::Color::Black, 1, Decoration::Stone | Decoration::Color::White, 1, Decoration::Stone | Decoration::Color::Black, 1);
+	generator->generate(0x17CF0,
+		Decoration::Arrow1 | Decoration::Color::Black, 2,
+		Decoration::Stone | Decoration::Color::White, 1,
+		Decoration::Stone | Decoration::Color::Black, 1);
 	ArrowWatchdog watchdog(0x17CF0, 0); // @HACK start a watchdog so we can test arrows.
 	watchdog.start();
 

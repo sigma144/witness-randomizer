@@ -37,17 +37,15 @@ void KeepWatchdog::action() {
 
 //Arrow Watchdog - To run the arrow puzzles
 
-ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f) {
-	Panel panel(id);
+ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f), _panel(Panel(id)) {
 	this->id = id;
-	grid = backupGrid = panel._grid;
+	grid = backupGrid = _panel._grid;
 	width = static_cast<int>(grid.size());
 	height = static_cast<int>(grid[0].size());
 	pillarWidth = tracedLength = 0;
 	complete = false;
 	style = ReadPanelData<int>(id, STYLE_FLAGS);
-	DIRECTIONS = { Point(0, 2), Point(0, -2), Point(2, 0), Point(-2, 0), Point(2, 2), Point(2, -2), Point(-2, -2), Point(-2, 2) };
-	exitPos = panel.xy_to_loc(panel._endpoints[0].GetX(), panel._endpoints[0].GetY());
+	exitPos = _panel.xy_to_loc(_panel._endpoints[0].GetX(), _panel._endpoints[0].GetY());
 	exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
 	exitPoint = (width / 2 + 1) * (height / 2 + 1);
 
@@ -63,6 +61,20 @@ ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
 	if (pillarWidth > 0) exitPoint = (width / 2) * (height / 2 + 1);
 }
 
+#define LOG_DEBUG(fmt, ...) LogDebug(__FILE__, __LINE__, fmt, __VA_ARGS__)
+void LogDebug(const char* function, int line, const char* fmt, ...) {
+	char message[1024] = "\0";
+	char message2[1024] = "\0";
+
+	va_list args;
+	va_start(args, fmt);
+	vsprintf_s(&message[0], sizeof(message) / sizeof(message[0]), fmt, args);
+	va_end(args);
+
+	snprintf(&message2[0], sizeof(message2) / sizeof(message2[0]), "[%s:%d] %s\n", function, line, message);
+	OutputDebugStringA(message2);
+}
+
 void ArrowWatchdog::action() {
 	int length = ReadPanelData<int>(id, TRACED_EDGES);
 	if (length != tracedLength) {
@@ -76,17 +88,26 @@ void ArrowWatchdog::action() {
 	if (length == tracedLength) return;
 	initPath();
 	if (complete) {
+		bool success = true;
+
+		Memory* memory = Memory::get();
 		for (int x = 1; x < width; x++) {
 			for (int y = 1; y < height; y++) {
+				int symbol = grid[x][y];
+				if ((symbol & 0xF00) != Decoration::Arrow) continue;
+
 				if (!checkArrow(x, y)) {
-					//OutputDebugStringW(L"No");
-					WritePanelData<int>(id, SEQUENCE, { _sequenceArray }); // Array is present; arrow not valid
-					return;
+					LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
+					success = false;
+					memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 1 });
+				} else {
+					LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
+					memory->WriteData<int>({ memory->GLOBALS, 0x18, id * 8, DECORATION_FLAGS, (int)(sizeof(int) * _panel.xy_to_dloc(x, y)) }, { 0 });
 				}
 			}
 		}
-		//OutputDebugStringW(L"Yes");
-		WritePanelData<int>(id, SEQUENCE, { 0 }); // Array is absent; arrow is valid
+		LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+		WritePanelData<int>(id, SEQUENCE, { success ? 0 : _sequenceArray });
 	}
 }
 
@@ -149,10 +170,10 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 {
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
-	if (((symbol & 0xF00) != 0x600) || symbol <= 0x40000)
+	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;
-	int targetCount = (symbol & 0xf000) >> 12;
-	Point dir = DIRECTIONS[(symbol & 0xf0000) >> 16];
+	int targetCount = (symbol >> 19);
+	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
 	x += dir.first / 2; y += dir.second / 2;
 	int count = 0;
 	while (x >= 0 && x < width && y >= 0 && y < height) {
@@ -168,18 +189,10 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 bool ArrowWatchdog::checkArrowPillar(int x, int y)
 {
 	int symbol = grid[x][y];
-	if ((symbol & 0xF00) == Decoration::Triangle && (symbol & 0xf0000) != 0) {
-		int count = 0;
-		if (grid[x - 1][y] == PATH) count++;
-		if (grid[x + 1][y] == PATH) count++;
-		if (grid[x][y - 1] == PATH) count++;
-		if (grid[x][y + 1] == PATH) count++;
-		return count == (symbol >> 16);
-	}
 	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;
-	int targetCount = (symbol & 0xf000) >> 12;
-	Point dir = DIRECTIONS[(symbol & 0xf0000) >> 16];
+	int targetCount = (symbol >> 19);
+	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
 	x = (x + (dir.first > 2 ? -2 : dir.first) / 2 + pillarWidth) % pillarWidth; y += dir.second / 2;
 	int count = 0;
 	while (y >= 0 && y < height) {

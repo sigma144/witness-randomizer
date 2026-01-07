@@ -59,8 +59,8 @@ public:
 	bool complete;
 	int style;
 	int exitPos, exitPosSym, exitPoint;
-	std::vector<struct Point> DIRECTIONS;
 private:
+	Panel _panel;
 	int _sequenceArray = 0;
 };
 
