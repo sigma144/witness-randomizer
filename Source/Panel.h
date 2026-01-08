@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <tuple>
 #include <functional>
+#include "SymbolData.h"
 
 struct Point {
 	int first;
@@ -35,9 +36,10 @@ public:
 		Triangle3 = 0x30600,
 		Triangle4 = 0x40600,
 		Arrow =		0x700,
-		Arrow1 = 0x1700,
-		Arrow2 = 0x2700,
-		Arrow3 = 0x3700,
+		Arrow1 =	GetWitnessDecorationId(SymbolId::Arrow1E),
+		Arrow2 =	GetWitnessDecorationId(SymbolId::Arrow2E),
+		Arrow3 =	GetWitnessDecorationId(SymbolId::Arrow3E),
+		EmptySpace = 0xA00, // Used by the game to "fill in" decorations which are part of jagged grids, to avoid floodfilling.
 		Can_Rotate = 0x1000,
 		Negative = 0x2000,
 		Gap = 0x100000,
@@ -375,54 +377,6 @@ private:
 		intersectionFlags.push_back(_grid[x][y]);
 		intersectionFlags.push_back(_grid[x][y]);
 		return true;
-	}
-
-	void render_arrow(int x, int y, int ticks, int dir, std::vector<float>& intersections, std::vector<int>& intersectionFlags, std::vector<int>& polygons) {
-		std::vector<float> positions = { 0.1f, 0.45f, 0.1f, 0.55f, 0.85f, 0.45f, 0.85f, 0.55f,
-			0.9f, 0.5f, 0.75f, 0.5f, 0.45f, 0.2f, 0.6f, 0.2f, 0.45f, 0.8f, 0.6f, 0.8f,
-			0.7f, 0.5f, 0.55f, 0.5f, 0.25f, 0.2f, 0.4f, 0.2f, 0.25f, 0.8f, 0.4f, 0.8f,
-			0.5f, 0.5f, 0.35f, 0.5f, 0.05f, 0.2f, 0.2f, 0.2f, 0.05f, 0.8f, 0.2f, 0.8f, };
-		std::vector<int> polys = { 0, 1, 2, 0, 1, 2, 3, 0,
-			4, 5, 7, 0, 5, 6, 7, 0, 4, 5, 9, 0, 5, 8, 9, 0,
-			10, 11, 13, 0, 11, 12, 13, 0, 10, 11, 15, 0, 11, 14, 15, 0,
-			16, 17, 19, 0, 17, 18, 19, 0, 16, 17, 21, 0, 17, 20, 21, 0,
-		};
-		std::vector<int> angles = { -90, 90, 0, 180, -45, 45, 135, -135 };
-		float angle = angles[dir] * 3.141592653589793238f / 180;
-		for (int i = 0; i < positions.size(); i += 2) {
-			//Translate to center
-			positions[i] -= 0.5f;
-			positions[i + 1] -= 0.5f;
-			if (ticks == 3 && dir > 3) positions[i] += 0.1f;
-			//Scale
-			positions[i] *= unitHeight * 1.5f;
-			positions[i + 1] *= unitHeight * 1.5f;
-			//Rotate
-			float newx = positions[i] * cos(angle) - positions[i + 1] * sin(angle);
-			float newy = positions[i] * sin(angle) + positions[i + 1] * cos(angle);
-			positions[i] = newx; positions[i + 1] = newy;
-			//Translate to correct position
-			positions[i] += intersections[xy_to_loc(x, y) * 2] + unitWidth;
-			positions[i + 1] += intersections[xy_to_loc(x, y) * 2 + 1] - unitWidth;
-		}
-		int posIndex = 0, polyIndex = 0;
-		if (ticks == 1) {
-			posIndex = 20; polyIndex = 24;
-		}
-		if (ticks == 2) {
-			posIndex = 32; polyIndex = 40;
-		}
-		if (ticks == 3) {
-			posIndex = 44; polyIndex = 56;
-		}
-		int baseIndex = static_cast<int>(intersectionFlags.size());
-		for (int i = 0; i < posIndex; i++) {
-			intersections.push_back(positions[i]);
-			if (i % 2 == 0) intersectionFlags.push_back(IntersectionFlags::NO_POINT);
-		}
-		for (int i = 0; i < polyIndex; i++) {
-			polygons.push_back(polys[i] + baseIndex);
-		}
 	}
 
 	int _width, _height;

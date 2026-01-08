@@ -40,7 +40,6 @@ struct PuzzleSymbols {
 		if (any(Decoration::Star)) style |= Panel::Style::HAS_STARS;
 		if (any(Decoration::Poly)) style |= Panel::Style::HAS_SHAPERS;
 		if (any(Decoration::Triangle)) style |= Panel::Style::HAS_TRIANGLES;
-		if (any(Decoration::Arrow)) style |= Panel::Style::HAS_TRIANGLES;
 	}
 };
 

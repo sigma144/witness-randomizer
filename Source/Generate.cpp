@@ -87,6 +87,9 @@ std::vector<Point> Generate::_DISCONNECT = { Point(0, 2), Point(0, -2), Point(2,
 	Point(0, 4), Point(0, -4), Point(4, 0), Point(-4, 0), //Used to make the discontiguous shapes
 };
 std::vector<Point> Generate::_SHAPEDIRECTIONS = { }; //This will eventually be set to one of the above lists
+// Specific order to match the SymbolId enum order.
+// East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast
+std::vector<Point> Generate::ArrowDirections = { Point(2, 0), Point(2, -2), Point(0, -2), Point(-2, -2), Point(-2, 0), Point(-2, 2), Point(0, 2), Point(2, 2) };
 
 //Make a maze puzzle. The maze will have one solution. id - id of the puzzle
 void Generate::generateMaze(int id) {
@@ -606,22 +609,32 @@ bool Generate::place_all_symbols(PuzzleSymbols & symbols)
 
 	_stoneTypes = static_cast<int>(symbols[Decoration::Stone].size());
 	_bisect = true; //This flag helps the generator prevent making two adjacent regions of stones the same color
-	for (std::pair<int, int> s : symbols[Decoration::Stone]) if (!place_stones(s.first & 0xf, s.second))
+	for (const std::pair<int, int>& s : symbols[Decoration::Stone]) {
+		if (!place_stones(s.first & 0xf, s.second)) return false;
+	}
+	for (const std::pair<int, int>& s : symbols[Decoration::Triangle]) {
+		// If the caller specified a triangle count, shift to get that count and pass it to place_triangles.
+		if (!place_triangles(s.first & 0xf, s.second, s.first >> 16)) return false;
+	}
+	for (const std::pair<int, int>& s : symbols[Decoration::Arrow]) {
+		// If the caller specified an arrow count, shift to get that count and pass it to place_arrows.
+		if (!place_arrows(s.first & 0xf, s.second, s.first >> 19)) return false;
+	}
+	for (const std::pair<int, int>& s : symbols[Decoration::Star]) {
+		if (!place_stars(s.first & 0xf, s.second)) return false;
+	}
+	if (symbols.style == Panel::Style::HAS_STARS && hasFlag(Generate::Config::TreehouseLayout) && !checkStarZigzag(_panel)) {
 		return false;
-	for (std::pair<int, int> s : symbols[Decoration::Triangle]) if (!place_triangles(s.first & 0xf, s.second, s.first >> 16))
+	}
+	if (eraserColors.size() > 0 && !place_erasers(eraserColors, eraseSymbols)) {
 		return false;
-	for (std::pair<int, int> s : symbols[Decoration::Arrow]) if (!place_arrows(s.first & 0xf, s.second, s.first >> 12))
-		return false;
-	for (std::pair<int, int> s : symbols[Decoration::Star]) if (!place_stars(s.first & 0xf, s.second))
-		return false;
-	if (symbols.style == Panel::Style::HAS_STARS && hasFlag(Generate::Config::TreehouseLayout) && !checkStarZigzag(_panel))
-		return false;
-	if (eraserColors.size() > 0 && !place_erasers(eraserColors, eraseSymbols))
-		return false;
-	for (std::pair<int, int> s : symbols[Decoration::Dot]) if (!place_dots(s.second, (s.first & 0xf), (s.first & ~0xf) == Decoration::Dot_Intersection))
-		return false;
-	for (std::pair<int, int> s : symbols[Decoration::Gap]) if (!place_gaps(s.second))
-		return false;
+	}
+	for (const std::pair<int, int>& s : symbols[Decoration::Dot]) {
+		if (!place_dots(s.second, (s.first & 0xf), (s.first & ~0xf) == Decoration::Dot_Intersection)) return false;
+	}
+	for (const std::pair<int, int>& s : symbols[Decoration::Gap]) {
+		if (!place_gaps(s.second)) return false;
+	}
 	return true;
 }
 
@@ -1692,14 +1705,14 @@ bool Generate::place_arrows(int color, int amount, int targetCount)
 		int fails = 0;
 		while (fails++ < 20) { //Keep picking random directions until one works
 			int choice = (_parity == -1 ? Random::rand() % 8 : Random::rand() % 4);
-			Point dir = _8DIRECTIONS2[choice];
+			Point dir = ArrowDirections[choice];
 			if (Point::pillarWidth > 0 && dir.second == 0) continue; //Sideways arrows on a pillar would wrap forever
 			int count = count_crossings(pos, dir);
 			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
 			if (dir.first < 0 && count == (pos.first + 1) / 2 || dir.first > 0 && count == (_panel->_width - pos.first) / 2 ||
 				dir.second < 0 && count == (pos.second + 1) / 2 || dir.second > 0 && count == (_panel->_height - pos.second) / 2 && Random::rand() % 10 > 0)
 				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
-			set(pos, Decoration::Arrow | color | (count << 12) | (choice << 16));
+			set(pos, Decoration::Arrow | color | (choice << 16) | (count << 19));
 			_openpos.erase(pos);
 			amount--;
 			break;

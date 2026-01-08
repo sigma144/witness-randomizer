@@ -161,6 +161,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="earcut.hpp" />
     <ClInclude Include="Generate.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="Randomizer.h" />
     <ClInclude Include="Special.h" />
+    <ClInclude Include="SymbolData.h" />
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
@@ -184,6 +186,7 @@
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Randomizer.cpp" />
     <ClCompile Include="Special.cpp" />
+    <ClCompile Include="SymbolData.cpp" />
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>
   <ItemGroup>
