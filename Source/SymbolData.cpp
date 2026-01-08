@@ -6,6 +6,10 @@
 #include <algorithm>
 #include <cmath>
 
+#undef min
+#undef max
+#include "earcut.hpp"
+
 // Do all of the math with doubles to avoid precision loss. We convert to floats at the very end.
 constexpr double PI_OVER_180 = 0.017453292519943295;
 SymbolData::Shape SymbolData::RotateClockwise(const Shape& shape, int degrees) {

@@ -4,10 +4,6 @@
 
 #pragma once
 
-#undef min
-#undef max
-#include "earcut.hpp"
-
 #include <array>
 #include <vector>
 
@@ -40,7 +36,7 @@ enum SymbolId {
 	NUM_SYMBOLS, // Must be last
 };
 
-constexpr int GetWitnessDecorationId(SymbolId symbolId) { return (symbolId << 16) + 0x80700; }
+constexpr int GetWitnessDecorationId(SymbolId symbolId) { return ((int)symbolId << 16) + 0x80700; }
 
 class SymbolData {
 public:
@@ -51,5 +47,5 @@ private:
 	using Shape = std::vector<Point>;
 
 	static Shape RotateClockwise(const Shape& shape, int degrees);
-	static std::array<Shape, NUM_SYMBOLS> GetAllShapes();
+	static std::array<Shape, SymbolId::NUM_SYMBOLS> GetAllShapes();
 };

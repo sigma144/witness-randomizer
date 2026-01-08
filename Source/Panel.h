@@ -39,6 +39,7 @@ public:
 		Arrow1 =	GetWitnessDecorationId(SymbolId::Arrow1E),
 		Arrow2 =	GetWitnessDecorationId(SymbolId::Arrow2E),
 		Arrow3 =	GetWitnessDecorationId(SymbolId::Arrow3E),
+		EmptySpace = 0xA00, // Used by the game to "fill in" decorations which are part of jagged grids, to avoid floodfilling.
 		Can_Rotate = 0x1000,
 		Negative = 0x2000,
 		Gap = 0x100000,

@@ -1441,11 +1441,11 @@ bool Special::checkDotSolvability(std::shared_ptr<Panel> panel1, std::shared_ptr
 	return false;
 }
 
-void Special::createArrowPuzzle(int id, int x, int y, int dir, int ticks, const std::vector<Point>& gaps)
+void Special::createArrowPuzzle(int id, int x, int y, SymbolId symbolId, const std::vector<Point>& gaps)
 {
 	generator->initPanel(id);
 	generator->clear();
-	generator->set(x, y, Decoration::Arrow1 | (dir << 16) | (ticks << 19));
+	generator->set(x, y, GetWitnessDecorationId(symbolId) | Decoration::Color::Purple);
 	for (Point p : gaps) {
 		generator->set(p, p.first % 2 ? Decoration::Gap_Row : Decoration::Gap_Column);
 	}
@@ -1459,13 +1459,15 @@ void Special::createArrowSecretDoor(int id)
 	generator->successColor = { 1, 0.6f, 0, 1 };
 	generator->initPanel(id);
 	generator->clear();
-	generator->set(1, 1, Decoration::Arrow | (4 << 16) | (3 << 19));
-	generator->set(1, 5, Decoration::Arrow | (2 << 16) | (3 << 19));
-	generator->set(1, 9, Decoration::Arrow | (5 << 16) | (3 << 19));
-	generator->set(9, 1, Decoration::Arrow | (7 << 16) | (3 << 19));
-	generator->set(9, 5, Decoration::Arrow | (3 << 16) | (3 << 19));
-	generator->set(9, 9, Decoration::Arrow | (6 << 16) | (3 << 19));
+	generator->set(1, 1, GetWitnessDecorationId(SymbolId::Arrow3NE) | Decoration::Color::Orange);
+	generator->set(1, 5, GetWitnessDecorationId(SymbolId::Arrow3E) | Decoration::Color::Orange);
+	generator->set(1, 9, GetWitnessDecorationId(SymbolId::Arrow3SE) | Decoration::Color::Orange);
+	generator->set(9, 1, GetWitnessDecorationId(SymbolId::Arrow3NW) | Decoration::Color::Orange);
+	generator->set(9, 5, GetWitnessDecorationId(SymbolId::Arrow3W) | Decoration::Color::Orange);
+	generator->set(9, 9, GetWitnessDecorationId(SymbolId::Arrow3SW) | Decoration::Color::Orange);
 	generator->write(id);
+	Memory::get()->WritePanelData<float>(id, SYMBOL_SCALE, 0.8f);
+	Memory::get()->WritePanelData<int>(0x17CFB, TARGET, id + 1); // HACK
 }
 
 void Special::generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType)

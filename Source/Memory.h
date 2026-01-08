@@ -27,6 +27,14 @@
 	static_cast<byte>((val & 0x00FF0000) >> 0x10), \
 	static_cast<byte>((val & 0xFF000000) >> 0x18)
 
+#define IF_GE(...) __VA_ARGS__, 0x72 // jb
+#define IF_LT(...) __VA_ARGS__, 0x73 // jae
+#define IF_NE(...) __VA_ARGS__, 0x74 // je
+#define IF_EQ(...) __VA_ARGS__, 0x75 // jne
+#define IF_GT(...) __VA_ARGS__, 0x76 // jbe
+#define IF_LE(...) __VA_ARGS__, 0x77 // ja
+#define THEN(...) ARGCOUNT(__VA_ARGS__), __VA_ARGS__
+
 #define ARGCOUNT(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value
 #define DO_WHILE_GT_ZERO(...) __VA_ARGS__, 0x77, static_cast<byte>(-2 - ARGCOUNT(__VA_ARGS__)) // Must end on a 'dec' instruction to set zero flags correclty.
 

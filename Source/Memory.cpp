@@ -207,23 +207,29 @@ void Memory::setupCustomSymbols() {
 		0x49, 0xC7, 0xC1, INT_TO_BYTES(MAX_POINTS),					// mov r9, MAX_POINTS						; Set up our loop counter
 		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray						; Load the vertex array
 		0x48, 0x83, 0xE8, 0x07,										// sub rax, 7								; Skip the first 7 entries so that the first custom symbol is 0x00080700 (space is required for the original triangles)
-		0x48, 0xC1, 0xE0, 0x0A,										// shl rax, 0x0A							; Determine the offset into our data array (256 floats allocated per symbol)
-		0x49, 0x01, 0xC2,											// add r10, rax								; Adjust the array start by the offset
-		0xB9, INT_TO_BYTES(3),										// mov rcx, 3
-		0x48, 0xB8, LONG_TO_BYTES(im_begin),						// mov rax, Device_Context::im_begin		; Initialize the immediate context for triangles. Sadly this is the only supported mode.
-		0xFF, 0xD0,													// call rax
+		IF_GE(0x48, 0x83, 0xF8, 0x00),								// cmp rax, 0								; Check to make sure our symbol ID is >= 0
+		THEN(
+			IF_LT(0x48, 0x3D, INT_TO_BYTES(SymbolId::NUM_SYMBOLS)),	// cmp rax, NUM_SYMBOLS						; Check to make sure our symbol ID is < NUM_SYMBOLS
+			THEN(
+				0x48, 0xC1, 0xE0, 0x0A,								// shl rax, 0x0A							; Determine the offset into our data array (256 floats allocated per symbol)
+				0x49, 0x01, 0xC2,									// add r10, rax								; Adjust the array start by the offset
+				0xB9, INT_TO_BYTES(3),								// mov rcx, 3
+				0x48, 0xB8, LONG_TO_BYTES(im_begin),				// mov rax, Device_Context::im_begin		; Initialize the immediate context for triangles. Sadly this is the only supported mode.
+				0xFF, 0xD0,											// call rax
 
-		DO_WHILE_GT_ZERO(											//											; We are going to run the code below for each triangle in our polygon.
-			0x49, 0x8B, 0x0A,										// mov rcx,qword ptr ds:[r10]				; Copy the x and y coordinates into rcx (temp variable)
-			0x48, 0x89, 0x0C, 0x24,									// mov qword ptr ss:[rsp],rcx				; Copy the x and y coordinates into [rsp] (Vector3.x and Vector3.y)
-			0x49, 0x83, 0xC2, 0x08,									// add r10, 8								; Increment the vertex array pointer to point to the next two verticies
-			0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),				// mov dword ptr [rsp+8], 0					; Set Vector3.z coordinate to 0 (to stay on the render plane)
-			0x48, 0x89, 0xE1,										// mov rcx, rsp								; Argument 1: Vector3 coordinate 
-			0x89, 0xF2,												// mov edx, esi								; Argument 2: ARGB Color (set by the caller, just passed through)
-			0x48, 0xB8, LONG_TO_BYTES(im_vertex),					// mov rax, Device_Context::im_vertex
-			0xFF, 0xD0,												// call rax									; Call im_vertex() to add a vertex to our current triangle
-			0x49, 0xFF, 0xC9 										// dec r9									; Decrease the number of vertices remaining
-		),															//											; Loop if there are more than 0 vertices remaining
+				DO_WHILE_GT_ZERO(									//											; We are going to run the code below for each triangle in our polygon.
+					0x49, 0x8B, 0x0A,								// mov rcx,qword ptr ds:[r10]				; Copy the x and y coordinates into rcx (temp variable)
+					0x48, 0x89, 0x0C, 0x24,							// mov qword ptr ss:[rsp],rcx				; Copy the x and y coordinates into [rsp] (Vector3.x and Vector3.y)
+					0x49, 0x83, 0xC2, 0x08,							// add r10, 8								; Increment the vertex array pointer to point to the next two verticies
+					0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),		// mov dword ptr [rsp+8], 0					; Set Vector3.z coordinate to 0 (to stay on the render plane)
+					0x48, 0x89, 0xE1,								// mov rcx, rsp								; Argument 1: Vector3 coordinate 
+					0x89, 0xF2,										// mov edx, esi								; Argument 2: ARGB Color (set by the caller, just passed through)
+					0x48, 0xB8, LONG_TO_BYTES(im_vertex),			// mov rax, Device_Context::im_vertex
+					0xFF, 0xD0,										// call rax									; Call im_vertex() to add a vertex to our current triangle
+					0x49, 0xFF, 0xC9 								// dec r9									; Decrease the number of vertices remaining
+				)													//											; Loop if there are more than 0 vertices remaining
+			)
+		),
 
 		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10								; Restore our stack pointer,
 		0x41, 0x5A,													// pop r10									; and scratch registers
