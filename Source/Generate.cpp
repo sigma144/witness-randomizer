@@ -679,7 +679,7 @@ bool Generate::generate_path(PuzzleSymbols & symbols)
 
 	//For stone puzzles, the path must have a certain number of regions
 	if (symbols.style == Panel::Style::HAS_STONES && _splitPoints.size() == 0)
-		return generate_path_regions(min(symbols.getNum(Decoration::Stone), (_panel->_width / 2 + _panel->_height / 2) / 2 + 1));
+		return generate_path_regions(std::min(symbols.getNumColors(Decoration::Stone), (_panel->_width / 2 + _panel->_height / 2) / 2 + 1));
 
 	if (symbols.style == Panel::Style::HAS_SHAPERS) {
 		if (hasFlag(Config::SplitShapes)) {
