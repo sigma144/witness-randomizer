@@ -1466,8 +1466,6 @@ void Special::createArrowSecretDoor(int id)
 	generator->set(9, 5, GetWitnessDecorationId(SymbolId::Arrow3W) | Decoration::Color::Orange);
 	generator->set(9, 9, GetWitnessDecorationId(SymbolId::Arrow3SW) | Decoration::Color::Orange);
 	generator->write(id);
-	Memory::get()->WritePanelData<float>(id, SYMBOL_SCALE, 0.8f);
-	Memory::get()->WritePanelData<int>(0x17CFB, TARGET, id + 1); // HACK
 }
 
 void Special::generateCenterPerspective(int id, const std::vector<std::pair<int, int>>& symbolVec, int symbolType)
