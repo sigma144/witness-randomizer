@@ -275,7 +275,7 @@ private:
 		case Decoration::Color::Magenta: return { 1, 0, 1, 1 };
 		case Decoration::Color::Yellow: return { 1, 1, 0, 1 };
 		case Decoration::Color::Orange: return { 1, 0.5, 0, 1 };
-		case Decoration::Color::Purple: return { 0.5, 0, 1, 1 };
+		case Decoration::Color::Purple: return { 0.6f, 0, 1, 1 };
 		case Decoration::Color::X: { //Copy background color
 			Color xColor = GetBackgroundColor();
 			xColor.a = 1;

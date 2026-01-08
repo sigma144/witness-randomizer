@@ -333,3 +333,6 @@ ASALocalRun/
 enc_temp_folder/
 /Witness Save Data.lnk
 App/WRPGglobals.txt
+/App/FindProcessErrorLog.txt
+vcpkg_installed/
+/App/sounds/output.wav

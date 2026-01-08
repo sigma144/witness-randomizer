@@ -256,18 +256,19 @@ void Generate::write(int id)
 		Color color = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
 		memory->WritePanelData(id, PATTERN_POINT_COLOR, color);
 	}
-	if (arrowColor.a > 0 || backgroundColor.a > 0 || successColor.a > 0) {
+	if (backgroundColor.a > 0) {
 		memory->WritePanelData<Color>(id, OUTER_BACKGROUND, { backgroundColor });
-		if (arrowColor.a == 0)
-			memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
-		memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { arrowColor });
-		memory->WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
-		if (successColor.a == 0) memory->WritePanelData(id, SUCCESS_COLOR_A, memory->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR));
-		else memory->WritePanelData(id, SUCCESS_COLOR_A, successColor);
-		memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
-		memory->WritePanelData<float>(id, ACTIVE_COLOR, { 1, 1, 1, 1 });
-		memory->WritePanelData<float>(id, REFLECTION_PATH_COLOR, { 1, 1, 1, 1 });
 	}
+	if (foregroundColor.a > 0) {
+		memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { foregroundColor });
+		memory->WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
+	}
+	if (successColor.a > 0) {
+		memory->WritePanelData(id, SUCCESS_COLOR_A, successColor);
+		memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, successColor);
+	}
+	else memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
+	
 	if (hasFlag(Config::TreehouseLayout)) {
 		memory->WritePanelData(id, SPECULAR_ADD, 0.001f);
 	}
@@ -305,7 +306,7 @@ void Generate::resetConfig()
 	_config = 0;
 	_oneTimeAdd = Config::None;
 	_oneTimeRemove = Config::None;
-	arrowColor = backgroundColor = successColor = { 0, 0, 0, 0 };
+	backgroundColor = foregroundColor = successColor = { 0, 0, 0, 0 };
 }
 
 //Increment the counter on the progress indicator. This is called each time a puzzle is written, but may be called manually in other situations
