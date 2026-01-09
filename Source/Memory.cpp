@@ -201,11 +201,13 @@ void Memory::setupCustomSymbols() {
 
 	// Here is our assembly code. I've tried to keep this as readable as possible, but I would generally not recommend changing this.
 	const byte instructions[] = {
-		0x41, 0x51,													// push r9
-		0x41, 0x52,													// push r10									; Reserve a couple of scratch registers to work with,
-		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; and allocate a Vector3 on the stack (would be 0xC bytes, but we pad to keep the stack aligned)
+		0x41, 0x51,													// push r9									; Reserve a couple of scratch registers to work with,
+		0x41, 0x52,													// push r10									
+		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; and allocate a Vector3 (0, 0, 0) and a float on the stack
 		0x49, 0xC7, 0xC1, INT_TO_BYTES(MAX_POINTS),					// mov r9, MAX_POINTS						; Set up our loop counter
 		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray						; Load the vertex array
+		0xC7, 0x44, 0x24, 0x0C, INT_TO_BYTES(0x40600000),			// mov dword ptr ss:[rsp+C], 3.5f			; Store a float on the stack (floats cannot be handled as immediate values)
+		0xF3, 0x0F, 0x59, 0x7C, 0x24, 0x0C,							// mulss xmm7, [rsp+C]						; Adjust the scale parameter by 3.5x so that it fits the entire square.
 		0x48, 0x83, 0xE8, 0x07,										// sub rax, 7								; Skip the first 7 entries so that the first custom symbol is 0x00080700 (space is required for the original triangles)
 		IF_GE(0x48, 0x83, 0xF8, 0x00),								// cmp rax, 0								; Check to make sure our symbol ID is >= 0
 		THEN(
@@ -218,10 +220,14 @@ void Memory::setupCustomSymbols() {
 				0xFF, 0xD0,											// call rax
 
 				DO_WHILE_GT_ZERO(									//											; We are going to run the code below for each triangle in our polygon.
-					0x49, 0x8B, 0x0A,								// mov rcx,qword ptr ds:[r10]				; Copy the x and y coordinates into rcx (temp variable)
-					0x48, 0x89, 0x0C, 0x24,							// mov qword ptr ss:[rsp],rcx				; Copy the x and y coordinates into [rsp] (Vector3.x and Vector3.y)
+					0xF3, 0x41, 0x0F, 0x10, 0x32,					// movss xmm6, [r10]						; Load the x coordinate into xmm6
+					0xF3, 0x0F, 0x59, 0xF7,							// mulss xmm6, xmm7							; Multiply by the symbol scale (xmm7)
+					0xF3, 0x0F, 0x11, 0x34, 0x24,					// movss [rsp], xmm6						; Save to Vector3.x
+					0xF3, 0x41, 0x0F, 0x10, 0x72, 0x04,				// movss xmm6, [r10+4]						; Load the y coordinate into xmm6
+					0xF3, 0x0F, 0x59, 0xF7,							// mulss xmm6, xmm7							; Multiply by the symbol scale (xmm7)
+					0xF3, 0x0F, 0x11, 0x74, 0x24, 0x04,				// movss [rsp+4], xmm6						; Save to Vector3.y
 					0x49, 0x83, 0xC2, 0x08,							// add r10, 8								; Increment the vertex array pointer to point to the next two verticies
-					0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),		// mov dword ptr [rsp+8], 0					; Set Vector3.z coordinate to 0 (to stay on the render plane)
+					0xC7, 0x44, 0x24, 0x08, INT_TO_BYTES(0),		// mov dword ptr [rsp+8], 0					; Set Vector3.z to 0 (to stay on the render plane)
 					0x48, 0x89, 0xE1,								// mov rcx, rsp								; Argument 1: Vector3 coordinate 
 					0x89, 0xF2,										// mov edx, esi								; Argument 2: ARGB Color (set by the caller, just passed through)
 					0x48, 0xB8, LONG_TO_BYTES(im_vertex),			// mov rax, Device_Context::im_vertex
@@ -231,8 +237,8 @@ void Memory::setupCustomSymbols() {
 			)
 		),
 
-		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10								; Restore our stack pointer,
-		0x41, 0x5A,													// pop r10									; and scratch registers
+		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10								; Free our local variables (by incrementing the stack pointer)
+		0x41, 0x5A,													// pop r10									
 		0x41, 0x59,													// pop r9
 		0x48, 0xB8, LONG_TO_BYTES(function_end),					// mov rax, function_end					; (known offset to end of function)
 		0xFF, 0xE0,													// jmp rax									; This jumps down to an im_flush call at the end of the function and other end-of-function cleanup.

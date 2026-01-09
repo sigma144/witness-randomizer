@@ -26,18 +26,6 @@ SymbolData::Shape SymbolData::RotateClockwise(const Shape& shape, int degrees) {
 	return rotated;
 }
 
-SymbolData::Shape SymbolData::Scale(const Shape& shape, float scale)
-{
-	Shape rotated;
-	rotated.resize(shape.size());
-	rotated.resize(shape.size());
-	for (int i = 0; i < shape.size(); i++) {
-		rotated[i][0] = shape[i][0] * scale;
-		rotated[i][1] = shape[i][1] * scale;
-	}
-	return rotated;
-}
-
 std::vector<float> SymbolData::GenerateData() {
 	// To make the assembly simpler, we assume all symbols have a fixed size.
 	// Excess polygons will just be empty triangles (all coordinates set to 0)
@@ -47,7 +35,7 @@ std::vector<float> SymbolData::GenerateData() {
 	constexpr int TRIANGLES_PER_SYMBOL = 42;
 	constexpr int VERTICES_PER_SYMBOL = 44;
 
-	std::vector<Shape> allShapes = GetAllShapes();
+	std::array<Shape, NUM_SYMBOLS> allShapes = GetAllShapes();
 
 	std::vector<float> data(allShapes.size() * FLOATS_PER_SYMBOL, 0.0f);
 	for (int i = 0; i < NUM_SYMBOLS; i++) {
@@ -68,112 +56,97 @@ std::vector<float> SymbolData::GenerateData() {
 	return data;
 }
 
-std::vector<float> SymbolData::scales = {0.66f, 0.5f, 0.4f, 0.33f, 0.28f};
-
-std::vector<SymbolData::Shape> SymbolData::GetAllShapes() {
-	std::vector<SymbolData::Shape> data;
-	data.resize(NUM_SYMBOLS);
-	AddArrows(data);
-
-	//"Hacky" scaling system that copies symbols at different sizes
-	//Going to hold off on this unless it is determined that scaling in assembly won't work.
-	//for (int i = 0; i < NUM_SYMBOLS * scales.size(); i++) {
-	//	data.emplace_back(Scale(data[i], scales[i / NUM_SYMBOLS]));
-	//}
-
-	return data;
-}
-
-void SymbolData::AddArrows(std::vector<SymbolData::Shape>& data) {
+std::array<SymbolData::Shape, SymbolId::NUM_SYMBOLS> SymbolData::GetAllShapes() {
+	// Sigma's arrows
 	Shape arrow1 = {
-		{ 0.04,  0.01},
-		{-0.08,  0.01},
-		{-0.08, -0.01},
-		{ 0.04, -0.01},
-		{-0.01, -0.06},
-		{ 0.02, -0.06},
-		{ 0.08,  0.00},
-		{ 0.02,  0.06},
-		{-0.01,  0.06},
+		{ 0.4,  0.1},
+		{-0.8,  0.1},
+		{-0.8, -0.1},
+		{ 0.4, -0.1},
+		{-0.1, -0.6},
+		{ 0.2, -0.6},
+		{ 0.8,  0.0},
+		{ 0.2,  0.6},
+		{-0.1,  0.6},
 	};
 
 	Shape arrow2 = {
-		{-0.08, -0.01},
-		{ 0.00, -0.01},
-		{-0.05, -0.06},
-		{-0.02, -0.06},
-		{ 0.03, -0.01},
-		{ 0.04, -0.01},
-		{-0.01, -0.06},
-		{ 0.02, -0.06},
-		{ 0.08,  0.00},
-		{ 0.02,  0.06},
-		{-0.01,  0.06},
-		{ 0.04,  0.01},
-		{ 0.03,  0.01},
-		{-0.02,  0.06},
-		{-0.05,  0.06},
-		{ 0.00,  0.01},
-		{-0.08,  0.01},
+		{-0.8, -0.1},
+		{ 0.0, -0.1},
+		{-0.5, -0.6},
+		{-0.2, -0.6},
+		{ 0.3, -0.1},
+		{ 0.4, -0.1},
+		{-0.1, -0.6},
+		{ 0.2, -0.6},
+		{ 0.8,  0.0},
+		{ 0.2,  0.6},
+		{-0.1,  0.6},
+		{ 0.4,  0.1},
+		{ 0.3,  0.1},
+		{-0.2,  0.6},
+		{-0.5,  0.6},
+		{ 0.0,  0.1},
+		{-0.8,  0.1},
 	};
 
 	Shape arrow3 = {
-		{-0.08, -0.01},
-		{-0.04, -0.01},
-		{-0.09, -0.06},
-		{-0.06, -0.06},
-		{-0.01, -0.01},
-		{ 0.00, -0.01},
-		{-0.05, -0.06},
-		{-0.02, -0.06},
-		{ 0.03, -0.01},
-		{ 0.04, -0.01},
-		{-0.01, -0.06},
-		{ 0.02, -0.06},
-		{ 0.08,  0.00},
-		{ 0.02,  0.06},
-		{-0.01,  0.06},
-		{ 0.04,  0.01},
-		{ 0.03,  0.01},
-		{-0.02,  0.06},
-		{-0.05,  0.06},
-		{ 0.00,  0.01},
-		{-0.01,  0.01},
-		{-0.06,  0.06},
-		{-0.09,  0.06},
-		{-0.04,  0.01},
-		{-0.08,  0.01},
+		{-0.8, -0.1},
+		{-0.4, -0.1},
+		{-0.9, -0.6},
+		{-0.6, -0.6},
+		{-0.1, -0.1},
+		{ 0.0, -0.1},
+		{-0.5, -0.6},
+		{-0.2, -0.6},
+		{ 0.3, -0.1},
+		{ 0.4, -0.1},
+		{-0.1, -0.6},
+		{ 0.2, -0.6},
+		{ 0.8,  0.0},
+		{ 0.2,  0.6},
+		{-0.1,  0.6},
+		{ 0.4,  0.1},
+		{ 0.3,  0.1},
+		{-0.2,  0.6},
+		{-0.5,  0.6},
+		{ 0.0,  0.1},
+		{-0.1,  0.1},
+		{-0.6,  0.6},
+		{-0.9,  0.6},
+		{-0.4,  0.1},
+		{-0.8,  0.1},
 	};
-	arrow1 = Scale(arrow1, 0.7f);
-	arrow2 = Scale(arrow2, 0.7f);
-	arrow3 = Scale(arrow3, 0.7f);
 
-	data.resize(NUM_SYMBOLS);
-	data[Arrow1E] = RotateClockwise(arrow1, 0);
+	std::array<Shape, NUM_SYMBOLS> data;
+	data[Arrow1E]  = RotateClockwise(arrow1, 0);
 	data[Arrow1SE] = RotateClockwise(arrow1, 45);
-	data[Arrow1S] = RotateClockwise(arrow1, 90);
+	data[Arrow1S]  = RotateClockwise(arrow1, 90);
 	data[Arrow1SW] = RotateClockwise(arrow1, 135);
-	data[Arrow1W] = RotateClockwise(arrow1, 180);
+	data[Arrow1W]  = RotateClockwise(arrow1, 180);
 	data[Arrow1NW] = RotateClockwise(arrow1, 225);
-	data[Arrow1N] = RotateClockwise(arrow1, 270);
+	data[Arrow1N]  = RotateClockwise(arrow1, 270);
 	data[Arrow1NE] = RotateClockwise(arrow1, 315);
 
-	data[Arrow2E] = RotateClockwise(arrow2, 0);
+	data[Arrow2E]  = RotateClockwise(arrow2, 0);
 	data[Arrow2SE] = RotateClockwise(arrow2, 45);
-	data[Arrow2S] = RotateClockwise(arrow2, 90);
+	data[Arrow2S]  = RotateClockwise(arrow2, 90);
 	data[Arrow2SW] = RotateClockwise(arrow2, 135);
-	data[Arrow2W] = RotateClockwise(arrow2, 180);
+	data[Arrow2W]  = RotateClockwise(arrow2, 180);
 	data[Arrow2NW] = RotateClockwise(arrow2, 225);
-	data[Arrow2N] = RotateClockwise(arrow2, 270);
+	data[Arrow2N]  = RotateClockwise(arrow2, 270);
 	data[Arrow2NE] = RotateClockwise(arrow2, 315);
 
-	data[Arrow3E] = RotateClockwise(arrow3, 0);
+	data[Arrow3E]  = RotateClockwise(arrow3, 0);
 	data[Arrow3SE] = RotateClockwise(arrow3, 45);
-	data[Arrow3S] = RotateClockwise(arrow3, 90);
+	data[Arrow3S]  = RotateClockwise(arrow3, 90);
 	data[Arrow3SW] = RotateClockwise(arrow3, 135);
-	data[Arrow3W] = RotateClockwise(arrow3, 180);
+	data[Arrow3W]  = RotateClockwise(arrow3, 180);
 	data[Arrow3NW] = RotateClockwise(arrow3, 225);
-	data[Arrow3N] = RotateClockwise(arrow3, 270);
+	data[Arrow3N]  = RotateClockwise(arrow3, 270);
 	data[Arrow3NE] = RotateClockwise(arrow3, 315);
-}
 
+	data[BigSquare] = Shape{ {-1.0, -1.0}, {-1.0, 1.0}, {1.0, 1.0}, {1.0, -1.0} };
+
+	return data;
+}
