@@ -49,8 +49,8 @@ SymbolData::Shape SymbolData::Translate(const Shape& shape, double dx, double dy
 
 std::vector<SymbolData::Shape> SymbolData::DrawCounter(const Shape& shape, int count)
 {
-	// Offset used by the triangle in game. This corresponds to half the distance between the center of the triangles of a 2 triangles clue
-	double offset = 0.213281251;
+	// Offset used by the triangle in game. This corresponds to 3/4 the distance between the center of the triangles of a 2 triangles clue
+	double offset = 0.3199218765;
 	std::vector<SymbolData::Shape> countered = {};
 	switch(count) {
 		case 1:
