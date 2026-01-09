@@ -51,6 +51,7 @@ private:
 	static Shape RotateClockwise(const Shape& shape, int degrees);
 	static Shape Scale(const Shape& shape, double scale);
 	static Shape Translate(const Shape& shape, double dx, double dy);
+	static std::vector<Shape> DrawCounter(const Shape& shape, int count);
 	static std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS> GetAllShapes();
 
 	static void AddArrows(std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS > & data);

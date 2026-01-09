@@ -47,6 +47,51 @@ SymbolData::Shape SymbolData::Translate(const Shape& shape, double dx, double dy
 	return translated;
 }
 
+std::vector<SymbolData::Shape> SymbolData::DrawCounter(const Shape& shape, int count)
+{
+	// Offset used by the triangle in game. This corresponds to 3/4 the distance between the center of the triangles of a 2 triangles clue
+	double offset = 0.3199218765;
+	std::vector<SymbolData::Shape> countered = {};
+	switch(count) {
+		case 1:
+			countered.push_back(shape);
+			break;
+		case 2:
+			countered.push_back(Translate(shape, offset * -1, 0));
+			countered.push_back(Translate(shape, offset, 0));
+			break;
+		case 3:
+			countered.push_back(shape);
+			countered.push_back(Translate(shape, offset * -2, 0));
+			countered.push_back(Translate(shape, offset * 2, 0));
+			break;
+		case 4:
+			countered.push_back(Translate(shape, offset * -1, offset * -1));
+			countered.push_back(Translate(shape, offset, offset * -1));
+			countered.push_back(Translate(shape, offset * -1, offset));
+			countered.push_back(Translate(shape, offset, offset));
+			break;
+		case 5:
+			countered.push_back(Translate(shape, 0, offset * -1));
+			countered.push_back(Translate(shape, offset * -2, offset * -1));
+			countered.push_back(Translate(shape, offset * 2, offset * -1));
+			countered.push_back(Translate(shape, offset * -1, offset));
+			countered.push_back(Translate(shape, offset, offset));
+			break;
+		case 6:
+			countered.push_back(Translate(shape, 0, offset * -1));
+			countered.push_back(Translate(shape, offset * -2, offset * -1));
+			countered.push_back(Translate(shape, offset * 2, offset * -1));
+			countered.push_back(Translate(shape, 0, offset));
+			countered.push_back(Translate(shape, offset * -2, offset));
+			countered.push_back(Translate(shape, offset * 2, offset));
+			break;
+		default:
+			break;
+	}
+	return countered;
+}
+
 std::vector<float> SymbolData::GenerateData() {
 	// To make the assembly simpler, we assume all symbols have a fixed size.
 	// Excess polygons will just be empty triangles (all coordinates set to 0)
