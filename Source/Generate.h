@@ -24,7 +24,7 @@ public:
 		_parity = -1;
 		colorblind = false;
 		_seed = Random::rand();
-		backgroundColor = foregroundColor = successColor = { 0, 0, 0, 0 };
+		backgroundColor = foregroundColor = gridColor = activeColor = successColor = failColor = { 0, 0, 0, 0 };
 		resetConfig();
 	}
 	enum Config { //See configinfo.txt for explanations of config flags.
@@ -79,7 +79,7 @@ public:
 	std::set<Point> openPos; //Custom set of points that can have symbols placed on
 	std::set<Point> blockPos; //Point that must be left open
 	std::set<Point> customPath; 
-	Color backgroundColor, foregroundColor, successColor;
+	Color backgroundColor, foregroundColor, gridColor, activeColor, successColor, failColor;
 
 	static std::vector<struct Point> ArrowDirections;
 

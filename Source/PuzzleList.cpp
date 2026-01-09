@@ -2045,11 +2045,13 @@ void PuzzleList::GenerateCavesH()
 
 	specialCase->createArrowSecretDoor(0x17FA2);
 
-	//Arrow Puzzles
 	generator->setGridSize(5, 5);
 	generator->backgroundColor = { 0, 0, 0.5f, 1 };
 	generator->successColor = { 0, 1, 0.8f, 1 };
 	generator->generate(0x00FF8, Decoration::Stone | Decoration::Color::Black, 5, Decoration::Stone | Decoration::Color::White, 4, Decoration::Arrow, 6);
+
+	//Arrow Puzzles
+	generator->setFlag(Generate::Config::WriteColors);
 	generator->backgroundColor = { 0, 0, 0.1f, 1 };
 	generator->foregroundColor = { 0, 0, 0.1f, 1 };
 	generator->successColor = { 0.6f, 0, 1, 1 };
@@ -2178,6 +2180,7 @@ void PuzzleList::GenerateCavesH()
 
 	generator->resetConfig();
 	//Arrows Exit
+	generator->setFlag(Generate::Config::WriteColors);
 	generator->setGridSize(4, 4);
 	generator->backgroundColor = { 0.5f, 0.5f, 0.5f, 1 };
 	generator->successColor = { 0.6f, 0, 1, 1 };
@@ -2191,9 +2194,10 @@ void PuzzleList::GenerateCavesH()
 		Decoration::Eraser | Decoration::Color::Cyan, 1);
 	//Arrow Pillar
 	generator->resetConfig();
+	generator->setFlag(Generate::Config::WriteColors);
 	generator->setFlag(Generate::Config::EnableFlash);
-	Memory::get()->WritePanelData <float>(0x09DD5, PATH_COLOR, { 0.01f, 0, 0.02f, 1 });
-	Memory::get()->WritePanelData <float>(0x09DD5, ACTIVE_COLOR, { 0.85f, 0.7f, 1, 1 });
+	generator->gridColor = { 0.01f, 0, 0.02f, 1 };
+	generator->activeColor = { 0.85f, 0.7f, 1, 1 };
 	generator->backgroundColor = { 0, 0, 0, 1 };
 	generator->successColor = { 1, 1, 1, 1 };
 	generator->pathWidth = 0.5f;
@@ -2201,10 +2205,12 @@ void PuzzleList::GenerateCavesH()
 	generator->pathWidth = 1;
 	generator->successColor = { 0, 0, 0, 0 }; //Reset
 	//Challenge Entrance
-	generator->backgroundColor = { 0.5, 0, 0, 0 };
+	generator->resetConfig();
+	generator->backgroundColor = { 0.1f, 0, 0, 1 };
 	generator->generate(0x0A16E, Decoration::Star | Decoration::Color::Green, 5, Decoration::Arrow | Decoration::Color::Green, 6);
 	//Theater Exit
 	generator->backgroundColor = { 0.5f, 0.5f, 0.5f, 1 };
+	generator->activeColor = { 0.85f, 0.7f, 1, 1 };
 	generator->generate(0x039B4, Decoration::Arrow2 | Decoration::Color::Purple, 12);
 	//Town Exit
 	generator->generate(0x09E85, Decoration::Arrow | Decoration::Color::Purple, 16, Decoration::Start, 4, Decoration::Exit, 1);

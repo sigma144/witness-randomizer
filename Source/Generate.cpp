@@ -261,14 +261,22 @@ void Generate::write(int id)
 	}
 	if (foregroundColor.a > 0) {
 		memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, { foregroundColor });
-		memory->WritePanelData(id, OUTER_BACKGROUND_MODE, 1);
+	}
+	if (gridColor.a > 0) {
+		memory->WritePanelData<Color>(id, PATH_COLOR, { gridColor });
+	}
+	if (activeColor.a > 0) {
+		memory->WritePanelData<Color>(id, ACTIVE_COLOR, { activeColor });
 	}
 	if (successColor.a > 0) {
 		memory->WritePanelData(id, SUCCESS_COLOR_A, successColor);
 		memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, successColor);
 	}
 	else memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
-	
+	if (failColor.a > 0) {
+		memory->WritePanelData<Color>(id, ERROR_COLOR, { failColor });
+	}
+
 	if (hasFlag(Config::TreehouseLayout)) {
 		memory->WritePanelData(id, SPECULAR_ADD, 0.001f);
 	}
@@ -306,7 +314,7 @@ void Generate::resetConfig()
 	_config = 0;
 	_oneTimeAdd = Config::None;
 	_oneTimeRemove = Config::None;
-	backgroundColor = foregroundColor = successColor = { 0, 0, 0, 0 };
+	backgroundColor = foregroundColor = gridColor = activeColor = successColor = failColor = { 0, 0, 0, 0 };
 }
 
 //Increment the counter on the progress indicator. This is called each time a puzzle is written, but may be called manually in other situations
