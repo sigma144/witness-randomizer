@@ -37,17 +37,15 @@ void KeepWatchdog::action() {
 
 //Arrow Watchdog - To run the arrow puzzles
 
-ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f), _panel(Panel(id)) {
+ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
 	this->id = id;
 	grid = backupGrid = _panel._grid;
 	width = static_cast<int>(grid.size());
 	height = static_cast<int>(grid[0].size());
-	pillarWidth = tracedLength = 0;
-	complete = false;
+	numPoints = (width / 2 + 1) * (height / 2 + 1);
+	pillarWidth = 0;
+	tracedLength = ReadPanelData<int>(id, TRACED_EDGES);
 	style = ReadPanelData<int>(id, STYLE_FLAGS);
-	exitPos = _panel.xy_to_loc(_panel._endpoints[0].GetX(), _panel._endpoints[0].GetY());
-	exitPosSym = (width / 2 + 1) * (height / 2 + 1) - 1 - exitPos;
-	exitPoint = (width / 2 + 1) * (height / 2 + 1);
 
 	// The sequence array is used to indicate panel validity. A panel with a nonnull SEQUENCE will always fail (since the first two indices cannot both be 0).
 	Memory* memory = Memory::get();
@@ -58,7 +56,8 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.1f), _panel(Panel(id)) {
 
 ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
 	this->pillarWidth = pillarWidth;
-	if (pillarWidth > 0) exitPoint = (width / 2) * (height / 2 + 1);
+	if (pillarWidth)
+		numPoints = (width / 2) * (height / 2 + 1);
 }
 
 #define LOG_DEBUG(fmt, ...) LogDebug(__FILE__, __LINE__, fmt, __VA_ARGS__)
@@ -77,38 +76,32 @@ void LogDebug(const char* function, int line, const char* fmt, ...) {
 
 void ArrowWatchdog::action() {
 	int length = ReadPanelData<int>(id, TRACED_EDGES);
-	if (length != tracedLength) {
-		complete = false;
-	}
-	if (length == 0 || complete) {
-		sleepTime = 0.1f;
+	if (length == tracedLength)
 		return;
-	}
-	sleepTime = 0.01f;
-	if (length == tracedLength) return;
+	tracedLength = length;
+
 	initPath();
-	if (complete) {
-		bool success = true;
 
-		Memory* memory = Memory::get();
-		for (int x = 1; x < width; x++) {
-			for (int y = 1; y < height; y++) {
-				int symbol = grid[x][y];
-				if ((symbol & 0xF00) != Decoration::Arrow) continue;
+	bool success = true;
 
-				if (!checkArrow(x, y)) {
-					// LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
-					memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 1);
-					success = false;
-				} else {
-					// LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
-					memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 0);
-				}
+	Memory* memory = Memory::get();
+	for (int x = 1; x < width; x++) {
+		for (int y = 1; y < height; y++) {
+			int symbol = grid[x][y];
+			if ((symbol & 0xF00) != Decoration::Arrow) continue;
+
+			if (!checkArrow(x, y)) {
+				// LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
+				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 1);
+				success = false;
+			} else {
+				// LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
+				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 0);
 			}
 		}
-		// LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
-		WritePanelData<uintptr_t>(id, SEQUENCE, { success ? 0 : _sequenceArray });
 	}
+	WritePanelData<uintptr_t>(id, SEQUENCE, { success ? 0 : _sequenceArray });
+	LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
 void ArrowWatchdog::initPath()
@@ -119,30 +112,20 @@ void ArrowWatchdog::initPath()
 	std::vector<SolutionPoint> traced = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 	if (style & Panel::Style::SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {
+			if (traced[i].pointA >= numPoints || traced[i].pointB >= numPoints)
+				continue;
 			SolutionPoint sp;
-			if (traced[i].pointA >= exitPoint || traced[i].pointB >= exitPoint) {
-				sp.pointA = sp.pointB = exitPoint;
-			}
-			else {
-				sp.pointA = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointA;
-				sp.pointB = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointB;
-			}
+			//TODO: Other types of symmetry
+			sp.pointA = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointA;
+			sp.pointB = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointB;
 			traced.push_back(sp);
 		}
 	}
 	grid = backupGrid;
-	tracedLength = numTraced;
-	complete = false;
-	if (traced.size() == 0) return;
 	for (const SolutionPoint& p : traced) {
 		int p1 = p.pointA, p2 = p.pointB;
-		if (p1 == exitPoint || p2 == exitPoint) {
-			complete = true;
+		if (p1 < 0 || p2 < 0 || p1 >= numPoints || p2 >= numPoints) {
 			continue;
-		}
-		else if (p1 > exitPoint || p2 > exitPoint) continue;
-		if (p1 == 0 && p2 == 0 || p1 < 0 || p2 < 0) {
-			return;
 		}
 		int x1 = (p1 % (width / 2 + 1)) * 2, y1 = height - 1 - (p1 / (width / 2 + 1)) * 2;
 		int x2 = (p2 % (width / 2 + 1)) * 2, y2 = height - 1 - (p2 / (width / 2 + 1)) * 2;
@@ -159,10 +142,6 @@ void ArrowWatchdog::initPath()
 			grid[x2][y2] = PATH;
 			grid[(x1 + x2) / 2][(y1 + y2) / 2] = PATH;
 		}
-		if (p1 == exitPos || p2 == exitPos || (style & Panel::Style::SYMMETRICAL) && (p1 == exitPosSym || p2 == exitPosSym)) {
-			complete = !complete;
-		}
-		else complete = false;
 	}
 }
 

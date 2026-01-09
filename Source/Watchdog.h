@@ -55,10 +55,9 @@ public:
 	std::vector<std::vector<int>> backupGrid;
 	std::vector<std::vector<int>> grid;
 	int width, height, pillarWidth;
+	int numPoints;
 	int tracedLength;
-	bool complete;
 	int style;
-	int exitPos, exitPosSym, exitPoint;
 private:
 	Panel _panel;
 	uintptr_t _sequenceArray = 0;
