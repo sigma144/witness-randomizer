@@ -203,7 +203,7 @@ void Memory::setupCustomSymbols() {
 	const byte instructions[] = {
 		0x41, 0x51,													// push r9									; Reserve a couple of scratch registers to work with,
 		0x41, 0x52,													// push r10									
-		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; and allocate a Vector3 (0, 0, 0) and a float on the stack
+		0x48, 0x83, 0xEC, 0x10,										// sub rsp, 0x10							; and allocate a Vector3 and a float on the stack
 		0x49, 0xC7, 0xC1, INT_TO_BYTES(MAX_POINTS),					// mov r9, MAX_POINTS						; Set up our loop counter
 		0x49, 0xBA, LONG_TO_BYTES(dataArray),						// mov r10, dataArray						; Load the vertex array
 		0xC7, 0x44, 0x24, 0x0C, INT_TO_BYTES(0x40600000),			// mov dword ptr ss:[rsp+C], 3.5f			; Store a float on the stack (floats cannot be handled as immediate values)
