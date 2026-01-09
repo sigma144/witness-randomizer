@@ -1847,6 +1847,9 @@ void PuzzleList::GenerateTrianglePanelsH()
 	generator->setLoadingData(L"Arrows", 14);
 	generator->resetConfig();
 	generator->backgroundColor = { 0.5f, 0.5f, 0.5f, 1 };
+	generator->activeColor = { 0.85f, 0.7f, 1, 1 };
+	generator->successColor = { 0.6f, 0, 1, 1 };
+	generator->setFlag(Generate::Config::WriteColors);
 	specialCase->createArrowPuzzle(0x17CFB, 5, 3, SymbolId::Arrow1N, { { 0, 3}, {6, 1} });
 	specialCase->createArrowPuzzle(0x3C12B, 1, 1, SymbolId::Arrow2N, { { 1, 4 },{ 6, 3 },{ 5, 0 } });
 	specialCase->createArrowPuzzle(0x17CE7, 1, 3, SymbolId::Arrow1SE, { { 0, 5 },{ 6, 3 } });
@@ -2046,8 +2049,10 @@ void PuzzleList::GenerateCavesH()
 	specialCase->createArrowSecretDoor(0x17FA2);
 
 	generator->setGridSize(5, 5);
+	generator->setFlag(Generate::Config::EnableFlash);
 	generator->backgroundColor = { 0, 0, 0.5f, 1 };
-	generator->successColor = { 0, 1, 0.8f, 1 };
+	generator->foregroundColor = { 0, 0, 0.5f, 1 };
+	generator->successColor = { 0, 1, 1, 1 };
 	generator->generate(0x00FF8, Decoration::Stone | Decoration::Color::Black, 5, Decoration::Stone | Decoration::Color::White, 4, Decoration::Arrow, 6);
 
 	//Arrow Puzzles

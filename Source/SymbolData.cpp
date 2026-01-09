@@ -22,8 +22,29 @@ SymbolData::Shape SymbolData::RotateClockwise(const Shape& shape, int degrees) {
 		rotated[i][0] = shape[i][0] * cosine - shape[i][1] * sine;
 		rotated[i][1] = shape[i][0] * sine   + shape[i][1] * cosine;
 	}
-
 	return rotated;
+}
+
+SymbolData::Shape SymbolData::Scale(const Shape& shape, double scale)
+{
+	Shape scaled;
+	scaled.resize(shape.size());
+	for (int i = 0; i < shape.size(); i++) {
+		scaled[i][0] = shape[i][0] * scale;
+		scaled[i][1] = shape[i][1] * scale;
+	}
+	return scaled;
+}
+
+SymbolData::Shape SymbolData::Translate(const Shape& shape, double dx, double dy)
+{
+	Shape translated;
+	translated.resize(shape.size());
+	for (int i = 0; i < shape.size(); i++) {
+		translated[i][0] = shape[i][0] + dx;
+		translated[i][1] = shape[i][1] + dy;
+	}
+	return translated;
 }
 
 std::vector<float> SymbolData::GenerateData() {
@@ -57,6 +78,17 @@ std::vector<float> SymbolData::GenerateData() {
 }
 
 std::array<SymbolData::Shape, SymbolId::NUM_SYMBOLS> SymbolData::GetAllShapes() {
+
+	std::array<Shape, NUM_SYMBOLS> data;
+	data[BigSquare] = Shape{ {-1.0, -1.0}, {-1.0, 1.0}, {1.0, 1.0}, {1.0, -1.0} };
+
+	AddArrows(data);
+
+	return data;
+}
+
+void SymbolData::AddArrows(std::array<Shape, SymbolId::NUM_SYMBOLS>& data)
+{
 	// Sigma's arrows
 	Shape arrow1 = {
 		{ 0.4,  0.1},
@@ -118,35 +150,39 @@ std::array<SymbolData::Shape, SymbolId::NUM_SYMBOLS> SymbolData::GetAllShapes() 
 		{-0.8,  0.1},
 	};
 
-	std::array<Shape, NUM_SYMBOLS> data;
-	data[Arrow1E]  = RotateClockwise(arrow1, 0);
+	double scale = 0.8;
+	double translate = 0.15;
+
+	arrow1 = Scale(arrow1, scale);
+	arrow2 = Scale(arrow2, scale);
+	arrow3 = Scale(arrow3, scale);
+
+	data[Arrow1E] = RotateClockwise(arrow1, 0);
 	data[Arrow1SE] = RotateClockwise(arrow1, 45);
-	data[Arrow1S]  = RotateClockwise(arrow1, 90);
+	data[Arrow1S] = RotateClockwise(arrow1, 90);
 	data[Arrow1SW] = RotateClockwise(arrow1, 135);
-	data[Arrow1W]  = RotateClockwise(arrow1, 180);
+	data[Arrow1W] = RotateClockwise(arrow1, 180);
 	data[Arrow1NW] = RotateClockwise(arrow1, 225);
-	data[Arrow1N]  = RotateClockwise(arrow1, 270);
+	data[Arrow1N] = RotateClockwise(arrow1, 270);
 	data[Arrow1NE] = RotateClockwise(arrow1, 315);
 
-	data[Arrow2E]  = RotateClockwise(arrow2, 0);
-	data[Arrow2SE] = RotateClockwise(arrow2, 45);
-	data[Arrow2S]  = RotateClockwise(arrow2, 90);
-	data[Arrow2SW] = RotateClockwise(arrow2, 135);
-	data[Arrow2W]  = RotateClockwise(arrow2, 180);
-	data[Arrow2NW] = RotateClockwise(arrow2, 225);
-	data[Arrow2N]  = RotateClockwise(arrow2, 270);
-	data[Arrow2NE] = RotateClockwise(arrow2, 315);
+	data[Arrow2E] = RotateClockwise(arrow2, 0);
+	data[Arrow2SE] = Translate(RotateClockwise(arrow2, 45), translate / 2, translate / 2);
+	data[Arrow2S] = RotateClockwise(arrow2, 90);
+	data[Arrow2SW] = Translate(RotateClockwise(arrow2, 135), -translate / 2, translate / 2);
+	data[Arrow2W] = RotateClockwise(arrow2, 180);
+	data[Arrow2NW] = Translate(RotateClockwise(arrow2, 225), -translate / 2, -translate / 2);
+	data[Arrow2N] = RotateClockwise(arrow2, 270);
+	data[Arrow2NE] = Translate(RotateClockwise(arrow2, 315), translate / 2, -translate / 2);
 
-	data[Arrow3E]  = RotateClockwise(arrow3, 0);
-	data[Arrow3SE] = RotateClockwise(arrow3, 45);
-	data[Arrow3S]  = RotateClockwise(arrow3, 90);
-	data[Arrow3SW] = RotateClockwise(arrow3, 135);
-	data[Arrow3W]  = RotateClockwise(arrow3, 180);
-	data[Arrow3NW] = RotateClockwise(arrow3, 225);
-	data[Arrow3N]  = RotateClockwise(arrow3, 270);
-	data[Arrow3NE] = RotateClockwise(arrow3, 315);
-
-	data[BigSquare] = Shape{ {-1.0, -1.0}, {-1.0, 1.0}, {1.0, 1.0}, {1.0, -1.0} };
-
-	return data;
+	
+	data[Arrow3E] = RotateClockwise(arrow3, 0);
+	data[Arrow3SE] = Translate(RotateClockwise(arrow3, 45), translate, translate);
+	data[Arrow3S] = RotateClockwise(arrow3, 90);
+	data[Arrow3SW] = Translate(RotateClockwise(arrow3, 135), -translate, translate);
+	data[Arrow3W] = RotateClockwise(arrow3, 180);
+	data[Arrow3NW] = Translate(RotateClockwise(arrow3, 225), -translate, -translate);
+	data[Arrow3N] = RotateClockwise(arrow3, 270);
+	data[Arrow3NE] = Translate(RotateClockwise(arrow3, 315), translate, -translate);
 }
+
