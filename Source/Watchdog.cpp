@@ -101,7 +101,7 @@ void ArrowWatchdog::action() {
 		}
 	}
 	WritePanelData<uintptr_t>(id, SEQUENCE, { success ? 0 : _sequenceArray });
-	LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+	//LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
 void ArrowWatchdog::initPath()
