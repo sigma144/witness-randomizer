@@ -1455,7 +1455,6 @@ void Special::createArrowPuzzle(int id, int x, int y, SymbolId symbolId, const s
 void Special::createArrowSecretDoor(int id)
 {
 	generator->backgroundColor = { 0, 0, 0, 1 };
-	generator->arrowColor = { 1, 0.6f, 0, 1 };
 	generator->successColor = { 1, 0.6f, 0, 1 };
 	generator->initPanel(id);
 	generator->clear();

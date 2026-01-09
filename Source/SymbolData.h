@@ -33,6 +33,8 @@ enum SymbolId {
 	Arrow3N  = 0x16,
 	Arrow3NE = 0x17,
 
+	BigSquare = 0x18,
+
 	NUM_SYMBOLS, // Must be last
 };
 
@@ -41,15 +43,11 @@ constexpr int GetWitnessDecorationId(SymbolId symbolId) { return ((int)symbolId 
 class SymbolData {
 public:
 	static std::vector<float> GenerateData();
-	static std::vector<float> scales;
 
 private:
 	using Point = std::array<double, 2>;
 	using Shape = std::vector<Point>;
 
 	static Shape RotateClockwise(const Shape& shape, int degrees);
-	static Shape Scale(const Shape& shape, float scale);
-	static std::vector<Shape> GetAllShapes();
-
-	static void AddArrows(std::vector<SymbolData::Shape>& data);
+	static std::array<Shape, SymbolId::NUM_SYMBOLS> GetAllShapes();
 };
