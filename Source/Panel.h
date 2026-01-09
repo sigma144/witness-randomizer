@@ -397,5 +397,5 @@ private:
 	friend class PuzzleList;
 	friend class Special;
 	friend class MultiGenerate;
-	friend class ArrowWatchdog;
+	friend class SymbolsWatchdog;
 };

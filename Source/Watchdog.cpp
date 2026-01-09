@@ -35,9 +35,9 @@ void KeepWatchdog::action() {
 	}
 }
 
-//Arrow Watchdog - To run the arrow puzzles
+//Symbols Watchdog - For custom symbols
 
-ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
+SymbolsWatchdog::SymbolsWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
 	this->id = id;
 	grid = backupGrid = _panel._grid;
 	width = static_cast<int>(grid.size());
@@ -54,7 +54,7 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
 	_sequenceArray = memory->ReadPanelData<uintptr_t>(id, SEQUENCE);
 }
 
-ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
+SymbolsWatchdog::SymbolsWatchdog(int id, int pillarWidth) : SymbolsWatchdog(id) {
 	this->pillarWidth = pillarWidth;
 	if (pillarWidth)
 		numPoints = (width / 2) * (height / 2 + 1);
@@ -74,7 +74,7 @@ void LogDebug(const char* function, int line, const char* fmt, ...) {
 	OutputDebugStringA(message2);
 }
 
-void ArrowWatchdog::action() {
+void SymbolsWatchdog::action() {
 	int length = ReadPanelData<int>(id, TRACED_EDGES);
 	if (length == tracedLength)
 		return;
@@ -104,7 +104,7 @@ void ArrowWatchdog::action() {
 	//LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
-void ArrowWatchdog::initPath()
+void SymbolsWatchdog::initPath()
 {
 	int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
 	int tracedptr = ReadPanelData<int>(id, TRACED_EDGE_DATA);
@@ -145,7 +145,7 @@ void ArrowWatchdog::initPath()
 	}
 }
 
-bool ArrowWatchdog::checkArrow(int x, int y)
+bool SymbolsWatchdog::checkArrow(int x, int y)
 {
 	int orig_x = x;
 	int orig_y = y;
@@ -169,7 +169,7 @@ bool ArrowWatchdog::checkArrow(int x, int y)
 	return count == targetCount;
 }
 
-bool ArrowWatchdog::checkArrowPillar(int x, int y)
+bool SymbolsWatchdog::checkArrowPillar(int x, int y)
 {
 	int orig_x = x;
 	int orig_y = y;

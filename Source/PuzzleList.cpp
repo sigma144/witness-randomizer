@@ -25,7 +25,7 @@ void PuzzleList::GenerateAllN()
 	GenerateMountainN();
 	GenerateCavesN();
 	SetWindowText(_handle, L"Done!");
-	(new ArrowWatchdog(0x0056E))->start(); //Easy way to close the randomizer when the game is done
+	(new SymbolsWatchdog(0x0056E))->start(); //Easy way to close the randomizer when the game is done
 	//GenerateShadowsN(); //Can't randomize
 	//GenerateMonasteryN(); //Can't randomize
 }

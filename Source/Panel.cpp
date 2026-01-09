@@ -349,7 +349,7 @@ void Panel::StartArrowWatchdogs(const std::map<int, int>& shuffleMappings) {
 		int realId = id;
 		if (invertedMappings.count(realId)) realId = invertedMappings.at(realId);
 
-		ArrowWatchdog* watchdog = new ArrowWatchdog(realId, pillarWidth);
+		SymbolsWatchdog* watchdog = new SymbolsWatchdog(realId, pillarWidth);
 		watchdog->start();
 	}
 }
