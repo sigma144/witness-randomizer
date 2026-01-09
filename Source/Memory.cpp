@@ -238,7 +238,7 @@ void Memory::setupCustomSymbols() {
 		),
 
 		0x48, 0x83, 0xC4, 0x10,										// add rsp, 10								; Free our local variables (by incrementing the stack pointer)
-		0x41, 0x5A,													// pop r10									
+		0x41, 0x5A,													// pop r10									; and restore our scratch registers
 		0x41, 0x59,													// pop r9
 		0x48, 0xB8, LONG_TO_BYTES(function_end),					// mov rax, function_end					; (known offset to end of function)
 		0xFF, 0xE0,													// jmp rax									; This jumps down to an im_flush call at the end of the function and other end-of-function cleanup.
