@@ -25,7 +25,7 @@ void PuzzleList::GenerateAllN()
 	GenerateMountainN();
 	GenerateCavesN();
 	SetWindowText(_handle, L"Done!");
-	(new ArrowWatchdog(0x0056E))->start(); //Easy way to close the randomizer when the game is done
+	(new SymbolsWatchdog(0x0056E))->start(); //Easy way to close the randomizer when the game is done
 	//GenerateShadowsN(); //Can't randomize
 	//GenerateMonasteryN(); //Can't randomize
 }
@@ -2188,6 +2188,7 @@ void PuzzleList::GenerateCavesH()
 	generator->setFlag(Generate::Config::WriteColors);
 	generator->setGridSize(4, 4);
 	generator->backgroundColor = { 0.5f, 0.5f, 0.5f, 1 };
+	generator->activeColor = { 0.85f, 0.7f, 1, 1 };
 	generator->successColor = { 0.6f, 0, 1, 1 };
 	generator->generate(0x17CF2, Decoration::Arrow1 | Decoration::Color::Purple, 12);
 	//Stars Exit
@@ -2212,10 +2213,13 @@ void PuzzleList::GenerateCavesH()
 	//Challenge Entrance
 	generator->resetConfig();
 	generator->backgroundColor = { 0.1f, 0, 0, 1 };
+	generator->setFlag(Generate::Config::EnableFlash);
 	generator->generate(0x0A16E, Decoration::Star | Decoration::Color::Green, 5, Decoration::Arrow | Decoration::Color::Green, 6);
 	//Theater Exit
 	generator->backgroundColor = { 0.5f, 0.5f, 0.5f, 1 };
 	generator->activeColor = { 0.85f, 0.7f, 1, 1 };
+	generator->successColor = { 0.6f, 0, 1, 1 };
+	generator->setFlag(Generate::Config::WriteColors);
 	generator->generate(0x039B4, Decoration::Arrow2 | Decoration::Color::Purple, 12);
 	//Town Exit
 	generator->generate(0x09E85, Decoration::Arrow | Decoration::Color::Purple, 16, Decoration::Start, 4, Decoration::Exit, 1);

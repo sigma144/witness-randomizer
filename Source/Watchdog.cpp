@@ -35,9 +35,9 @@ void KeepWatchdog::action() {
 	}
 }
 
-//Arrow Watchdog - To run the arrow puzzles
+//Symbols Watchdog - For custom symbols
 
-ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
+SymbolsWatchdog::SymbolsWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
 	this->id = id;
 	grid = backupGrid = _panel._grid;
 	width = static_cast<int>(grid.size());
@@ -54,7 +54,7 @@ ArrowWatchdog::ArrowWatchdog(int id) : Watchdog(0.01f), _panel(Panel(id)) {
 	_sequenceArray = memory->ReadPanelData<uintptr_t>(id, SEQUENCE);
 }
 
-ArrowWatchdog::ArrowWatchdog(int id, int pillarWidth) : ArrowWatchdog(id) {
+SymbolsWatchdog::SymbolsWatchdog(int id, int pillarWidth) : SymbolsWatchdog(id) {
 	this->pillarWidth = pillarWidth;
 	if (pillarWidth)
 		numPoints = (width / 2) * (height / 2 + 1);
@@ -74,7 +74,7 @@ void LogDebug(const char* function, int line, const char* fmt, ...) {
 	OutputDebugStringA(message2);
 }
 
-void ArrowWatchdog::action() {
+void SymbolsWatchdog::action() {
 	int length = ReadPanelData<int>(id, TRACED_EDGES);
 	if (length == tracedLength)
 		return;
@@ -90,12 +90,12 @@ void ArrowWatchdog::action() {
 			int symbol = grid[x][y];
 			if ((symbol & 0xF00) != Decoration::Arrow) continue;
 
-			if (!checkArrow(x, y)) {
-				// LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
+			if (!checkSymbol(x, y)) {
+				//LOG_DEBUG("Symbol at %d, %d NOT valid", x, y);
 				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 1);
 				success = false;
 			} else {
-				// LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
+				//LOG_DEBUG("Symbol at %d, %d NOT valid", x, y);
 				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 0);
 			}
 		}
@@ -104,12 +104,12 @@ void ArrowWatchdog::action() {
 	//LOG_DEBUG("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
-void ArrowWatchdog::initPath()
+void SymbolsWatchdog::initPath()
 {
 	int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
 	int tracedptr = ReadPanelData<int>(id, TRACED_EDGE_DATA);
 	if (!tracedptr) return;
-	std::vector<SolutionPoint> traced = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
+	traced = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 	if (style & Panel::Style::SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {
 			if (traced[i].pointA >= numPoints || traced[i].pointB >= numPoints)
@@ -145,49 +145,40 @@ void ArrowWatchdog::initPath()
 	}
 }
 
-bool ArrowWatchdog::checkArrow(int x, int y)
+//Get grid value at (x, y), accounting for pillar wrapping (-1 if off-grid)
+int SymbolsWatchdog::get(int x, int y) {
+	if (y < 0 || y >= height) return -1;
+	if (x < 0) return pillarWidth && x > -width ? grid[x + width][y] : -1;
+	if (x >= width) return pillarWidth && x < width*2 - 1 ? grid[x - width][y] : -1;
+	return grid[x][y];
+}
+
+bool SymbolsWatchdog::checkSymbol(int x, int y)
 {
-	int orig_x = x;
-	int orig_y = y;
-	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
-	if ((symbol & 0xF00) != Decoration::Arrow)
-		return true;
+	if ((symbol & 0xF00) != 0x700) return true; //Vanilla symbol
+	int type = GetWitnessSymbolId(grid[x][y]);
+
+	if (type >= SymbolId::Arrow1E && type <= SymbolId::Arrow3NE) {
+		if (!checkArrow(x, y)) return false;
+	}
+	return true;
+}
+
+bool SymbolsWatchdog::checkArrow(int x, int y)
+{
+	int symbol = grid[x][y];
 	int targetCount = (symbol >> 19);
 	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
 	x += dir.first / 2; y += dir.second / 2;
 	int count = 0;
-	while (x >= 0 && x < width && y >= 0 && y < height) {
-		if (grid[x][y] == PATH) {
-			if (++count > targetCount) { 
-				// The arrow already sees too many lines, no need to continue counting
+	while (get(x, y) != -1) {
+		if (get(x, y) == PATH) {
+			if (++count > targetCount) {
 				break;
 			}
 		}
 		x += dir.first; y += dir.second;
-	}
-	return count == targetCount;
-}
-
-bool ArrowWatchdog::checkArrowPillar(int x, int y)
-{
-	int orig_x = x;
-	int orig_y = y;
-	int symbol = grid[x][y];
-	if ((symbol & 0xF00) != Decoration::Arrow)
-		return true;
-	int targetCount = (symbol >> 19);
-	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
-	x = (x + (dir.first > 2 ? -2 : dir.first) / 2 + pillarWidth) % pillarWidth; y += dir.second / 2;
-	int count = 0;
-	while (y >= 0 && y < height) {
-		if (grid[x][y] == PATH) {
-			if (++count > targetCount) {
-				// The arrow already sees too many lines, no need to continue counting
-				break;
-			}
-		}
-		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;
 	}
 	return count == targetCount;
 }

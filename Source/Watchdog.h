@@ -2,6 +2,7 @@
 #include "Randomizer.h"
 #include "Generate.h"
 #include "Memory.h"
+#include "SymbolData.h"
 
 class Watchdog
 {
@@ -42,27 +43,6 @@ public:
 	virtual void action();
 };
 
-class ArrowWatchdog : public Watchdog {
-public:
-	ArrowWatchdog(int id);
-	ArrowWatchdog(int id, int pillarWidth);
-	virtual void action();
-	void initPath();
-	bool checkArrow(int x, int y);
-	bool checkArrowPillar(int x, int y);
-
-	int id;
-	std::vector<std::vector<int>> backupGrid;
-	std::vector<std::vector<int>> grid;
-	int width, height, pillarWidth;
-	int numPoints;
-	int tracedLength;
-	int style;
-private:
-	Panel _panel;
-	uintptr_t _sequenceArray = 0;
-};
-
 class BridgeWatchdog : public Watchdog {
 public:
 	BridgeWatchdog(int id1, int id2) : Watchdog(1) {
@@ -97,4 +77,27 @@ class TownDoorWatchdog : public Watchdog {
 public:
 	TownDoorWatchdog() : Watchdog(0.2f) { }
 	virtual void action();
+};
+
+class SymbolsWatchdog : public Watchdog {
+public:
+	SymbolsWatchdog(int id);
+	SymbolsWatchdog(int id, int pillarWidth);
+	virtual void action();
+	void initPath();
+	int get(int x, int y);
+	bool checkSymbol(int x, int y);
+	bool checkArrow(int x, int y);
+
+	int id;
+	std::vector<std::vector<int>> backupGrid;
+	std::vector<std::vector<int>> grid;
+	std::vector<SolutionPoint> traced;
+	int width, height, pillarWidth;
+	int numPoints;
+	int tracedLength;
+	int style;
+private:
+	Panel _panel;
+	uintptr_t _sequenceArray = 0;
 };
