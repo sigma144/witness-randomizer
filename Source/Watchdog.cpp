@@ -88,8 +88,7 @@ void SymbolsWatchdog::action() {
 	for (int x = 1; x < width; x++) {
 		for (int y = 1; y < height; y++) {
 			int symbol = grid[x][y];
-			if ((symbol & 0xF00) != Decoration::Arrow) continue;
-
+			if ((symbol & 0xF00) != 0x700) continue; //Skip non-custom symbols
 			if (!checkSymbol(x, y)) {
 				//LOG_DEBUG("Symbol at %d, %d NOT valid", x, y);
 				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 1);
@@ -106,14 +105,21 @@ void SymbolsWatchdog::action() {
 
 void SymbolsWatchdog::initPath()
 {
-	int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
 	int tracedptr = ReadPanelData<int>(id, TRACED_EDGE_DATA);
 	if (!tracedptr) return;
-	traced = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
+	int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
+	std::vector<SolutionPoint> tracedData = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
+	traced.clear();
+	for (int i = 0; i < numTraced; i++) { //Remove mid-segment points
+		if (tracedData[i].pointA < 0 || tracedData[i].pointA >= numPoints) continue;
+		if (tracedData[i].pointB < 0 || tracedData[i].pointB >= numPoints) {
+			if (i+1 < numTraced)
+				tracedData[i].pointB = tracedData[i + 1].pointB;
+		}
+		traced.emplace_back(tracedData[i]);
+	}
 	if (style & Panel::Style::SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {
-			if (traced[i].pointA >= numPoints || traced[i].pointB >= numPoints)
-				continue;
 			SolutionPoint sp;
 			//TODO: Other types of symmetry
 			sp.pointA = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointA;
@@ -155,10 +161,7 @@ int SymbolsWatchdog::get(int x, int y) {
 
 bool SymbolsWatchdog::checkSymbol(int x, int y)
 {
-	int symbol = grid[x][y];
-	if ((symbol & 0xF00) != 0x700) return true; //Vanilla symbol
 	int type = GetWitnessSymbolId(grid[x][y]);
-
 	if (type >= SymbolId::Arrow1E && type <= SymbolId::Arrow3NE) {
 		if (!checkArrow(x, y)) return false;
 	}
