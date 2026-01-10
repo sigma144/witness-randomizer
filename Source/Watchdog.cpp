@@ -167,41 +167,18 @@ bool SymbolsWatchdog::checkSymbol(int x, int y)
 
 bool SymbolsWatchdog::checkArrow(int x, int y)
 {
-	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
 	int targetCount = (symbol >> 19);
 	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
 	x += dir.first / 2; y += dir.second / 2;
 	int count = 0;
-	while (x >= 0 && x < width && y >= 0 && y < height) {
-		if (grid[x][y] == PATH) {
-			if (++count > targetCount) { 
-				// The arrow already sees too many lines, no need to continue counting
+	while (get(x, y) != -1) {
+		if (get(x, y) == PATH) {
+			if (++count > targetCount) {
 				break;
 			}
 		}
 		x += dir.first; y += dir.second;
-	}
-	return count == targetCount;
-}
-
-bool SymbolsWatchdog::checkArrowPillar(int x, int y)
-{
-	int symbol = grid[x][y];
-	if ((symbol & 0xF00) != Decoration::Arrow)
-		return true;
-	int targetCount = (symbol >> 19);
-	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
-	x = (x + (dir.first > 2 ? -2 : dir.first) / 2 + pillarWidth) % pillarWidth; y += dir.second / 2;
-	int count = 0;
-	while (y >= 0 && y < height) {
-		if (grid[x][y] == PATH) {
-			if (++count > targetCount) {
-				// The arrow already sees too many lines, no need to continue counting
-				break;
-			}
-		}
-		x = (x + dir.first + pillarWidth) % pillarWidth; y += dir.second;
 	}
 	return count == targetCount;
 }

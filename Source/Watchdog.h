@@ -88,7 +88,6 @@ public:
 	int get(int x, int y);
 	bool checkSymbol(int x, int y);
 	bool checkArrow(int x, int y);
-	bool checkArrowPillar(int x, int y);
 
 	int id;
 	std::vector<std::vector<int>> backupGrid;
