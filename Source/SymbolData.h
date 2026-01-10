@@ -39,6 +39,7 @@ enum SymbolId {
 };
 
 constexpr int GetWitnessDecorationId(SymbolId symbolId) { return ((int)symbolId << 16) + 0x80700; }
+constexpr SymbolId GetWitnessSymbolId(int decId) { return static_cast<SymbolId>((decId - 0x80700) >> 16); }
 
 class SymbolData {
 public:

@@ -35,13 +35,9 @@ public:
 		Triangle2 = 0x20600,
 		Triangle3 = 0x30600,
 		Triangle4 = 0x40600,
-		Arrow =		0x700,
-		Arrow1 =	GetWitnessDecorationId(SymbolId::Arrow1E),
-		Arrow2 =	GetWitnessDecorationId(SymbolId::Arrow2E),
-		Arrow3 =	GetWitnessDecorationId(SymbolId::Arrow3E),
-		EmptySpace = 0xA00, // Used by the game to "fill in" decorations which are part of jagged grids, to avoid floodfilling.
+		Empty = 0xA00, // Used by the game to "fill in" decorations which are part of jagged grids, to avoid floodfilling.
 		Can_Rotate = 0x1000,
-		Negative = 0x2000,
+		Negative =	0x2000,
 		Gap = 0x100000,
 		Gap_Row = 0x300000,
 		Gap_Column = 0x500000,
@@ -49,7 +45,14 @@ public:
 		Dot_Row = 0x240020,
 		Dot_Column = 0x440020,
 		Dot_Intersection = 0x600020,
-		Empty = 0xA00,
+
+		//Custom symbols: 0x700 to 0x7FF (these are not the actual values written)
+		Arrow = 0x700,
+		Arrow1 = 0x10700,
+		Arrow2 = 0x20700,
+		Arrow3 = 0x30700,
+
+
 	};
 	enum Color : int {
 		None = 0,

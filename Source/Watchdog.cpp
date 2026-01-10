@@ -90,12 +90,12 @@ void SymbolsWatchdog::action() {
 			int symbol = grid[x][y];
 			if ((symbol & 0xF00) != Decoration::Arrow) continue;
 
-			if (!checkArrow(x, y)) {
-				// LOG_DEBUG("Arrow at %d, %d NOT valid", x, y);
+			if (!checkSymbol(x, y)) {
+				//LOG_DEBUG("Symbol at %d, %d NOT valid", x, y);
 				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 1);
 				success = false;
 			} else {
-				// LOG_DEBUG("Arrow at %d, %d IS valid", x, y);
+				//LOG_DEBUG("Symbol at %d, %d NOT valid", x, y);
 				memory->WriteToArray(id, DECORATION_FLAGS, _panel.xy_to_dloc(x, y), 0);
 			}
 		}
@@ -109,7 +109,7 @@ void SymbolsWatchdog::initPath()
 	int numTraced = ReadPanelData<int>(id, TRACED_EDGES);
 	int tracedptr = ReadPanelData<int>(id, TRACED_EDGE_DATA);
 	if (!tracedptr) return;
-	std::vector<SolutionPoint> traced = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
+	traced = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
 	if (style & Panel::Style::SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {
 			if (traced[i].pointA >= numPoints || traced[i].pointB >= numPoints)
@@ -145,14 +145,30 @@ void SymbolsWatchdog::initPath()
 	}
 }
 
+//Get grid value at (x, y), accounting for pillar wrapping (-1 if off-grid)
+int SymbolsWatchdog::get(int x, int y) {
+	if (y < 0 || y >= height) return -1;
+	if (x < 0) return pillarWidth && x > -width ? grid[x + width][y] : -1;
+	if (x >= width) return pillarWidth && x < width*2 - 1 ? grid[x - width][y] : -1;
+	return grid[x][y];
+}
+
+bool SymbolsWatchdog::checkSymbol(int x, int y)
+{
+	int symbol = grid[x][y];
+	if ((symbol & 0xF00) != 0x700) return true; //Vanilla symbol
+	int type = GetWitnessSymbolId(grid[x][y]);
+
+	if (type >= SymbolId::Arrow1E && type <= SymbolId::Arrow3NE) {
+		if (!checkArrow(x, y)) return false;
+	}
+	return true;
+}
+
 bool SymbolsWatchdog::checkArrow(int x, int y)
 {
-	int orig_x = x;
-	int orig_y = y;
 	if (pillarWidth > 0) return checkArrowPillar(x, y);
 	int symbol = grid[x][y];
-	if ((symbol & 0xF00) != Decoration::Arrow)
-		return true;
 	int targetCount = (symbol >> 19);
 	Point dir = Generate::ArrowDirections[(symbol >> 16) & 0x07];
 	x += dir.first / 2; y += dir.second / 2;
@@ -171,8 +187,6 @@ bool SymbolsWatchdog::checkArrow(int x, int y)
 
 bool SymbolsWatchdog::checkArrowPillar(int x, int y)
 {
-	int orig_x = x;
-	int orig_y = y;
 	int symbol = grid[x][y];
 	if ((symbol & 0xF00) != Decoration::Arrow)
 		return true;

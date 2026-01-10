@@ -2,6 +2,7 @@
 #include "Randomizer.h"
 #include "Generate.h"
 #include "Memory.h"
+#include "SymbolData.h"
 
 class Watchdog
 {
@@ -84,12 +85,15 @@ public:
 	SymbolsWatchdog(int id, int pillarWidth);
 	virtual void action();
 	void initPath();
+	int get(int x, int y);
+	bool checkSymbol(int x, int y);
 	bool checkArrow(int x, int y);
 	bool checkArrowPillar(int x, int y);
 
 	int id;
 	std::vector<std::vector<int>> backupGrid;
 	std::vector<std::vector<int>> grid;
+	std::vector<SolutionPoint> traced;
 	int width, height, pillarWidth;
 	int numPoints;
 	int tracedLength;
