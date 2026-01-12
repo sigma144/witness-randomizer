@@ -112,11 +112,11 @@ Memory* Memory::get()
 }
 
 void Memory::findActivePanel() {
-	Memory* memory = Memory::get();
 	ScanForBytes({ 0xF2, 0x0F, 0x58, 0xC8, 0x66, 0x0F, 0x5A, 0xC1, 0xF2 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		_activePanelOffsets = {};
-		_activePanelOffsets.push_back(ReadStaticInt(offset, index + 0x36, data, 5));
+		_activePanelOffsets.push_back((int)Memory::ReadStaticInt(offset, index + 0x36, data, 5));
 		_activePanelOffsets.push_back(data[index + 0x5A]); // This is 0x10 in both versions I have, but who knows.
+		
 		_activePanelOffsets.push_back(*(int*)&data[index + 0x54]);
 
 		return true;
