@@ -102,12 +102,29 @@ void Memory::create()
 		_singleton->findGlobals();
 		_singleton->fixTriangleNegation();
 		_singleton->setupCustomSymbols();
+		_singleton->findActivePanel();
 	}
 }
 
 Memory* Memory::get()
 {
 	return _singleton;
+}
+
+void Memory::findActivePanel() {
+	Memory* memory = Memory::get();
+	ScanForBytes({ 0xF2, 0x0F, 0x58, 0xC8, 0x66, 0x0F, 0x5A, 0xC1, 0xF2 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		_activePanelOffsets = {};
+		_activePanelOffsets.push_back(ReadStaticInt(offset, index + 0x36, data, 5));
+		_activePanelOffsets.push_back(data[index + 0x5A]); // This is 0x10 in both versions I have, but who knows.
+		_activePanelOffsets.push_back(*(int*)&data[index + 0x54]);
+
+		return true;
+	});
+}
+
+int Memory::GetActivePanel() {
+	return Memory::get()->ReadData<int>(_activePanelOffsets, 1)[0] - 1;
 }
 
 void Memory::invalidateCache() {
