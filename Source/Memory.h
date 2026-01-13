@@ -54,6 +54,8 @@ public:
 	static Memory* get();
 	void invalidateCache();
 
+	int GetActivePanel();
+
 	Memory(const Memory& memory) = delete;
 	Memory& operator=(const Memory& other) = delete;
 
@@ -159,6 +161,7 @@ public:
 		void findGlobals();
 		void fixTriangleNegation();
 		void setupCustomSymbols();
+		void findActivePanel();
 
 		template<class T>
 		std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
@@ -206,6 +209,7 @@ public:
 		void* ComputeOffset(std::vector<int> offsets);
 
 		std::map<uintptr_t, uintptr_t> _computedAddresses;
+		std::vector<int> _activePanelOffsets;
 		std::map<std::pair<int, int>, int> _arraySizes;
 		uintptr_t _baseAddress = 0;
 		HANDLE _handle = nullptr;
