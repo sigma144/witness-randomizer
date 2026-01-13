@@ -221,6 +221,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
+				randomizer->needRestore = true;
 			}
 
 			//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file

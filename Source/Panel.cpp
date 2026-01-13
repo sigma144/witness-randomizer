@@ -91,7 +91,9 @@ void Panel::Write() {
 	WriteDecorations();
 	if (enableFlash) _style &= ~NO_BLINK;
 	memory->WritePanelData<int>(id, STYLE_FLAGS, { _style });
-	if (pathWidth != 1) memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { pathWidth });
+	float patternWidth = memory->ReadPanelData<float>(id, PATTERN_SCALE);
+	float preComputation = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	if (pathWidth != 1) memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, { pathWidth * patternWidth / preComputation});
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, { 1 });
 	generatedPanels.push_back(*this);
 }
