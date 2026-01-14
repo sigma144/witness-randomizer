@@ -11,6 +11,7 @@
 #include <numeric>
 #include "Random.h"
 #include "Quaternion.h"
+#include "OriginalPanelData.h"
 
 std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::vector<int>& toRemove) {
 	std::vector<int> result;
@@ -25,6 +26,7 @@ std::vector<int> copyWithoutElements(const std::vector<int>& input, const std::v
 
 void Randomizer::GenerateNormal(HWND loadingHandle) {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
+	if (needRestore) RestoreOriginalPanelData();
 	puzzles->setLoadingHandle(loadingHandle);
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllN();
@@ -33,6 +35,7 @@ void Randomizer::GenerateNormal(HWND loadingHandle) {
 
 void Randomizer::GenerateHard(HWND loadingHandle) {
 	std::shared_ptr<PuzzleList> puzzles = std::make_shared<PuzzleList>();
+	if (needRestore) RestoreOriginalPanelData();
 	puzzles->setLoadingHandle(loadingHandle);
 	puzzles->setSeed(seed, seedIsRNG, colorblind);
 	puzzles->GenerateAllH();
@@ -147,6 +150,28 @@ void Randomizer::RandomizeAudiologs()
 	Randomizer::RandomizeRange(audiologs, SWAP::AUDIO_NAMES, 0, audiologs.size());
 }
 
+void Randomizer::RestoreOriginalPanelData() { // Taken from the Archipelago randomizer
+	Memory* memory = Memory::get();
+
+	for (auto& [key, value] : originalBackgroundModes) {
+		memory->WritePanelData<int>(key, OUTER_BACKGROUND_MODE, { value });
+	}
+
+	for (auto& [key, value] : originalPathColors) {
+		memory->WritePanelData<float>(key, PATH_COLOR, value);
+	}
+
+	for (auto& [key, value] : originalOuterBackgroundColors) {
+		memory->WritePanelData<float>(key, OUTER_BACKGROUND, value);
+	}
+
+	for (auto& [key, value] : originalBackgroundRegionColors) {
+		if (key == 0x64 || key == 0x182) continue; //important info is stored on these
+
+		memory->WritePanelData<float>(key, BACKGROUND_REGION_COLOR, value);
+	}
+}
+
 void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 	if (!_shuffleMapping.count(panel1)) {
 		_shuffleMapping[panel1] = panel1;
@@ -192,6 +217,7 @@ void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 	if (flags & SWAP::PATHS) {
 		offsets[AUDIO_PREFIX] = sizeof(void*);
 		offsets[PATH_WIDTH_SCALE] = sizeof(float);
+		offsets[PATTERN_SCALE] = sizeof(float);
 		offsets[STARTPOINT_SCALE] = sizeof(float);
 		offsets[NUM_DOTS] = sizeof(int);
 		offsets[NUM_CONNECTIONS] = sizeof(int);
@@ -222,8 +248,24 @@ void Randomizer::SwapPanels(int panel1, int panel2, int flags) {
 
 	Memory* memory = Memory::get();
 	for (auto const&[offset, size] : offsets) {
+		if (offset == PATH_WIDTH_SCALE || ((offset == PATTERN_POINT_COLOR || offset == PATTERN_POINT_COLOR_A || offset == PATTERN_POINT_COLOR_B ) && needRestore)) {
+			continue;
+		}
+		if (offset == PATTERN_SCALE) {
+			float panel1path = memory->ReadPanelData<float>(panel1, PATH_WIDTH_SCALE);
+			float panel2path = memory->ReadPanelData<float>(panel2, PATH_WIDTH_SCALE);
+			float panel1pattern = memory->ReadPanelData<float>(panel1, PATTERN_SCALE);
+			float panel2pattern = memory->ReadPanelData<float>(panel2, PATTERN_SCALE);
+
+			float computedFor1 = panel1path * panel1pattern / panel2path;
+			float computedFor2 = panel2path * panel2pattern / panel1path;
+			memory->WritePanelData<float>(panel2, PATTERN_SCALE, computedFor1);
+			memory->WritePanelData<float>(panel1, PATTERN_SCALE, computedFor2);
+			continue;
+		}
 		std::vector<byte> panel1data = memory->ReadPanelData<byte>(panel1, offset, size);
 		std::vector<byte> panel2data = memory->ReadPanelData<byte>(panel2, offset, size);
+
 		memory->WritePanelData<byte>(panel2, offset, panel1data);
 		memory->WritePanelData<byte>(panel1, offset, panel2data);
 	}

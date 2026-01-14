@@ -26,6 +26,7 @@ public:
 	bool seedIsRNG = false;
 	bool colorblind = false;
 	bool doubleMode = false;
+	bool needRestore = false;
 
 private:
 	void RandomizeDesert();
@@ -33,6 +34,7 @@ private:
 	void Randomize(std::vector<int>& panels, int flags);
 	void RandomizeRange(std::vector<int> panels, int flags, size_t startIndex, size_t endIndex);
 	void RandomizeAudiologs();
+	void RestoreOriginalPanelData();
 	void SwapPanels(int panel1, int panel2, int flags);
 	void ReassignTargets(const std::vector<int>& panels, const std::vector<int>& order, std::vector<int> targets = {});
 	void SwapWithRandomPanel(int panel1, const std::vector<int>& possiblePanels, int flags);
