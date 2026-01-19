@@ -36,15 +36,19 @@ public:
 	};
 	
 	void generate(int id) { PuzzleSymbols symbols({ }); while (!generate(id, symbols)); }
-	void generate(int id, int symbol, int amount);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9);
+	void generateHelper(int id, std::vector<std::pair<int, int>>& symbolAmounts) { generate(id, symbolAmounts); };
+
+	template <typename... Params>
+	void generateHelper(int id, std::vector<std::pair<int, int>>& symbolAmounts, int symbol, int amount, Params... params) {
+		symbolAmounts.push_back({ symbol, amount });
+		generateHelper(id, symbolAmounts, params...);
+	};
+	template <typename... Params>
+	void generate(int id, Params... params) {
+		std::vector<std::pair<int, int>> symbolAmounts;
+		generateHelper(id, symbolAmounts, params...);
+	};
+
 	void generate(int id, const std::vector<std::pair<int, int>>& symbolVec);
 	void generateMulti(int id, std::vector<std::shared_ptr<Generate>> gens, std::vector<std::pair<int, int>> symbolVec);
 	void generateMulti(int id, int numSolutions, std::vector<std::pair<int, int>> symbolVec);
