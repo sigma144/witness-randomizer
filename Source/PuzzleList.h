@@ -6,32 +6,22 @@
 class PuzzleList {
 
 public: 
-
-	void GenerateAllN();
-	void GenerateAllH();
-
 	PuzzleList() {
-		generator = std::make_shared<Generate>();
-		specialCase = std::make_shared<Special>(generator);
-	}
-
-	PuzzleList(std::shared_ptr<Generate> generator) {
-		this->generator = generator;
-		this->specialCase = std::make_shared<Special>(generator);
+		special = Special(&g);
 	}
 
 	void setLoadingHandle(HWND handle) {
 		_handle = handle;
-		generator->setLoadingHandle(handle);
+		g.setLoadingHandle(handle);
 	}
 
 	void setSeed(int seed, bool isRNG, bool colorblind) {
 		this->seed = seed;
 		this->seedIsRNG = isRNG;
 		this->colorblind = colorblind;
-		if (seed >= 0) generator->seed(seed);
-		else generator->seed(Random::rand());
-		generator->colorblind = colorblind;
+		if (seed >= 0) g.seed(seed);
+		else g.seed(Random::rand());
+		g.colorblind = colorblind;
 	}
 
 	void CopyTargets();
@@ -58,7 +48,9 @@ public:
 	void GenerateMonasteryN(); //Can't randomize
 	void GenerateJungleN();
 
-	//-------------------------Hard difficulty--------------------------
+	void GenerateAllN();
+
+	//-------------------------Expert difficulty--------------------------
 
 	void GenerateTutorialH();
 	void GenerateSymmetryH();
@@ -80,27 +72,13 @@ public:
 	void GenerateMonasteryH(); //Can't randomize
 	void GenerateJungleH();
 
+	void GenerateAllH();
+
 private:
-	std::shared_ptr<Generate> generator;
-	std::shared_ptr<Special> specialCase;
+	Generate g;
+	Special special;
 	HWND _handle = nullptr;
 	int seed = 0;
 	bool seedIsRNG = false;
 	bool colorblind = false;
-
-	template <class T> T pick_random(std::vector<T>& vec) { return vec[Random::rand() % vec.size()]; }
-	template <class T> T pick_random(std::set<T>& set) { auto it = set.begin(); std::advance(it, Random::rand() % set.size()); return *it; }
-	template <class T> T pop_random(std::vector<T>& vec) {
-		int i = Random::rand() % vec.size();
-		T item = vec[i];
-		vec.erase(vec.begin() + i);
-		return item;
-	}
-	template <class T> T pop_random(std::set<T>& set) {
-		auto it = set.begin();
-		std::advance(it, Random::rand() % set.size());
-		T item = *it;
-		set.erase(item);
-		return item;
-	}
 };

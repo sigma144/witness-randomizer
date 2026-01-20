@@ -15,153 +15,136 @@ typedef std::set<Point> Shape;
 class Generate
 {
 public:
-	Generate() {
-		_width = _height = 0;
-		_areaTotal = _genTotal = _totalPuzzles = _areaPuzzles = _stoneTypes = 0;
-		_fullGaps = _bisect = _allowNonMatch = false;
-		_handle = NULL;
-		_panel = NULL;
-		_parity = -1;
-		colorblind = false;
-		_seed = Random::rand();
-		backgroundColor = foregroundColor = gridColor = activeColor = successColor = failColor = { 0, 0, 0, 0 };
-		resetConfig();
-	}
-	enum Config { //See configinfo.txt for explanations of config flags.
-		None = 0, FullGaps = 0x1, StartEdgeOnly = 0x2, DisableWrite = 0x4, PreserveStructure = 0x8, MakeStonesUnsolvable = 0x10, SmallShapes = 0x20, DisconnectShapes = 0x40, ResetColors = 0x80,
-		DisableCancelShapes = 0x100, RequireCancelShapes = 0x200, BigShapes = 0x400, SplitShapes = 0x800, RequireCombineShapes = 0x1000, TreehouseLayout = 0x2000, TreehouseColors = 0x4000,
-		AlternateColors = 0x8000, WriteColors = 0x10000, Write2Color = 0x20000, FixBackground = 0x40000, CombineErasers = 0x80000, LongPath = 0x100000, ShortPath = 0x200000, EnableFlash = 0x400000,
-		DecorationsOnly = 0x800000, FalseParity = 0x1000000, DisableDotIntersection = 0x2000000, WriteDotColor = 0x4000000, WriteDotColor2 = 0x8000000, LongestPath = 0x10000000, WriteInvisible = 0x20000000,
-		DisableReset = 0x40000000, MountainFloorH = 0x80000000
-	};
+	Generate();
 	
-	void generate(int id) { PuzzleSymbols symbols({ }); while (!generate(id, symbols)); }
-	void generate(int id, int symbol, int amount);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8);
-	void generate(int id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9);
-	void generate(int id, const std::vector<std::pair<int, int>>& symbolVec);
-	void generateMulti(int id, std::vector<std::shared_ptr<Generate>> gens, std::vector<std::pair<int, int>> symbolVec);
-	void generateMulti(int id, int numSolutions, std::vector<std::pair<int, int>> symbolVec);
-	void generateMaze(int id);
-	void generateMaze(int id, int numStarts, int numExits);
-	void initPanel(int id);
-	void setPath(const std::set<Point>& path) {
-		customPath = path;
-		for (Point p : path) setSymbol(IntersectionFlags::PATH, p.first, p.second); }
-	void setObstructions(const std::vector<Point>& walls) { _obstructions = { walls }; }
-	void setObstructions(const std::vector<std::vector<Point>>& walls) { _obstructions = walls; }
-	void setSymbol(Decoration::Shape symbol, int x, int y);
-	void setSymbol(IntersectionFlags symbol, int x, int y) { setSymbol(static_cast<Decoration::Shape>(symbol), x, y); }
-	void setVal(int val, int x, int y) { _panel->_grid[x][y] = val; }
+	void generate(PanelID id) { PuzzleSymbols symbols({ }); while (!generate(id, symbols)); }
+	void generate(PanelID id, int symbol, int amount);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9);
+	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9, int symbol10, int amount10);
+	void generate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec);
+	bool tryGenerate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec, int attempts);
+	bool tryGenerate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec) { return tryGenerate(id, symbolVec, 20); }
+	void generateMulti(PanelID id, std::vector<std::shared_ptr<Generate>> gens, std::vector<std::pair<int, int>> symbolVec);
+	void generateMulti(PanelID id, int numSolutions, std::vector<std::pair<int, int>> symbolVec);
+	void generateMaze(PanelID id);
+	void generateMaze(PanelID id, int numStarts, int numExits);
+
+	void initPanel(PanelID id);
+	void setCustomPath(const std::set<Point>& path) { customPath = path; for (Point p : path) setSymbol(PATH, p.x, p.y); }
+	void setObstructions(const std::vector<Point>& walls) { obstructions = { walls }; }
+	void setObstructions(const std::vector<std::vector<Point>>& walls) { obstructions = walls; }
+	void setSymbol(int symbol, int x, int y);
+	void setVal(int val, int x, int y) { panel.set(x, y, val); }
 	void setGridSize(int width, int height);
-	void setSymmetry(Panel::Symmetry symmetry);
-	void write(int id);
-	void setLoadingHandle(HWND handle) { _handle = handle; }
-	void setLoadingData(int totalPuzzles) { _totalPuzzles = totalPuzzles; _genTotal = 0; }
-	void setLoadingData(const std::wstring& areaName, int numPuzzles) { _areaName = areaName; _areaPuzzles = numPuzzles; _areaTotal = 0; }
-	void setFlag(Config option) { _config |= option; };
-	void setFlagOnce(Config option) { _config |= option; _oneTimeAdd |= option; };
-	bool hasFlag(Config option) { return _config & option; };
-	void removeFlag(Config option) { _config &= ~option; };
-	void removeFlagOnce(Config option) { _config &= ~option; _oneTimeRemove |= option; };
+	void setSymmetry(Symmetry symmetry);
+	void write(PanelID id);
+	void setConfig(Config option) { config.insert(option); };
+	void setConfigOnce(Config option) { config.insert(option); oneTimeAdd.insert(option); };
+	bool hasConfig(Config option) { return config.count(option); };
+	void removeConfig(Config option) { config.erase(option); };
+	void removeConfigOnce(Config option) { config.erase(option); oneTimeRemove.insert(option); };
 	void resetConfig();
-	void seed(long seed) { Random::seed(seed); _seed = Random::rand(); }
+	void seed(long seed) { Random::seed(seed); randomSeed = Random::rand(); }
+
+	void setLoadingHandle(HWND handle) { this->handle = handle; }
+	void setLoadingData(int totalPuzzles) { this->totalPuzzles = totalPuzzles; genTotal = 0; }
+	void setLoadingData(const std::wstring& areaName, int numPuzzles) { this->areaName = areaName; areaPuzzles = numPuzzles; areaTotal = 0; }
 	void incrementProgress();
 
-	float pathWidth; //Controls how thick the line is on the puzzle
+	std::set<Point> getRegion(Point pos) { return panel.getRegion(pos); }
+
+	float lineThickness;
 	std::vector<Point> hitPoints; //The generated path will be forced to hit these points in order
 	std::set<Point> openPos; //Custom set of points that can have symbols placed on
 	std::set<Point> blockPos; //Point that must be left open
-	std::set<Point> customPath; 
 	Color backgroundColor, foregroundColor, gridColor, activeColor, successColor, failColor;
 
-	static std::vector<struct Point> ArrowDirections;
-
+//Don't call these private methods in PuzzleList unless you're sure you need to!
 private:
-
-	int get(Point pos) { return _panel->_grid[pos.first][pos.second]; }
-	void set(Point pos, int val) { _panel->_grid[pos.first][pos.second] = val; }
-	int get(int x, int y) { return _panel->_grid[x][y]; }
-	void set(int x, int y, int val) { _panel->_grid[x][y] = val; }
-	int get_symbol_type(int flags) { return flags & 0xF00; }
-	void set_path(Point pos);
-	Point get_sym_point(Point pos) { return _panel->get_sym_point(pos); }
-	int get_parity(Point pos) { return (pos.first / 2 + pos.second / 2) % 2; }
+	int get(int x, int y) { return panel.get(x, y); }
+	int get(Point p) { return panel.get(p); }
+	void set(int x, int y, int val) { panel.set(x, y, val); }
+	void set(Point p, int val) { panel.set(p, val); }
+	int getSymbolShape(int flags) { return flags & 0xF00; }
+	void setPath(Point pos);
+	Point getSymPoint(int x, int y) { return panel.getSymPoint(x, y); }
+	Point getSymPoint(Point p) { return panel.getSymPoint(p.x, p.y); }
+	int getParity(Point pos) { return (pos.x / 2 + pos.y / 2) % 2; }
 	void clear();
 	void resetVars();
-	void init_treehouse_layout();
-	template <class T> T pick_random(const std::vector<T>& vec) { return vec[Random::rand() % vec.size()]; }
-	template <class T> T pick_random(const std::set<T>& set) { auto it = set.begin(); std::advance(it, Random::rand() % set.size()); return *it; }
-	template <class T> T pop_random(const std::vector<T>& vec) { int i = Random::rand() % vec.size(); T item = vec[i]; vec.erase(vec.begin() + i); return item; }
-	template <class T> T pop_random(const std::set<T>& set) { T item = pick_random(set); set.erase(item); return item; }
-	bool on_edge(Point p) { return (Point::pillarWidth == 0 && (p.first == 0 || p.first + 1 == _panel->_width) || p.second == 0 || p.second + 1 == _panel->_height); }
-	bool off_edge(Point p) { return (p.first < 0 || p.first >= _panel->_width || p.second < 0 || p.second >= _panel->_height); }
-	static std::vector<Point> _DIRECTIONS1, _8DIRECTIONS1, _DIRECTIONS2, _8DIRECTIONS2, _SHAPEDIRECTIONS, _DISCONNECT;
-	bool generate_maze(int id, int numStarts, int numExits);
-	bool generate(int id, PuzzleSymbols symbols); //************************************************************
-	bool place_all_symbols(PuzzleSymbols& symbols);
-	bool generate_path(PuzzleSymbols& symbols);
-	bool generate_path_length(int minLength, int maxLength);
-	bool generate_path_length(int minLength) { return generate_path_length(minLength, 10000); };
-	bool generate_path_regions(int minRegions);
-	bool generate_longest_path();
-	bool generate_special_path();
-	void erase_path();
-	Point adjust_point(Point pos);
-	std::set<Point> get_region(Point pos);
-	std::vector<int> get_symbols_in_region(Point pos);
-	std::vector<int> get_symbols_in_region(const std::set<Point>& region);
-	bool place_start(int amount);
-	bool place_exit(int amount);
-	bool can_place_gap(Point pos);
-	bool place_gaps(int amount);
-	bool can_place_dot(Point pos, bool intersectionOnly);
-	bool place_dots(int amount, int color, bool intersectionOnly);
-	bool can_place_stone(const std::set<Point>& region, int color);
-	bool place_stones(int color, int amount);
-	Shape generate_shape(std::set<Point>& region, std::set<Point>& bufferRegion, Point pos, int maxSize);
-	Shape generate_shape(std::set<Point>& region, Point pos, int maxSize) { std::set<Point> buffer; return generate_shape(region, buffer, pos, maxSize); }
-	int make_shape_symbol(Shape shape, bool rotated, bool negative, int rotation, int depth);
-	int make_shape_symbol(const Shape& shape, bool rotated, bool negative) { return make_shape_symbol(shape, rotated, negative, -1, 0); }
-	bool place_shapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int amount, int numRotated, int numNegative);
-	int count_color(const std::set<Point>& region, int color);
-	bool place_stars(int color, int amount);
-	bool has_star(const std::set<Point>& region, int color);
-	bool checkStarZigzag(std::shared_ptr<Panel> panel);
-	bool place_triangles(int color, int amount, int targetCount);
-	int count_sides(Point pos);
-	bool place_arrows(int color, int amount, int targetCount);
-	int count_crossings(Point pos, Point dir);
-	bool place_erasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols);
-	bool combine_shapes(std::vector<Shape>& shapes);
+	void initTreehouseLayout();
+	int rand() { return Random::rand(); }
+	int rand(int mod) { return Random::rand(mod); }
+	int rand(size_t mod) { return Random::rand(mod); }
+	int rand(int min, int max) { return Random::rand(min, max); }
+	template <class T> T pickRandom(const std::vector<T>& vec) { return Random::pickRandom(vec); }
+	template <class T> T pickRandom(const std::set<T>& set) { return Random::pickRandom(set); }
+	template <class T> T popRandom(const std::vector<T>& vec) { return Random::popRandom(vec); }
+	template <class T> T popRandom(const std::set<T>& set) { return Random::popRandom(set); }
+	bool onEdge(Point p) { return (!panel.isCylinder && (p.x == 0 || p.x + 1 == panel.width) || p.y == 0 || p.y + 1 == panel.height); }
+	bool offEdge(Point p) { return get(p.x, p.y) == OFF_GRID; }
+	static std::vector<Point> SHAPEDIRECTIONS, DISCONNECT;
+	bool generateMazeI(PanelID id, int numStarts, int numExits);
+	bool generate(PanelID id, PuzzleSymbols symbols); //************************************************************
+	bool placeSymbols(PuzzleSymbols& symbols);
+	bool generatePath(PuzzleSymbols& symbols);
+	bool generatePathLength(int minLength, int maxLength);
+	bool generatePathLength(int minLength) { return generatePathLength(minLength, 10000); };
+	bool generatePathRegions(int minRegions);
+	bool generateLongestPath();
+	bool generateSpecialPath();
+	void erasePath();
+	Point adjustPoint(Point pos);
 
-	std::shared_ptr<Panel> _panel;
-	std::vector<std::vector<int>> _custom_grid;
-	int _width, _height;
-	Panel::Symmetry _symmetry;
-	std::set<Point> _starts, _exits;
-	std::set<Point> _gridpos, _openpos;
-	std::set<Point> _path, _path1, _path2;
-	bool _fullGaps, _bisect;
-	int _stoneTypes;
-	int _config;
-	int _oneTimeAdd, _oneTimeRemove;
-	long _seed;
-	std::vector<Point> _splitPoints;
-	bool _allowNonMatch; //Used for multi-generator
-	int _parity;
-	std::vector<std::vector<Point>> _obstructions;
+	bool placeStart(int amount);
+	bool placeExit(int amount);
+	bool canPlaceGap(Point pos);
+	bool placeGaps(int amount);
+	bool canPlaceDot(Point pos, bool intersectionOnly);
+	bool placeDots(int amount, int color, bool intersectionOnly);
+	bool canPlaceStone(const std::set<Point>& region, int color);
+	bool placeStones(int color, int amount);
+	Shape generateShape(std::set<Point>& region, std::set<Point>& bufferRegion, Point pos, int maxSize);
+	Shape generateShape(std::set<Point>& region, Point pos, int maxSize) { std::set<Point> buffer; return generateShape(region, buffer, pos, maxSize); }
+	int makeShapeSymbol(Shape shape, bool rotated, bool negative, int rotation, int depth);
+	int makeShapeSymbol(const Shape& shape, bool rotated, bool negative) { return makeShapeSymbol(shape, rotated, negative, -1, 0); }
+	bool placeShapes(const std::vector<int>& colors, const std::vector<int>& negativeColors, int amount, int numRotated, int numNegative);
+	bool placeStars(int color, int amount);
+	bool hasStar(const std::set<Point>& region, int color);
+	bool checkStarZigzag(Panel& panel);
+	bool placeTriangles(int color, int amount, int targetCount);
+	bool placeArrows(int color, int amount, int targetCount);
+	bool placeErasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols);
+
+	bool combineShapes(std::vector<Shape>& shapes);
+
+	Panel panel;
+	std::vector<std::vector<int>> customGrid;
+	int width, height;
+	Symmetry symmetry;
+	std::set<Point> starts, exits;
+	std::set<Point> gridpos, openpos;
+	std::set<Point> path, path1, path2;
+	std::set<Point> customPath; //TODO: Do I need this?
+	bool bisect; //Used for stone generation
+	int stoneTypes; //Used fo stone generation
+	std::set<Config> config, oneTimeAdd, oneTimeRemove;
+	long randomSeed;
+	std::vector<Point> splitPoints; //For double eraser generation. TODO: Replace this with setSymbol.
+	int parity;
+	std::vector<std::vector<Point>> obstructions;
 	bool colorblind;
 
-	HWND _handle;
-	int _areaTotal, _genTotal, _areaPuzzles, _totalPuzzles;
-	std::wstring _areaName;
+	HWND handle;
+	int areaTotal, genTotal, areaPuzzles, totalPuzzles;
+	std::wstring areaName;
 
 	friend class PuzzleList;
 	friend class Special;

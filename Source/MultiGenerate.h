@@ -3,6 +3,7 @@
 #include "Random.h"
 
 //Class for generating puzzles with multiple solutions.
+//TODO: Make this more generalized. Probably try to remove splitStones hardcoding.
 class MultiGenerate
 {
 public:
@@ -12,22 +13,19 @@ public:
 
 	std::vector<std::shared_ptr<Generate>> generators;
 
-	void generate(int id, const std::vector<std::shared_ptr<Generate>>& gens, const std::vector<std::pair<int, int>>& symbolVec);
+	void generate(PanelID id, const std::vector<std::shared_ptr<Generate>>& gens, const std::vector<std::pair<int, int>>& symbolVec);
 
 	bool splitStones;
 
 private:
 
-	bool generate(int id, PuzzleSymbols symbols);
-	bool place_all_symbols(PuzzleSymbols symbols);
-	bool can_place_gap(Point pos);
-	bool place_stones(int color, int amount);
-	bool place_stars(int color, int amount);
-	bool can_place_triangle(Point pos);
-	bool place_triangles(int color, int amount);
-
-	template <class T> T pick_random(std::vector<T>& vec) { return vec[Random::rand() % vec.size()]; }
-	template <class T> T pick_random(std::set<T>& set) { auto it = set.begin(); std::advance(it, Random::rand() % set.size()); return *it; }
+	bool generate(PanelID id, PuzzleSymbols symbols);
+	bool placeAllSymbols(PuzzleSymbols symbols);
+	bool canPlaceGap(Point pos);
+	bool placeStones(int color, int amount);
+	bool placeStars(int color, int amount);
+	bool canPlaceTriangle(Point pos);
+	bool placeTriangles(int color, int amount);
 
 	friend class Special;
 };

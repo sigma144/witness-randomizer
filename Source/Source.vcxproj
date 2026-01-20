@@ -166,6 +166,7 @@
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MultiGenerate.h" />
     <ClInclude Include="Panel.h" />
+    <ClInclude Include="PanelLists.h" />
     <ClInclude Include="Panels.h" />
     <ClInclude Include="PuzzleList.h" />
     <ClInclude Include="PuzzleSymbols.h" />
@@ -177,11 +178,13 @@
     <ClInclude Include="Watchdog.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Enums.h" />
     <ClCompile Include="Generate.cpp" />
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MultiGenerate.cpp" />
     <ClCompile Include="Panel.cpp" />
-    <ClCompile Include="PuzzleList.cpp" />
+    <ClCompile Include="PuzzleListNormal.cpp" />
+    <ClCompile Include="PuzzleListExpert.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Randomizer.cpp" />

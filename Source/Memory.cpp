@@ -123,8 +123,8 @@ void Memory::findActivePanel() {
 	});
 }
 
-int Memory::GetActivePanel() {
-	return Memory::get()->ReadData<int>(_activePanelOffsets, 1)[0] - 1;
+PanelID Memory::GetActivePanel() {
+	return static_cast<PanelID>(_singleton->ReadData<PanelID>(_activePanelOffsets, 1)[0] - 1);
 }
 
 void Memory::invalidateCache() {
@@ -137,7 +137,7 @@ void Memory::findGlobals() {
 		for (int g : globalsTests) {
 			GLOBALS = g;
 			try {
-				if (_singleton->ReadPanelData<int>(0x17E52, STYLE_FLAGS) == 0xA040) {
+				if (_singleton->ReadPanelData<int>(TREEHOUSE_GREEN_4, STYLE_FLAGS) == 0xA040) {
 					return;
 				}
 			}

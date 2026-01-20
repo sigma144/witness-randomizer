@@ -17,26 +17,50 @@ public:
 	float sleepTime;
 	bool terminate;
 protected:
-	template <class T> std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
+	template <class T> std::vector<T> ReadPanelData(PanelID panel, PanelVar offset, size_t size) {
 		return Memory::get()->ReadPanelData<T>(panel, offset, size);
 	}
-	template <class T> T ReadPanelData(int panel, int offset) {
+	template <class T> T ReadPanelData(PanelID panel, PanelVar offset) {
 		return Memory::get()->ReadPanelData<T>(panel, offset);
 	}
-	template <class T> std::vector<T> ReadArray(int panel, int offset, int size) {
+	template <class T> std::vector<T> ReadArray(PanelID panel, PanelVar offset, int size) {
 		return Memory::get()->ReadArray<T>(panel, offset, size);
 	}
-	template <class T> void WritePanelData(int panel, int offset, const std::vector<T>& data) {
+	template <class T> void WritePanelData(PanelID panel, PanelVar offset, const T data) {
 		return Memory::get()->WritePanelData<T>(panel, offset, data);
 	}
-	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data) {
+	template <class T> void WritePanelDataVector(PanelID panel, PanelVar offset, const std::vector<T>& data) {
+		return Memory::get()->WritePanelDataVector<T>(panel, offset, data);
+	}
+	template <class T> void WriteArray(PanelID panel, PanelVar offset, const std::vector<T>& data) {
 		return Memory::get()->WriteArray<T>(panel, offset, data, false);
 	}
-	template <class T> void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
+	template <class T> void WriteArray(PanelID panel, PanelVar offset, const std::vector<T>& data, bool force) {
 		return Memory::get()->WriteArray<T>(panel, offset, data, force);
 	}
 };
 
+class SymbolsWatchdog : public Watchdog {
+public:
+	SymbolsWatchdog();
+	virtual void action();
+	void initPath();
+	int get(int x, int y);
+	void set(int x, int y, int val);
+
+	bool checkSymbol(int x, int y);
+	bool checkArrow(int x, int y);
+
+	PanelID id;
+	std::vector<SolutionPoint> traced;
+	int tracedLength;
+private:
+	Memory* memory;
+	Panel panel;
+	uintptr_t sequenceArray = 0;
+};
+
+//TODO: Replace these with a more generic "TargetWatchdog" and addTarget method.
 class KeepWatchdog : public Watchdog {
 public:
 	KeepWatchdog() : Watchdog(10) { }
@@ -45,27 +69,26 @@ public:
 
 class BridgeWatchdog : public Watchdog {
 public:
-	BridgeWatchdog(int id1, int id2) : Watchdog(1) {
+	BridgeWatchdog() : Watchdog(1) {
 		solLength1 = false;
 		solLength2 = false;
-		this->id1 = id1; this->id2 = id2;
 	}
 	virtual void action();
-	bool checkTouch(int id);
-	int id1, id2, solLength1, solLength2;
+	bool checkTouch(PanelID id);
+	int solLength1, solLength2;
 };
 
 class TreehouseWatchdog : public Watchdog {
 public:
-	TreehouseWatchdog(int id) : Watchdog(1) { }
+	TreehouseWatchdog(PanelID id) : Watchdog(1) { }
 	virtual void action();
 };
 
 class JungleWatchdog : public Watchdog {
 public:
-	JungleWatchdog(int id, std::vector<int> correctSeq1, std::vector<int> correctSeq2);
+	JungleWatchdog(PanelID id, std::vector<int> correctSeq1, std::vector<int> correctSeq2);
 	virtual void action();
-	int id;
+	PanelID id;
 	std::vector<int> sizes;
 	long ptr1, ptr2;
 	std::vector<int> correctSeq1, correctSeq2;
@@ -79,25 +102,4 @@ public:
 	virtual void action();
 };
 
-class SymbolsWatchdog : public Watchdog {
-public:
-	SymbolsWatchdog(int id);
-	SymbolsWatchdog(int id, int pillarWidth);
-	virtual void action();
-	void initPath();
-	int get(int x, int y);
-	bool checkSymbol(int x, int y);
-	bool checkArrow(int x, int y);
-
-	int id;
-	std::vector<std::vector<int>> backupGrid;
-	std::vector<std::vector<int>> grid;
-	std::vector<SolutionPoint> traced;
-	int width, height, pillarWidth;
-	int numPoints;
-	int tracedLength;
-	int style;
-private:
-	Panel _panel;
-	uintptr_t _sequenceArray = 0;
-};
+//TODO: Add Desert latch watchdog

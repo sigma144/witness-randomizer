@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <array>
 #include <wtypes.h>
+#include "Enums.h"
 
 // Note: Little endian
 #define LONG_TO_BYTES(val) \
@@ -54,32 +55,38 @@ public:
 	static Memory* get();
 	void invalidateCache();
 
-	int GetActivePanel();
-
 	Memory(const Memory& memory) = delete;
 	Memory& operator=(const Memory& other) = delete;
+	LPVOID getHandle() { return _handle; }
+	uint64_t getBaseAddress() { return _baseAddress; }
+
+	//These templated functions must be implemented in the header file.
+	//WARNING: Do NOT use bool as the type when calling these - the code won't compile
 
 	template <class T>
-	uintptr_t AllocArray(int numItems) {
-		uintptr_t ptr = reinterpret_cast<uintptr_t>(VirtualAllocEx(_handle, 0, numItems * sizeof(T), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-		return ptr;
-	}
-
-	template <class T>
-	uintptr_t AllocArray(size_t numItems) {
-		return AllocArray<T>(static_cast<int>(numItems));
-	}
-
-	LPVOID getHandle() {
-		return _handle;
-	}
-
-	uint64_t getBaseAddress() {
-		return _baseAddress;
+	T ReadPanelData(PanelID panel, PanelVar offset) {
+		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, 1)[0];
 	}
 
 	template <class T>
-	std::vector<T> ReadArray(int panel, int offset, int size) {
+	void WritePanelData(PanelID panel, PanelVar offset, T data) {
+		std::vector<T> dataVector = { data };
+		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, dataVector);
+	}
+
+	template <class T>
+	std::vector<T> ReadPanelDataVector(PanelID panel, PanelVar offset, size_t size) {
+		if (size == 0) return std::vector<T>();
+		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, size);
+	}
+
+	template <class T>
+	void WritePanelDataVector(PanelID panel, PanelVar offset, const std::vector<T>& data) {
+		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
+	}
+
+	template <class T>
+	std::vector<T> ReadArray(PanelID panel, PanelVar offset, int size) {
 		if (size == 0) return std::vector<T>();
 		if (offset == 0x230 || offset == 0x238) { //Traced edge data - this moves sometimes so it should not be cached
 			//Invalidate cache entry for old array address
@@ -90,7 +97,7 @@ public:
 	}
 
 	template <class T>
-	void WriteArray(int panel, int offset, const std::vector<T>& data) {
+	void WriteArray(PanelID panel, PanelVar offset, const std::vector<T>& data) {
 		if (data.size() == 0) return;
 		auto search = _arraySizes.find({panel, offset});
 		if (search == _arraySizes.end() || data.size() > search->second) {
@@ -105,13 +112,13 @@ public:
 	}
 
 	template <class T>
-	void WriteArray(int panel, int offset, const std::vector<T>& data, bool force) {
+	void WriteArray(PanelID panel, PanelVar offset, const std::vector<T>& data, bool force) {
 		if (force) _arraySizes[{panel, offset}] = 0;
 		WriteArray(panel, offset, data);
 	}
 
 	template <class T>
-	void WriteToArray(int panel, int offset, int index, T data) {
+	void WriteToArray(PanelID panel, PanelVar offset, int index, T data) {
 		auto search = _arraySizes.find({panel, offset});
 		if (search != _arraySizes.end() && index >= search->second) {
 			ThrowError("Out of bound array write");
@@ -120,26 +127,14 @@ public:
 	}
 
 	template <class T>
-	std::vector<T> ReadPanelData(int panel, int offset, size_t size) {
-		if (size == 0) return std::vector<T>();
-		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, size);
+	uintptr_t AllocArray(int numItems) {
+		return reinterpret_cast<uintptr_t>(VirtualAllocEx(_handle, 0, numItems * sizeof(T), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	}
 
 	template <class T>
-	T ReadPanelData(int panel, int offset) {
-		return ReadData<T>({ GLOBALS, 0x18, panel * 8, offset }, 1)[0];
-	}
+	uintptr_t AllocArray(size_t numItems) { return AllocArray<T>(static_cast<int>(numItems)); }
 
-	template <class T>
-	void WritePanelData(int panel, int offset, T data) {
-		std::vector<T> dataVector = { data };
-		WritePanelData<T>(panel, offset, dataVector);
-	}
-
-	template <class T>
-	void WritePanelData(int panel, int offset, const std::vector<T>& data) {
-		WriteData<T>({ GLOBALS, 0x18, panel * 8, offset }, data);
-	}
+	PanelID GetActivePanel(); //Returns -1 when no panel is focused
 
 	// Clear cached offsets computed by ComputeOffset.
 	void ClearOffsets() { _computedAddresses = std::map<uintptr_t, uintptr_t>(); }

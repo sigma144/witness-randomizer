@@ -68,24 +68,25 @@
 #define ARROW_UP_LEFT 0x706
 #define ARROW_DOWN_LEFT 0x707
 
-#define DEBUG false
+#define DEBUG true
 
 //Panel to edit
-int panel = 0x09E69;
+PanelID panelID = MOUNTAIN_GREEN_4;
 
 HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
-std::shared_ptr<Panel> _panel;
-std::shared_ptr<Randomizer> randomizer = std::make_shared<Randomizer>();
-std::shared_ptr<Generate> generator = std::make_shared<Generate>();
-std::shared_ptr<Special> specialCase = std::make_shared<Special>(generator);
+Panel panel;
+Randomizer randomizer;
+Generate generator;
+Special specialCase;
+SymbolsWatchdog* symbolsWatchdog;
 std::vector<byte> bytes;
 
 int ctr = 0;
 TCHAR text[30];
 int x, y;
 std::wstring str;
-Decoration::Shape symbol;
-Decoration::Color color;
+Symbol symbol;
+SymbolColor color;
 int currentShape;
 int currentDir;
 bool hard = false;
@@ -120,11 +121,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			//Test button  - general testing (debug mode only)
 		case IDC_TEST:
-			generator->resetConfig();
-			generator->seed(static_cast<unsigned int>(time(NULL)));
-			//generator->seed(ctr++);
-			//generator->seed(1);
-			specialCase->test();
+			randomizer.StartWatchdogs();
+			specialCase = Special(&specialCase.g);
+			//specialCase.g.seed(static_cast<unsigned int>(time(NULL)));
+			//specialCase.g.seed(ctr++);
+			specialCase.g.seed(1);
+			specialCase.test();
 			break;
 
 			//Difficulty selection
@@ -147,7 +149,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_RANDOMIZE:
 		{
 			bool rerandomize = false;
-			if (memory->ReadPanelData<int>(0x00064, NUM_DOTS) > 5) {
+			if (memory->ReadPanelData<int>(TUT_ENTER_1, NUM_DOTS) > 5) {
 				if (MessageBox(hwnd, L"Game is currently randomized. Are you sure you want to randomize again? (Can cause glitches)", NULL, MB_YESNO) == IDYES) {
 					rerandomize = true;
 					seedIsRNG = false;
@@ -165,31 +167,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					Random::seed(static_cast<int>(time(NULL)));
 					seed = Random::rand() % 9999999 + 1;
 					Random::seed(seed);
-					randomizer->seedIsRNG = true;
+					randomizer.seedIsRNG = true;
 				}
 				else {
 					MessageBox(hwnd, L"Please enter a number between 1 and 9999999.", NULL, MB_OK);
 					break;
 				}
 			}
-			else randomizer->seedIsRNG = false;
+			else randomizer.seedIsRNG = false;
 
 			memory->ClearOffsets();
 
 			ShowWindow(hwndLoadingText, SW_SHOW);
 
-			randomizer->AdjustSpeed(); //Makes certain moving objects move faster
+			randomizer.AdjustSpeed(); //Makes certain moving objects move faster
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
-			int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+			int lastSeed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
 			if (lastSeed > 0 && !rerandomize && !DEBUG) {
-				if (seed != lastSeed && !randomizer->seedIsRNG) {
+				if (seed != lastSeed && !randomizer.seedIsRNG) {
 					if (MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". Are you sure you want to use seed " + std::to_wstring(seed) + L" instead?").c_str(), NULL, MB_YESNO) == IDNO) {
 						SetWindowText(hwndSeed, std::to_wstring(lastSeed).c_str());
 						break;
 					}
 				}
-				lastHard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+				lastHard = (memory->ReadPanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR) > 0);
 				if (!lastHard && hard) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Normal. Are you sure you want to switch to Expert?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
@@ -206,7 +208,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				bool lastDouble = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+				bool lastDouble = (memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR) > 0);
 				if (lastDouble && !doubleMode) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Double Mode. Are you sure you want to disable it?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
@@ -226,7 +228,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//If the save hasn't been randomized before, make sure it is a fresh, unplayed save file
 			else if (Special::hasBeenPlayed() && !rerandomize && !DEBUG) {
 				if (MessageBox(hwnd, L"Warning: It is recommended that you start a new game for the randomizer, to prevent corruption of your save file. Randomize on the current save file anyway?", NULL, MB_YESNO) == IDYES) {
-					randomizer->seedIsRNG = false;
+					randomizer.seedIsRNG = false;
 				}
 				else break;
 			}
@@ -242,14 +244,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				std::remove("WRPGconfig.txt");
 			}
 			SetWindowText(hwndRandomize, L"Randomizing...");
-			randomizer->seed = seed;
-			randomizer->colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
-			randomizer->doubleMode = doubleMode;
-			if (hard) randomizer->GenerateHard(hwndLoadingText);
-			else randomizer->GenerateNormal(hwndLoadingText);
-			memory->WritePanelData(0x00064, BACKGROUND_REGION_COLOR + 12, seed);
-			memory->WritePanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12, hard);
-			memory->WritePanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12, doubleMode);
+			randomizer.seed = seed;
+			randomizer.colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
+			randomizer.doubleMode = doubleMode;
+			if (hard) randomizer.GenerateHard(hwndLoadingText);
+			else randomizer.GenerateNormal(hwndLoadingText);
+			randomizer.StartWatchdogs();
+			memory->WritePanelData(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR, seed);
+			memory->WritePanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR, hard);
+			memory->WritePanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR, doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndSeed, std::to_wstring(seed).c_str());
 
@@ -260,50 +263,50 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_ADD:
 			memset(&text, 0, sizeof(text));
 			GetWindowText(hwndElem, text, 30);
-			if (wcscmp(text, L"Stone") == 0) symbol = Decoration::Shape::Stone;
-			if (wcscmp(text, L"Star") == 0) symbol = Decoration::Shape::Star;
-			if (wcscmp(text, L"Eraser") == 0) symbol = Decoration::Shape::Eraser;
-			if (wcscmp(text, L"Shape") == 0) symbol = Decoration::Shape::Poly;
-			if (wcscmp(text, L"Triangle 1") == 0) symbol = Decoration::Shape::Triangle1;
-			if (wcscmp(text, L"Triangle 2") == 0) symbol = Decoration::Shape::Triangle2;
-			if (wcscmp(text, L"Triangle 3") == 0) symbol = Decoration::Shape::Triangle3;
-			if (wcscmp(text, L"Arrow 1") == 0) symbol = Decoration::Shape::Arrow1;
-			if (wcscmp(text, L"Arrow 2") == 0) symbol = Decoration::Shape::Arrow2;
-			if (wcscmp(text, L"Arrow 3") == 0) symbol = Decoration::Shape::Arrow3;
-			if (wcscmp(text, L"Dot (Intersection)") == 0) symbol = Decoration::Shape::Dot_Intersection;
-			if (wcscmp(text, L"Dot (Row)") == 0) symbol = Decoration::Shape::Dot_Row;
-			if (wcscmp(text, L"Dot (Column)") == 0) symbol = Decoration::Shape::Dot_Column;
-			if (wcscmp(text, L"Gap (Row)") == 0) symbol = Decoration::Shape::Gap_Row;
-			if (wcscmp(text, L"Gap (Column)") == 0) symbol = Decoration::Shape::Gap_Column;
-			if (wcscmp(text, L"Start") == 0) symbol = Decoration::Shape::Start;
-			if (wcscmp(text, L"Exit") == 0) symbol = Decoration::Shape::Exit;
+			if (wcscmp(text, L"Stone") == 0) symbol = Stone;
+			if (wcscmp(text, L"Star") == 0) symbol = Star;
+			if (wcscmp(text, L"Eraser") == 0) symbol = Eraser;
+			if (wcscmp(text, L"Shape") == 0) symbol = Poly;
+			if (wcscmp(text, L"Triangle 1") == 0) symbol = Triangle1;
+			if (wcscmp(text, L"Triangle 2") == 0) symbol = Triangle2;
+			if (wcscmp(text, L"Triangle 3") == 0) symbol = Triangle3;
+			if (wcscmp(text, L"Arrow 1") == 0) symbol = Arrow1;
+			if (wcscmp(text, L"Arrow 2") == 0) symbol = Arrow2;
+			if (wcscmp(text, L"Arrow 3") == 0) symbol = Arrow3;
+			if (wcscmp(text, L"Dot (Intersection)") == 0) symbol = Dot_Intersection;
+			if (wcscmp(text, L"Dot (Row)") == 0) symbol = Dot_Row;
+			if (wcscmp(text, L"Dot (Column)") == 0) symbol = Dot_Column;
+			if (wcscmp(text, L"Gap (Row)") == 0) symbol = Gap_Row;
+			if (wcscmp(text, L"Gap (Column)") == 0) symbol = Gap_Column;
+			if (wcscmp(text, L"Start") == 0) symbol = Start;
+			if (wcscmp(text, L"Exit") == 0) symbol = Exit;
 			memset(&text, 0, sizeof(text));
 			GetWindowText(hwndColor, text, 30);
-			if (wcscmp(text, L"Black") == 0) color = Decoration::Color::Black;
-			if (wcscmp(text, L"White") == 0) color = Decoration::Color::White;
-			if (wcscmp(text, L"Red") == 0) color = Decoration::Color::Red;
-			if (wcscmp(text, L"Orange") == 0) color = Decoration::Color::Orange;
-			if (wcscmp(text, L"Yellow") == 0) color = Decoration::Color::Yellow;
-			if (wcscmp(text, L"Green") == 0) color = Decoration::Color::Green;
-			if (wcscmp(text, L"Cyan") == 0) color = Decoration::Color::Cyan;
-			if (wcscmp(text, L"Blue") == 0) color = Decoration::Color::Blue;
-			if (wcscmp(text, L"Purple") == 0) color = Decoration::Color::Purple;
-			if (wcscmp(text, L"Magenta") == 0) color = Decoration::Color::Magenta;
-			if (wcscmp(text, L"None") == 0) color = Decoration::Color::None;
-			if (wcscmp(text, L"???") == 0) color = Decoration::Color::X;
+			if (wcscmp(text, L"Black") == 0) color = Black;
+			if (wcscmp(text, L"White") == 0) color = White;
+			if (wcscmp(text, L"Red") == 0) color = Red;
+			if (wcscmp(text, L"Orange") == 0) color = Orange;
+			if (wcscmp(text, L"Yellow") == 0) color = Yellow;
+			if (wcscmp(text, L"Green") == 0) color = Green;
+			if (wcscmp(text, L"Cyan") == 0) color = Cyan;
+			if (wcscmp(text, L"Blue") == 0) color = Blue;
+			if (wcscmp(text, L"Purple") == 0) color = Purple;
+			if (wcscmp(text, L"Magenta") == 0) color = Magenta;
+			if (wcscmp(text, L"None") == 0) color = NoColor;
+			if (wcscmp(text, L"???") == 0) color = Invisible;
 			str.reserve(30);
 			GetWindowText(hwndCol, &str[0], 30);
 			x = _wtoi(str.c_str());
 			GetWindowText(hwndRow, &str[0], 30);
 			y = _wtoi(str.c_str());
 
-			_panel->Read(panel);
-			if (symbol == Decoration::Shape::Poly)
-				_panel->SetShape(x, y, currentShape, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
-			else if (symbol == Decoration::Shape::Arrow1 || symbol == Decoration::Shape::Arrow2 || symbol == Decoration::Shape::Arrow3)
-				_panel->SetShape(x, y, symbol | currentDir, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
-			else _panel->SetSymbol(x, y, symbol, color);
-			_panel->Write(panel);
+			panel.read(panelID);
+			if (symbol == Poly)
+				panel.setShape(x, y, currentShape, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
+			else if (symbol == Arrow1 || symbol == Arrow2 || symbol == Arrow3)
+				panel.setShape(x, y, symbol | currentDir, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
+			else panel.setSymbol(x, y, symbol, color);
+			panel.write(panelID);
 			break;
 
 			//Remove a symbol from the puzzle (debug mode only)
@@ -314,19 +317,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			y = _wtoi(str.c_str());
 			GetWindowText(hwndElem, text, 30);
 
-			_panel->Read(panel);
+			panel.read(panelID);
 			if (wcscmp(text, L"Dot (Intersection)") == 0 ||
 				wcscmp(text, L"Start") == 0 || wcscmp(text, L"Exit") == 0)
-				_panel->ClearGridSymbol(x * 2, y * 2);
+				panel.setGridSymbol(x * 2, y * 2, None, NoColor);
 			else if (wcscmp(text, L"Gap (Column)") == 0 ||
 				wcscmp(text, L"Dot (Column)") == 0)
-				_panel->ClearGridSymbol(x * 2, y * 2 + 1);
+				panel.setGridSymbol(x * 2, y * 2 + 1, None, NoColor);
 			else if (wcscmp(text, L"Gap (Row)") == 0 ||
 				wcscmp(text, L"Dot (Row)") == 0)
-				_panel->ClearGridSymbol(x * 2 + 1, y * 2);
+				panel.setGridSymbol(x * 2 + 1, y * 2, None, NoColor);
 			else
-				_panel->ClearSymbol(x, y);
-			_panel->Write(panel);
+				panel.setGridSymbol(x, y, None, NoColor);
+			panel.write(panelID);
 			break;
 
 			//Debug mode checkboxes
@@ -341,25 +344,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_SYMMETRYX:
 			CheckDlgButton(hwnd, IDC_SYMMETRYX, !IsDlgButtonChecked(hwnd, IDC_SYMMETRYX));
 			if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX) && IsDlgButtonChecked(hwnd, IDC_SYMMETRYY))
-				_panel->symmetry = Panel::Symmetry::Rotational;
+				panel.symmetry = Rotational;
 			else if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX))
-				_panel->symmetry = Panel::Symmetry::Horizontal;
+				panel.symmetry = Horizontal;
 			else if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYY))
-				_panel->symmetry = Panel::Symmetry::Vertical;
-			else _panel->symmetry = Panel::Symmetry::None;
-			_panel->Write(panel);
+				panel.symmetry = Vertical;
+			else panel.symmetry = NoSymmetry;
+			panel.write(panelID);
 			break;
 
 		case IDC_SYMMETRYY:
 			CheckDlgButton(hwnd, IDC_SYMMETRYY, !IsDlgButtonChecked(hwnd, IDC_SYMMETRYY));
 			if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX) && IsDlgButtonChecked(hwnd, IDC_SYMMETRYY))
-				_panel->symmetry = Panel::Symmetry::Rotational;
+				panel.symmetry = Rotational;
 			else if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYX))
-				_panel->symmetry = Panel::Symmetry::Horizontal;
+				panel.symmetry = Horizontal;
 			else if (IsDlgButtonChecked(hwnd, IDC_SYMMETRYY))
-				_panel->symmetry = Panel::Symmetry::Vertical;
-			else _panel->symmetry = Panel::Symmetry::None;
-			_panel->Write(panel);
+				panel.symmetry = Vertical;
+			else panel.symmetry = NoSymmetry;
+			panel.write(panelID);
 			break;
 			//Tetris shape editing
 		case SHAPE_11: CheckDlgButton(hwnd, SHAPE_11, !IsDlgButtonChecked(hwnd, SHAPE_11)); currentShape ^= SHAPE_11; break;
@@ -397,6 +400,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	//Initialize memory globals constant depending on game version
 	Memory::create();
+	specialCase = Special(&generator);
+
 	Memory* memory = memory->get();
 
 	if (wcscmp(lpCmdLine, L"-nogui") == 0)
@@ -404,11 +409,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		// if -nogui is passed as argument, just keep saved settings and re-randomize using them
 		std::wcout << L"Running in nogui mode" << std::endl;
 		// SEED
-		randomizer->seed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
+		randomizer.seed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
 		// HARD
-		hard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
+		hard = (memory->ReadPanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR) > 0);
 		// DOUBLE
-		randomizer->doubleMode = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+		randomizer.doubleMode = (memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR) > 0);
 
 		// COLORBLIND
 		std::ifstream configFile("WRPGconfig.txt");
@@ -421,19 +426,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 				settings[setting] = value;
 			}
 			if (settings.count("colorblind") && settings["colorblind"] == "true") {
-				randomizer->colorblind = true;
+				randomizer.colorblind = true;
 			}
 			configFile.close();
 		}
-		randomizer->seedIsRNG = false;
+		randomizer.seedIsRNG = false;
 
 		std::wcout << L"Randomizing..." << std::endl;
 
 		memory->ClearOffsets();
-		randomizer->AdjustSpeed();
+		randomizer.AdjustSpeed();
 
-		if (hard) randomizer->GenerateHard(hwndLoadingText);
-		else randomizer->GenerateNormal(hwndLoadingText);
+		if (hard) randomizer.GenerateHard(hwndLoadingText);
+		else randomizer.GenerateNormal(hwndLoadingText);
+		randomizer.StartWatchdogs();
 
 		std::wcout << L"Done !" << std::endl;
 
@@ -462,9 +468,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	memory->showMsg = true;
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
-	int lastSeed = memory->ReadPanelData<int>(0x00064, BACKGROUND_REGION_COLOR + 12);
-	hard = (memory->ReadPanelData<int>(0x00182, BACKGROUND_REGION_COLOR + 12) > 0);
-	doubleMode = (memory->ReadPanelData<int>(0x0A3B2, BACKGROUND_REGION_COLOR + 12) > 0);
+	int lastSeed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
+	hard = (memory->ReadPanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR) > 0);
+	doubleMode = (memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR) > 0);
 
 	//-------------------------Basic window controls---------------------------
 
@@ -532,7 +538,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//---------------------Debug/editing controls (debug mode only)---------------------
 
 	if (DEBUG) {
-		_panel = std::make_shared<Panel>();
 		CreateWindow(L"STATIC", L"Col/Row:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 			160, 330, 100, 26, hwnd, NULL, hInstance, NULL);
@@ -652,9 +657,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			}
 		}
 
-		if (_panel->symmetry == Panel::Symmetry::Horizontal || _panel->symmetry == Panel::Symmetry::Rotational)
+		if (panel.symmetry == Horizontal || panel.symmetry == Rotational)
 			CheckDlgButton(hwnd, IDC_SYMMETRYX, TRUE);
-		if (_panel->symmetry == Panel::Symmetry::Vertical || _panel->symmetry == Panel::Symmetry::Rotational)
+		if (panel.symmetry == Vertical || panel.symmetry == Rotational)
 			CheckDlgButton(hwnd, IDC_SYMMETRYY, TRUE);
 	}
 

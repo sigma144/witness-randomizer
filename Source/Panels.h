@@ -1,1045 +1,643 @@
 #pragma once
 #include <vector>
 
-// Some of these (the puzzle ones) are duplicated elsewhere
-std::vector<int> lasers = {
-	0x0360D, // Symmetry
-	0x03615, // Swamp
-	0x09DE0, // Bunker
-	0x17CA4, // Monastery
-	0x032F5, // Town
-	0x03613, // Treehouse
-	0x0360E, // Keep Front Laser
-//	0x03317, // Keep Back Laser
-//	0x03608, // Desert
-	0x03612, // Quarry
-	0x03616, // Jungle
-	0x19650, // Shadows
-};
+enum PanelID : int {
+    TUT_ENTER_1 = 0x00064, // Tutorial Straight
+    TUT_ENTER_2 = 0x00182, // Tutorial Bend
+    TUT_MAZE_1 = 0x00293, // Tutorial Front Center
+    TUT_MAZE_2 = 0x00295, // Tutorial Center Left
+    TUT_MAZE_3 = 0x002C2, // Tutorial Front Left
+    TUT_2START = 0x0A3B2, // Tutorial Back Right
+    TUT_2EXIT = 0x0A3B5, // Tutorial Back Left
+    TUT_GATE = 0x03629, // Tutorial Gate Open
+    TUT_GATE_CLOSE = 0x03505, // Tutorial Gate Close
+    TUT_PILLAR = 0x0C335, // Tutorial Pillar (Mesh, probably can't change)
+    TUT_FLOOR = 0x0C373, // Tutorial Patio floor (Needed for EP)
+    TUT_OUTER_1 = 0x0A171, // Tutorial Optional Door 1
+    TUT_OUTER_2 = 0x04CA4, // Tutorial Optional Door 2
+    TUT_DISCARD = 0x17CFB, // Outside Tutorial Discard
+    TUT_DOT_1 = 0x0005D, // Outside Tutorial Dots Tutorial 1
+    TUT_DOT_2 = 0x0005E, // Outside Tutorial Dots Tutorial 2
+    TUT_DOT_3 = 0x0005F, // Outside Tutorial Dots Tutorial 3
+    TUT_DOT_4 = 0x00060, // Outside Tutorial Dots Tutorial 4
+    TUT_DOT_5 = 0x00061, // Outside Tutorial Dots Tutorial 5
+    TUT_STONE_1 = 0x018AF, // Outside Tutorial Stones Tutorial 1
+    TUT_STONE_2 = 0x0001B, // Outside Tutorial Stones Tutorial 2
+    TUT_STONE_3 = 0x012C9, // Outside Tutorial Stones Tutorial 3
+    TUT_STONE_4 = 0x0001C, // Outside Tutorial Stones Tutorial 4
+    TUT_STONE_5 = 0x0001D, // Outside Tutorial Stones Tutorial 5
+    TUT_STONE_6 = 0x0001E, // Outside Tutorial Stones Tutorial 6
+    TUT_STONE_7 = 0x0001F, // Outside Tutorial Stones Tutorial 7
+    TUT_STONE_8 = 0x00020, // Outside Tutorial Stones Tutorial 8
+    TUT_STONE_9 = 0x00021, // Outside Tutorial Stones Tutorial 9
+    TUT_VAULT = 0x033D4, // Outside Tutorial Vault
 
-std::vector<int> millElevatorControlOptions = {
-	0x0008D, // Glass Factory Rotational Symmetry 1
-	0x00081, // Glass Factory Rotational Symmetry 2
-	0x00070, // Symmetry Island Fading Lines 5
-	0x01E5A, // Mill Entry Door Left
-	0x28AC7, // Town Blue 1
-	0x28AC8, // Town Blue 2
-	0x28ACA, // Town Blue 3
-	0x28ACB, // Town Blue 4
-	0x28ACC, // Town Blue 5
-	0x00029, // UTM Invisible Dots Symmetry 3
+    APPLE_1 = 0x00143, // Orchard Apple Tree 1
+    APPLE_2 = 0x0003B, // Orchard Apple Tree 2
+    APPLE_3 = 0x00055, // Orchard Apple Tree 3
+    APPLE_4 = 0x032F7, // Orchard Apple Tree 4
+    APPLE_5 = 0x032FF, // Orchard Apple Tree 5
 
-	0x17CC4, // Mill Elevator Control
-};
+    SYM_DISCARD = 0x3C12B, // Glass Factory Discard
+    SYM_ENTER = 0x01A54, // Glass Factory Entry (Needed for EP)
+    SYM_MAZE_V1 = 0x00086, // Glass Factory Vertical Symmetry 1
+    SYM_MAZE_V2 = 0x00087, // Glass Factory Vertical Symmetry 2
+    SYM_MAZE_V3 = 0x00059, // Glass Factory Vertical Symmetry 3
+    SYM_MAZE_V4 = 0x00062, // Glass Factory Vertical Symmetry 4
+    SYM_MAZE_V5 = 0x0005C, // Glass Factory Vertical Symmetry 5 (Beware blocked point)
+    SYM_MAZE_R1 = 0x0008D, // Glass Factory Rotational Symmetry 1
+    SYM_MAZE_R2 = 0x00081, // Glass Factory Rotational Symmetry 2
+    SYM_MAZE_R3 = 0x00083, // Glass Factory Rotational Symmetry 3
+    SYM_MAZE_M1 = 0x00084, // Glass Factory Melting 1
+    SYM_MAZE_M2 = 0x00082, // Glass Factory Melting 2
+    SYM_MAZE_M3 = 0x0343A, // Glass Factory Melting 3
+    SYM_DOT_ENTER = 0x000B0, // Symmetry Island Door 1
+    SYM_DOT_1 = 0x00022, // Symmetry Island Black Dots 1
+    SYM_DOT_2 = 0x00023, // Symmetry Island Black Dots 2
+    SYM_DOT_3 = 0x00024, // Symmetry Island Black Dots 3
+    SYM_DOT_4 = 0x00025, // Symmetry Island Black Dots 4
+    SYM_DOT_5 = 0x00026, // Symmetry Island Black Dots 5
+    SYM_COLOR_1 = 0x0007C, // Symmetry Island Colored Dots 1
+    SYM_COLOR_2 = 0x0007E, // Symmetry Island Colored Dots 2
+    SYM_COLOR_3 = 0x00075, // Symmetry Island Colored Dots 3
+    SYM_COLOR_4 = 0x00073, // Symmetry Island Colored Dots 4
+    SYM_COLOR_5 = 0x00077, // Symmetry Island Colored Dots 5
+    SYM_COLOR_6 = 0x00079, // Symmetry Island Colored Dots 6
+    SYM_INVISIBLE_1 = 0x00065, // Symmetry Island Fading Lines 1
+    SYM_INVISIBLE_2 = 0x0006D, // Symmetry Island Fading Lines 2
+    SYM_INVISIBLE_3 = 0x00072, // Symmetry Island Fading Lines 3
+    SYM_INVISIBLE_4 = 0x0006F, // Symmetry Island Fading Lines 4
+    SYM_INVISIBLE_5 = 0x00070, // Symmetry Island Fading Lines 5
+    SYM_INVISIBLE_6 = 0x00071, // Symmetry Island Fading Lines 6
+    SYM_INVISIBLE_7 = 0x00076, // Symmetry Island Fading Lines 7
+    SYM_ROCKS_1 = 0x009B8, // Symmetry Island Transparent 1
+    SYM_ROCKS_2 = 0x003E8, // Symmetry Island Transparent 2
+    SYM_ROCKS_3 = 0x00A15, // Symmetry Island Transparent 3
+    SYM_ROCKS_4 = 0x00B53, // Symmetry Island Transparent 4
+    SYM_ROCKS_5 = 0x00B8D, // Symmetry Island Transparent 5
+    SYM_LASER_ENTER = 0x1C349,  // Symmetry Island Door 2 (Collision breaks if changed)
+    SYM_YELLOW_1 = 0x00A52, // Symmetry Island Laser Yellow 1
+    SYM_YELLOW_2 = 0x00A57, // Symmetry Island Laser Yellow 2
+    SYM_YELLOW_3 = 0x00A5B, // Symmetry Island Laser Yellow 3
+    SYM_CYAN_1 = 0x00A61, // Symmetry Island Laser Blue 1
+    SYM_CYAN_2 = 0x00A64, // Symmetry Island Laser Blue 2
+    SYM_CYAN_3 = 0x00A68, // Symmetry Island Laser Blue 3
 
-std::vector<int> tutorialBackLeftOptions = {
-	0x0008D, // Glass Factory Rotational Symmetry 1
-	0x00081, // Glass Factory Rotational Symmetry 2
-	0x00083, // Glass Factory Rotational Symmetry 3
-	0x00084, // Glass Factory Melting 1
-	0x28AC7, // Town Blue 1
-	0x28AC8, // Town Blue 2
-	0x28ACA, // Town Blue 3
-	0x28ACB, // Town Blue 4
-	0x28ACC, // Town Blue 5
-	0x00029, // UTM Invisible Dots Symmetry 3
-	0x00082, // Glass Factory Melting 2
-	0x0343A, // Glass Factory Melting 3
-	0x00022, // Symmetry Island Black Dots 1
-	0x00023, // Symmetry Island Black Dots 2
-	0x00024, // Symmetry Island Black Dots 3
-	0x00025, // Symmetry Island Black Dots 4
-	0x00026, // Symmetry Island Black Dots 5
-	0x01A0D, // UTM Blue Hard Symmetry
-	0x018A0, // UTM Blue Easy Symmetry
+    DESERT_DISCARD = 0x17CE7, // Desert Discard
+    DESERT_VAULT = 0x0CC7B, // Desert Vault
+    DESERT_SUN_1 = 0x00698, // Desert Surface 1
+    DESERT_SUN_2 = 0x0048F, // Desert Surface 2
+    DESERT_SUN_3 = 0x09F92, // Desert Surface 3
+    DESERT_SUN_4 = 0x0A036, // Desert Surface 4
+    DESERT_SUN_5 = 0x09DA6, // Desert Surface 5
+    DESERT_SUN_6 = 0x0A049, // Desert Surface 6
+    DESERT_SUN_7 = 0x0A053, // Desert Surface 7 (Latches might affect collision?)
+    DESERT_SUN_8 = 0x09F94, // Desert Surface 8
+    DESERT_LIGHT_L = 0x00422, // Desert Light 1
+    DESERT_LIGHT_R = 0x006E3, // Desert Light 2
+    DESERT_LIGHT_FLOOR = 0x0A02D, // Desert Light 3 (Latches might affect collision?)
+    DESERT_POND_1 = 0x00C72, // Desert Pond 1
+    DESERT_POND_2 = 0x0129D, // Desert Pond 2
+    DESERT_POND_3 = 0x008BB, // Desert Pond 3
+    DESERT_POND_4 = 0x0078D, // Desert Pond 4
+    DESERT_POND_5 = 0x18313, // Desert Pond 5
+    DESERT_FLOOD_1 = 0x04D18, // Desert Flood 1
+    DESERT_FLOOD_2 = 0x01205, // Desert Flood 2
+    DESERT_FLOOD_3 = 0x181AB, // Desert Flood 3
+    DESERT_FLOOD_4 = 0x0117A, // Desert Flood 4
+    DESERT_FLOOD_5 = 0x17ECA, // Desert Flood 5
+    DESERT_FLOOD_FINAL = 0x18076, // Desert Flood Exit
+    DESERT_CURVED_1 = 0x0A15C, // Desert Final Left Convex
+    DESERT_CURVED_2 = 0x09FFF, // Desert Final Left Concavw
+    DESERT_CURVED_3 = 0x0A15F, // Desert Final Near
+    DESERT_GLASS = 0x17C31, // Desert Final Transparent
+    DESERT_TILT = 0x012D7, // Desert Final Far
 
-	0x0A3B5, // Tutorial Back Left
-};
+    QUARRY_ENTER_1 = 0x09E57, // Quarry Entry Gate 1
+    QUARRY_ENTER_2 = 0x17C09, // Quarry Entry Gate 2
+    QUARRY_ELEVATOR = 0x17CC4, // Mill Elevator (Control)
+    MILL_ENTER_L = 0x01E5A, // Mill Entry Door Left
+    MILL_ENTER_R = 0x01E59, // Mill Entry Door Right
+    MILL_RAMP = 0x03678, // Mill Lower Ramp (Control)
+    MILL_LIFT = 0x03675, // Mill Lower Lift (Control)
+    MILL_DOT_1 = 0x00E0C, // Mill Lower Row 1
+    MILL_DOT_2 = 0x01489, // Mill Lower Row 2
+    MILL_DOT_3 = 0x0148A, // Mill Lower Row 3
+    MILL_DOT_4 = 0x014D9, // Mill Lower Row 4
+    MILL_DOT_5 = 0x014E7, // Mill Lower Row 5
+    MILL_DOT_6 = 0x014E8, // Mill Lower Row 6
+    MILL_RAMP_2 = 0x03676, // Mill Lower Ramp (Control)
+    MILL_LIFT_2 = 0x03675, // Mill Lower Lift (Control)
+    MILL_STONE_1 = 0x00557, // Mill Upper Row 1
+    MILL_STONE_2 = 0x005F1, // Mill Upper Row 2
+    MILL_STONE_3 = 0x00620, // Mill Upper Row 3
+    MILL_STONE_4 = 0x009F5, // Mill Upper Row 4
+    MILL_STONE_5 = 0x0146C, // Mill Upper Row 5
+    MILL_STONE_6 = 0x3C12D, // Mill Upper Row 6
+    MILL_STONE_7 = 0x03686, // Mill Upper Row 7
+    MILL_STONE_8 = 0x014E9, // Mill Upper Row 8
+    MILL_FINAL = 0x0367C, // Mill Control Room 1
+    MILL_OPTIONAL = 0x3C125, // Mill Control Room 2
+    MILL_STAIRS = 0x03677, // Mill Stairs Control
+    MILL_DISCARD = 0x17CF0, // Mill Discard
+    BOATHOUSE_BEGIN_L = 0x034D4, // Boathouse Ramp Activation Stars
+    BOATHOUSE_BEGIN_R = 0x021D5, // Boathouse Ramp Activation Shapers
+    BOATHOUSE_RAMP_ANGLE = 0x03852, // Boathouse Ramp Angle (Control)
+    BOATHOUSE_SHAPE_1 = 0x021B3, // Boathouse Erasers and Shapers 1
+    BOATHOUSE_SHAPE_2 = 0x021B4, // Boathouse Erasers and Shapers 2
+    BOATHOUSE_SHAPE_3 = 0x021B0, // Boathouse Erasers and Shapers 3
+    BOATHOUSE_SHAPE_4 = 0x021AF, // Boathouse Erasers and Shapers 4
+    BOATHOUSE_SHAPE_5 = 0x021AE, // Boathouse Erasers and Shapers 5
+    BOATHOUSE_RAMP_POS = 0x03858, // Boathouse Ramp Position (Control)
+    BOATHOUSE_STAR_1 = 0x021B5, // Boathouse Erasers and Stars 1
+    BOATHOUSE_STAR_2 = 0x021B6, // Boathouse Erasers and Stars 2
+    BOATHOUSE_STAR_3 = 0x021B7, // Boathouse Erasers and Stars 3
+    BOATHOUSE_STAR_4 = 0x021BB, // Boathouse Erasers and Stars 4
+    BOATHOUSE_STAR_5 = 0x09DB5, // Boathouse Erasers and Stars 5
+    BOATHOUSE_STAR_6 = 0x09DB1, // Boathouse Erasers and Stars 6
+    BOATHOUSE_STAR_7 = 0x3C124, // Boathouse Erasers and Stars 7
+    BOATHOUSE_STAR_8 = 0x09DB3, // Boathouse Erasers Shapers and Stars 1
+    BOATHOUSE_STAR_9 = 0x09DB4, // Boathouse Erasers Shapers and Stars 2
+    BOATHOUSE_FINAL_1 = 0x0A3CB, // Boathouse Erasers Shapers and Stars 3
+    BOATHOUSE_FINAL_2 = 0x0A3CC, // Boathouse Erasers Shapers and Stars 4
+    BOATHOUSE_FINAL_3 = 0x0A3D0, // Boathouse Erasers Shapers and Stars 5
+    BOATHOUSE_HOOK = 0x275FA, // Boathouse Hook (Control)
+    QUARRY_LASER = 0x03612, // Quarry Laser (Write decorations only)
 
-std::vector<int> tutorialBackLeftExpertOptions = {
-    0x0A3B2, // Tutorial Back Right
-    0x0A171, // Tutorial Optional Door 1
-    0x04CA4, // Tutorial Optional Door 2
-    0x17CFB, // Outside Tutorial Discard
-    0x3C12B, // Glass Factory Discard
-    0x01A54, // Glass Factory Entry
-    0x000B0, // Symmetry Island Door 1
-    0x17CE7, // Desert Discard
-    0x0CC7B, // Desert Vault
-    0x01E59, // Mill Entry Door Right
-    0x00E0C, // Mill Lower Row 1
-    0x01489, // Mill Lower Row 2
-    0x0148A, // Mill Lower Row 3
-    0x014D9, // Mill Lower Row 4
-    0x014E7, // Mill Lower Row 5
-    0x014E8, // Mill Lower Row 6
-    0x00557, // Mill Upper Row 1
-    0x005F1, // Mill Upper Row 2
-    0x00620, // Mill Upper Row 3
-    0x009F5, // Mill Upper Row 4
-    0x0146C, // Mill Upper Row 5
-    0x3C12D, // Mill Upper Row 6
-    0x03686, // Mill Upper Row 7
-    0x014E9, // Mill Upper Row 8
-    0x0367C, // Mill Control Room 1
-    0x17CF0, // Mill Discard
-    0x021D5, // Boathouse Ramp Activation Shapers
-    0x021B3, // Boathouse Erasers and Shapers 1
-    0x021B4, // Boathouse Erasers and Shapers 2
-    0x021B0, // Boathouse Erasers and Shapers 3
-    0x021AF, // Boathouse Erasers and Shapers 4
-    0x021AE, // Boathouse Erasers and Shapers 5
-    0x021B5, // Boathouse Erasers and Stars 1
-    0x021B6, // Boathouse Erasers and Stars 2
-    0x021B7, // Boathouse Erasers and Stars 3
-    0x021BB, // Boathouse Erasers and Stars 4
-    0x09DB5, // Boathouse Erasers and Stars 5
-    0x09DB1, // Boathouse Erasers and Stars 6
-    0x3C124, // Boathouse Erasers and Stars 7
-    0x09DB3, // Boathouse Erasers Shapers and Stars 1
-    0x09DB4, // Boathouse Erasers Shapers and Stars 2
-    0x0A3CB, // Boathouse Erasers Shapers and Stars 3
-    0x0A3CC, // Boathouse Erasers Shapers and Stars 4
-    0x0A3D0, // Boathouse Erasers Shapers and Stars 5
-    0x09E57, // Quarry Entry Gate 1
-    0x17C09, // Quarry Entry Gate 2
-    0x0288C, // Treehouse Door 1
-    0x02886, // Treehouse Door 2
-    0x17D72, // Treehouse Yellow 1
-    0x17D8F, // Treehouse Yellow 2
-    0x17D74, // Treehouse Yellow 3
-    0x17DAC, // Treehouse Yellow 4
-    0x17D9E, // Treehouse Yellow 5
-    0x17DB9, // Treehouse Yellow 6
-    0x17D9C, // Treehouse Yellow 7
-    0x17DC2, // Treehouse Yellow 8
-    0x17DC4, // Treehouse Yellow 9
-    0x0A182, // Treehouse Door 3
-    0x17DC8, // Treehouse First Purple 1
-    0x17DC7, // Treehouse First Purple 2
-    0x17CE4, // Treehouse First Purple 3
-    0x17D2D, // Treehouse First Purple 4
-    0x17D6C, // Treehouse First Purple 5
-    0x17D9B, // Treehouse Second Purple 1
-    0x17D99, // Treehouse Second Purple 2
-    0x17DAA, // Treehouse Second Purple 3
-    0x17D97, // Treehouse Second Purple 4
-    0x17BDF, // Treehouse Second Purple 5
-    0x17D91, // Treehouse Second Purple 6
-    0x17DC6, // Treehouse Second Purple 7
-    0x17DB3, // Treehouse Left Orange 1
-    0x17DB5, // Treehouse Left Orange 2
-    0x17DB6, // Treehouse Left Orange 3
-    0x17DC0, // Treehouse Left Orange 4
-    0x17DD7, // Treehouse Left Orange 5
-    0x17DD9, // Treehouse Left Orange 6
-    0x17DB8, // Treehouse Left Orange 7
-    0x17DDC, // Treehouse Left Orange 8
-    0x17DDE, // Treehouse Left Orange 10
-    0x17DE3, // Treehouse Left Orange 11
-    0x17DEC, // Treehouse Left Orange 12
-    0x17DAE, // Treehouse Left Orange 13
-    0x17DB0, // Treehouse Left Orange 14
-    0x17DDB, // Treehouse Left Orange 15
-    0x17D88, // Treehouse Right Orange 1
-    0x17DB4, // Treehouse Right Orange 2
-    0x17D8C, // Treehouse Right Orange 3
-    0x17DCD, // Treehouse Right Orange 5
-    0x17DB2, // Treehouse Right Orange 6
-    0x17DCC, // Treehouse Right Orange 7
-    0x17DCA, // Treehouse Right Orange 8
-    0x17D8E, // Treehouse Right Orange 9
-    0x17DB1, // Treehouse Right Orange 11
-    0x17DA2, // Treehouse Right Orange 12
-    0x17E3C, // Treehouse Green 1
-    0x17E4D, // Treehouse Green 2
-    0x17E4F, // Treehouse Green 3
-    0x17E5B, // Treehouse Green 5
-    0x17E5F, // Treehouse Green 6
-    0x17E61, // Treehouse Green 7
-    0x17FA9, // Treehouse Green Bridge Discard
-    0x00139, // Keep Hedges 1
-    0x019DC, // Keep Hedges 2
-    0x019E7, // Keep Hedges 3
-    0x01A0F, // Keep Hedges 4
-    0x17D28, // Shipwreck Discard
-    0x2899C, // Town 25 Dots 1
-    0x28A33, // Town 25 Dots 2
-    0x28ABF, // Town 25 Dots 3
-    0x28AC0, // Town 25 Dots 4
-    0x28AC1, // Town 25 Dots 5
-    0x28AC7, // Town Blue 1
-    0x28A0D, // Town Church Stars
-    0x28AD9, // Town Eraser
-    0x28998, // Town Green Door
-    0x0A0C8, // Town Orange Crate
-    0x17D01, // Town Orange Crate Discard
-    0x03C0C, // Town RGB Stones
-    0x17C71, // Town Rooftop Discard
-    0x17F89, // Theater Entrance
-    0x33AB2, // Theater Corona Exit
-    0x0A168, // Theater Sun Exit
-    0x17C2E, // Bunker Entry Door
-    0x00469, // Swamp Tutorial 1
-    0x00472, // Swamp Tutorial 2
-    0x00262, // Swamp Tutorial 3
-    0x00474, // Swamp Tutorial 4
-    0x00553, // Swamp Tutorial 5
-    0x0056F, // Swamp Tutorial 6
-    0x00390, // Swamp Tutorial 7
-    0x010CA, // Swamp Tutorial 8
-    0x00983, // Swamp Tutorial 9
-    0x00984, // Swamp Tutorial 10
-    0x00986, // Swamp Tutorial 11
-    0x00985, // Swamp Tutorial 12
-    0x00987, // Swamp Tutorial 13
-    0x181A9, // Swamp Tutorial 14
-    0x00982, // Swamp Red 1
-    0x0097F, // Swamp Red 2
-    0x0098F, // Swamp Red 3
-    0x00990, // Swamp Red 4
-    0x17C0D, // Swamp Red Shortcut 1
-    0x17C0E, // Swamp Red Shortcut 2
-    0x00999, // Swamp Discontinuous 1
-    0x0099D, // Swamp Discontinuous 2
-    0x009A0, // Swamp Discontinuous 3
-    0x009A1, // Swamp Discontinuous 4
-    0x00007, // Swamp Rotation Tutorial 1
-    0x00008, // Swamp Rotation Tutorial 2
-    0x00009, // Swamp Rotation Tutorial 3
-    0x0000A, // Swamp Rotation Tutorial 4
-    0x009AB, // Swamp Blue Underwater 1
-    0x009AD, // Swamp Blue Underwater 2
-    0x009AE, // Swamp Blue Underwater 3
-    0x009AF, // Swamp Blue Underwater 4
-    0x00006, // Swamp Blue Underwater 5
-    0x003B2, // Swamp Rotation Advanced 1
-    0x00A1E, // Swamp Rotation Advanced 2
-    0x00C2E, // Swamp Rotation Advanced 3
-    0x00E3A, // Swamp Rotation Advanced 4
-    0x009A6, // Swamp Purple Tetris
-    0x00002, // Swamp Teal Underwater 1
-    0x00004, // Swamp Teal Underwater 2
-    0x00005, // Swamp Teal Underwater 3
-    0x013E6, // Swamp Teal Underwater 4
-    0x00596, // Swamp Teal Underwater 5
-    0x00001, // Swamp Red Underwater 1
-    0x014D2, // Swamp Red Underwater 2
-    0x014D4, // Swamp Red Underwater 3
-    0x014D1, // Swamp Red Underwater 4
-    0x17C05, // Swamp Laser Shortcut 1
-    0x17C02, // Swamp Laser Shortcut 2
-    0x17F9B, // Jungle Discard
-    0x09FD3, // Mountain 2 Rainbow 1
-    0x09FD4, // Mountain 2 Rainbow 2
-    0x09FD6, // Mountain 2 Rainbow 3
-    0x09FD7, // Mountain 2 Rainbow 4
-    0x09FD8, // Mountain 2 Rainbow 5
-    0x17F93, // Mountain 2 Discard
-    0x17FA2, // Mountain 3 Secret Door
-    0x17C42, // Mountainside Discard
-    0x00FF8, // UTM Entrance Door
-    0x0A16B, // UTM Green Dots 1
-    0x0A2CE, // UTM Green Dots 2
-    0x0A2D7, // UTM Green Dots 3
-    0x0A2DD, // UTM Green Dots 4
-    0x0008F, // UTM Invisible Dots 1
-    0x0006B, // UTM Invisible Dots 2
-    0x0008B, // UTM Invisible Dots 3
-    0x0008C, // UTM Invisible Dots 4
-    0x0008A, // UTM Invisible Dots 5
-    0x00089, // UTM Invisible Dots 6
-    0x0006A, // UTM Invisible Dots 7
-    0x0006C, // UTM Invisible Dots 8
-    0x021D7, // UTM Mountainside Shortcut
-    0x00B71, // UTM Quarry
-    0x01A31, // UTM Rainbow
-    0x32962, // UTM Swamp
-    0x32966, // UTM Treehouse
-    0x17CF2, // UTM Waterfall Shortcut
-    0x00A72, // UTM Blue Cave In
-    0x009A4, // UTM Blue Discontinuous
-    0x008B8, // UTM Blue Left 1
-    0x00973, // UTM Blue Left 2
-    0x0097B, // UTM Blue Left 3
-    0x0097D, // UTM Blue Left 4
-    0x0097E, // UTM Blue Left 5
-    0x00994, // UTM Blue Right Far 1
-    0x334D5, // UTM Blue Right Far 2
-    0x00995, // UTM Blue Right Far 3
-    0x00996, // UTM Blue Right Far 4
-    0x00998, // UTM Blue Right Far 5
-    0x00190, // UTM Blue Right Near 1
-    0x006FE, // UTM Blue Right Near 4
-    0x0A16E, // UTM Challenge Entrance
-    0x039B4, // Tunnels Theater Catwalk
+    SHADOWS_TUT_1 = 0x198B5, // Shadows Tutorial 1
+    SHADOWS_TUT_2 = 0x198BD, // Shadows Tutorial 2
+    SHADOWS_TUT_3 = 0x198BF, // Shadows Tutorial 3
+    SHADOWS_TUT_4 = 0x19771, // Shadows Tutorial 4
+    SHADOWS_TUT_5 = 0x0A8DC, // Shadows Tutorial 5
+    SHADOWS_TUT_6 = 0x0AC74, // Shadows Tutorial 6
+    SHADOWS_TUT_7 = 0x0AC7A, // Shadows Tutorial 7
+    SHADOWS_TUT_8 = 0x0A8E0, // Shadows Tutorial 8
+    SHADOWS_AVOID_1 = 0x386FA, // Shadows Avoid 1
+    SHADOWS_AVOID_2 = 0x1C33F, // Shadows Avoid 2
+    SHADOWS_AVOID_3 = 0x196E2, // Shadows Avoid 3
+    SHADOWS_AVOID_4 = 0x1972A, // Shadows Avoid 4
+    SHADOWS_AVOID_5 = 0x19809, // Shadows Avoid 5
+    SHADOWS_AVOID_6 = 0x19806, // Shadows Avoid 6
+    SHADOWS_AVOID_7 = 0x196F8, // Shadows Avoid 7
+    SHADOWS_AVOID_8 = 0x1972F, // Shadows Avoid 8
+    SHADOWS_FOLLOW_1 = 0x19797, // Shadows Follow 1
+    SHADOWS_FOLLOW_2 = 0x1979A, // Shadows Follow 2
+    SHADOWS_FOLLOW_3 = 0x197E0, // Shadows Follow 3
+    SHADOWS_FOLLOW_4 = 0x197E8, // Shadows Follow 4
+    SHADOWS_FOLLOW_5 = 0x197E5, // Shadows Follow 5
+    SHADOWS_LASER = 0x19650, // Shadows Laser
 
-    0x0A3B5, // Tutorial Back Left
-};
+    TREEHOUSE_ENTER_1 = 0x0288C, // Treehouse Door 1
+    TREEHOUSE_ENTER_2 = 0x02886, // Treehouse Door 2
+    TREEHOUSE_YELLOW_1 = 0x17D72, // Treehouse Yellow 1
+    TREEHOUSE_YELLOW_2 = 0x17D8F, // Treehouse Yellow 2
+    TREEHOUSE_YELLOW_3 = 0x17D74, // Treehouse Yellow 3
+    TREEHOUSE_YELLOW_4 = 0x17DAC, // Treehouse Yellow 4
+    TREEHOUSE_YELLOW_5 = 0x17D9E, // Treehouse Yellow 5
+    TREEHOUSE_YELLOW_6 = 0x17DB9, // Treehouse Yellow 6
+    TREEHOUSE_YELLOW_7 = 0x17D9C, // Treehouse Yellow 7
+    TREEHOUSE_YELLOW_8 = 0x17DC2, // Treehouse Yellow 8
+    TREEHOUSE_YELLOW_9 = 0x17DC4, // Treehouse Yellow 9
+    TREEHOUSE_YELLOW_DOOR = 0x0A182, // Treehouse Door 3
+    TREEHOUSE_PURPLE_A1 = 0x17DC8, // Treehouse First Purple 1
+    TREEHOUSE_PURPLE_A2 = 0x17DC7, // Treehouse First Purple 2
+    TREEHOUSE_PURPLE_A3 = 0x17CE4, // Treehouse First Purple 3
+    TREEHOUSE_PURPLE_A4 = 0x17D2D, // Treehouse First Purple 4
+    TREEHOUSE_PURPLE_A5 = 0x17D6C, // Treehouse First Purple 5
+    TREEHOUSE_PURPLE_B1 = 0x17D9B, // Treehouse Second Purple 1
+    TREEHOUSE_PURPLE_B2 = 0x17D99, // Treehouse Second Purple 2
+    TREEHOUSE_PURPLE_B3 = 0x17DAA, // Treehouse Second Purple 3
+    TREEHOUSE_PURPLE_B4 = 0x17D97, // Treehouse Second Purple 4
+    TREEHOUSE_PURPLE_B5 = 0x17BDF, // Treehouse Second Purple 5
+    TREEHOUSE_PURPLE_B6 = 0x17D91, // Treehouse Second Purple 6
+    TREEHOUSE_PURPLE_B7 = 0x17DC6, // Treehouse Second Purple 7
+    TREEHOUSE_ORANGE_L1 = 0x17DB3, // Treehouse Left Orange 1
+    TREEHOUSE_ORANGE_L2 = 0x17DB5, // Treehouse Left Orange 2
+    TREEHOUSE_ORANGE_L3 = 0x17DB6, // Treehouse Left Orange 3
+    TREEHOUSE_ORANGE_L4 = 0x17DC0, // Treehouse Left Orange 4
+    TREEHOUSE_ORANGE_L5 = 0x17DD7, // Treehouse Left Orange 5
+    TREEHOUSE_ORANGE_L6 = 0x17DD9, // Treehouse Left Orange 6
+    TREEHOUSE_ORANGE_L7 = 0x17DB8, // Treehouse Left Orange 7
+    TREEHOUSE_ORANGE_L8 = 0x17DDC, // Treehouse Left Orange 8
+    TREEHOUSE_ORANGE_L9 = 0x17DD1, // Treehouse Left Orange 9 (Pivot)
+    TREEHOUSE_ORANGE_L10 = 0x17DDE, // Treehouse Left Orange 10
+    TREEHOUSE_ORANGE_L11 = 0x17DE3, // Treehouse Left Orange 11
+    TREEHOUSE_ORANGE_L12 = 0x17DEC, // Treehouse Left Orange 12
+    TREEHOUSE_ORANGE_L13 = 0x17DAE, // Treehouse Left Orange 13
+    TREEHOUSE_ORANGE_L14 = 0x17DB0, // Treehouse Left Orange 14
+    TREEHOUSE_ORANGE_L15 = 0x17DDB, // Treehouse Left Orange 15
+    TREEHOUSE_ORANGE_DISCARD = 0x17FA0, // Treehouse Laser Discard
+    TREEHOUSE_ORANGE_R1 = 0x17D88, // Treehouse Right Orange 1
+    TREEHOUSE_ORANGE_R2 = 0x17DB4, // Treehouse Right Orange 2
+    TREEHOUSE_ORANGE_R3 = 0x17D8C, // Treehouse Right Orange 3
+    TREEHOUSE_ORANGE_R4 = 0x17CE3, // Treehouse Right Orange 4 (Pivot)
+    TREEHOUSE_ORANGE_R5 = 0x17DCD, // Treehouse Right Orange 5
+    TREEHOUSE_ORANGE_R6 = 0x17DB2, // Treehouse Right Orange 6
+    TREEHOUSE_ORANGE_R7 = 0x17DCC, // Treehouse Right Orange 7
+    TREEHOUSE_ORANGE_R8 = 0x17DCA, // Treehouse Right Orange 8
+    TREEHOUSE_ORANGE_R9 = 0x17D8E, // Treehouse Right Orange 9
+    TREEHOUSE_ORANGE_R10 = 0x17DB7, // Treehouse Right Orange 10 (Pivot)
+    TREEHOUSE_ORANGE_R11 = 0x17DB1, // Treehouse Right Orange 11
+    TREEHOUSE_ORANGE_R12 = 0x17DA2, // Treehouse Right Orange 12
+    TREEHOUSE_GREEN_1 = 0x17E3C, // Treehouse Green 1
+    TREEHOUSE_GREEN_2 = 0x17E4D, // Treehouse Green 2
+    TREEHOUSE_GREEN_3 = 0x17E4F, // Treehouse Green 3
+    TREEHOUSE_GREEN_4 = 0x17E52, // Treehouse Green 4 (Pivot)
+    TREEHOUSE_GREEN_5 = 0x17E5B, // Treehouse Green 5
+    TREEHOUSE_GREEN_6 = 0x17E5F, // Treehouse Green 6
+    TREEHOUSE_GREEN_7 = 0x17E61, // Treehouse Green 7
+    TREEHOUSE_GREEN_DISCARD = 0x17FA9, // Treehouse Green Bridge Discard
+    TREEHOUSE_EXIT = 0x037FF, // Treehouse Drawbridge (Control)
+    
+    KEEP_HEDGE_1 = 0x00139, // Keep Hedges 1
+    KEEP_HEDGE_2 = 0x019DC, // Keep Hedges 2
+    KEEP_HEDGE_3 = 0x019E7, // Keep Hedges 3
+    KEEP_HEDGE_4 = 0x01A0F, // Keep Hedges 4
+    KEEP_HEDGE_LASER = 0x0360E, // Keep Front Laser
+    KEEP_PRESSURE_1 = 0x033EA, // Keep Yellow Pressure Plates (Needed for EP)
+    KEEP_PRESSURE_2 = 0x01BE9, // Keep Purple Pressure Plates (Needed for EP)
+    KEEP_PRESSURE_3 = 0x01CD3, // Keep Green Pressure Plates (Needed for EP)
+    KEEP_PRESSURE_4 = 0x01D3F, // Keep Blue Pressure Plates (Needed for EP)
+    KEEP_PRESSURE_LASER = 0x03317, // Keep Back Laser
+    KEEP_DISCARD = 0x17D27, // Keep Discard
+    SHIPWRECK_DISCARD = 0x17D28, // Shipwreck Discard
+    SHIPWRECK_VAULT = 0x00AFB, // Shipwreck Vault
 
-std::vector<int> utmElevatorControls = {
-	0x335AB, // UTM In Elevator Control
-	0x3369D, // UTM Lower Elevator Control
-	0x335AC, // UTM Upper Elevator Control
-};
+    TOWN_SYM = 0x18590, // Town Transparent
+    TOWN_SHADOW = 0x28AE3, // Town Wire
+    TOWN_APPLE = 0x28938, // Town Apple Tree
+    TOWN_TRIPLE = 0x079DF, // Town Triple
+    TOWN_RED = 0x28B39, // Town Red Hexagonal
+    TOWN_MAZE = 0x28A79, // Town Maze
+    TOWN_BRIDGE = 0x2896A, // Town Bridge (Control)
+    TOWN_BLUE_1 = 0x28AC7, // Town Blue 1
+    TOWN_BLUE_2 = 0x28AC8, // Town Blue 2
+    TOWN_BLUE_3 = 0x28ACA, // Town Blue 3
+    TOWN_BLUE_4 = 0x28ACB, // Town Blue 4
+    TOWN_BLUE_5 = 0x28ACC, // Town Blue 5
+    TOWN_ROOF_DISCARD = 0x17C71, // Town Rooftop Discard
+    TOWN_DOT_1 = 0x2899C, // Town 25 Dots 1
+    TOWN_DOT_2 = 0x28A33, // Town 25 Dots 2
+    TOWN_DOT_3 = 0x28ABF, // Town 25 Dots 3
+    TOWN_DOT_4 = 0x28AC0, // Town 25 Dots 4
+    TOWN_DOT_5 = 0x28AC1, // Town 25 Dots 5
+    TOWN_DOT_FINAL = 0x28AD9, // Town Eraser
+    TOWN_STAR = 0x28A0D, // Town Church Stars
+    TOWN_LATTICE = 0x28A69, // Town Lattice
+    TOWN_GLASS = 0x28998, // Town Green Door
+    TOWN_SOUND_WAVE = 0x034E4, // Town Soundproof Waves
+    TOWN_SOUND_DOT = 0x034E3, // Town Soundproof Dots
+    TOWN_RGB_CONTROL = 0x334D8, // Town RGB Light Control (Control)
+    TOWN_RGB_L = 0x03C0C, // Town RGB Stones
+    TOWN_RGB_R = 0x03C08, // Town RGB Stars
+    TOWN_CRATE = 0x0A0C8, // Town Orange Crate
+    TOWN_CRATE_DISCARD = 0x17D01, // Town Orange Crate Discard
+    TOWN_WINDMILL_ENTER = 0x17F5F, // Town Windmill Door
+    TOWN_WINDMILL_CONTROL = 0x17D02, // Town Windmill Control (Control)
+    THEATER_ENTER = 0x17F89, // Theater Entrance
+    THEATER_DISCARD = 0x17CF7, // Theater Discard
+    THEATER_EXIT_L = 0x0A168, // Theater Sun Exit
+    THEATER_EXIT_R = 0x33AB2, // Theater Corona Exit
 
-std::vector<int> treehousePivotSet = {
-	0x17DD1, // Treehouse Left Orange 9
-	0x17CE3, // Treehouse Right Orange 4
-	0x17DB7, // Treehouse Right Orange 10
-	0x17E52, // Treehouse Green 4
-};
+    MONASTERY_TREE = 0x09D9B, // Monastery Bonsai
+    MONASTERY_OUTSIDE_1 = 0x00290, // Monastery Exterior 1
+    MONASTERY_OUTSIDE_2 = 0x00038, // Monastery Exterior 2
+    MONASTERY_OUTSIDE_3 = 0x00037, // Monastery Exterior 3
+    MONASTERY_INSIDE_1 = 0x193A7, // Monastery Interior 1
+    MONASTERY_INSIDE_2 = 0x193AA, // Monastery Interior 2
+    MONASTERY_INSIDE_3 = 0x193AB, // Monastery Interior 3
+    MONASTERY_INSIDE_4 = 0x193A6, // Monastery Interior 4
 
-std::vector<int> utmPerspectiveSet = {
-	0x288EA, // UTM Perspective 1
-	0x288FC, // UTM Perspective 2
-	0x289E7, // UTM Perspective 3
-	0x288AA, // UTM Perspective 4
-};
+    BUNKER_ENTER = 0x17C2E, // Bunker Entry Door
+    BUNKER_A1 = 0x09F7D, // Bunker Tutorial 1
+    BUNKER_A2 = 0x09FDC, // Bunker Tutorial 2
+    BUNKER_A3 = 0x09FF7, // Bunker Tutorial 3
+    BUNKER_A4 = 0x09F82, // Bunker Tutorial 4
+    BUNKER_A5 = 0x09FF8, // Bunker Tutorial 5
+    BUNKER_B1 = 0x09D9F, // Bunker Advanced 1
+    BUNKER_B2 = 0x09DA1, // Bunker Advanced 2
+    BUNKER_B3 = 0x09DA2, // Bunker Advanced 3
+    BUNKER_B4 = 0x09DAF, // Bunker Advanced 4
+    BUNKER_GLASS_1 = 0x0A010, // Bunker Glass 1
+    BUNKER_GLASS_2 = 0x0A01B, // Bunker Glass 2
+    BUNKER_GLASS_3 = 0x0A01F, // Bunker Glass 3
+    BUNKER_PINK_1 = 0x17E63, // Bunker Ultraviolet 1
+    BUNKER_PINK_2 = 0x17E67, // Bunker Ultraviolet 2
+    BUNKER_ELEVATOR = 0x0A079, // Bunker Elevator
 
-std::vector<int> symmetryLaserYellows = {
-	0x00A52, // Symmetry Island Laser Yellow 1
-	0x00A57, // Symmetry Island Laser Yellow 2
-	0x00A5B, // Symmetry Island Laser Yellow 3
-};
+    SWAMP_ENTER = 0x0056E, 
+    SWAMP_TUT_A1 = 0x00469, // Swamp Tutorial 1
+    SWAMP_TUT_A2 = 0x00472, // Swamp Tutorial 2
+    SWAMP_TUT_A3 = 0x00262, // Swamp Tutorial 3
+    SWAMP_TUT_A4 = 0x00474, // Swamp Tutorial 4
+    SWAMP_TUT_A5 = 0x00553, // Swamp Tutorial 5
+    SWAMP_TUT_A6 = 0x0056F, // Swamp Tutorial 6
+    SWAMP_TUT_B1 = 0x00390, // Swamp Tutorial 7
+    SWAMP_TUT_B2 = 0x010CA, // Swamp Tutorial 8
+    SWAMP_TUT_B3 = 0x00983, // Swamp Tutorial 9
+    SWAMP_TUT_B4 = 0x00984, // Swamp Tutorial 10
+    SWAMP_TUT_B5 = 0x00986, // Swamp Tutorial 11
+    SWAMP_TUT_B6 = 0x00985, // Swamp Tutorial 12
+    SWAMP_TUT_B7 = 0x00987, // Swamp Tutorial 13
+    SWAMP_TUT_B8 = 0x181A9, // Swamp Tutorial 14
+    SWAMP_SLIDING_BRIDGE = 0x00609, // Swamp Surface Sliding Bridge (Control)
+    SWAMP_RED_1 = 0x00982, // Swamp Red 1
+    SWAMP_RED_2 = 0x0097F, // Swamp Red 2
+    SWAMP_RED_3 = 0x0098F, // Swamp Red 3
+    SWAMP_RED_4 = 0x00990, // Swamp Red 4
+    SWAMP_RED_SHORTCUT_1 = 0x17C0D, // Swamp Red Shortcut 1
+    SWAMP_RED_SHORTCUT_2 = 0x17C0E, // Swamp Red Shortcut 2
+    SWAMP_DISJOINT_1 = 0x00999, // Swamp Discontinuous 1
+    SWAMP_DISJOINT_2 = 0x0099D, // Swamp Discontinuous 2
+    SWAMP_DISJOINT_3 = 0x009A0, // Swamp Discontinuous 3
+    SWAMP_DISJOINT_4 = 0x009A1, // Swamp Discontinuous 4
+    SWAMP_ROTATE_A1 = 0x00007, // Swamp Rotation Tutorial 1
+    SWAMP_ROTATE_A2 = 0x00008, // Swamp Rotation Tutorial 2
+    SWAMP_ROTATE_A3 = 0x00009, // Swamp Rotation Tutorial 3
+    SWAMP_ROTATE_A4 = 0x0000A, // Swamp Rotation Tutorial 4
+    SWAMP_ROTATING_BRIDGE = 0x181F5, // Swamp Rotating Bridge (Control)
+    SWAMP_ROTATE_B1 = 0x003B2, // Swamp Rotation Advanced 1
+    SWAMP_ROTATE_B2 = 0x00A1E, // Swamp Rotation Advanced 2
+    SWAMP_ROTATE_B3 = 0x00C2E, // Swamp Rotation Advanced 3
+    SWAMP_ROTATE_B4 = 0x00E3A, // Swamp Rotation Advanced 4
+    SWAMP_FLOODGATE = 0x17E2B, // Swamp Flood Gate (Control)
+    SWAMP_PURPLE = 0x009A6, // Swamp Purple Tetris
+    SWAMP_SLIDING_BRIDGE_2 = 0x18488, // Swamp Underwater Sliding Bridge (Control)
+    SWAMP_NEG_A1 = 0x009AB, // Swamp Blue Underwater 1
+    SWAMP_NEG_A2 = 0x009AD, // Swamp Blue Underwater 2
+    SWAMP_NEG_A3 = 0x009AE, // Swamp Blue Underwater 3
+    SWAMP_NEG_A4 = 0x009AF, // Swamp Blue Underwater 4
+    SWAMP_NEG_A5 = 0x00006, // Swamp Blue Underwater 5
+    SWAMP_NEG_B1 = 0x00002, // Swamp Teal Underwater 1
+    SWAMP_NEG_B2 = 0x00004, // Swamp Teal Underwater 2
+    SWAMP_NEG_B3 = 0x00005, // Swamp Teal Underwater 3
+    SWAMP_NEG_B4 = 0x013E6, // Swamp Teal Underwater 4
+    SWAMP_NEG_B5 = 0x00596, // Swamp Teal Underwater 5
+    SWAMP_NEG_C1 = 0x00001, // Swamp Red Underwater 1
+    SWAMP_NEG_C2 = 0x014D2, // Swamp Red Underwater 2
+    SWAMP_NEG_C3 = 0x014D4, // Swamp Red Underwater 3
+    SWAMP_NEG_C4 = 0x014D1, // Swamp Red Underwater 4
+    SWAMP_ISLAND_1 = 0x17C0A, // Swamp Island 1 (Control)
+    SWAMP_ISLAND_2 = 0x17E07, // Swamp Island 2 (Control)
+    SWAMP_EXIT_1 = 0x17C05, // Swamp Laser Shortcut 1
+    SWAMP_EXIT_2 = 0x17C02, // Swamp Laser Shortcut 2
 
-std::vector<int> symmetryLaserBlues = {
-	0x00A61, // Symmetry Island Laser Blue 1
-	0x00A64, // Symmetry Island Laser Blue 2
-	0x00A68, // Symmetry Island Laser Blue 3
-};
+    JUNGLE_DISCARD = 0x17F9B, // Jungle Discard
+    JUNGLE_WAVE_1 = 0x002C4, // Jungle Waves 1
+    JUNGLE_WAVE_2 = 0x00767, // Jungle Waves 2
+    JUNGLE_WAVE_3 = 0x002C6, // Jungle Waves 3
+    JUNGLE_WAVE_4 = 0x0070E, // Jungle Waves 4
+    JUNGLE_WAVE_5 = 0x0070F, // Jungle Waves 5
+    JUNGLE_WAVE_6 = 0x0087D, // Jungle Waves 6
+    JUNGLE_WAVE_7 = 0x002C7, // Jungle Waves 7
+    JUNGLE_DOT_1 = 0x0026D, // Jungle Dots 1
+    JUNGLE_DOT_2 = 0x0026E, // Jungle Dots 2
+    JUNGLE_DOT_3 = 0x0026F, // Jungle Dots 3
+    JUNGLE_DOT_4 = 0x00C3F, // Jungle Dots 4
+    JUNGLE_DOT_5 = 0x00C41, // Jungle Dots 5
+    JUNGLE_DOT_6 = 0x014B2, // Jungle Dots 6
+    JUNGLE_VAULT = 0x15ADD, // Jungle Vault
+    JUNGLE_TO_MONASTERY = 0x17CAA, // Jungle Courtyard Gate
 
-std::vector<int> pillars = {
-	0x0383D, // Mountain 3 Left Pillar 1
-	0x0383F, // Mountain 3 Left Pillar 2
-	0x03859, // Mountain 3 Left Pillar 3
-	0x339BB, // Mountain 3 Left Pillar 4
-	0x3C113, // Mountain 3 Left Open Door
-	0x0383A, // Mountain 3 Right Pillar 1
-	0x09E56, // Mountain 3 Right Pillar 2
-	0x09E5A, // Mountain 3 Right Pillar 3
-	0x33961, // Mountain 3 Right Pillar 4
-	0x3C114, // Mountain 3 Right Open Door
-//	0x09DD5, // UTM Challenge Pillar
-};
+    MOUNTAIN_OUTSIDE_DISCARD = 0x17C42, // Mountainside Discard
+    MOUNTAIN_VAULT = 0x002A6, // Mountainside Vault
+    MOUNTAIN_TOP = 0x17C34, // Mountaintop Perspective (Multi-generate)
+    MOUNTAIN_PURPLE_BRIDGE = 0x09E39, // Mountain 1 Purple Pathway (Don't use shapes)
+    MOUNTAIN_ORANGE_1 = 0x09E73, // Mountain 1 Orange 1
+    MOUNTAIN_ORANGE_2 = 0x09E75, // Mountain 1 Orange 2
+    MOUNTAIN_ORANGE_3 = 0x09E78, // Mountain 1 Orange 3
+    MOUNTAIN_ORANGE_4 = 0x09E79, // Mountain 1 Orange 4
+    MOUNTAIN_ORANGE_5 = 0x09E6C, // Mountain 1 Orange 5
+    MOUNTAIN_ORANGE_6 = 0x09E6F, // Mountain 1 Orange 6
+    MOUNTAIN_ORANGE_7 = 0x09E6B, // Mountain 1 Orange 7
+    MOUNTAIN_PURPLE_1 = 0x09EAD, // Mountain 1 Purple 1
+    MOUNTAIN_PURPLE_2 = 0x09EAF, // Mountain 1 Purple 2
+    MOUNTAIN_GREEN_1 = 0x09E7A, // Mountain 1 Green 1
+    MOUNTAIN_GREEN_2 = 0x09E71, // Mountain 1 Green 2
+    MOUNTAIN_GREEN_3 = 0x09E72, // Mountain 1 Green 3
+    MOUNTAIN_GREEN_4 = 0x09E69, // Mountain 1 Green 4
+    MOUNTAIN_GREEN_5 = 0x09E7B, // Mountain 1 Green 5
+    MOUNTAIN_BLUE_1 = 0x33AF5, // Mountain 1 Blue 1
+    MOUNTAIN_BLUE_2 = 0x33AF7, // Mountain 1 Blue 2
+    MOUNTAIN_BLUE_3 = 0x09F6E, // Mountain 1 Blue 3
+    MOUNTAIN_RAINBOW_1 = 0x09FD3, // Mountain 2 Rainbow 1
+    MOUNTAIN_RAINBOW_2 = 0x09FD4, // Mountain 2 Rainbow 2
+    MOUNTAIN_RAINBOW_3 = 0x09FD6, // Mountain 2 Rainbow 3
+    MOUNTAIN_RAINBOW_4 = 0x09FD7, // Mountain 2 Rainbow 4
+    MOUNTAIN_RAINBOW_5 = 0x09FD8, // Mountain 2 Rainbow 5
+    MOUNTAIN_BLUE_BRIDGE = 0x09E86, // Mountain 2 Blue Pathway (Needed for EP)
+    MOUNTAIN_ORANGE_BRIDGE = 0x09ED8, // Mountain 2 Orange Pathway (Needed for EP)
+    MOUNTAIN_MULTI_1 = 0x09FCC, // Mountain 2 Multipanel 1
+    MOUNTAIN_MULTI_2 = 0x09FCE, // Mountain 2 Multipanel 2
+    MOUNTAIN_MULTI_3 = 0x09FCF, // Mountain 2 Multipanel 3
+    MOUNTAIN_MULTI_4 = 0x09FD0, // Mountain 2 Multipanel 4
+    MOUNTAIN_MULTI_5 = 0x09FD1, // Mountain 2 Multipanel 5
+    MOUNTAIN_MULTI_6 = 0x09FD2, // Mountain 2 Multipanel 6
+    MOUNTAIN_INSIDE_DISCARD = 0x17F93, // Mountain 2 Discard
+    MOUNTAIN_META_DR = 0x09F8E, // Mountain 3 Near Right Floor
+    MOUNTAIN_META_DL = 0x09FC1, // Mountain 3 Near Left Floor
+    MOUNTAIN_META_UR = 0x09F01, // Mountain 3 Far Right Floor
+    MOUNTAIN_META_UL = 0x09EFF, // Mountain 3 Far Left Floor
+    MOUNTAIN_META_FLOOR = 0x09FDA, // Mountain 3 Giant Floor
+    MOUNTAIN_SECRET_DOOR = 0x17FA2, // Mountain 3 Secret Door
+    MOUNTAIN_TIMED_L = 0x01983, // Mountain 3 Left Peekaboo
+    MOUNTAIN_TIMED_R = 0x01987, // Mountain 3 Right Peekaboo
+    MOUNTAIN_PILLAR_L1 = 0x0383D, // Mountain 3 Left Pillar 1
+    MOUNTAIN_PILLAR_L2 = 0x0383F, // Mountain 3 Left Pillar 2
+    MOUNTAIN_PILLAR_L3 = 0x03859, // Mountain 3 Left Pillar 3
+    MOUNTAIN_PILLAR_L4 = 0x339BB, // Mountain 3 Left Pillar 4
+    MOUNTAIN_PILLAR_R1 = 0x0383A, // Mountain 3 Right Pillar 1
+    MOUNTAIN_PILLAR_R2 = 0x09E56, // Mountain 3 Right Pillar 2
+    MOUNTAIN_PILLAR_R3 = 0x09E5A, // Mountain 3 Right Pillar 3
+    MOUNTAIN_PILLAR_R4 = 0x33961, // Mountain 3 Right Pillar 4
 
-std::vector<int> challengePanels = {
-	0x0A332, // Challenge Record Start
-	0x0088E, // Challenge Easy Maze
-	0x00BAF, // Challenge Hard Maze
-	0x00BF3, // Challenge Stones Maze
-	0x00C09, // Challenge Pedestal
-	0x0051F, // Challenge Column Bottom Left
-	0x00524, // Challenge Column Top Right
-	0x00CDB, // Challenge Column Top Left
-	0x00CD4, // Challenge Column Far Panel
-	0x00C80, // Challenge Triple 1 Left
-	0x00CA1, // Challenge Triple 1 Center
-	0x00CB9, // Challenge Triple 1 Right
-	0x00C22, // Challenge Triple 2 Left
-	0x00C59, // Challenge Triple 2 Center
-	0x00C68, // Challenge Triple 2 Right
-//	0x04CB3, // Challenge Left Timer
-//	0x04CB5, // Challenge Middle Timer
-//	0x04CB6, // Challenge Right Timer
-	0x034EC, // Challenge Triangle
-	0x034F4, // Challenge Triangle
-	0x1C31A, // Challenge Left Pillar
-	0x1C319, // Challenge Right Pillar
-//	0x0356B, // Challenge Vault Box
-};
+    CAVES_ENTER = 0x00FF8, // UTM Entrance Door
+    CAVES_ELEVATOR_IN = 0x335AB, // UTM In Elevator Control
+    CAVES_ELEVATOR_LOWER = 0x3369D, // UTM Lower Elevator Control
+    CAVES_ELEVATOR_UPPER = 0x335AC, // UTM Upper Elevator Control
+    CAVES_SHAPE_L1 = 0x008B8, // UTM Blue Left 1
+    CAVES_SHAPE_L2 = 0x00973, // UTM Blue Left 2
+    CAVES_SHAPE_L3 = 0x0097B, // UTM Blue Left 3
+    CAVES_SHAPE_L4 = 0x0097D, // UTM Blue Left 4
+    CAVES_SHAPE_L5 = 0x0097E, // UTM Blue Left 5
+    CAVES_SHAPE_R1 = 0x00190, // UTM Blue Right Near 1
+    CAVES_SHAPE_R2 = 0x00558, // UTM Blue Right Near 2
+    CAVES_SHAPE_R3 = 0x00567, // UTM Blue Right Near 3
+    CAVES_SHAPE_R4 = 0x006FE, // UTM Blue Right Near 4
+    CAVES_SHAPE_B1 = 0x00994, // UTM Blue Right Far 1
+    CAVES_SHAPE_B2 = 0x334D5, // UTM Blue Right Far 2
+    CAVES_SHAPE_B3 = 0x00995, // UTM Blue Right Far 3
+    CAVES_SHAPE_B4 = 0x00996, // UTM Blue Right Far 4
+    CAVES_SHAPE_B5 = 0x00998, // UTM Blue Right Far 5
+    CAVES_SHAPE_SYM1 = 0x01A0D, // UTM Blue Hard Symmetry
+    CAVES_SHAPE_SYM2 = 0x018A0, // UTM Blue Easy Symmetry
+    CAVES_SHAPE_NEG = 0x00A72, // UTM Blue Cave In
+    CAVES_SHAPE_DISJOINT = 0x009A4, // UTM Blue Discontinuous
+    CAVES_QUARRY = 0x00B71, // UTM Quarry
+    CAVES_RAINBOW = 0x01A31, // UTM Rainbow
+    CAVES_TREEHOUSE = 0x32966, // UTM Treehouse
+    CAVES_SWAMP = 0x32962, // UTM Swamp
+    CAVES_PERSPECTIVE_1 = 0x288EA, // UTM Perspective 1
+    CAVES_PERSPECTIVE_2 = 0x288FC, // UTM Perspective 2
+    CAVES_PERSPECTIVE_3 = 0x289E7, // UTM Perspective 3 
+    CAVES_PERSPECTIVE_4 = 0x288AA, // UTM Perspective 4
+    CAVES_DOT_1 = 0x0A16B, // UTM Green Dots 1
+    CAVES_DOT_2 = 0x0A2CE, // UTM Green Dots 2
+    CAVES_DOT_3 = 0x0A2D7, // UTM Green Dots 3
+    CAVES_DOT_4 = 0x0A2DD, // UTM Green Dots 4
+    CAVES_DOT_5 = 0x0A2EA, // UTM Green Dots 5
+    CAVES_DOT_6 = 0x17FB9, // UTM Green Dots 6
+    CAVES_INVISIBLE_1 = 0x0008F, // UTM Invisible Dots 1
+    CAVES_INVISIBLE_2 = 0x0006B, // UTM Invisible Dots 2
+    CAVES_INVISIBLE_3 = 0x0008B, // UTM Invisible Dots 3
+    CAVES_INVISIBLE_4 = 0x0008C, // UTM Invisible Dots 4
+    CAVES_INVISIBLE_5 = 0x0008A, // UTM Invisible Dots 5
+    CAVES_INVISIBLE_6 = 0x00089, // UTM Invisible Dots 6
+    CAVES_INVISIBLE_7 = 0x0006A, // UTM Invisible Dots 7
+    CAVES_INVISIBLE_8 = 0x0006C, // UTM Invisible Dots 8
+    CAVES_INVISIBLE_SYM1 = 0x00027, // UTM Invisible Dots Symmetry 1
+    CAVES_INVISIBLE_SYM2 = 0x00028, // UTM Invisible Dots Symmetry 2
+    CAVES_INVISIBLE_SYM3 = 0x00029, // UTM Invisible Dots Symmetry 3
+    CAVES_TRIANGLE_EXIT = 0x17CF2, // UTM Waterfall Shortcut
+    CAVES_STAR_EXIT = 0x021D7, // UTM Mountainside Shortcut
+    CAVES_PILLAR = 0x09DD5, // UTM Challenge Pillar
+    CAVES_CHALLENGE_ENTER = 0x0A16E, // UTM Challenge Entrance
+    CAVES_THEATER_WALK = 0x039B4, // Tunnels Theater Catwalk
+    CAVES_TOWN_EXIT = 0x09E85, // Tunnels Town Shortcut
 
-std::vector<int> mountainMultipanel = {
-	0x09FCC, // Mountain 2 Multipanel 1
-	0x09FCE, // Mountain 2 Multipanel 2
-	0x09FCF, // Mountain 2 Multipanel 3
-	0x09FD0, // Mountain 2 Multipanel 4
-	0x09FD1, // Mountain 2 Multipanel 5
-	0x09FD2, // Mountain 2 Multipanel 6
-};
+    CHALLENGE_BEGIN_1 = 0x0088E, // Challenge Easy Maze
+    CHALLENGE_BEGIN_2 = 0x00BAF, // Challenge Hard Maze
+    CHALLENGE_BEGIN_3 = 0x00BF3, // Challenge Stones Maze
+    CHALLENGE_MAZE = 0x00C09, // Challenge Pedestal
+    CHALLENGE_COLUMN_HIGH = 0x00524, // Challenge Column Top Right
+    CHALLENGE_COLUMN_MID = 0x00CDB, // Challenge Column Top Left
+    CHALLENGE_COLUMN_LOW = 0x0051F, // Challenge Column Bottom Left
+    CHALLENGE_COLUMN_FAR = 0x00CD4, // Challenge Column Far Panel
+    CHALLENGE_TRIPLE_A1 = 0x00C80, // Challenge Triple 1 Left
+    CHALLENGE_TRIPLE_A2 = 0x00CA1, // Challenge Triple 1 Center
+    CHALLENGE_TRIPLE_A3 = 0x00CB9, // Challenge Triple 1 Right
+    CHALLENGE_TRIPLE_B1 = 0x00C22, // Challenge Triple 2 Left
+    CHALLENGE_TRIPLE_B2 = 0x00C59, // Challenge Triple 2 Center
+    CHALLENGE_TRIPLE_B3 = 0x00C68, // Challenge Triple 2 Right
+    CHALLENGE_TRIANGLE_1 = 0x034EC, // Challenge Triangle
+    CHALLENGE_TRIANGLE_2 = 0x034F4, // Challenge Triangle
+    CHALLENGE_PILLAR_L = 0x1C31A, // Challenge Left Pillar
+    CHALLENGE_PILLAR_R = 0x1C319, // Challenge Right Pillar
 
-std::vector<int> squarePanels = {
-    0x00064, // Tutorial Straight
-    0x00182, // Tutorial Bend
-    0x0A3B2, // Tutorial Back Right
-    0x00295, // Tutorial Center Left
-    0x00293, // Tutorial Front Center
-    0x002C2, // Tutorial Front Left
-    0x0005D, // Outside Tutorial Dots Tutorial 1
-    0x0005E, // Outside Tutorial Dots Tutorial 2
-    0x0005F, // Outside Tutorial Dots Tutorial 3
-    0x00060, // Outside Tutorial Dots Tutorial 4
-    0x00061, // Outside Tutorial Dots Tutorial 5
-    0x018AF, // Outside Tutorial Stones Tutorial 1
-    0x0001B, // Outside Tutorial Stones Tutorial 2
-    0x012C9, // Outside Tutorial Stones Tutorial 3
-    0x0001C, // Outside Tutorial Stones Tutorial 4
-    0x0001D, // Outside Tutorial Stones Tutorial 5
-    0x0001E, // Outside Tutorial Stones Tutorial 6
-    0x0001F, // Outside Tutorial Stones Tutorial 7
-    0x00020, // Outside Tutorial Stones Tutorial 8
-    0x00021, // Outside Tutorial Stones Tutorial 9
-    0x033D4, // Outside Tutorial Vault
-    0x0A171, // Tutorial Optional Door 1
-    0x04CA4, // Tutorial Optional Door 2
-    0x17CFB, // Outside Tutorial Discard
-    0x3C12B, // Glass Factory Discard
-    0x01A54, // Glass Factory Entry
-    0x00086, // Glass Factory Vertical Symmetry 1
-    0x00087, // Glass Factory Vertical Symmetry 2
-    0x00059, // Glass Factory Vertical Symmetry 3
-    0x00062, // Glass Factory Vertical Symmetry 4
-    0x0008D, // Glass Factory Rotational Symmetry 1
-    0x00081, // Glass Factory Rotational Symmetry 2
-    0x00083, // Glass Factory Rotational Symmetry 3
-    0x00084, // Glass Factory Melting 1
-    0x00082, // Glass Factory Melting 2
-    0x0343A, // Glass Factory Melting 3
-    0x000B0, // Symmetry Island Door 1
-    0x00022, // Symmetry Island Black Dots 1
-    0x00023, // Symmetry Island Black Dots 2
-    0x00024, // Symmetry Island Black Dots 3
-    0x00025, // Symmetry Island Black Dots 4
-    0x00026, // Symmetry Island Black Dots 5
-    0x0007C, // Symmetry Island Colored Dots 1
-    0x0007E, // Symmetry Island Colored Dots 2
-    0x00075, // Symmetry Island Colored Dots 3
-    0x00073, // Symmetry Island Colored Dots 4
-    0x00077, // Symmetry Island Colored Dots 5
-    0x00079, // Symmetry Island Colored Dots 6
-    0x00065, // Symmetry Island Fading Lines 1
-    0x0006D, // Symmetry Island Fading Lines 2
-    0x00072, // Symmetry Island Fading Lines 3
-    0x0006F, // Symmetry Island Fading Lines 4
-    0x00070, // Symmetry Island Fading Lines 5
-    0x00071, // Symmetry Island Fading Lines 6
-    0x00076, // Symmetry Island Fading Lines 7
-    0x17CE7, // Desert Discard
-    0x0CC7B, // Desert Vault
-    0x01E5A, // Mill Entry Door Left
-    0x01E59, // Mill Entry Door Right
-    0x00E0C, // Mill Lower Row 1
-    0x01489, // Mill Lower Row 2
-    0x0148A, // Mill Lower Row 3
-    0x014D9, // Mill Lower Row 4
-    0x014E7, // Mill Lower Row 5
-    0x014E8, // Mill Lower Row 6
-    0x00557, // Mill Upper Row 1
-    0x005F1, // Mill Upper Row 2
-    0x00620, // Mill Upper Row 3
-    0x009F5, // Mill Upper Row 4
-    0x0146C, // Mill Upper Row 5
-    0x3C12D, // Mill Upper Row 6
-    0x03686, // Mill Upper Row 7
-    0x014E9, // Mill Upper Row 8
-    0x0367C, // Mill Control Room 1
-    0x3C125, // Mill Control Room 2
-    0x03677, // Mill Stairs Control
-    0x17CF0, // Mill Discard
-    0x021D5, // Boathouse Ramp Activation Shapers
-    0x034D4, // Boathouse Ramp Activation Stars
-    0x021B3, // Boathouse Erasers and Shapers 1
-    0x021B4, // Boathouse Erasers and Shapers 2
-    0x021B0, // Boathouse Erasers and Shapers 3
-    0x021AF, // Boathouse Erasers and Shapers 4
-    0x021AE, // Boathouse Erasers and Shapers 5
-    0x021B5, // Boathouse Erasers and Stars 1
-    0x021B6, // Boathouse Erasers and Stars 2
-    0x021B7, // Boathouse Erasers and Stars 3
-    0x021BB, // Boathouse Erasers and Stars 4
-    0x09DB5, // Boathouse Erasers and Stars 5
-    0x09DB1, // Boathouse Erasers and Stars 6
-    0x3C124, // Boathouse Erasers and Stars 7
-    0x09DB3, // Boathouse Erasers Shapers and Stars 1
-    0x09DB4, // Boathouse Erasers Shapers and Stars 2
-    0x0A3CB, // Boathouse Erasers Shapers and Stars 3
-    0x0A3CC, // Boathouse Erasers Shapers and Stars 4
-    0x0A3D0, // Boathouse Erasers Shapers and Stars 5
-    0x09E57, // Quarry Entry Gate 1
-    0x17C09, // Quarry Entry Gate 2
-    0x0288C, // Treehouse Door 1
-    0x02886, // Treehouse Door 2
-    0x17D72, // Treehouse Yellow 1
-    0x17D8F, // Treehouse Yellow 2
-    0x17D74, // Treehouse Yellow 3
-    0x17DAC, // Treehouse Yellow 4
-    0x17D9E, // Treehouse Yellow 5
-    0x17DB9, // Treehouse Yellow 6
-    0x17D9C, // Treehouse Yellow 7
-    0x17DC2, // Treehouse Yellow 8
-    0x17DC4, // Treehouse Yellow 9
-    0x0A182, // Treehouse Door 3
-    0x17DC8, // Treehouse First Purple 1
-    0x17DC7, // Treehouse First Purple 2
-    0x17CE4, // Treehouse First Purple 3
-    0x17D2D, // Treehouse First Purple 4
-    0x17D6C, // Treehouse First Purple 5
-    0x17D9B, // Treehouse Second Purple 1
-    0x17D99, // Treehouse Second Purple 2
-    0x17DAA, // Treehouse Second Purple 3
-    0x17D97, // Treehouse Second Purple 4
-    0x17BDF, // Treehouse Second Purple 5
-    0x17D91, // Treehouse Second Purple 6
-    0x17DC6, // Treehouse Second Purple 7
-    0x17DB3, // Treehouse Left Orange 1
-    0x17DB5, // Treehouse Left Orange 2
-    0x17DB6, // Treehouse Left Orange 3
-    0x17DC0, // Treehouse Left Orange 4
-    0x17DD7, // Treehouse Left Orange 5
-    0x17DD9, // Treehouse Left Orange 6
-    0x17DB8, // Treehouse Left Orange 7
-    0x17DDC, // Treehouse Left Orange 8
-    0x17DDE, // Treehouse Left Orange 10
-    0x17DE3, // Treehouse Left Orange 11
-    0x17DEC, // Treehouse Left Orange 12
-    0x17DAE, // Treehouse Left Orange 13
-    0x17DB0, // Treehouse Left Orange 14
-    0x17DDB, // Treehouse Left Orange 15
-    0x17D88, // Treehouse Right Orange 1
-    0x17DB4, // Treehouse Right Orange 2
-    0x17D8C, // Treehouse Right Orange 3
-    0x17DCD, // Treehouse Right Orange 5
-    0x17DB2, // Treehouse Right Orange 6
-    0x17DCC, // Treehouse Right Orange 7
-    0x17DCA, // Treehouse Right Orange 8
-    0x17D8E, // Treehouse Right Orange 9
-    0x17DB1, // Treehouse Right Orange 11
-    0x17DA2, // Treehouse Right Orange 12
-    0x17E3C, // Treehouse Green 1
-    0x17E4D, // Treehouse Green 2
-    0x17E4F, // Treehouse Green 3
-    0x17E5B, // Treehouse Green 5
-    0x17E5F, // Treehouse Green 6
-    0x17E61, // Treehouse Green 7
-    0x17FA9, // Treehouse Green Bridge Discard
-    0x17FA0, // Treehouse Laser Discard
-    0x00139, // Keep Hedges 1
-    0x019DC, // Keep Hedges 2
-    0x019E7, // Keep Hedges 3
-    0x01A0F, // Keep Hedges 4
-    0x0360E, // Keep Front Laser
-    0x03317, // Keep Back Laser
-    0x17D27, // Keep Discard
-    0x17D28, // Shipwreck Discard
-    0x00AFB, // Shipwreck Vault
-    0x2899C, // Town 25 Dots 1
-    0x28A33, // Town 25 Dots 2
-    0x28ABF, // Town 25 Dots 3
-    0x28AC0, // Town 25 Dots 4
-    0x28AC1, // Town 25 Dots 5
-    0x28938, // Town Apple Tree
-    0x28AC7, // Town Blue 1
-    0x28AC8, // Town Blue 2
-    0x28ACA, // Town Blue 3
-    0x28ACB, // Town Blue 4
-    0x28ACC, // Town Blue 5
-    0x28A0D, // Town Church Stars
-    0x28AD9, // Town Eraser
-    0x28998, // Town Green Door
-    0x0A0C8, // Town Orange Crate
-    0x17D01, // Town Orange Crate Discard
-    0x03C08, // Town RGB Stars
-    0x03C0C, // Town RGB Stones
-    0x17C71, // Town Rooftop Discard
-    0x17F5F, // Town Windmill Door
-    0x17F89, // Theater Entrance
-    0x17CF7, // Theater Discard
-    0x33AB2, // Theater Corona Exit
-    0x0A168, // Theater Sun Exit
-    0x00B10, // Monastery Left Door
-    0x00C92, // Monastery Right Door
-    0x17C2E, // Bunker Entry Door
-    0x00469, // Swamp Tutorial 1
-    0x00472, // Swamp Tutorial 2
-    0x00262, // Swamp Tutorial 3
-    0x00474, // Swamp Tutorial 4
-    0x00553, // Swamp Tutorial 5
-    0x0056F, // Swamp Tutorial 6
-    0x00390, // Swamp Tutorial 7
-    0x010CA, // Swamp Tutorial 8
-    0x00983, // Swamp Tutorial 9
-    0x00984, // Swamp Tutorial 10
-    0x00986, // Swamp Tutorial 11
-    0x00985, // Swamp Tutorial 12
-    0x00987, // Swamp Tutorial 13
-    0x181A9, // Swamp Tutorial 14
-    0x00982, // Swamp Red 1
-    0x0097F, // Swamp Red 2
-    0x0098F, // Swamp Red 3
-    0x00990, // Swamp Red 4
-    0x17C0D, // Swamp Red Shortcut 1
-    0x17C0E, // Swamp Red Shortcut 2
-    0x00999, // Swamp Discontinuous 1
-    0x0099D, // Swamp Discontinuous 2
-    0x009A0, // Swamp Discontinuous 3
-    0x009A1, // Swamp Discontinuous 4
-    0x00007, // Swamp Rotation Tutorial 1
-    0x00008, // Swamp Rotation Tutorial 2
-    0x00009, // Swamp Rotation Tutorial 3
-    0x0000A, // Swamp Rotation Tutorial 4
-    0x009AB, // Swamp Blue Underwater 1
-    0x009AD, // Swamp Blue Underwater 2
-    0x009AE, // Swamp Blue Underwater 3
-    0x009AF, // Swamp Blue Underwater 4
-    0x00006, // Swamp Blue Underwater 5
-    0x003B2, // Swamp Rotation Advanced 1
-    0x00A1E, // Swamp Rotation Advanced 2
-    0x00C2E, // Swamp Rotation Advanced 3
-    0x00E3A, // Swamp Rotation Advanced 4
-    0x009A6, // Swamp Purple Tetris
-    0x00002, // Swamp Teal Underwater 1
-    0x00004, // Swamp Teal Underwater 2
-    0x00005, // Swamp Teal Underwater 3
-    0x013E6, // Swamp Teal Underwater 4
-    0x00596, // Swamp Teal Underwater 5
-    0x00001, // Swamp Red Underwater 1
-    0x014D2, // Swamp Red Underwater 2
-    0x014D4, // Swamp Red Underwater 3
-    0x014D1, // Swamp Red Underwater 4
-    0x17C05, // Swamp Laser Shortcut 1
-    0x17C02, // Swamp Laser Shortcut 2
-    0x17F9B, // Jungle Discard
-    0x09E73, // Mountain 1 Orange 1
-    0x09E75, // Mountain 1 Orange 2
-    0x09E78, // Mountain 1 Orange 3
-    0x09E79, // Mountain 1 Orange 4
-    0x09E6C, // Mountain 1 Orange 5
-    0x09E6F, // Mountain 1 Orange 6
-    0x09E6B, // Mountain 1 Orange 7
-    0x09EAD, // Mountain 1 Purple 1
-    0x09EAF, // Mountain 1 Purple 2
-    0x09E7A, // Mountain 1 Green 1
-    0x09E71, // Mountain 1 Green 2
-    0x09E72, // Mountain 1 Green 3
-    0x09E69, // Mountain 1 Green 4
-    0x09E7B, // Mountain 1 Green 5
-    0x09FD3, // Mountain 2 Rainbow 1
-    0x09FD4, // Mountain 2 Rainbow 2
-    0x09FD6, // Mountain 2 Rainbow 3
-    0x09FD7, // Mountain 2 Rainbow 4
-    0x09FD8, // Mountain 2 Rainbow 5
-    0x17F93, // Mountain 2 Discard
-    0x17FA2, // Mountain 3 Secret Door
-    0x17C42, // Mountainside Discard
-    0x002A6, // Mountainside Vault
-    0x0042D, // Mountaintop River
-    0x00FF8, // UTM Entrance Door
-    0x0A16B, // UTM Green Dots 1
-    0x0A2CE, // UTM Green Dots 2
-    0x0A2D7, // UTM Green Dots 3
-    0x0A2DD, // UTM Green Dots 4
-    0x0A2EA, // UTM Green Dots 5
-    0x17FB9, // UTM Green Dots 6
-    0x0008F, // UTM Invisible Dots 1
-    0x0006B, // UTM Invisible Dots 2
-    0x0008B, // UTM Invisible Dots 3
-    0x0008C, // UTM Invisible Dots 4
-    0x0008A, // UTM Invisible Dots 5
-    0x00089, // UTM Invisible Dots 6
-    0x0006A, // UTM Invisible Dots 7
-    0x0006C, // UTM Invisible Dots 8
-    0x00027, // UTM Invisible Dots Symmetry 1
-    0x00028, // UTM Invisible Dots Symmetry 2
-    0x00029, // UTM Invisible Dots Symmetry 3
-    0x021D7, // UTM Mountainside Shortcut
-    0x00B71, // UTM Quarry
-    0x01A31, // UTM Rainbow
-    0x32962, // UTM Swamp
-    0x32966, // UTM Treehouse
-    0x17CF2, // UTM Waterfall Shortcut
-    0x00A72, // UTM Blue Cave In
-    0x009A4, // UTM Blue Discontinuous
-    0x018A0, // UTM Blue Easy Symmetry
-    0x01A0D, // UTM Blue Hard Symmetry
-    0x008B8, // UTM Blue Left 1
-    0x00973, // UTM Blue Left 2
-    0x0097B, // UTM Blue Left 3
-    0x0097D, // UTM Blue Left 4
-    0x0097E, // UTM Blue Left 5
-    0x00994, // UTM Blue Right Far 1
-    0x334D5, // UTM Blue Right Far 2
-    0x00995, // UTM Blue Right Far 3
-    0x00996, // UTM Blue Right Far 4
-    0x00998, // UTM Blue Right Far 5
-    0x00190, // UTM Blue Right Near 1
-    0x00558, // UTM Blue Right Near 2
-    0x00567, // UTM Blue Right Near 3
-    0x006FE, // UTM Blue Right Near 4
-    0x0A16E, // UTM Challenge Entrance
-    0x039B4, // Tunnels Theater Catwalk
-    0x09E85, // Tunnels Town Shortcut
-};
+    //CONTROLS - Attempting to load these into a Panel object will probably fail.
 
-std::vector<int> arrowPanels = {
-    0x17CFB, // Outside Tutorial Discard
-    0x3C12B, // Glass Factory Discard
-    0x17CE7, // Desert Discard
-    0x17CF0, // Mill Discard
-    0x17FA9, // Treehouse Green Bridge Discard
-    0x17FA0, // Treehouse Laser Discard
-    0x17D27, // Keep Discard
-    0x17D28, // Shipwreck Discard
-    0x17D01, // Town Orange Crate Discard
-    0x17C71, // Town Rooftop Discard
-    0x17CF7, // Theater Discard
-    0x17F9B, // Jungle Discard
-    0x17F93, // Mountain 2 Discard
-    0x17FA2, // Mountain 3 Secret Door
-    0x17C42, // Mountainside Discard
-    0x00FF8, // UTM Entrance Door
-    0x0A16B, // UTM Green Dots 1
-    0x0A2CE, // UTM Green Dots 2
-    0x0A2D7, // UTM Green Dots 3
-    0x0A2DD, // UTM Green Dots 4
-    0x0A2EA, // UTM Green Dots 5
-    0x17FB9, // UTM Green Dots 6
-    0x0008F, // UTM Invisible Dots 1
-    0x0006B, // UTM Invisible Dots 2
-    0x0008B, // UTM Invisible Dots 3
-    0x0008C, // UTM Invisible Dots 4
-    0x0008A, // UTM Invisible Dots 5
-    0x00089, // UTM Invisible Dots 6
-    0x0006A, // UTM Invisible Dots 7
-    0x0006C, // UTM Invisible Dots 8
-    0x00027, // UTM Invisible Dots Symmetry 1
-    0x00028, // UTM Invisible Dots Symmetry 2
-    0x00029, // UTM Invisible Dots Symmetry 3
-    0x021D7, // UTM Mountainside Shortcut
-    0x00B71, // UTM Quarry
-    0x01A31, // UTM Rainbow
-    0x32962, // UTM Swamp
-    0x32966, // UTM Treehouse
-    0x17CF2, // UTM Waterfall Shortcut
-    0x00A72, // UTM Blue Cave In
-    0x009A4, // UTM Blue Discontinuous
-    0x018A0, // UTM Blue Easy Symmetry
-    0x01A0D, // UTM Blue Hard Symmetry
-    0x008B8, // UTM Blue Left 1
-    0x00973, // UTM Blue Left 2
-    0x0097B, // UTM Blue Left 3
-    0x0097D, // UTM Blue Left 4
-    0x0097E, // UTM Blue Left 5
-    0x00994, // UTM Blue Right Far 1
-    0x334D5, // UTM Blue Right Far 2
-    0x00995, // UTM Blue Right Far 3
-    0x00996, // UTM Blue Right Far 4
-    0x00998, // UTM Blue Right Far 5
-    0x00190, // UTM Blue Right Near 1
-    0x00558, // UTM Blue Right Near 2
-    0x00567, // UTM Blue Right Near 3
-    0x006FE, // UTM Blue Right Near 4
-    0x0A16E, // UTM Challenge Entrance
-    0x039B4, // Tunnels Theater Catwalk
-    0x09E85, // Tunnels Town Shortcut
-};
+    BOAT_MAP = 0x34D96, // Boat Map
+    BOAT_SPEED = 0x34C7F, // Boat Speed Control
+    SYM_BOAT = 0x17CC8, // Glass Factory Summon Boat
+    QUARRY_BOAT = 0x17CA6, // Boathouse Summon Boat
+    TOWN_BOAT = 0x0A054, // Town Summon Boat
+    JUNGLE_BOAT = 0x17CDF, // Jungle Summon Boat
+    TREEHOUSE_BOAT = 0x17C95, // Treehouse Summon Boat
+    SWAMP_BOAT = 0x09DB8, // Swamp Summon Boat
 
-std::vector<int> glassPanels = {
-    0x01A54, // Glass Factory Entry
-    0x00086, // Glass Factory Vertical Symmetry 1
-    0x00087, // Glass Factory Vertical Symmetry 2
-    0x00059, // Glass Factory Vertical Symmetry 3
-    0x00062, // Glass Factory Vertical Symmetry 4
-    0x0008D, // Glass Factory Rotational Symmetry 1
-    0x00081, // Glass Factory Rotational Symmetry 2
-    0x00083, // Glass Factory Rotational Symmetry 3
-    0x00084, // Glass Factory Melting 1
-    0x00082, // Glass Factory Melting 2
-    0x0343A, // Glass Factory Melting 3
-    0x000B0, // Symmetry Island Door 1
-    0x00022, // Symmetry Island Black Dots 1
-    0x00023, // Symmetry Island Black Dots 2
-    0x00024, // Symmetry Island Black Dots 3
-    0x00025, // Symmetry Island Black Dots 4
-    0x00026, // Symmetry Island Black Dots 5
-    0x0007C, // Symmetry Island Colored Dots 1
-    0x0007E, // Symmetry Island Colored Dots 2
-    0x00075, // Symmetry Island Colored Dots 3
-    0x00073, // Symmetry Island Colored Dots 4
-    0x00077, // Symmetry Island Colored Dots 5
-    0x00079, // Symmetry Island Colored Dots 6
-    0x00065, // Symmetry Island Fading Lines 1
-    0x0006D, // Symmetry Island Fading Lines 2
-    0x00072, // Symmetry Island Fading Lines 3
-    0x0006F, // Symmetry Island Fading Lines 4
-    0x00070, // Symmetry Island Fading Lines 5
-    0x00071, // Symmetry Island Fading Lines 6
-    0x00076, // Symmetry Island Fading Lines 7
-    0x28998, // Town Green Door
-};
+    DESERT_SUN_3_CONTROL = 0x09FA0, // Desert Surface 3 Control
+    DESERT_SUN_8_CONTROL = 0x09F86, // Desert Surface 8 Control
+    DESERT_SUN_EXIT = 0x0C339, // Desert Surface Door
+    DESERT_LIGHT_CONTROL = 0x09FAA, // Desert Lightswitch
+    DESERT_POND_EXIT = 0x0A249, // Desert Pond Exit Door
+    DESERT_FLOOD_DRAIN_BL = 0x1C2DF, // Desert Flood Control Lower Far Left
+    DESERT_FLOOD_DRAIN_BR = 0x1831E, // Desert Flood Control Lower Far Right
+    DESERT_FLOOD_DRAIN_FL = 0x1C260, // Desert Flood Control Lower Near Left
+    DESERT_FLOOD_DRAIN_FR = 0x1831C, // Desert Flood Control Lower Near Right
+    DESERT_FLOOD_RAISE_BL = 0x1C2F3, // Desert Flood Control Raise Far Left
+    DESERT_FLOOD_RAISE_BR = 0x1831D, // Desert Flood Control Raise Far Right
+    DESERT_FLOOD_RAISE_FL = 0x1C2B1, // Desert Flood Control Raise Near Left
+    DESERT_FLOOD_RAISE_FR = 0x1831B, // Desert Flood Control Raise Near Right
+    DESERT_TILT_CONTROL = 0x0A015, // Desert Final Far Control
 
-std::vector<int> squarePanelsExpertBanned = {
-    0x09E7A, // Mountain 1 Green 1
-    0x09E71, // Mountain 1 Green 2
-    0x09E72, // Mountain 1 Green 3
-    0x09E69, // Mountain 1 Green 4
-    0x09E7B, // Mountain 1 Green 5
-};
+    MILL_OUTSIDE_EXIT = 0x275ED, // Mill EP Door
+    MILL_STAIRS_EXIT = 0x17CAC, // Mill Stairs Shortcut Door
+    BOATHOUSE_SHORTCUT = 0x38663, // Boathouse Shortcut
 
-std::vector<int> desertPanels = {
-	0x00698, // Desert Surface 1
-	0x0048F, // Desert Surface 2
-	0x09F92, // Desert Surface 3
-	0x0A036, // Desert Surface 4
-	0x09DA6, // Desert Surface 5
-	0x0A049, // Desert Surface 6
-	0x0A053, // Desert Surface 7
-	0x09F94, // Desert Surface 8
-	0x00422, // Desert Light 1
-	0x006E3, // Desert Light 2
-	0x0A02D, // Desert Light 3
-	0x00C72, // Desert Pond 1
-	0x0129D, // Desert Pond 2
-	0x008BB, // Desert Pond 3
-	0x0078D, // Desert Pond 4
-	0x18313, // Desert Pond 5
-	0x04D18, // Desert Flood 1
-	0x01205, // Desert Flood 2
-	0x181AB, // Desert Flood 3
-	0x0117A, // Desert Flood 4
-	0x17ECA, // Desert Flood 5
-//	0x18076, // Desert Flood Exit
-//	0x0A15C, // Desert Final Left Convex
-//	0x09FFF, // Desert Final Left Concave
-//	0x0A15F, // Desert Final Near
-	0x012D7, // Desert Final Far
-};
+    KEEP_RESET_1 = 0x0A3A8, // Keep Yellow Reset
+    KEEP_RESET_2 = 0x0A3B9, // Keep Purple Reset
+    KEEP_RESET_3 = 0x0A3BB, // Keep Green Reset
+    KEEP_RESET_4 = 0x0A3AD, // Keep Blue Reset
+    KEEP_SHADOWS_EXIT = 0x09E49, // Keep Shadows Shortcut
+    KEEP_SHORTCUT = 0x0361B, // Keep Tower Shortcut
 
-std::vector<int> desertPanelsWide = {
-    0x0A15C, //wide desert panel curve 1
-    0x09FFF, //wide desert panel curve 2
-};
+    SHADOWS_TIMER_1 = 0x334DC, // Shadows Inner Door Control
+    SHADOWS_TIMER_2 = 0x334DB, // Shadows Outer Door Control
 
-std::vector<int> orchard{
-    0x00143, // Orchard Apple Tree 1
-    0x0003B, // Orchard Apple Tree 2
-    0x00055, // Orchard Apple Tree 3
-    0x032F7, // Orchard Apple Tree 4
-    0x032FF, // Orchard Apple Tree 5
-};
+    TOWN_REDIRECT = 0x09F98, // Town Laser Redirect Control
 
-std::vector<int> transparent = {
-    0x009B8, // Symmetry Island Transparent 1
-    0x003E8, // Symmetry Island Transparent 2
-    0x00A15, // Symmetry Island Transparent 3
-    0x00B53, // Symmetry Island Transparent 4
-    0x00B8D, // Symmetry Island Transparent 5
-};
+    MONASTERY_ENTER_L = 0x00B10, // Monastery Left Door
+    MONASTERY_ENTER_R = 0x00C92, // Monastery Right Door
+    MONASTERY_EXIT = 0x03713, // Monastery Shortcut
 
-std::vector<int> shadowsPanels = {
-	0x198B5, // Shadows Tutorial 1
-	0x198BD, // Shadows Tutorial 2
-	0x198BF, // Shadows Tutorial 3
-	0x19771, // Shadows Tutorial 4
-	0x0A8DC, // Shadows Tutorial 5
-	0x0AC74, // Shadows Tutorial 6
-	0x0AC7A, // Shadows Tutorial 7
-	0x0A8E0, // Shadows Tutorial 8
-	0x386FA, // Shadows Avoid 1
-	0x1C33F, // Shadows Avoid 2
-	0x196E2, // Shadows Avoid 3
-	0x1972A, // Shadows Avoid 4
-	0x19809, // Shadows Avoid 5
-	0x19806, // Shadows Avoid 6
-	0x196F8, // Shadows Avoid 7
-	0x1972F, // Shadows Avoid 8
-	0x19797, // Shadows Follow 1
-	0x1979A, // Shadows Follow 2
-	0x197E0, // Shadows Follow 3
-	0x197E8, // Shadows Follow 4
-	0x197E5, // Shadows Follow 5
-	0x19650, // Shadows Laser
-};
+    BUNKER_GLASS_ENTER = 0x0A099, // Bunker Glass Door
+    BUNKER_PINK_OPEN = 0x34BC5, // Bunker Open Ultraviolet
+    BUNKER_PINK_CLOSE = 0x34BC6, // Bunker Close Ultraviolet
 
-std::vector<int> monasteryPanels = {
-	0x00B10, // Monastery Left Door
-	0x00C92, // Monastery Right Door
-	0x00290, // Monastery Exterior 1
-	0x00038, // Monastery Exterior 2
-	0x00037, // Monastery Exterior 3
-//	0x09D9B, // Monastery Bonsai
-	0x193A7, // Monastery Interior 1
-	0x193AA, // Monastery Interior 2
-	0x193AB, // Monastery Interior 3
-	0x193A6, // Monastery Interior 4
-//	0x03713, // Monastery Shortcut
-	0x17CA4, // Monastery Laser
-};
+    TREEHOUSE_TIMER_1 = 0x2700B, // Treehouse Exterior Door Control
+    TREEHOUSE_TIMER_2 = 0x17CBC, // Treehouse Interior Door Control
 
-std::vector<int> bunkerPanels = {
-	0x09F7D, // Bunker Tutorial 1
-	0x09FDC, // Bunker Tutorial 2
-	0x09FF7, // Bunker Tutorial 3
-	0x09F82, // Bunker Tutorial 4
-	0x09FF8, // Bunker Tutorial 5
-	0x09D9F, // Bunker Advanced 1
-	0x09DA1, // Bunker Advanced 2
-	0x09DA2, // Bunker Advanced 3
-	0x09DAF, // Bunker Advanced 4
-//	0x0A099, // Bunker Glass Door
-	0x0A010, // Bunker Glass 1
-	0x0A01B, // Bunker Glass 2
-	0x0A01F, // Bunker Glass 3
-	0x17E63, // Bunker Ultraviolet 1
-	0x17E67, // Bunker Ultraviolet 2
-	0x34BC5, // Bunker Open Ultraviolet
-	0x34BC6, // Bunker Close Ultraviolet
-	0x0A079, // Bunker Elevator
-};
+    JUNGLE_POPUP = 0x17CAB, // Jungle Pop-up Wall
+    JUNGLE_EXIT = 0x337FA, // Jungle Shortcut
 
-std::vector<int> junglePanels = {
-	0x002C4, // Jungle Waves 1
-	0x00767, // Jungle Waves 2
-	0x002C6, // Jungle Waves 3
-	0x0070E, // Jungle Waves 4
-	0x0070F, // Jungle Waves 5
-	0x0087D, // Jungle Waves 6
-	0x002C7, // Jungle Waves 7
-//	0x17CAB, // Jungle Pop-up Wall
-	0x0026D, // Jungle Dots 1
-	0x0026E, // Jungle Dots 2
-	0x0026F, // Jungle Dots 3
-	0x00C3F, // Jungle Dots 4
-	0x00C41, // Jungle Dots 5
-	0x014B2, // Jungle Dots 6
-	0x03616, // Jungle Laser
-};
+    MOUNTAIN_LASER_BOX = 0x09F7F, // Mountaintop Laser Box
+    MOUNTAIN_RIVER = 0x0042D, // Mountaintop River
+    MOUNTAIN_ELEVATOR = 0x09EEB, // Mountain 2 Elevator
 
-// There might be something to do with these, I haven't decided yet.
-std::vector<int> nothingPanels = {
-// Doors & Shortcuts & Shortcut doors & Door controls
-	0x0C339, // Desert Surface Door
-	0x0A249, // Desert Pond Exit Door
-	0x275ED, // Mill EP Door
-	0x17CAC, // Mill Stairs Shortcut Door
-	0x38663, // Boathouse Shortcut
-	0x09E49, // Keep Shadows Shortcut
-	0x0361B, // Keep Tower Shortcut
-	0x334DC, // Shadows Inner Door Control
-	0x334DB, // Shadows Outer Door Control
-	0x2700B, // Treehouse Exterior Door Control
-	0x17CBC, // Treehouse Interior Door Control
-	0x337FA, // Jungle Shortcut
+    END_ELEVATOR_CLOSE_L = 0x3D9A6, // Mountain 3 Left Close Door
+    END_ELEVATOR_CLOSE_R = 0x3D9A7, // Mountain 3 Right Close Door
+    END_ELEVATOR_OPEN_L = 0x3C113, // Mountain 3 Left Open Door
+    END_ELEVATOR_OPEN_R = 0x3C114, // Mountain 3 Right Open Door
+    END_ELEVATOR_L = 0x3D9AA, // Mountain 3 Left Activate Elevator
+    END_ELEVATOR_R = 0x3D9A8, // Mountain 3 Right Activate Elevator
+    END_ELEVATOR_FINAL = 0x3D9A9, // Mountain 3 Launch Elevator
 
-// Controls (?)
-	0x09FA0, // Desert Surface 3 Control
-	0x09F86, // Desert Surface 8 Control
-	0x1C2DF, // Desert Flood Control Lower Far Left
-	0x1831E, // Desert Flood Control Lower Far Right
-	0x1C260, // Desert Flood Control Lower Near Left
-	0x1831C, // Desert Flood Control Lower Near Right
-	0x1C2F3, // Desert Flood Control Raise Far Left
-	0x1831D, // Desert Flood Control Raise Far Right
-	0x1C2B1, // Desert Flood Control Raise Near Left
-	0x1831B, // Desert Flood Control Raise Near Right
-	0x0A015, // Desert Final Far Control
-	0x03678, // Mill Lower Ramp Contol
-	0x03679, // Mill Lower Lift Control
-	0x03675, // Mill Upper Lift Control
-	0x03676, // Mill Upper Ramp Control
-	0x03852, // Boathouse Ramp Angle Control
-	0x03858, // Boathouse Ramp Position Control
-	0x275FA, // Boathouse Hook Control
-	0x037FF, // Treehouse Drawbridge Control
-	0x09F98, // Town Laser Redirect Control
-	0x334D8, // Town RGB Light Control
-	0x17E2B, // Swamp Flood Gate Control
-	0x00609, // Swamp Surface Sliding Bridge Control
-	0x18488, // Swamp Underwater Sliding Bridge Control
-	0x17C0A, // Swamp Island Control 1
-	0x17E07, // Swamp Island Control 2
-	0x181F5, // Swamp Rotating Bridge Control
+    CHALLENGE_START = 0x0A332, // Challenge Record Start
+    CHALLENGE_TIMER_L = 0x04CB3, // Challenge Left Timer
+    CHALLENGE_TIMER_M = 0x04CB5, // Challenge Middle Timer
+    CHALLENGE_TIMER_R = 0x04CB6, // Challenge Right Timer
 
-// Vault Boxes
-	0x03481, // Outside Tutorial Vault Box
-	0x0339E, // Desert Vault Box
-	0x03535, // Shipwreck Vault Box
-	0x03702, // Jungle Vault Box
-	0x03542, // Mountainside Vault Box
-	0x2FAF6, // Tunnels Vault Box
+    CAVES_DOOR_TIMER = 0x334E1, // UTM Secret Door Control
+    CAVES_DESERT_EXIT = 0x2773D, // Tunnels Desert Shortcut
+    CAVES_WINDMILL_EXIT = 0x27732, // Tunnels Theater Shortcut
 
-// Boat Summons
-	0x17CC8, // Glass Factory Summon Boat
-	0x17CA6, // Boathouse Summon Boat
-	0x17C95, // Treehouse Summon Boat
-	0x0A054, // Town Summon Boat
-	0x09DB8, // Swamp Summon Boat
-	0x17CDF, // Jungle Summon Boat
+    TUT_VAULT_BOX = 0x03481, // Outside Tutorial Vault Box
+    DESERT_VAULT_BOX = 0x0339E, // Desert Vault Box
+    SHIPWRECK_VAULT_BOX = 0x03535, // Shipwreck Vault Box
+    JUNGLE_VAULT_BOX = 0x03702, // Jungle Vault Box
+    MOUNTAIN_VAULT_BOX = 0x03542, // Mountainside Vault Box
+    CHALLENGE_VAULT_BOX = 0x0356B, // Challenge Vault Box
+    CAVES_VAULT_BOX = 0x2FAF6, // Tunnels Vault Box (For Secret Ending)
 
-// Identical sets
-	0x00143, // Orchard Apple Tree 1
-	0x0003B, // Orchard Apple Tree 2
-	0x00055, // Orchard Apple Tree 3
-	0x032F7, // Orchard Apple Tree 4
-	0x032FF, // Orchard Apple Tree 5
-	0x009B8, // Symmetry Island Transparent 1
-	0x003E8, // Symmetry Island Transparent 2
-	0x00A15, // Symmetry Island Transparent 3
-	0x00B53, // Symmetry Island Transparent 4
-	0x00B8D, // Symmetry Island Transparent 5
+    THEATER_VIDEO_INPUT = 0x00815, // Theater Video Input
+    THEATER_VIDEO_TUT = 0x03553, // Theater Tutorial Video
+    THEATER_VIDEO_DESERT = 0x03552, // Theater Desert Video
+    THEATER_VIDEO_JUNGLE = 0x0354E, // Theater Jungle Video
+    THEATER_VIDEO_SHIPWRECK = 0x0354F, // Theater Shipwreck Video
+    THEATER_VIDEO_MOUNTAIN = 0x03545, // Theater Mountain Video
+    THEATER_VIDEO_CHALLENGE = 0x03549, // Theater Challenge Video
 
-// Misc
-	0x03629, // Tutorial Gate Open
-	0x09FAA, // Desert Lightswitch
-	0x0C335, // Tutorial Pillar
-	0x0C373, // Tutorial Patio floor
-	0x1C349, // Symmetry Island Door 2 - Collision fails here, sadly
-	0x033EA, // Keep Yellow Pressure Plates
-	0x0A3A8, // Keep Yellow Reset
-	0x01BE9, // Keep Purple Pressure Plates
-	0x0A3B9, // Keep Purple Reset
-	0x01CD3, // Keep Green Pressure Plates
-	0x0A3BB, // Keep Green Reset
-	0x01D3F, // Keep Blue Pressure Plates
-	0x0A3AD, // Keep Blue Reset
-	0x2896A, // Town Bridge
-	0x28A69, // Town Lattice
-	0x28A79, // Town Maze
-	0x28B39, // Town Red Hexagonal
-	0x034E3, // Town Soundproof Dots
-	0x034E4, // Town Soundproof Waves
-	0x079DF, // Town Triple
-	0x00815, // Theater Video Input
-	0x03553, // Theater Tutorial Video
-	0x03552, // Theater Desert Video
-	0x0354E, // Theater Jungle Video
-	0x03549, // Theater Challenge Video
-	0x0354F, // Theater Shipwreck Video
-	0x03545, // Theater Mountain Video
-	0x18590, // Town Transparent
-	0x28AE3, // Town Wire
+    SYM_LASER = 0x0360D, // Symmetry Laser
+    DESERT_LASER = 0x03608, // Desert Laser
+    TOWN_LASER = 0x032F5, // Town Laser
+    TREEHOUSE_LASER = 0x03613, // Treehouse Laser
+    MONASTERY_LASER = 0x17CA4, // Monastery Laser
+    BUNKER_LASER = 0x09DE0, // Bunker Laser
+    JUNGLE_LASER = 0x03616, // Jungle Laser
+    SWAMP_LASER = 0x03615, // Swamp Laser
 
-
-	0x09E39, // Mountain 1 Purple Pathway
-//	0x33AF5, // Mountain 1 Blue 1
-//	0x33AF7, // Mountain 1 Blue 2
-//	0x09F6E, // Mountain 1 Blue 3
-//	0x09FD8, // Mountain 2 Rainbow 5
-	0x09E86, // Mountain 2 Blue Pathway
-	0x09ED8, // Mountain 2 Orange Pathway
-	0x09F8E, // Mountain 3 Near Right Floor
-	0x09FC1, // Mountain 3 Near Left Floor
-	0x09F01, // Mountain 3 Far Right Floor
-	0x09EFF, // Mountain 3 Far Left Floor
-	0x09FDA, // Mountain 3 Giant Floor
-//	0x01983, // Mountain 3 Left Peekaboo
-//	0x01987, // Mountain 3 Right Peekaboo
-//	0x3D9A6, // Mountain 3 Left Close Door
-//	0x3D9A7, // Mountain 3 Right Close Door
-//	0x3D9AA, // Mountain 3 Left Activate Elevator
-//	0x3D9A8, // Mountain 3 Right Activate Elevator
-//	0x3D9A9, // Mountain 3 Launch Elevator
-//	0x3C113, // Mountain 3 Left Open Door
-//	0x3C114, // Mountain 3 Right Open Door
-	0x09F7F, // Mountaintop Laser Box
-	0x17C34, // Mountaintop Perspective
-//	0x334E1, // UTM Secret Door Control
-//	0x2773D, // Tunnels Desert Shortcut
-//	0x27732, // Tunnels Theater Shortcut
-//	0x0A099, // Bunker Glass Door
-//	0x15ADD, // Jungle Vault
-//	0x17CAA, // Jungle Courtyard Gate
-	0x0005C, // Glass Factory Vertical Symmetry 5
-	0x17C31, // Desert Final Transparent
-	0x19650, // Shadows Laser
-	0x09EEB, // Mountain 2 Elevator
+    // Moving objects (increase OPEN_RATE to speed up)
+    
+    MV_DESERT_SUN_8 = 0x09F95,
+    MV_MILL_RAMP = 0x03839,
+    MV_MILL_LIFT = 0x021BA,
+    MV_QUARRY_ELEVATOR = 0x17CC1,
+    MV_SWAMP_SLIDING_BRIDGE = 0x0061A,
+    MV_SWAMP_FLOODGATE_1 = 0x17E74,
+    MV_SWAMP_FLOODGATE_2 = 0x1802C,
+    MV_SWAMP_ROTATING_BRIDGE = 0x005A2,
+    MV_BOATHOUSE_RAMP_ANGLE = 0x17C6A,
+    MV_BOATHOUSE_RAMP_SLIDE = 0x17F02,
+    MV_BOATHOUSE_SHORTCUT = 0x17C50,
+    MV_MOUNTAIN_ELEVATOR = 0x09EEC,
 };
