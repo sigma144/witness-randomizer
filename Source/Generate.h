@@ -66,6 +66,9 @@ public:
 	std::set<Point> openPos; //Custom set of points that can have symbols placed on
 	std::set<Point> blockPos; //Point that must be left open
 	Color backgroundColor, foregroundColor, gridColor, activeColor, successColor, failColor;
+	Color defaultPatternPointColorA = { 0.348684430f, 0.999999762f, 0.920394182f, 1.0f };
+	Color defaultPatternPointColorB = { 0.973958254f, 0.967290401f, 0.00959424675f, 1.0f };
+	Color defaultReflectionPathColor = { 1.0f, 0.975288868f, 0.430921078f, 0.0f };
 
 //Don't call these private methods in PuzzleList unless you're sure you need to!
 private:
