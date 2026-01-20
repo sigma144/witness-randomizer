@@ -17,56 +17,6 @@ Generate::Generate() {
 	resetConfig();
 }
 
-void Generate::generate(PanelID id, int symbol, int amount) {
-	PuzzleSymbols symbols({ {symbol, amount} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1,  int symbol2, int amount2, int symbol3, int amount3) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4},  {symbol5, amount5} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4},  {symbol5, amount5}, {symbol6, amount6} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4},  {symbol5, amount5}, {symbol6, amount6}, {symbol7, amount7} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4},  {symbol5, amount5}, {symbol6, amount6}, {symbol7, amount7}, {symbol8, amount8} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4},  {symbol5, amount5}, {symbol6, amount6}, {symbol7, amount7}, {symbol8, amount8}, {symbol9, amount9} });
-	while (!generate(id, symbols));
-}
-
-void Generate::generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9, int symbol10, int amount10) {
-	PuzzleSymbols symbols({ {symbol1, amount1}, {symbol2, amount2}, {symbol3, amount3}, {symbol4, amount4},  {symbol5, amount5}, {symbol6, amount6}, {symbol7, amount7}, {symbol8, amount8}, {symbol9, amount9}, {symbol10, amount10} });
-	while (!generate(id, symbols));
-}
-
 void Generate::generate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec) {
 	PuzzleSymbols symbols(symbolVec);
 	while (!generate(id, symbols));

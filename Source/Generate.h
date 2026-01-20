@@ -18,16 +18,17 @@ public:
 	Generate();
 	
 	void generate(PanelID id) { PuzzleSymbols symbols({ }); while (!generate(id, symbols)); }
-	void generate(PanelID id, int symbol, int amount);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9);
-	void generate(PanelID id, int symbol1, int amount1, int symbol2, int amount2, int symbol3, int amount3, int symbol4, int amount4, int symbol5, int amount5, int symbol6, int amount6, int symbol7, int amount7, int symbol8, int amount8, int symbol9, int amount9, int symbol10, int amount10);
+	void generateHelper(PanelID id, std::vector<std::pair<int, int>>& symbolAmounts) { generate(id, symbolAmounts); };
+	template <typename... Params>
+	void generateHelper(PanelID id, std::vector<std::pair<int, int>>& symbolAmounts, int symbol, int amount, Params... params) {
+		symbolAmounts.push_back({ symbol, amount });
+		generateHelper(id, symbolAmounts, params...);
+	};
+	template <typename... Params>
+	void generate(PanelID id, Params... params) {
+		std::vector<std::pair<int, int>> symbolAmounts;
+		generateHelper(id, symbolAmounts, params...);
+	};
 	void generate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec);
 	bool tryGenerate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec, int attempts);
 	bool tryGenerate(PanelID id, const std::vector<std::pair<int, int>>& symbolVec) { return tryGenerate(id, symbolVec, 20); }
