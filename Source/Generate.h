@@ -36,15 +36,15 @@ public:
 	};
 	
 	void generate(int id) { PuzzleSymbols symbols({ }); while (!generate(id, symbols)); }
-	void generateHelper(int id, std::vector<std::pair<int, int>>& symbolAmounts) { generate(id, symbolAmounts); };
+	void generateHelper(PanelID id, std::vector<std::pair<int, int>>& symbolAmounts) { generate(id, symbolAmounts); };
 
 	template <typename... Params>
-	void generateHelper(int id, std::vector<std::pair<int, int>>& symbolAmounts, int symbol, int amount, Params... params) {
+	void generateHelper(PanelID id, std::vector<std::pair<int, int>>& symbolAmounts, int symbol, int amount, Params... params) {
 		symbolAmounts.push_back({ symbol, amount });
 		generateHelper(id, symbolAmounts, params...);
 	};
 	template <typename... Params>
-	void generate(int id, Params... params) {
+	void generate(PanelID id, Params... params) {
 		std::vector<std::pair<int, int>> symbolAmounts;
 		generateHelper(id, symbolAmounts, params...);
 	};
