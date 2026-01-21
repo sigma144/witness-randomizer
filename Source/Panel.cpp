@@ -84,8 +84,9 @@ void Panel::write() {
 	memory->WritePanelData<int>(id, STYLE_FLAGS, style);
 	memory->WritePanelData<uintptr_t>(id, SEQUENCE, 0);
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, 0);
-	//TODO: Use PATTERN_SCALE instead
-	if (lineThickness != 1) memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, lineThickness);
+	float patternWidth = memory->ReadPanelData<float>(id, PATTERN_SCALE);
+	float preComputation = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	if (lineThickness != 1) memory->WritePanelData<float>(id, PATTERN_SCALE, { lineThickness * patternWidth / preComputation });
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, true);
 }
 
