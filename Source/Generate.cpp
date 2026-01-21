@@ -196,7 +196,6 @@ void Generate::write(PanelID id) {
 		memory->WritePanelData(id, ACTIVE_COLOR, defaultPatternPointColorA);
 	}
 	if (hasConfig(InvisibleSymmetryLine)) {
-		//TODO: Hardcode these colors instead of reading from a panel
 		memory->WritePanelData(id, REFLECTION_PATH_COLOR, defaultReflectionPathColor);
 	}
 	if (hasConfig(MatchDotColor)) {
