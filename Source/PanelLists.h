@@ -163,7 +163,6 @@ std::vector<PanelID> squarePanels = {
     KEEP_PRESSURE_LASER, // Keep Back Laser
     KEEP_DISCARD, // Keep Discard
     SHIPWRECK_DISCARD, // Shipwreck Discard
-    SHIPWRECK_VAULT, // Shipwreck Vault
 
     TOWN_BLUE_1, // Town Blue 1
     TOWN_BLUE_2, // Town Blue 2
@@ -311,7 +310,6 @@ std::vector<PanelID> squarePanels = {
 
 std::vector<PanelID> elevatorControls = {
     QUARRY_ELEVATOR,
-    MOUNTAIN_ELEVATOR,
     CAVES_ELEVATOR_IN,
     CAVES_ELEVATOR_LOWER,
     CAVES_ELEVATOR_UPPER

@@ -183,11 +183,11 @@ void Randomizer::SwapPanels(PanelID panel1, PanelID panel2, int flags) {
 		offsets[PUSH_SYMBOL_COLORS] = sizeof(int);
 		offsets[OUTER_BACKGROUND] = 16;
 		offsets[OUTER_BACKGROUND_MODE] = sizeof(int);
-		offsets[NUM_COLORED_REGIONS] = sizeof(int);
-		offsets[COLORED_REGIONS] = sizeof(void*);
+		//This variable is permanent and shouldn't be swapped again
+		offsets[PATH_WIDTH_SCALE] = sizeof(float);
 	}
 	if (flags & SWAP::PATHS) {
-		offsets[AUDIO_PREFIX] = sizeof(void*);
+		//offsets[AUDIO_PREFIX] = sizeof(void*);
 		offsets[PATH_WIDTH_SCALE] = sizeof(float);
 		offsets[STARTPOINT_SCALE] = sizeof(float);
 		offsets[NUM_DOTS] = sizeof(int);
@@ -210,8 +210,25 @@ void Randomizer::SwapPanels(PanelID panel1, PanelID panel2, int flags) {
 		offsets[DOT_SEQUENCE] = sizeof(void*);
 		offsets[DOT_SEQUENCE_LEN_REFLECTION] = sizeof(int);
 		offsets[DOT_SEQUENCE_REFLECTION] = sizeof(void*);
+		offsets[NUM_COLORED_REGIONS] = sizeof(int);
+		offsets[COLORED_REGIONS] = sizeof(void*);
 		offsets[PANEL_TARGET] = sizeof(void*);
 		offsets[SPECULAR_TEXTURE] = sizeof(void*);
+		//Color information that still must be swapped
+		//TODO: Why do the symmetry 2-color panels still have cyan lines?
+		offsets[SUCCESS_COLOR_A] = 16;
+		offsets[SUCCESS_COLOR_B] = 16;
+		offsets[STROBE_COLOR_A] = 16;
+		offsets[STROBE_COLOR_B] = 16;
+		offsets[ERROR_COLOR] = 16;
+		offsets[SYMBOL_A] = 16;
+		offsets[SYMBOL_B] = 16;
+		offsets[SYMBOL_C] = 16;
+		offsets[SYMBOL_D] = 16;
+		offsets[SYMBOL_E] = 16;
+		offsets[PUSH_SYMBOL_COLORS] = sizeof(int);
+		offsets[OUTER_BACKGROUND] = 16;
+		offsets[OUTER_BACKGROUND_MODE] = sizeof(int);
 	}
 	if (flags & SWAP::DRAWN_LINES) {
 		offsets[TRACED_EDGES] = 16;
@@ -272,21 +289,22 @@ void Randomizer::ShuffleRange(std::vector<int>& order, int startIndex,int endInd
 void Randomizer::ShufflePanels(bool hard) {
 	Memory* memory = Memory::get();
 	_alreadySwapped.clear();
+	int swapMode = HasBeenRandomized() ? SWAP::PATHS : SWAP::PATHS | SWAP::COLORS;
 
-	Randomize(elevatorControls, SWAP::PATHS | SWAP::COLORS);
-	Randomize(treehousePivotSet, SWAP::PATHS | SWAP::COLORS);
-	Randomize(utmPerspectiveSet, SWAP::PATHS | SWAP::COLORS);
+	Randomize(elevatorControls, swapMode);
+	Randomize(treehousePivotSet, swapMode);
+	Randomize(utmPerspectiveSet, swapMode);
 	if (!hard) {
-		Randomize(symmetryLaserYellows, SWAP::PATHS | SWAP::COLORS);
-		Randomize(symmetryLaserBlues, SWAP::PATHS | SWAP::COLORS);
-		Randomize(squarePanels, SWAP::PATHS | SWAP::COLORS);
+		Randomize(symmetryLaserYellows, swapMode);
+		Randomize(symmetryLaserBlues, swapMode);
+		Randomize(squarePanels, swapMode);
 	} else {
 		std::vector<PanelID> panelsToRandom = copyWithoutElements(squarePanels, squarePanelsExpertBanned);
-		Randomize(panelsToRandom, SWAP::PATHS | SWAP::COLORS);
+		Randomize(panelsToRandom, swapMode);
 	}
-	Randomize(mountainMultipanel, SWAP::PATHS | SWAP::COLORS);
+	Randomize(mountainMultipanel, swapMode);
 
-	Randomize(pillars, SWAP::PATHS | SWAP::COLORS);
+	Randomize(pillars, swapMode);
 }
 
 bool Randomizer::HasBeenPlayed() {

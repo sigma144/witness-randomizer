@@ -71,8 +71,6 @@ void Special::generateReflectionDotPuzzle(PanelID id1, PanelID id2, std::vector<
 			Point sp = puzzle->getSymPoint(dot.x, dot.y, symmetry);
 			flippedPuzzle.clearFlag(sp.x, sp.y, DOT_IS_INVISIBLE);
 		}
-		Color color = memory->ReadPanelData<Color>(id2, SUCCESS_COLOR_A);
-		memory->WritePanelData<Color>(id2, PATTERN_POINT_COLOR, { color });
 	}
 	flippedPuzzle.startpoints.clear();
 	for (Point p : puzzle->startpoints) {
@@ -195,7 +193,6 @@ void Special::generateSoundDotPuzzle(PanelID id1, PanelID id2, std::vector<int> 
 	//generator->setConfig(DisableReset);
 	generateSoundDotPuzzle(id1, { 5, 5 }, dotSequence, writeSequence);
 	gen->write(id2);
-	memory->WritePanelData(id2, PATTERN_POINT_COLOR, memory->ReadPanelData<Color>(id2, SUCCESS_COLOR_A));
 	gen->resetConfig();
 }
 
@@ -250,7 +247,6 @@ void Special::generateSoundDotReflectionPuzzle(PanelID id, Point size, std::vect
 	gen->setSymmetry(Rotational);
 	gen->setGridSize(size.x, size.y);
 	if (id != SHIPWRECK_VAULT) {
-		memory->WritePanelData(id, SUCCESS_COLOR_B, memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A));
 		gen->setSymbol(Start, 0, gen->height - 1); gen->setSymbol(Start, gen->width - 1, 0);
 		gen->setSymbol(Exit, 0, 0); gen->setSymbol(Exit, gen->width - 1, gen->height - 1);
 	}
@@ -531,11 +527,14 @@ void Special::generateRGBStonePuzzleH(PanelID id) {
 }
 
 void Special::generateRGBDotPuzzleH(PanelID id) {
-	memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, {1, 0, 0, 1});
-	memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_A, { 0, 1, 1, 1 });
-	memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_B, { 1, 1, 0, 1 });
-	memory->WritePanelData<Color>(id, ACTIVE_COLOR, { 0, 1, 1, 1 });
-	memory->WritePanelData<Color>(id, REFLECTION_PATH_COLOR, { 1, 1, 0, 1 });
+	//TODO: Doing these writes here will mess up double mode.
+	// Do the colors look correct using this config mode instead?
+	//memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, {1, 0, 0, 1});
+	//memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_A, { 0, 1, 1, 1 });
+	//memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_B, { 1, 1, 0, 1 });
+	//memory->WritePanelData<Color>(id, ACTIVE_COLOR, { 0, 1, 1, 1 });
+	//memory->WritePanelData<Color>(id, REFLECTION_PATH_COLOR, { 1, 1, 0, 1 });
+	gen->setConfig(CyanAndYellowLines);
 	gen->setGridSize(7, 7);
 	gen->setSymmetry(Rotational);
 	gen->setSymbol(Exit, 0, 14); gen->setSymbol(Exit, 14, 0);
@@ -1331,7 +1330,6 @@ void Special::initPillarSymmetry(PanelID id, Symmetry symmetry)
 	case PillarRotational:
 		gen->setSymbol(Start, 0, gen->height - 1);  gen->setSymbol(Exit, 6, gen->height - 1), gen->setSymbol(Exit, 0, 0);  gen->setSymbol(Start, 6, 0); break;
 	}
-	memory->WritePanelData<Color>(id, SUCCESS_COLOR_B, { memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A) });
 }
 
 void Special::generateSymmetryGate(PanelID id)
