@@ -190,15 +190,13 @@ void Generate::write(PanelID id) {
 		panel.colorMode = Panel::WriteColors;
 	}
 	if (hasConfig(CyanAndYellowLines)) {
-		//TODO: Hardcode these colors instead of reading from a panel
-		memory->WritePanelData(id, PATTERN_POINT_COLOR_A, memory->ReadPanelData<Color>(SYM_COLOR_1, PATTERN_POINT_COLOR_A));
-		memory->WritePanelData(id, PATTERN_POINT_COLOR_B, memory->ReadPanelData<Color>(SYM_COLOR_1, PATTERN_POINT_COLOR_B));
-		memory->WritePanelData(id, REFLECTION_PATH_COLOR, memory->ReadPanelData<Color>(SYM_COLOR_1, PATTERN_POINT_COLOR_B));
-		memory->WritePanelData(id, ACTIVE_COLOR, memory->ReadPanelData<Color>(SYM_COLOR_1, PATTERN_POINT_COLOR_A));
+		memory->WritePanelData(id, PATTERN_POINT_COLOR_A, defaultPatternPointColorA);
+		memory->WritePanelData(id, PATTERN_POINT_COLOR_B, defaultPatternPointColorB);
+		memory->WritePanelData(id, REFLECTION_PATH_COLOR, defaultPatternPointColorB);
+		memory->WritePanelData(id, ACTIVE_COLOR, defaultPatternPointColorA);
 	}
 	if (hasConfig(InvisibleSymmetryLine)) {
-		//TODO: Hardcode these colors instead of reading from a panel
-		memory->WritePanelData(id, REFLECTION_PATH_COLOR, memory->ReadPanelData<Color>(SYM_INVISIBLE_7, REFLECTION_PATH_COLOR));
+		memory->WritePanelData(id, REFLECTION_PATH_COLOR, defaultReflectionPathColor);
 	}
 	if (hasConfig(MatchDotColor)) {
 		Color color = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
