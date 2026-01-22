@@ -861,7 +861,7 @@ void PuzzleList::GenerateMountainH() {
 	g.generate(MOUNTAIN_PILLAR_L2, Triangle|Orange, 8);
 	special.initPillarSymmetry(MOUNTAIN_PILLAR_R2, PillarHorizontal);
 	g.setConfigOnce(WriteColors);
-	g.generate(MOUNTAIN_PILLAR_R2, Triangle|Orange, 4, Dot_Intersection, 36); //TODO: Why are the colors screwed up?
+	g.generate(MOUNTAIN_PILLAR_R2, Triangle|Orange, 4, Dot_Intersection, 36); 
 	g.setConfigOnce(RequireCombineShapes);
 	g.setGridSize(6, 4);
 	special.initPillarSymmetry(MOUNTAIN_PILLAR_L3, PillarRotational);

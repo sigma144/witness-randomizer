@@ -84,8 +84,9 @@ void Panel::write() {
 	memory->WritePanelData<int>(id, STYLE_FLAGS, style);
 	memory->WritePanelData<uintptr_t>(id, SEQUENCE, 0);
 	memory->WritePanelData<int>(id, SEQUENCE_LEN, 0);
-	//TODO: Use PATTERN_SCALE instead
-	if (lineThickness != 1) memory->WritePanelData<float>(id, PATH_WIDTH_SCALE, lineThickness);
+	float patternWidth = memory->ReadPanelData<float>(id, PATTERN_SCALE);
+	float preComputation = memory->ReadPanelData<float>(id, PATH_WIDTH_SCALE);
+	if (lineThickness != 1) memory->WritePanelData<float>(id, PATTERN_SCALE, { lineThickness * patternWidth / preComputation });
 	memory->WritePanelData<int>(id, NEEDS_REDRAW, true);
 }
 
@@ -304,12 +305,12 @@ void Panel::writeDecorations() {
 	}
 	else {
 		memory->WritePanelData<int>(id, NUM_DECORATIONS, { static_cast<int>(decorations.size()) });
-		if (colorMode == ColorMode::Reset)
+		if (colorMode == ColorMode::WriteColors || memory->ReadPanelData<long>(id, DECORATION_COLORS))
+			memory->WriteArray<Color>(id, DECORATION_COLORS, decorationColors);
+		else if (colorMode == ColorMode::Reset)
 			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, 0);
 		else if (colorMode == ColorMode::Alternate)
 			memory->WritePanelData<int>(id, PUSH_SYMBOL_COLORS, 1);
-		else if (colorMode == ColorMode::WriteColors || memory->ReadPanelData<long>(id, DECORATION_COLORS))
-			memory->WriteArray<Color>(id, DECORATION_COLORS, decorationColors);
 	}
 	if (any || memory->ReadPanelData<int>(id, DECORATIONS)) {
 		memory->WriteArray<int>(id, DECORATIONS, decorations);
