@@ -736,7 +736,7 @@ void PuzzleList::GenerateMountainN() {
 	g.generate(MOUNTAIN_PILLAR_L4, Star|Orange, 4, Stone|Black, 2, Stone|White, 2);
 	g.setSymmetry(PillarParallel);
 	g.setConfigOnce(DisableDotIntersection);
-	g.generate(MOUNTAIN_PILLAR_R4, Dot, 8); //TODO: One of the startpoints is broken
+	g.generate(MOUNTAIN_PILLAR_R4, Dot, 8);
 }
 
 void PuzzleList::GenerateCavesN() {
