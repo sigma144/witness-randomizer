@@ -189,6 +189,7 @@ void Randomizer::SwapPanels(PanelID panel1, PanelID panel2, int flags) {
 	if (flags & SWAP::PATHS) {
 		offsets[AUDIO_PREFIX] = sizeof(void*);
 		offsets[PATH_WIDTH_SCALE] = sizeof(float);
+		offsets[PATTERN_SCALE] = sizeof(float);
 		offsets[STARTPOINT_SCALE] = sizeof(float);
 		offsets[NUM_DOTS] = sizeof(int);
 		offsets[NUM_CONNECTIONS] = sizeof(int);
@@ -219,6 +220,20 @@ void Randomizer::SwapPanels(PanelID panel1, PanelID panel2, int flags) {
 
 	Memory* memory = Memory::get();
 	for (auto const&[offset, size] : offsets) {
+		if (offset == PATH_WIDTH_SCALE)
+			continue;
+		if (offset == PATTERN_SCALE) {
+			float panel1path = memory->ReadPanelData<float>(panel1, PATH_WIDTH_SCALE);
+			float panel2path = memory->ReadPanelData<float>(panel2, PATH_WIDTH_SCALE);
+			float panel1pattern = memory->ReadPanelData<float>(panel1, PATTERN_SCALE);
+			float panel2pattern = memory->ReadPanelData<float>(panel2, PATTERN_SCALE);
+
+			float computedFor1 = panel1path * panel1pattern / panel2path;
+			float computedFor2 = panel2path * panel2pattern / panel1path;
+			memory->WritePanelData<float>(panel2, PATTERN_SCALE, computedFor1);
+			memory->WritePanelData<float>(panel1, PATTERN_SCALE, computedFor2);
+			continue;
+		}
 		std::vector<byte> panel1data = memory->ReadPanelDataVector<byte>(panel1, offset, size);
 		std::vector<byte> panel2data = memory->ReadPanelDataVector<byte>(panel2, offset, size);
 		memory->WritePanelDataVector<byte>(panel2, offset, panel1data);
