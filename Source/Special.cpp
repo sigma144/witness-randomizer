@@ -1206,7 +1206,6 @@ void Special::generatePivotPanel(PanelID id, Point gridSize, const std::vector<s
 		gen->seed(Random::rand());
 		gen->setSymbol(Start, width / 2, height - 1);
 		gen->setGridSize(gridSize.x, gridSize.y);
-		gen->setConfig(FixBackground);
 		gen->setConfig(DisableWrite);
 	}
 	gens[0]->setSymbol(Exit, 0, height / 2);

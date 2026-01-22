@@ -68,9 +68,6 @@ void Generate::initPanel(PanelID id) {
 	if (width > 0 && height > 0 && !(width == panel.width && height == panel.height)) {
 		panel.resize(panel.isCylinder ? width - 1 : width, height);
 	}
-	if (hasConfig(FixBackground)) {
-		panel.resize(panel.width, panel.height); //This will force the panel to have to redraw the background. TODO: Do this automatically
-	}
 	if (hasConfig(TreehouseLayout)) {
 		initTreehouseLayout();
 	}
@@ -245,6 +242,8 @@ void Generate::write(PanelID id) {
 	panel.disableFlash = hasConfig(DisableFlash);
 	if (id == KEEP_PRESSURE_1 || id == KEEP_PRESSURE_2 || id == KEEP_PRESSURE_3 || id == KEEP_PRESSURE_4)
 		panel.disableFlash = true;
+	if (hasConfig(PreserveStructure) || hasConfig(DecorationsOnly))
+		panel.fixBackground = false;
 
 	panel.write(id);
 	
@@ -1568,7 +1567,6 @@ bool Generate::placeTriangles(int color, int amount, int targetCount)
 }
 
 //Place the given amount of arrows with the given color. targetCount is how many ticks on the arrows, or 0 for random
-//The color won't actually be reflected, ArrowRecolor must be used instead
 bool Generate::placeArrows(int color, int amount, int targetCount) {
 	std::set<Point> open = openpos;
 	while (amount > 0) {
@@ -1576,8 +1574,6 @@ bool Generate::placeArrows(int color, int amount, int targetCount) {
 			return false;
 		Point pos = pickRandom(open);
 		open.erase(pos);
-		if (pos.x == panel.width / 2 || panel.isCylinder && pos.x == panel.width / 2 - 1)
-			continue; //Because of a glitch where arrows in the center column won't draw right
 		int fails = 0;
 		while (fails++ < 20) { //Keep picking random directions until one works
 			int choice = (parity == -1 ? rand(8) : rand(4));

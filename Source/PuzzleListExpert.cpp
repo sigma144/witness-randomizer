@@ -678,7 +678,6 @@ void PuzzleList::GenerateTownH() {
 	g.resetConfig();
 	g.setConfigOnce(PreserveStructure);
 	g.generate(THEATER_ENTER, Stone|Black, 3, Stone|White, 2, Triangle|Orange, 5, Eraser|White, 1);
-	g.setConfig(FixBackground);
 	g.generate(THEATER_EXIT_L, Stone|White, 3, Stone|Black, 3, Star|White, 3, Star|Black, 3, Eraser|White, 2);
 	g.setConfigOnce(WriteColors);
 	g.generate(THEATER_EXIT_R, Poly|Yellow, 3, Triangle|Orange, 5, Eraser|White, 1);

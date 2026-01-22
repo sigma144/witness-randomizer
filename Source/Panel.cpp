@@ -32,7 +32,7 @@ Panel::Panel(PanelID id) {
 void Panel::read() {
 	Memory* memory = Memory::get();
 	lineThickness = 1;
-	resized = decorationsOnly = false;
+	fixBackground = decorationsOnly = false;
 	colorMode = Default;
 	style = memory->ReadPanelData<int>(id, STYLE_FLAGS);
 	isCylinder = memory->ReadPanelData<int>(id, IS_CYLINDER);
@@ -58,7 +58,7 @@ void Panel::write() {
 	Memory* memory = Memory::get();
 	memory->WritePanelData<int>(id, GRID_SIZE_X, { (width + 1) / 2 });
 	memory->WritePanelData<int>(id, GRID_SIZE_Y, { (height + 1) / 2 });
-	if (resized && memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS) > 0) {
+	if (fixBackground && memory->ReadPanelData<int>(id, NUM_COLORED_REGIONS) > 0) {
 		//Make two triangles that cover the whole panel
 		std::vector<int> newRegions = { 0, pointToIndex(width - 1, 0), pointToIndex(0, 0), 0, pointToIndex(width - 1, height - 1), pointToIndex(width - 1, 0), 0, 0 };
 		memory->WritePanelData<int>(id, NUM_COLORED_REGIONS, { static_cast<int>(newRegions.size()) / 4 });
@@ -182,7 +182,7 @@ void Panel::resize(int width, int height) {
 	this->height = height;
 	grid.resize(width);
 	for (auto& row : grid) row.resize(height);
-	resized = true;
+	fixBackground = true;
 }
 
 std::set<Point> Panel::getRegion(Point pos) {
@@ -276,7 +276,9 @@ void Panel::readDecorations() {
 	std::vector<int> decorations = memory->ReadArray<int>(id, DECORATIONS, numDecorations);
 	for (int i=0; i<numDecorations; i++) {
 		Point p = decorationIndexToPoint(i);
-		set(p.x, p.y, decorations[i]);
+		set(p, decorations[i]);
+		if ((decorations[i] & Empty) == Empty)
+			fixBackground = true;
 	}
 }
 

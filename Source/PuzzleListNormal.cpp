@@ -269,7 +269,6 @@ void PuzzleList::GenerateQuarryN() {
 	g.generate(BOATHOUSE_STAR_7, Star|Orange, 6, Star|Magenta, 5, Star|Green, 4, Eraser|Magenta, 1);
 	g.resetConfig();
 	//Eraser + Stars + Shapes
-	g.setConfigOnce(FixBackground);
 	g.setGridSize(4, 4);
 	g.setSymbol(Start, 0, 8);
 	g.generate(BOATHOUSE_STAR_8, Star|White, 5, Poly|Green, 2, Eraser|Black, 1);
@@ -508,7 +507,6 @@ void PuzzleList::GenerateTreehouseN() {
 	g.generate(TREEHOUSE_ORANGE_R8, Star|Magenta, 8, Star|Orange, 6);
 	g.generate(TREEHOUSE_ORANGE_R9, Star|Orange, 4, Star|Magenta, 2, Star|Green, 2, Gap, 8);
 	g.setObstructions({ { 1, 2 },{ 1, 4 },{ 7, 2 },{ 7, 4 },{ 2, 1 },{ 4, 1 },{ 6, 1 } });
-	g.setConfigOnce(FixBackground);
 	g.generate(TREEHOUSE_ORANGE_R10, Star|Orange, 4, Star|Magenta, 4, Star|Green, 4);
 	g.setGridSize(4, 3);
 	g.generate(TREEHOUSE_ORANGE_R11, Star|Orange, 6, Star|Magenta, 4, Star|Green, 2);
@@ -577,7 +575,6 @@ void PuzzleList::GenerateTownN() {
 	//Because of this, polyominoes can't be used with these puzzles unless Config::PreserveStructure flag is turned off.
 	g.setConfigOnce(PreserveStructure);
 	g.generate(THEATER_ENTER, Stone|Black, 5, Stone|White, 5, Gap, 7);
-	g.setConfig(FixBackground);
 	g.generate(THEATER_EXIT_L, Stone|White, 8, Stone|Black, 8, Eraser|White, 2);
 	g.setConfigOnce(WriteColors);
 	g.generate(THEATER_EXIT_R, Poly|Orange, 2, Stone|White, 4, Stone|Black, 4, Gap, 4);

@@ -104,6 +104,7 @@ public:
 	bool isCylinder, disableFlash, decorationsOnly;
 	enum ColorMode { Default, Reset, Alternate, WriteColors };
 	ColorMode colorMode;
+	bool fixBackground;
 
 private:
 
@@ -120,7 +121,6 @@ private:
 
 	std::vector<std::vector<int>> grid;
 	float minx, miny, maxx, maxy, unitWidth, unitHeight;
-	bool resized;
 
 	friend class Special;
 };

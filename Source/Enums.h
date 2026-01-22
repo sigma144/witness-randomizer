@@ -191,7 +191,6 @@ enum Config {
 	AlternateColors, //Use an alternate symbol color scheme. The colors used vary by puzzle
 	WriteColors, //Write out exact colors from each symbol. Sometimes needed to get a proper red, orange, or green.
 	CyanAndYellowLines, //Write out line and dot colors for a blue/yellow symmetry puzzle
-	FixBackground, //TODO: Make this automatic
 	CombineErasers, //Allow erasers to be together
 	LongPath, //Make a longer than usual path, covering at least 7/8 of the available points
 	ShortPath, //Make a path without any length restrictions
