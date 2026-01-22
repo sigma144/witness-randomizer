@@ -131,7 +131,8 @@ private:
 	int width, height;
 	Symmetry symmetry;
 	std::set<Point> starts, exits;
-	std::set<Point> gridpos, openpos;
+	std::set<Point> gridpos; //Coordinates of the cells of the grid.
+	std::set<Point> openpos; //(Possibly not proper) subset of gridpos where decorations can be.
 	std::set<Point> path, path1, path2;
 	std::set<Point> customPath; //TODO: Do I need this?
 	bool bisect; //Used for stone generation

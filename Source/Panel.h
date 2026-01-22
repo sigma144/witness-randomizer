@@ -83,6 +83,7 @@ public:
 	std::vector<int> getSymbolsInRegion(Point pos);
 	Point getSymPoint(int x, int y) { return getSymPoint(x, y, symmetry); }
 	Point getSymPoint(int x, int y, Symmetry symmetry);
+	int getSymSolutionPoint(int index);
 	int countColor(const std::set<Point>& region, int color);
 	int countSides(Point pos);
 	int countCrossings(Point pos, Point dir);
