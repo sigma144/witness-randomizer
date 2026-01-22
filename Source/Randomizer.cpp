@@ -24,22 +24,23 @@ std::vector<PanelID> copyWithoutElements(const std::vector<PanelID>& input, cons
 	return result;
 }
 
-void Randomizer::GenerateNormal(HWND loadingHandle) {
-	PuzzleList puzzles;
-	puzzles.setLoadingHandle(loadingHandle);
-	puzzles.setSeed(seed, seedIsRNG, colorblind);
-	puzzles.GenerateAllN();
-	if (doubleMode) ShufflePanels(false);
-}
+Randomizer* Randomizer::_singleton = nullptr;
 
-void Randomizer::GenerateHard(HWND loadingHandle) {
+Randomizer::Randomizer() { _singleton = this; }
+
+Randomizer* Randomizer::get() { return _singleton; }
+
+void Randomizer::Generate(HWND loadingHandle) {
 	PuzzleList puzzles;
 	puzzles.setLoadingHandle(loadingHandle);
-	puzzles.setSeed(seed, seedIsRNG, colorblind);
-	puzzles.GenerateAllH();
-	if (doubleMode) ShufflePanels(true);
+	puzzles.setSeed(seed, seedIsRNG);
+	if (difficulty == Normal) puzzles.GenerateAllN();
+	if (difficulty == Expert) puzzles.GenerateAllH();
+	if (doubleMode) ShufflePanels();
+	StartWatchdogs();
 	SetWindowText(loadingHandle, L"Done!");
-	if (!HasBeenRandomized())
+
+	if (difficulty == Expert && !HasBeenRandomized())
 		MessageBox(GetActiveWindow(), L"Hi there! Thanks for trying out Expert Mode. It will be tough, but I hope you have fun!\r\n\r\n"
 		L"Expert has some unique tricks up its sleeve. You will encounter some situations that may seem impossible at first glance (even in tutorial)! "
 		L"In these situations, try to think of alternate approaches that weren't required in the base game.\r\n\r\n"
@@ -48,8 +49,7 @@ void Randomizer::GenerateHard(HWND loadingHandle) {
 		L"Thanks for playing, and good luck!", L"Welcome", MB_OK);
 }
 
-void Randomizer::StartWatchdogs()
-{
+void Randomizer::StartWatchdogs() {
 	if (watchdogsStarted) return;
 	(new SymbolsWatchdog())->start();
 	(new TownDoorWatchdog())->start();
@@ -301,7 +301,7 @@ void Randomizer::ShuffleRange(std::vector<int>& order, int startIndex,int endInd
 	}
 }
 
-void Randomizer::ShufflePanels(bool hard) {
+void Randomizer::ShufflePanels() {
 	Memory* memory = Memory::get();
 	_alreadySwapped.clear();
 	int swapMode = HasBeenRandomized() ? SWAP::PATHS : SWAP::PATHS | SWAP::COLORS;
@@ -309,7 +309,7 @@ void Randomizer::ShufflePanels(bool hard) {
 	Randomize(elevatorControls, swapMode);
 	Randomize(treehousePivotSet, swapMode);
 	Randomize(utmPerspectiveSet, swapMode);
-	if (!hard) {
+	if (difficulty != Expert) {
 		Randomize(symmetryLaserYellows, swapMode);
 		Randomize(symmetryLaserBlues, swapMode);
 		Randomize(squarePanels, swapMode);

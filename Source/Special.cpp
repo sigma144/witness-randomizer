@@ -9,8 +9,9 @@
 #include "Watchdog.h"
 
 Special::Special(Generate* generator) {
-	this->gen = generator;
+	gen = generator;
 	memory = Memory::get();
+	randomizer = Randomizer::get();
 }
 
 void Special::generateSpecialSymMaze(PanelID id) {
@@ -82,8 +83,7 @@ void Special::generateReflectionDotPuzzle(PanelID id1, PanelID id2, std::vector<
 		flippedPuzzle.endpoints.push_back(Endpoint(sp.x, sp.y, gen->panel.getSymDir(p.dir, symmetry),
 			ENDPOINT | (p.dir == Endpoint::Direction::UP || p.dir == Endpoint::Direction::DOWN ? COLUMN : ROW)));
 	}
-	//TODO: Do something about this hardcoding?
-	if (id1 == SYM_YELLOW_3 && split) {
+	if (id1 == SYM_YELLOW_3 && randomizer->difficulty == Expert) {
 		if (checkDotSolvability(puzzle, &flippedPuzzle, symmetry)) {
 			generateReflectionDotPuzzle(id1, id2, symbols, symmetry, split);
 			return;
@@ -191,7 +191,6 @@ void Special::generateColorFilterPuzzle(PanelID id, Point size, const std::vecto
 }
 
 void Special::generateSoundDotPuzzle(PanelID id1, PanelID id2, std::vector<int> dotSequence, bool writeSequence) {
-	//generator->setConfig(DisableReset);
 	generateSoundDotPuzzle(id1, { 5, 5 }, dotSequence, writeSequence);
 	gen->write(id2);
 	gen->resetConfig();
@@ -241,7 +240,6 @@ void Special::generateSoundDotPuzzle(PanelID id, Point size, std::vector<int> do
 
 void Special::generateSoundDotReflectionPuzzle(PanelID id, Point size, std::vector<int> dotSequence1, std::vector<int> dotSequence2, int numColored, bool writeSequence)
 {
-	//TODO: Get rid of hardcoding?
 	gen->resetConfig();
 	gen->setConfigOnce(DisableWrite);
 	gen->setConfigOnce(LongPath);
@@ -254,7 +252,7 @@ void Special::generateSoundDotReflectionPuzzle(PanelID id, Point size, std::vect
 	if (id == JUNGLE_DOT_5 || id == JUNGLE_DOT_6) { //Generate with one less dot than the pattern (for set start/exit)
 		gen->generate(id, Dot_Intersection | Blue, static_cast<int>(dotSequence1.size() - 1), Dot_Intersection | Yellow, static_cast<int>(dotSequence2.size() - 1));
 	}
-	else if (id == SHIPWRECK_VAULT && writeSequence) { //Shipwreck Expert
+	else if (id == SHIPWRECK_VAULT && randomizer->difficulty == Expert) {
 		while (!generateSoundDotReflectionSpecial(id, size, dotSequence1, dotSequence2, numColored));
 		return;
 	}
@@ -335,7 +333,6 @@ void Special::generateSoundDotReflectionPuzzle(PanelID id, Point size, std::vect
 	}
 	if (id == SHIPWRECK_VAULT) gen->setConfig(DisableFlash);
 	gen->write(id);
-	memory->WritePanelData(id, POWER_OFF_ON_FAIL, 0);
 	gen->resetConfig();
 	if (dotSequence1 != dotSequence2 && id != SHIPWRECK_VAULT) (new JungleWatchdog(id, dotSequence1, dotSequence2))->start();
 }
@@ -792,7 +789,6 @@ void Special::generate2Bridge(PanelID id1, PanelID id2)
 	for (int i = 0; i < 3; i++) gens.push_back(std::make_shared<Generate>());
 	for (std::shared_ptr<Generate> g : gens) {
 		g->setConfig(DisableWrite);
-		//g->setConfig(DisableReset);
 		g->setConfig(DecorationsOnly);
 		g->setConfig(ShortPath);
 		g->setConfig(WriteColors);
@@ -865,7 +861,6 @@ void Special::generate2BridgeH(PanelID id1, PanelID id2)
 	for (int i = 0; i < 3; i++) gens.push_back(std::make_shared<Generate>());
 	for (std::shared_ptr<Generate> g : gens) {
 		g->setConfig(DisableWrite);
-		//g->setConfig(DisableReset);
 		g->setConfig(DecorationsOnly);
 		g->setConfig(ShortPath);
 		g->setConfig(WriteColors);
@@ -1203,13 +1198,12 @@ void Special::generateMountainFloorH()
 	gen->resetConfig();
 }
 
-void Special::generatePivotPanel(PanelID id, Point gridSize, const std::vector<std::pair<int, int>>& symbolVec, bool colorblind) {
+void Special::generatePivotPanel(PanelID id, Point gridSize, const std::vector<std::pair<int, int>>& symbolVec) {
 	int width = gridSize.x * 2 + 1, height = gridSize.y * 2 + 1;
 	std::vector<std::shared_ptr<Generate>> gens;
 	for (int i = 0; i < 3; i++) gens.push_back(std::make_shared<Generate>());
 	for (std::shared_ptr<Generate> gen : gens) {
 		gen->seed(Random::rand());
-		gen->colorblind = colorblind;
 		gen->setSymbol(Start, width / 2, height - 1);
 		gen->setGridSize(gridSize.x, gridSize.y);
 		gen->setConfig(FixBackground);

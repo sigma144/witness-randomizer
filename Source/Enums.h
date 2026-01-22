@@ -183,6 +183,7 @@ enum Config {
 	ResetColors, //Force the default symbol color scheme
 	DisableCancelShapes, //Don't make solutions where positive/negative shapes cancel
 	RequireCancelShapes, //Make only solutions where positive/negative shapes cancel
+	OnlyCancelShapes, //Force all positive/negative shapes to cancel
 	BigShapes, //Bigger tetris shapes than normal, with an average size of about 5-6 blocks
 	SplitShapes, //Don't make solutions where tetris shapes combine
 	RequireCombineShapes, //Make only solutions where tetris shapes combine
@@ -195,9 +196,9 @@ enum Config {
 	LongPath, //Make a longer than usual path, covering at least 7/8 of the available points
 	ShortPath, //Make a path without any length restrictions
 	DisableFlash, //Disable incorrect symbols from flashing
-	DecorationsOnly, //TODO: Do I really need this? Write out only the puzzle symbols to memory, preserving the original point and edge locations
+	DecorationsOnly, //Write out only the puzzle symbols to memory, preserving the original point and edge locations
 	FalseParity, //Cause a full path to miss one vertex. For eraser + full dot puzzles
-	DisableDotIntersection, //TODO: Do I really need this? Dots will not be put on grid intersections
+	DisableDotIntersection, //Dots will not be put on grid intersections
 	FixDotColor, //Make dots a dark grey color. Use if dot color looks incorrect
 	MatchDotColor, //Make dots the same color as the line
 	LongestPath, //Make the longest path possible, covering every point. For full dot puzzles
@@ -205,3 +206,5 @@ enum Config {
 	MountainFloorH, //Only for the mountain floor puzzles on hard mode
 	PowerOffOnFail, //Have the panel power off with an incorrect solution
 };
+
+enum Difficulty { Normal, Expert, Symbols };

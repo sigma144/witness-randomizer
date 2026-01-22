@@ -9,6 +9,9 @@
 
 class Randomizer {
 public:
+	Randomizer();
+	static Randomizer* get();
+	void Generate(HWND loadingHandle);
 	void GenerateNormal(HWND loadingHandle);
 	void GenerateHard(HWND loadingHandle);
 	void StartWatchdogs();
@@ -28,11 +31,10 @@ public:
 	bool seedIsRNG = false;
 	bool colorblind = false;
 	bool doubleMode = false;
-	bool watchdogsStarted = false;
+	Difficulty difficulty = Normal;
 
 private:
 	void RandomizeDesert();
-
 	void Randomize(std::vector<PanelID>& panels, int flags);
 	void RandomizeRange(std::vector<PanelID> panels, int flags, int startIndex, int endIndex);
 	void RandomizeAudiologs();
@@ -40,12 +42,14 @@ private:
 	void ReassignTargets(const std::vector<PanelID>& panels, const std::vector<int>& order, std::vector<PanelID> targets = {});
 	void SwapWithRandomPanel(PanelID panel1, const std::vector<PanelID>& possiblePanels, int flags);
 	void ShuffleRange(std::vector<int>& order, int startIndex, int endIndex);
-	void ShufflePanels(bool hard);
+	void ShufflePanels();
 	bool HasBeenPlayed();
 	bool HasBeenRandomized();
 
 	std::set<PanelID> _alreadySwapped;
 	std::map<int, int> _shuffleMapping;
+	static Randomizer* _singleton;
+	bool watchdogsStarted = false;
 
 	friend class Panel;
 	friend class PuzzleList;

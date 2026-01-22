@@ -141,8 +141,8 @@ private:
 	std::vector<Point> splitPoints; //For double eraser generation. TODO: Replace this with setSymbol.
 	int parity;
 	std::vector<std::vector<Point>> obstructions;
-	bool colorblind;
 
+	Randomizer* randomizer;
 	HWND handle;
 	int areaTotal, genTotal, areaPuzzles, totalPuzzles;
 	std::wstring areaName;

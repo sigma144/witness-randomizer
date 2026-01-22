@@ -19,7 +19,7 @@ template <class T> struct MemoryWrite {
 class Special {
 
 public:
-	Special() { }
+	Special() { } //Don't use
 	Special(Generate* generator);
 	
 	void generateSpecialSymMaze(PanelID id);
@@ -46,7 +46,7 @@ public:
 	bool generate2BridgeH(PanelID id1, PanelID id2, std::vector<std::shared_ptr<Generate>> gens);
 	void generateMountainFloor();
 	void generateMountainFloorH();
-	void generatePivotPanel(PanelID id, Point gridSize, const std::vector<std::pair<int, int>>& symbolVec, bool colorblind); //Too slow right now, only used a couple times in hard mode
+	void generatePivotPanel(PanelID id, Point gridSize, const std::vector<std::pair<int, int>>& symbolVec); //Too slow right now, only used a couple times in hard mode
 	void modifyGate(PanelID id);
 	void addDecoyExits(int amount);
 	void initSecretSymmetryGrid();
@@ -77,6 +77,7 @@ public:
 
 	Generate* gen;
 	Memory* memory;
+	Randomizer* randomizer;
 	Generate g; //For testing convenience ONLY, use "gen" for Special.cpp generation functions
 
 private:

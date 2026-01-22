@@ -8,11 +8,11 @@
 #include "Special.h"
 
 Generate::Generate() {
+	randomizer = Randomizer::get();
 	handle = NULL;
 	areaTotal = genTotal = totalPuzzles = areaPuzzles = stoneTypes = 0;
 	bisect = false;
 	parity = -1;
-	colorblind = false;
 	randomSeed = rand();
 	resetConfig();
 }
@@ -45,7 +45,8 @@ void Generate::generateMulti(PanelID id, int numSolutions, std::vector<std::pair
 	MultiGenerate gen;
 	gen.splitStones = (id == MOUNTAIN_TOP); //Mountaintop
 	std::vector<std::shared_ptr<Generate>> gens;
-	for (; numSolutions > 0; numSolutions--) gens.push_back(std::make_shared<Generate>());
+	for (; numSolutions > 0; numSolutions--)
+		gens.push_back(std::make_shared<Generate>());
 	gen.generate(id, gens, symbolVec);
 	incrementProgress();
 }
@@ -326,6 +327,7 @@ void Generate::resetVars() {
 	openPos.clear();
 	blockPos.clear();
 	splitPoints.clear();
+	customPath.clear();
 }
 
 //Place start and exits in central positions like in the treehouse
@@ -347,8 +349,7 @@ bool Generate::generateMazeI(PanelID id, int numStarts, int numExits) {
 	if (numStarts > 0) placeStart(numStarts);
 	if (numExits > 0) placeExit(numExits);
 	//Prevent start and exit from overlapping, except in one one particular puzzle.
-	//TODO: Get rid of this hardcoding
-	if (id == SYM_MAZE_R3 && width == 15 && height == 15) {
+	if (id == SYM_MAZE_R3 && randomizer->difficulty == Expert) {
 		clear();
 		panel.endpoints.clear();
 		exits.clear();
@@ -1307,10 +1308,9 @@ bool Generate::placeShapes(const std::vector<int>& colors, const std::vector<int
 		if (hasConfig(SplitShapes) && numShapes != 1) continue;
 		if (hasConfig(RequireCombineShapes) && numShapes == 1) continue;
 		bool cancel = false;
-		if (numShapes > amount //The region is too big for the number of shapes chosen
-			//TODO: Replace with OnlyCancelShapes setting
-			|| numNegative > 0 && panel.id == CAVES_PERSPECTIVE_4
-			|| numNegative > 0 && panel.id == CAVES_INVISIBLE_6) {
+		//Check if the region is too big for the number of shapes chosen
+		//TODO: Make OnlyCancelShapes put canceling shapes only in large regions?
+		if (numShapes > amount || hasConfig(OnlyCancelShapes)) {
 			if (numNegative < 2 || hasConfig(DisableCancelShapes)) continue;
 			//Make canceling shapes. Positive and negative will be switched so that code can be reused
 			cancel = true;
@@ -1517,8 +1517,8 @@ bool Generate::checkStarZigzag(Panel& panel) {
 //Place the given amount of triangles with the given color. targetCount is how many triangles are in the symbol, or 0 for random
 bool Generate::placeTriangles(int color, int amount, int targetCount)
 {
-	//TODO: Don't hardcode this
-	if (panel.id == KEEP_PRESSURE_1) {
+	//TODO: Replace with setSymbol.
+	if (panel.id == KEEP_PRESSURE_1 && randomizer->difficulty == Expert) {
 		int count = panel.countSides({ 1, 3 });
 		set({ 1, 3 }, Triangle | color | (count << 16));
 		openpos.erase({ 1, 3 });
@@ -1600,8 +1600,8 @@ bool Generate::placeArrows(int color, int amount, int targetCount) {
 //Place the given amount of erasers with the given colors. eraseSymbols are the symbols that were erased
 bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols) {
 	std::set<Point> open = openpos;
-	//TODO: Don't hardcode this
-	if (panel.id == CAVES_PERSPECTIVE_2 && hasConfig(DisableWrite)) open.erase({ 5, 5 });
+	//TODO: Replace with setSymbol.
+	if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert) open.erase({ 5, 5 });
 	int amount = static_cast<int>(colors.size());
 	while (amount > 0) {
 		if (open.size() == 0)
@@ -1625,7 +1625,7 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			if (!found) continue;
 		}
 		//TODO: Don't hardcode this
-		if (panel.id == CAVES_PERSPECTIVE_2 && hasConfig(DisableWrite) && !region.count({ 5, 5 })) continue; //For the puzzle in the cave with a pillar in middle
+		if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert && !region.count({ 5, 5 })) continue; //For the puzzle in the cave with a pillar in middle
 		if (hasConfig(MakeStonesUnsolvable)) {
 			std::set<Point> valid;
 			for (Point p : open2) {
@@ -1718,7 +1718,7 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 		if (splitPoints.size() == 0) pos = pickRandom(open2);
 		else for (Point p : splitPoints) if (region.count(p)) { pos = p; break; }
 		//TODO: Don't hardcode this
-		if (panel.id == CAVES_PERSPECTIVE_2 && hasConfig(DisableWrite)) {
+		if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert) {
 			if (get(5, 5) != 0) return false;
 			pos = { 5, 5 }; //For the puzzle in the cave with a pillar in middle
 		}

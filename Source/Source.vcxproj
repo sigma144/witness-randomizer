@@ -192,9 +192,6 @@
     <ClCompile Include="SymbolData.cpp" />
     <ClCompile Include="Watchdog.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="configinfo.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

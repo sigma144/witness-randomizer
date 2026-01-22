@@ -331,7 +331,7 @@ void Panel::readIntersections() {
 	else {
 		minx = miny = 0.1f; maxx = maxy = 0.9f;
 		startpoints = { { 0, height - 1 } };
-		endpoints = { Endpoint(width - 1, 0, Endpoint::Direction::RIGHT, ENDPOINT | ROW) }; //TODO: Let the startpoint correction handle this
+		endpoints = { Endpoint(width - 1, 0, Endpoint::Direction::RIGHT, ENDPOINT | ROW) };
 		return;
 	}
 	if (minx > maxx) std::swap(minx, maxx);
@@ -619,7 +619,7 @@ Color Panel::getColorRGB(SymbolColor color) {
 		case Yellow: return { 1, 1, 0, 1 };
 		case Orange: return { 1, 0.5, 0, 1 };
 		case Purple: return { 0.6f, 0, 1, 1 };
-		case Invisible: { //Copy background color
+		case Invisible: { //Copy background color TODO: Broken on double mode
 			Color xColor = Memory::get()->ReadPanelData<Color>(id, BACKGROUND_REGION_COLOR);
 			xColor.a = 1;
 			return xColor;

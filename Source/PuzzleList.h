@@ -15,13 +15,12 @@ public:
 		g.setLoadingHandle(handle);
 	}
 
-	void setSeed(int seed, bool isRNG, bool colorblind) {
+	void setSeed(int seed, bool isRNG) {
 		this->seed = seed;
 		this->seedIsRNG = isRNG;
 		this->colorblind = colorblind;
 		if (seed >= 0) g.seed(seed);
 		else g.seed(Random::rand());
-		g.colorblind = colorblind;
 	}
 
 	void CopyTargets();

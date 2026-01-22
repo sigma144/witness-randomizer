@@ -333,7 +333,6 @@ void PuzzleList::GenerateSwampN() {
 	g.lineThickness = 0.6f;
 	g.generate(SWAMP_RED_3, Poly, 3, Gap, 5);
 	g.generate(SWAMP_RED_4, Poly, 4);
-	//generator->setConfigOnce(DisableReset);
 	g.setConfigOnce(LongPath);
 	g.generate(SWAMP_RED_SHORTCUT_1, Poly, 3);
 	g.placeGaps(12);
@@ -462,7 +461,6 @@ void PuzzleList::GenerateTreehouseN() {
 	g.setConfig(WriteColors);
 	g.generate(TREEHOUSE_PURPLE_B5, Star|Orange, 6, Stone|Magenta, 3, Stone|Green, 3);
 	g.setGridSize(5, 4);
-	//generator->setConfigOnce(DisableReset);
 	g.setConfigOnce(LongPath);
 	g.generate(TREEHOUSE_PURPLE_B6, Star|Magenta, 6, Stone|Orange, 4, Stone|Green, 4);
 	g.placeGaps(8);
@@ -735,7 +733,7 @@ void PuzzleList::GenerateMountainN() {
 	g.generate(MOUNTAIN_PILLAR_L4, Star|Orange, 4, Stone|Black, 2, Stone|White, 2);
 	g.setSymmetry(PillarParallel);
 	g.setConfigOnce(DisableDotIntersection);
-	g.generate(MOUNTAIN_PILLAR_R4, Dot, 8); //TODO: One of the startpoints is broken
+	g.generate(MOUNTAIN_PILLAR_R4, Dot, 8);
 }
 
 void PuzzleList::GenerateCavesN() {

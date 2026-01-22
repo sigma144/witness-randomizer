@@ -368,7 +368,6 @@ void PuzzleList::GenerateSwampH() {
 	g.set(3, 5, Stone|Black);
 	g.set(9, 5, Stone|Black);
 	g.setConfig(DecorationsOnly);
-	//generator->setConfig(DisableReset);
 	g.write(SWAMP_SLIDING_BRIDGE);
 	g.write(SWAMP_SLIDING_BRIDGE_2);
 	g.resetConfig();
@@ -388,7 +387,6 @@ void PuzzleList::GenerateSwampH() {
 	g.generate(SWAMP_RED_3, Poly|Rotate, 3, Gap, 3);
 	g.setSymbol(Start, 4, 6);
 	g.generate(SWAMP_RED_4, Poly|Rotate, 4, Gap, 3);
-	//generator->setConfigOnce(DisableReset);
 	g.setConfigOnce(LongPath);
 	g.setSymbol(Start, 4, 6);
 	g.generate(SWAMP_RED_SHORTCUT_1, Poly|Rotate, 3);
@@ -576,7 +574,7 @@ void PuzzleList::GenerateTreehouseH() {
 	g.setGridSize(4, 4);
 	g.generate(TREEHOUSE_ORANGE_R2, Star|Orange, 3, Star|Magenta, 2, Triangle|Orange, 2, Triangle|Magenta, 2);
 	g.generate(TREEHOUSE_ORANGE_R3, Star|Orange, 1, Star|Magenta, 2, Triangle|Orange, 3, Triangle|Magenta, 2);
-	special.generatePivotPanel(TREEHOUSE_ORANGE_R4, { 4, 4 }, { { Triangle|Orange, 3 },{ Triangle|Magenta, 2 } }, g.colorblind);
+	special.generatePivotPanel(TREEHOUSE_ORANGE_R4, { 4, 4 }, { { Triangle|Orange, 3 },{ Triangle|Magenta, 2 } });
 	g.setGridSize(5, 4);
 	g.lineThickness = 0.8f;
 	g.generate(TREEHOUSE_ORANGE_R5, Star|Orange, 3, Star|Magenta, 3, Triangle|Orange, 3, Triangle|Magenta, 3);
@@ -584,7 +582,7 @@ void PuzzleList::GenerateTreehouseH() {
 	g.generate(TREEHOUSE_ORANGE_R7, Star|Orange, 3, Star|Magenta, 3, Star|Green, 6, Triangle|Orange, 2, Triangle|Magenta, 2);
 	g.generate(TREEHOUSE_ORANGE_R8, Star|Orange, 4, Star|Magenta, 4, Star|Green, 6, Triangle|Orange, 1, Triangle|Magenta, 1);
 	g.generate(TREEHOUSE_ORANGE_R9, Star|Orange, 3, Star|Magenta, 3, Star|Green, 2, Triangle|Orange, 2, Triangle|Magenta, 2, Triangle|Green, 2);
-	special.generatePivotPanel(TREEHOUSE_ORANGE_R10, { 4, 4 }, { { Triangle|Orange, 2 },{ Triangle|Magenta, 2 },{ Triangle|Green, 1 } }, g.colorblind);
+	special.generatePivotPanel(TREEHOUSE_ORANGE_R10, { 4, 4 }, { { Triangle|Orange, 2 },{ Triangle|Magenta, 2 },{ Triangle|Green, 1 } });
 	g.generate(TREEHOUSE_ORANGE_R11, Star|Orange, 3, Star|Magenta, 3, Star|White, 3, Star|Green, 3, Triangle|Orange, 1, Triangle|Magenta, 1, Triangle|White, 1, Triangle|Green, 1);
 	g.generate(TREEHOUSE_ORANGE_R12, Star|Orange, 2, Star|Magenta, 2, Star|White, 2, Star|Green, 2, Star|Black, 2,
 		Triangle|Orange, 1, Triangle|Magenta, 1, Triangle|White, 1, Triangle|Green, 1, Triangle|Black, 1);
@@ -969,7 +967,7 @@ void PuzzleList::GenerateCavesH() {
 	special.generateCenterPerspective(CAVES_PERSPECTIVE_2, { { Poly, 4 }, { Eraser|White, 1 } }, Eraser);
 	special.generateCenterPerspective(CAVES_PERSPECTIVE_3, { { Triangle|Orange, 10}, { Eraser|White, 1 } }, Triangle);
 	g.removeConfig(DecorationsOnly);
-	g.setConfigOnce(RequireCancelShapes);
+	g.setConfigOnce(OnlyCancelShapes);
 	special.generateCenterPerspective(CAVES_PERSPECTIVE_4, { { Dot_Intersection, 36 },{ Poly, 2 }, { Poly|Negative|Blue, 4 } }, Poly);
 
 	//Full Dots + Arrows
@@ -997,6 +995,7 @@ void PuzzleList::GenerateCavesH() {
 	g.generate(CAVES_INVISIBLE_4, Star|Black, 4, Star|Invisible, 4, Poly|Rotate|Invisible, 1, Poly|Invisible, 1);
 	g.generate(CAVES_INVISIBLE_5, Star|Black, 2, Triangle|Black, 2, Poly|Rotate|Black, 1, Poly|Invisible, 1, Eraser|Invisible, 1);
 	g.setGridSize(0, 0);
+	g.setConfigOnce(OnlyCancelShapes);
 	g.generate(CAVES_INVISIBLE_6, Poly|Invisible, 2, Poly|Negative|Invisible, 4, Dot, 8);
 	g.generate(CAVES_INVISIBLE_7, Dot, 4, Star|Black, 4, Star|Orange, 4, Star|Invisible, 6);
 	g.generate(CAVES_INVISIBLE_8, Dot, 6, Star|Black, 4, Star|Orange, 4, Star|Invisible, 6, Eraser|Invisible, 1);

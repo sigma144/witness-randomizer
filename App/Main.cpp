@@ -89,15 +89,9 @@ Symbol symbol;
 SymbolColor color;
 int currentShape;
 int currentDir;
-bool hard = false;
-bool doubleMode = false;
-int lastSeed;
-bool lastHard;
-bool colorblind;
 std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24, SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
 std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }; //L-shape
 std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
-float target;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -131,18 +125,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			//Difficulty selection
 		case IDC_DIFFICULTY_NORMAL:
-			hard = false;
+			randomizer.difficulty = Normal;
 			break;
 		case IDC_DIFFICULTY_EXPERT:
-			hard = true;
+			randomizer.difficulty = Expert;
 			break;
 		case IDC_COLORBLIND:
-			colorblind = !IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
-			CheckDlgButton(hwnd, IDC_COLORBLIND, colorblind);
+			randomizer.colorblind = !IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
+			CheckDlgButton(hwnd, IDC_COLORBLIND, randomizer.colorblind);
 			break;
 		case IDC_DOUBLE:
-			doubleMode = !IsDlgButtonChecked(hwnd, IDC_DOUBLE);
-			CheckDlgButton(hwnd, IDC_DOUBLE, doubleMode);
+			randomizer.doubleMode = !IsDlgButtonChecked(hwnd, IDC_DOUBLE);
+			CheckDlgButton(hwnd, IDC_DOUBLE, randomizer.doubleMode);
 			break;
 
 			//Randomize button
@@ -184,6 +178,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
 			int lastSeed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
+			Difficulty lastDiff = memory->ReadPanelData<Difficulty>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR);
 			if (lastSeed > 0 && !rerandomize && !DEBUG) {
 				if (seed != lastSeed && !randomizer.seedIsRNG) {
 					if (MessageBox(hwnd, (L"This save file was previously randomized with seed " + std::to_wstring(lastSeed) + L". Are you sure you want to use seed " + std::to_wstring(seed) + L" instead?").c_str(), NULL, MB_YESNO) == IDNO) {
@@ -191,35 +186,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 				}
-				lastHard = (memory->ReadPanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR) > 0);
-				if (!lastHard && hard) {
+				if (lastDiff == Normal && randomizer.difficulty != Normal) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Normal. Are you sure you want to switch to Expert?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
 						SendMessage(hwndExpert, BM_SETCHECK, BST_UNCHECKED, 1);
-						hard = false;
+						randomizer.difficulty = lastDiff;
 						break;
 					}
 				}
-				if (lastHard && !hard) {
+				if (lastDiff == Expert && randomizer.difficulty != Expert) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Expert. Are you sure you want to switch to Normal?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
 						SendMessage(hwndNormal, BM_SETCHECK, BST_UNCHECKED, 1);
-						hard = true;
+						randomizer.difficulty = lastDiff;
 						break;
 					}
 				}
 				bool lastDouble = (memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR) > 0);
-				if (lastDouble && !doubleMode) {
+				if (lastDouble && !randomizer.doubleMode) {
 					if (MessageBox(hwnd, L"This save file was previously randomized on Double Mode. Are you sure you want to disable it?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
-						doubleMode = true;
+						randomizer.doubleMode = true;
 						break;
 					}
 				}
-				if (!lastDouble && doubleMode) {
+				if (!lastDouble && randomizer.doubleMode) {
 					if (MessageBox(hwnd, L"This save file was not previously randomized on Double Mode. Are you sure you want to enable it?", NULL, MB_YESNO) == IDNO) {
 						SendMessage(hwndDoubleMode, BM_SETCHECK, BST_UNCHECKED, 1);
-						doubleMode = false;
+						randomizer.doubleMode = false;
 						break;
 					}
 				}
@@ -235,7 +229,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			EnableWindow(hwndColorblind, false);
 			EnableWindow(hwndDoubleMode, false);
-			if (colorblind) {
+			if (randomizer.colorblind) {
 				std::ofstream out("WRPGconfig.txt");
 				out << "colorblind:true" << std::endl;
 				out.close();
@@ -245,14 +239,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			SetWindowText(hwndRandomize, L"Randomizing...");
 			randomizer.seed = seed;
-			randomizer.colorblind = IsDlgButtonChecked(hwnd, IDC_COLORBLIND);
-			randomizer.doubleMode = doubleMode;
-			if (hard) randomizer.GenerateHard(hwndLoadingText);
-			else randomizer.GenerateNormal(hwndLoadingText);
-			randomizer.StartWatchdogs();
+			randomizer.Generate(hwndLoadingText);
 			memory->WritePanelData(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR, seed);
-			memory->WritePanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR, hard);
-			memory->WritePanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR, doubleMode);
+			memory->WritePanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR, randomizer.difficulty);
+			memory->WritePanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR, randomizer.doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndSeed, std::to_wstring(seed).c_str());
 
@@ -397,54 +387,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-
 	//Initialize memory globals constant depending on game version
 	Memory::create();
-	specialCase = Special(&generator);
 
 	Memory* memory = memory->get();
-
-	if (wcscmp(lpCmdLine, L"-nogui") == 0)
-	{
-		// if -nogui is passed as argument, just keep saved settings and re-randomize using them
-		std::wcout << L"Running in nogui mode" << std::endl;
-		// SEED
-		randomizer.seed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
-		// HARD
-		hard = (memory->ReadPanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR) > 0);
-		// DOUBLE
-		randomizer.doubleMode = (memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR) > 0);
-
-		// COLORBLIND
-		std::ifstream configFile("WRPGconfig.txt");
-		if (configFile.is_open()) {
-			std::map<std::string, std::string> settings;
-			std::string setting, value;
-			while (!configFile.eof() && configFile.good()) {
-				std::getline(configFile, setting, ':');
-				std::getline(configFile, value);
-				settings[setting] = value;
-			}
-			if (settings.count("colorblind") && settings["colorblind"] == "true") {
-				randomizer.colorblind = true;
-			}
-			configFile.close();
-		}
-		randomizer.seedIsRNG = false;
-
-		std::wcout << L"Randomizing..." << std::endl;
-
-		memory->ClearOffsets();
-		randomizer.AdjustSpeed();
-
-		if (hard) randomizer.GenerateHard(hwndLoadingText);
-		else randomizer.GenerateNormal(hwndLoadingText);
-		randomizer.StartWatchdogs();
-
-		std::wcout << L"Done !" << std::endl;
-
-		return 0;
-	}
+	specialCase = Special(&generator);
 
 	LoadLibrary(L"Msftedit.dll");
 
@@ -469,8 +416,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	//Get the seed and difficulty previously used for this save file (if applicable)
 	int lastSeed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
-	hard = (memory->ReadPanelData<int>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR) > 0);
-	doubleMode = (memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR) > 0);
+	randomizer.difficulty = memory->ReadPanelData<Difficulty>(TUT_ENTER_2, BACKGROUND_HIDDEN_VAR);
+	randomizer.doubleMode = memory->ReadPanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR);
 
 	//-------------------------Basic window controls---------------------------
 
@@ -487,7 +434,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hwndExpert = CreateWindow(L"BUTTON", L"EXPERT - Very difficult puzzles with complex mechanics and mind-boggling new tricks. For brave players seeking the ultimate challenge.",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE,
 		10, 75, 570, 35, hwnd, (HMENU)IDC_DIFFICULTY_EXPERT, hInstance, NULL);
-	if (hard) SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
+	if (randomizer.difficulty == Expert) SendMessage(hwndExpert, BM_SETCHECK, BST_CHECKED, 1);
 	else SendMessage(hwndNormal, BM_SETCHECK, BST_CHECKED, 1);
 
 	CreateWindow(L"STATIC", L"Options:",
@@ -499,7 +446,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hwndDoubleMode = CreateWindow(L"BUTTON", L"Double Mode - In addition to generating new puzzles, the randomizer will also shuffle the location of most puzzles. (Not recommended for first playthrough)",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_CHECKBOX | BS_MULTILINE,
 		10, 200, 570, 35, hwnd, (HMENU)IDC_DOUBLE, hInstance, NULL);
-	if (doubleMode) SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
+	if (randomizer.doubleMode) SendMessage(hwndDoubleMode, BM_SETCHECK, BST_CHECKED, 1);
 
 	CreateWindow(L"STATIC", L"Enter a seed (optional):",
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -527,7 +474,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			settings[setting] = value;
 		}
 		if (settings.count("colorblind") && settings["colorblind"] == "true") {
-			colorblind = true;
+			randomizer.colorblind = true;
 			CheckDlgButton(hwnd, IDC_COLORBLIND, true);
 		}
 		configFile.close();
