@@ -7,6 +7,7 @@ void PuzzleList::GenerateTutorialH() {
 	Special::drawSeedAndDifficulty(TUT_ENTER_1, seed, true, !seedIsRNG, false);
 	Special::drawGoodLuckPanel(TUT_ENTER_2);
 	g.setConfig(LongestPath);
+	g.setConfig(FixDotColor);
 	//Mazes
 	g.setConfig(FullGaps);
 	g.setGridSize(4, 4);

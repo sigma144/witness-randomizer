@@ -193,10 +193,10 @@ void Generate::write(PanelID id) {
 	}
 	if (!hasBeenRandomized) {
 		if (hasConfig(CyanAndYellowLines)) {
-			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_A, { 0.349f, 1, 0.92f, 1 });
-			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_B, { 0.974f, 0.967f, 0, 1 });
-			memory->WritePanelData<Color>(id, ACTIVE_COLOR, { 0.349f, 1, 0.92f, 1 });
-			memory->WritePanelData<Color>(id, REFLECTION_PATH_COLOR, { 0.974f, 0.967f, 0, 1 });
+			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_A, { 0.35f, 1, 0.92f, 1 });
+			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_B, { 1, 1, 0, 1 });
+			memory->WritePanelData<Color>(id, ACTIVE_COLOR, { 0.35f, 1, 0.92f, 1 });
+			memory->WritePanelData<Color>(id, REFLECTION_PATH_COLOR, { 1, 1, 0, 1 });
 		}
 		if (hasConfig(InvisibleSymmetryLine)) {
 			memory->WritePanelData<Color>(id, REFLECTION_PATH_COLOR, { 0, 0, 0, 0 });
@@ -205,10 +205,11 @@ void Generate::write(PanelID id) {
 			Color color = memory->ReadPanelData<Color>(id, SUCCESS_COLOR_A);
 			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, color);
 		}
-		//TODO: Make dots even darker?
-		else if (memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR).b > 0.2f || hasConfig(FixDotColor) || id == TUT_2START || id == TUT_2EXIT) {
-			Color ctest = memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR);
+		else if (hasConfig(FixDotColor)) {
 			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, { 0.1f, 0.1f, 0.1f, 1 });
+		}
+		else if (memory->ReadPanelData<Color>(id, PATTERN_POINT_COLOR).b > 0.2f) {
+			memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, { 0, 0, 0, 1 });
 		}
 		if (foregroundColor.a > 0) {
 			memory->WritePanelData<Color>(id, BACKGROUND_REGION_COLOR, foregroundColor);

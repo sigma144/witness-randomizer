@@ -561,7 +561,6 @@ void PuzzleList::GenerateTownN() {
 	g.setConfigOnce(SmallShapes);
 	g.generate(TOWN_GLASS, Poly|Rotate, 4, Star|White, 6);
 	//Church Star Door
-	g.setConfig(DisableFlash);
 	special.generateColorFilterPuzzle(TOWN_STAR, { 4, 4 }, { { Star|1, 6 },{ Star|2, 6 }, { Star|3, 4 } }, { 1, 1, 0, 0 }, colorblind);
 	special.setPower(TOWN_LATTICE, false); (new TownDoorWatchdog())->start();
 	//Soundproof Room

@@ -183,7 +183,8 @@ void Special::generateColorFilterPuzzle(PanelID id, Point size, const std::vecto
 			}
 		}
 	}
-	gen->setConfigOnce(WriteColors);
+	gen->setConfig(WriteColors);
+	gen->setConfig(DisableFlash);
 	gen->write(id);
 	memory->WriteArray(id, DECORATION_COLORS, symbolColors);
 	gen->resetConfig();
@@ -527,13 +528,6 @@ void Special::generateRGBStonePuzzleH(PanelID id) {
 }
 
 void Special::generateRGBDotPuzzleH(PanelID id) {
-	//TODO: Doing these writes here will mess up double mode.
-	// Do the colors look correct using this config mode instead?
-	//memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR, {1, 0, 0, 1});
-	//memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_A, { 0, 1, 1, 1 });
-	//memory->WritePanelData<Color>(id, PATTERN_POINT_COLOR_B, { 1, 1, 0, 1 });
-	//memory->WritePanelData<Color>(id, ACTIVE_COLOR, { 0, 1, 1, 1 });
-	//memory->WritePanelData<Color>(id, REFLECTION_PATH_COLOR, { 1, 1, 0, 1 });
 	gen->setConfig(CyanAndYellowLines);
 	gen->setGridSize(7, 7);
 	gen->setSymmetry(Rotational);
