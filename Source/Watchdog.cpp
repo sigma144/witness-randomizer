@@ -105,9 +105,8 @@ void SymbolsWatchdog::initPath() {
 	if (panel.style & SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {
 			SolutionPoint sp;
-			//TODO: Other types of symmetry
-			sp.pointA = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointA;
-			sp.pointB = (width / 2 + 1) * (height / 2 + 1) - 1 - traced[i].pointB;
+			sp.pointA = panel.getSymSolutionPoint(traced[i].pointA);
+			sp.pointB = panel.getSymSolutionPoint(traced[i].pointB);
 			traced.push_back(sp);
 		}
 	}

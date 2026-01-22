@@ -1524,6 +1524,17 @@ bool Generate::placeTriangles(int color, int amount, int targetCount)
 		openpos.erase({ 1, 3 });
 	}
 	std::set<Point> open = openpos;
+	//If the block is adjacent to a start or exit, don't allow triangles to be placed there
+	for (Point dir : Panel::DIRECTIONS) {
+		for (Point start : starts) {
+			if (open.count(start + dir))
+				open.erase(start + dir);
+		}
+		for (Point exit : exits) {
+			if (open.count(exit + dir))
+				open.erase(exit + dir);
+		}
+	}
 	int count1 = 0, count2 = 0, count3 = 0;
 	while (amount > 0) {
 		if (open.size() == 0)
@@ -1535,18 +1546,6 @@ bool Generate::placeTriangles(int color, int amount, int targetCount)
 			open.erase(getSymPoint(pos));
 		}
 		if (count == 0 || targetCount && count != targetCount) continue;
-		//If the block is adjacent to a start or exit, don't place a triangle there
-		//TODO: Don't hardcode this
-		if (hasConfig(TreehouseLayout) || panel.id == CAVES_PERSPECTIVE_3) {
-			bool found = false;
-			for (Point dir : Panel::DIRECTIONS) {
-				if (starts.count(pos + dir) || exits.count(pos + dir)) {
-					found = true;
-					break;
-				}
-			}
-			if (found) continue;
-		}
 		//Attempt to balance the amount of 1, 2, and 3 triangles
 		if (count == 1) {
 			if (!targetCount && count1 * 2 > count2 + count3 && rand(2) == 0) continue;

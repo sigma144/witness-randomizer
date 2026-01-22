@@ -236,6 +236,19 @@ Point Panel::getSymPoint(int x, int y, Symmetry symmetry) {
 	return Point(x, y);
 }
 
+//Returns the grid symetric solution point as defined by the panel's REFLECTION_DATA
+int Panel::getSymSolutionPoint(int index) {
+	if (style & SYMMETRICAL) {
+		Memory* memory = Memory::get();
+		int numIntersections = memory->ReadPanelData<int>(id, NUM_DOTS);
+		std::vector<int> symmetryData = memory->ReadArray<int>(id, REFLECTION_DATA, numIntersections);
+		return symmetryData[index];
+	}
+	else {
+		return index;
+	}
+}
+
 //Count the occurrence of the given symbol color in the given region (for the stars)
 int Panel::countColor(const std::set<Point>& region, int color) {
 	int count = 0;
