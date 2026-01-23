@@ -204,6 +204,7 @@ std::array<std::vector<SymbolData::Shape>, SymbolID::NUM_SYMBOLS> SymbolData::Ge
 
 	AddArrows(data);
 	AddAntiTriangles(data);
+	AddCaves(data);
 
 	return data;
 }
@@ -314,3 +315,28 @@ void SymbolData::AddAntiTriangles(std::array<std::vector<Shape>, SymbolID::NUM_S
 	data[ANTITRIANGLE4] = DrawCounter(triangle, 4);
 }
 
+void SymbolData::AddCaves(std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS>& data) {
+	Shape pip = {
+		{-0.1, 0.0},
+		{0.0, 1.0},
+		{0.1, 0.0},
+		{0.0, -0.1},
+	};
+
+	Shape viewer = {
+		{0.2, 0.8},
+		{0.0, 0.9},
+		{-0.2, 0.8},
+	};
+
+	std::vector<Shape> fourViewers = Combine(viewer, RotateClockwise(viewer, 90), RotateClockwise(viewer, 180), RotateClockwise(viewer, 270));
+	data[CAVE1] = Combine(DrawCounter(pip, 1), fourViewers);
+	data[CAVE2] = Combine(DrawCounter(pip, 2), fourViewers);
+	data[CAVE3] = Combine(DrawCounter(pip, 3), fourViewers);
+	data[CAVE4] = Combine(DrawCounter(pip, 4), fourViewers);
+	data[CAVE5] = Combine(DrawCounter(pip, 5), fourViewers);
+	data[CAVE6] = Combine(DrawCounter(pip, 6), fourViewers);
+	data[CAVE7] = Combine(Translate(DrawCounter(pip, 5), 0, 0.3199218765), Translate(DrawCounter(pip, 2), 0, -2 * 0.3199218765), fourViewers);
+	data[CAVE8] = Combine(Translate(DrawCounter(pip, 5), 0, -0.3199218765), Translate(DrawCounter(pip, 3), 0, 2 * 0.3199218765), fourViewers);
+	data[CAVE9] = Combine(Translate(DrawCounter(pip, 6), 0, -0.3199218765), Translate(DrawCounter(pip, 3), 0, 2 * 0.3199218765), fourViewers);
+}

@@ -580,6 +580,9 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 	for (const std::pair<int, int>& s : symbols[AntiTriangle]) {
 		if (!placeAntiTriangles(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
+	for (const std::pair<int, int>& s : symbols[Cave]) {
+		if (!placeCaveClues(s.first & 0xf, s.second, s.first >> 20)) return false;
+	}
 	for (const std::pair<int, int>& s : symbols[Star]) {
 		if (!placeStars(s.first & 0xf, s.second)) return false;
 	}
