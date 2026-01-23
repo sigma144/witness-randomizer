@@ -1795,3 +1795,27 @@ bool Generate::placeAntiTriangles(int color, int amount, int targetCount) {
 	}
 	return true;
 }
+
+bool Generate::placeCaveClues(int color, int amount) {
+	std::set<Point> open = openpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		open.erase(pos);
+		int count = 1;
+		for (Point dir : Panel::DIRECTIONS) {
+			Point temp = pos;
+			while (get(temp + dir + dir) != OFF_GRID && get(temp + dir) != PATH) {
+				count++;
+				temp = temp + dir + dir;
+			}
+		}
+		if (count > 9)
+			continue; 
+		set(pos, SymbolData::GetValFromSymbolID())
+		openpos.erase(pos);
+		amount--;
+	}
+	return true;
+}

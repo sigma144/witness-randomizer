@@ -150,6 +150,9 @@ bool SymbolsWatchdog::checkSymbol(int x, int y) {
 	else if (type == AntiTriangle) {
 		if (!checkAntiTriangle(x, y)) return false;
 	}
+	else if (type == Cave) {
+		if (!checkAntiTriangle(x, y)) return false;
+	}
 	return true;
 }
 
@@ -164,6 +167,20 @@ bool SymbolsWatchdog::checkAntiTriangle(int x, int y) {
 	int symbol = getCustomSymbol(x, y);
 	int targetCount = (symbol >> 20) + 1;
 	return panel.countTurns({ x, y }) == targetCount;
+}
+
+bool SymbolsWatchdog::checkCave(int x, int y) {
+	int symbol = get(x, y);
+	int targetCount = 0;
+	int count = 1;
+	for (Point dir : Panel::DIRECTIONS) {
+		Point temp = { x, y };
+		while (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y) != OFF_GRID && get(temp.x + dir.x, temp.y + dir.y) != PATH) {
+			count++;
+			temp = temp + dir + dir;
+		}
+	}
+	return count = targetCount;
 }
 
 //Keep Watchdog - Keep the big panel off until all panels are solved
