@@ -59,6 +59,26 @@ private:
 	static std::vector<Shape> Translate(const std::vector<Shape>& shapes, double dx, double dy);
 	static std::vector<Shape> FlipX(const std::vector<Shape>& shapes);
 
+	static std::vector<Shape> CombineHelper(std::vector<Shape> combined) { return combined; };
+	template<typename... Params>
+	static std::vector<Shape> CombineHelper(std::vector<Shape> combined, Shape shape, Params... params) {
+		combined.push_back(shape);
+		return CombineHelper(combined, params...);
+	};
+	template<typename... Params>
+	static std::vector<Shape> CombineHelper(std::vector<Shape> combined, std::vector<Shape> shapes, Params... params) {
+		for (Shape shape : shapes) {
+			combined.push_back(shape);
+		}
+		return CombineHelper(combined, params...);
+	};
+	// Combines any number of shape and vector of shapes into a singular vector of shape
+	template<typename... Params>
+	static std::vector<Shape> Combine(Params... params) { 
+		std::vector<Shape> combined;
+		return CombineHelper(combined, params...);
+	};
+
 	static std::vector<Shape> DrawCounter(const Shape& shape, int count);
 	static std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS> GetAllShapes();
 

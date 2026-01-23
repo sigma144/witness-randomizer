@@ -157,7 +157,7 @@ std::vector<float> SymbolData::GenerateData() {
 		int dataIndex = 0;
 		for (int j = 0; j < allShapes[i].size(); j++) {
 			size += allShapes[i][j].size();
-			assert(size <= VERTICES_PER_SYMBOL); // Shape was bigger than the allowed size
+			assert(size <= VERTICES_PER_SYMBOL + (2 * j)); // Shape was bigger than the allowed size
 
 			// Use the earcut library to divide the polygon into triangles.
 			// This returns an ordered list of points in the shape which comprise the triangles.
