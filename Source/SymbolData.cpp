@@ -47,6 +47,53 @@ SymbolData::Shape SymbolData::Translate(const Shape& shape, double dx, double dy
 	return translated;
 }
 
+SymbolData::Shape SymbolData::FlipX(const Shape& shape)
+{
+	Shape flipped;
+	flipped.resize(shape.size());
+	for (int i = 0; i < shape.size(); i++) {
+		flipped[i][0] = shape[i][0] * -1;
+		flipped[i][1] = shape[i][1];
+	}
+	return flipped;
+}
+
+std::vector<SymbolData::Shape> SymbolData::RotateClockwise(const std::vector<SymbolData::Shape>& shapes, int degrees) 
+{
+	std::vector<Shape> rotated;
+	for (Shape shape : shapes) {
+		rotated.push_back(RotateClockwise(shape, degrees));
+	}
+	return rotated;
+}
+
+std::vector<SymbolData::Shape> SymbolData::Scale(const std::vector<SymbolData::Shape>& shapes, double scale)
+{
+	std::vector<Shape> scaled;
+	for (Shape shape : shapes) {
+		scaled.push_back(Scale(shape, scale));
+	}
+	return scaled;
+}
+
+std::vector<SymbolData::Shape> SymbolData::Translate(const std::vector<SymbolData::Shape>& shapes, double dx, double dy)
+{
+	std::vector<Shape> translated;
+	for (Shape shape : shapes) {
+		translated.push_back(Translate(shape, dx, dy));
+	}
+	return translated;
+}
+
+std::vector<SymbolData::Shape> SymbolData::FlipX(const std::vector<SymbolData::Shape>& shapes)
+{
+	std::vector<Shape> flipped;
+	for (Shape shape : shapes) {
+		flipped.push_back(FlipX(shape));
+	}
+	return flipped;
+}
+
 std::vector<SymbolData::Shape> SymbolData::DrawCounter(const Shape& shape, int count)
 {
 	// Offset used by the triangle in game. This corresponds to 3/4 the distance between the center of the triangles of a 2 triangles clue

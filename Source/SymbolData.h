@@ -52,6 +52,13 @@ private:
 	static Shape RotateClockwise(const Shape& shape, int degrees);
 	static Shape Scale(const Shape& shape, double scale);
 	static Shape Translate(const Shape& shape, double dx, double dy);
+	static Shape FlipX(const Shape& shape);
+
+	static std::vector<Shape> RotateClockwise(const std::vector<Shape>& shapes, int degrees);
+	static std::vector<Shape> Scale(const std::vector<Shape>& shapes, double scale);
+	static std::vector<Shape> Translate(const std::vector<Shape>& shapes, double dx, double dy);
+	static std::vector<Shape> FlipX(const std::vector<Shape>& shapes);
+
 	static std::vector<Shape> DrawCounter(const Shape& shape, int count);
 	static std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS> GetAllShapes();
 
