@@ -121,10 +121,13 @@ private:
 	bool hasStar(const std::set<Point>& region, int color);
 	bool checkStarZigzag(Panel& panel);
 	bool placeTriangles(int color, int amount, int targetCount);
-	bool placeArrows(int color, int amount, int targetCount);
 	bool placeErasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols);
-
 	bool combineShapes(std::vector<Shape>& shapes);
+	//Custom Symbols
+	bool placeArrows(int color, int amount, int targetCount);
+	bool placeAntiTriangles(int color, int amount, int targetCount);
+
+	
 
 	Panel panel;
 	std::vector<std::vector<int>> customGrid;
@@ -133,8 +136,8 @@ private:
 	std::set<Point> starts, exits;
 	std::set<Point> gridpos; //Coordinates of the cells of the grid.
 	std::set<Point> openpos; //(Possibly not proper) subset of gridpos where decorations can be.
-	std::set<Point> path, path1, path2;
-	std::set<Point> customPath; //TODO: Do I need this?
+	std::set<Point> path, path1, path2; //Path points
+	std::set<Point> customPath; //TODO: Add points in the correct order (for symbols where that matters)
 	bool bisect; //Used for stone generation
 	int stoneTypes; //Used fo stone generation
 	std::set<Config> config, oneTimeAdd, oneTimeRemove;

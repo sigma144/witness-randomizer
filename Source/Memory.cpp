@@ -228,7 +228,7 @@ void Memory::setupCustomSymbols() {
 		0x48, 0x83, 0xE8, 0x07,										// sub rax, 7								; Skip the first 7 entries so that the first custom symbol is 0x00080700 (space is required for the original triangles)
 		IF_GE(0x48, 0x83, 0xF8, 0x00),								// cmp rax, 0								; Check to make sure our symbol ID is >= 0
 		THEN(
-			IF_LT(0x48, 0x3D, INT_TO_BYTES(SymbolId::NUM_SYMBOLS)),	// cmp rax, NUM_SYMBOLS						; Check to make sure our symbol ID is < NUM_SYMBOLS
+			IF_LT(0x48, 0x3D, INT_TO_BYTES(SymbolID::NUM_SYMBOLS)),	// cmp rax, NUM_SYMBOLS						; Check to make sure our symbol ID is < NUM_SYMBOLS
 			THEN(
 				0x48, 0xC1, 0xE0, 0x0A,								// shl rax, 0x0A							; Determine the offset into our data array (256 floats allocated per symbol)
 				0x49, 0x01, 0xC2,									// add r10, rax								; Adjust the array start by the offset

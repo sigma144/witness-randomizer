@@ -631,11 +631,11 @@ void Special::generateKeepLaserPuzzle(PanelID id, const std::set<Point>& path1, 
 	for (Point p : path1) gen->setPath(Point(p.x + 12, p.y + 14));
 	for (Point p : path2) gen->setPath(Point(p.x + 12, p.y + 2));
 	for (Point p : path3) gen->setPath(Point(8 - p.x, 8 - p.y + 2));
-	if (psymbols.getNum(Triangle) == 0) { //Normal mode
+	if (randomizer->difficulty == Normal) {
 		for (Point p : path4) gen->setPath(Point(p.x, p.y + 14));
 		if (path4.count(Point({ 8, 4 }))) for (Point p : pathPoints2) gen->setPath(p);
 	}
-	else { //Hard mode
+	else {
 		for (Point p : path4) gen->setPath(Point(8 - p.x, 8 - p.y + 14));
 		for (Point p : pathPoints3) gen->setPath(p);
 	}
@@ -1017,7 +1017,7 @@ bool checkShape(const std::set<Point>& shape, int direction) {
 	return false;
 }
 
-void Special::generateMountainFloor()
+void Special::generateMountainFloor() //TODO: Sometimes doesn't make a rotated shape when it's supposed to
 {
 	std::vector<PanelID> ids = { MOUNTAIN_META_UL, MOUNTAIN_META_UR, MOUNTAIN_META_DL, MOUNTAIN_META_DR };
 	PanelID idfloor = MOUNTAIN_META_FLOOR;
@@ -1413,11 +1413,11 @@ bool Special::checkDotSolvability(Panel* panel1, Panel* panel2, Symmetry correct
 	return false;
 }
 
-void Special::createArrowPuzzle(PanelID id, int x, int y, SymbolId symbolId, const std::vector<Point>& gaps)
+void Special::createArrowPuzzle(PanelID id, int x, int y, SymbolID symbolId, const std::vector<Point>& gaps)
 {
 	gen->initPanel(id);
 	gen->clear();
-	gen->set(x, y, GetWitnessDecorationId(symbolId) | Purple);
+	gen->set(x, y, SymbolData::GetValFromSymbolID(symbolId) | Purple);
 	for (Point p : gaps) {
 		gen->set(p, p.x % 2 ? Gap_Row : Gap_Column);
 	}
@@ -1433,12 +1433,12 @@ void Special::createArrowSecretDoor(PanelID id)
 	gen->successColor = { 1, 0.6f, 0, 1 };
 	gen->initPanel(id);
 	gen->clear();
-	gen->set(1, 1, GetWitnessDecorationId(SymbolId::Arrow3NE) | Orange);
-	gen->set(1, 5, GetWitnessDecorationId(SymbolId::Arrow3E) | Orange);
-	gen->set(1, 9, GetWitnessDecorationId(SymbolId::Arrow3SE) | Orange);
-	gen->set(9, 1, GetWitnessDecorationId(SymbolId::Arrow3NW) | Orange);
-	gen->set(9, 5, GetWitnessDecorationId(SymbolId::Arrow3W) | Orange);
-	gen->set(9, 9, GetWitnessDecorationId(SymbolId::Arrow3SW) | Orange);
+	gen->set(1, 1, SymbolData::GetValFromSymbolID(SymbolID::ARROW3NE) | Orange);
+	gen->set(1, 5, SymbolData::GetValFromSymbolID(SymbolID::ARROW3E) | Orange);
+	gen->set(1, 9, SymbolData::GetValFromSymbolID(SymbolID::ARROW3SE) | Orange);
+	gen->set(9, 1, SymbolData::GetValFromSymbolID(SymbolID::ARROW3NW) | Orange);
+	gen->set(9, 5, SymbolData::GetValFromSymbolID(SymbolID::ARROW3W) | Orange);
+	gen->set(9, 9, SymbolData::GetValFromSymbolID(SymbolID::ARROW3SW) | Orange);
 	gen->write(id);
 }
 
@@ -1573,8 +1573,8 @@ bool Special::hasBeenRandomized() {
 
 //For testing/debugging purposes only
 void Special::test() {
-	Random::seed(0);
-
 	g.resetConfig();
-	
+	g.setGridSize(4, 4);
+	g.lineThickness = 1.0f;
+	g.generate(TUT_DOT_1, AntiTriangle | Orange, 8, Arrow | Purple, 4, Start, 1, Exit, 1);
 }

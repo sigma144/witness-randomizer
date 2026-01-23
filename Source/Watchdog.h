@@ -47,9 +47,11 @@ public:
 	void initPath();
 	int get(int x, int y);
 	void set(int x, int y, int val);
+	int getCustomSymbol(int x, int y) { return SymbolData::GetSymbolFromVal(get(x, y)); }
 
 	bool checkSymbol(int x, int y);
 	bool checkArrow(int x, int y);
+	bool checkAntiTriangle(int x, int y);
 
 	PanelID id;
 	std::vector<SolutionPoint> traced;

@@ -34,6 +34,8 @@ struct PuzzleSymbols {
 				symbols[static_cast<Symbol>(s.first)].push_back(s);
 			else if (s.first & Dot)
 				symbols[Dot].push_back(s);
+			else if ((s.first & 0xF00) == 0x700) //Custom symbol
+				symbols[static_cast<Symbol>(s.first & 0xFF00)].push_back(s);
 			else
 				symbols[static_cast<Symbol>(s.first & 0xF00)].push_back(s);
 		}

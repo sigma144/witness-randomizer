@@ -25,12 +25,18 @@ enum Symbol : int {
 	Dot_Row = 0x240020,
 	Dot_Column = 0x440020,
 	Dot_Intersection = 0x600020,
-
-	Arrow = 0x700,
-	Arrow1 = 0x10700,
-	Arrow2 = 0x20700,
-	Arrow3 = 0x30700,
-
+	//Custom symbols - Don't actually set these values into the grid.
+	//Instead, use values from GetValFromSymbol or GetValFromSymbolID.
+	//Format: 0xVVTT700		T = Symbol Type		V = Symbol Variant
+	Arrow = 0x000700,
+	Arrow1 = 0x100700,
+	Arrow2 = 0x200700,
+	Arrow3 = 0x300700,
+	AntiTriangle = 0x001700,
+	AntiTriangle1 = 0x101700,
+	AntiTriangle2 = 0x201700,
+	AntiTriangle3 = 0x301700,
+	AntiTriangle4 = 0x401700,
 };
 
 enum SymbolColor {

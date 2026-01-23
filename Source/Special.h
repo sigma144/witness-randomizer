@@ -54,7 +54,7 @@ public:
 	void initPillarSymmetry(PanelID id, Symmetry symmetry);
 	void generateSymmetryGate(PanelID id);
 	bool checkDotSolvability(Panel* panel1, Panel* panel2, Symmetry correctSym);
-	void createArrowPuzzle(PanelID id, int x, int y, SymbolId symbolId, const std::vector<Point>& gaps);
+	void createArrowPuzzle(PanelID id, int x, int y, SymbolID symbolId, const std::vector<Point>& gaps);
 	void createArrowSecretDoor(PanelID id);
 	void generateCenterPerspective(PanelID id, const std::vector<std::pair<int, int>>& symbolVec, Symbol symbolType);
 

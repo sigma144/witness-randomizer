@@ -426,8 +426,8 @@ bool Generate::generateMazeI(PanelID id, int numStarts, int numExits) {
 			}
 			Point dir = pickRandom(validDir);
 			Point newPos = pos + dir;
-			setPath(newPos);
 			setPath(pos + dir / 2);
+			setPath(newPos);
 			check.insert(newPos);
 			pos = newPos;
 		}
@@ -575,7 +575,10 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 		if (!placeTriangles(s.first & 0xf, s.second, s.first >> 16)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Arrow]) {
-		if (!placeArrows(s.first & 0xf, s.second, s.first >> 16)) return false;
+		if (!placeArrows(s.first & 0xf, s.second, s.first >> 20)) return false;
+	}
+	for (const std::pair<int, int>& s : symbols[AntiTriangle]) {
+		if (!placeAntiTriangles(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Star]) {
 		if (!placeStars(s.first & 0xf, s.second)) return false;
@@ -657,8 +660,8 @@ bool Generate::generatePathLength(int minLength, int maxLength) {
 			|| newPos == exit && path.size() / 2 + 2 < minLength) continue;
 		if (panel.symmetry && (offEdge(getSymPoint(newPos)) || newPos == getSymPoint(newPos)))
 			continue;
-		setPath(newPos);
 		setPath(pos + dir / 2);
+		setPath(newPos);
 		pos = newPos;
 		fails = 0;
 	}
@@ -682,8 +685,8 @@ bool Generate::generatePathRegions(int minRegions) {
 			|| newPos == exit && regions < minRegions)
 			continue;
 		if (panel.symmetry && (offEdge(getSymPoint(newPos)) || newPos == getSymPoint(newPos))) continue;
-		setPath(newPos);
 		setPath(pos + dir / 2);
+		setPath(newPos);
 		if (!onEdge(newPos) && onEdge(pos)) {
 			regions++;
 			if (panel.symmetry) regions++;
@@ -755,8 +758,8 @@ bool Generate::generateLongestPath() {
 				if (open >= 2) continue;
 			}
 		}
-		setPath(newPos);
 		setPath(pos + dir / 2);
+		setPath(newPos);
 		pos = newPos;
 		fails = 0;
 	}
@@ -805,8 +808,8 @@ bool Generate::generateSpecialPath() {
 		if (validDir.size() == 0)
 			return false;
 		Point dir = pickRandom(validDir);
-		setPath(pos + dir);
 		setPath(pos + dir / 2);
+		setPath(pos + dir);
 		pos = pos + dir;
 	}
 	return hitIndex == hitPoints.size() && path.size() >= minLength;
@@ -1565,33 +1568,6 @@ bool Generate::placeTriangles(int color, int amount, int targetCount)
 	return true;
 }
 
-//Place the given amount of arrows with the given color. targetCount is how many ticks on the arrows, or 0 for random
-bool Generate::placeArrows(int color, int amount, int targetCount) {
-	std::set<Point> open = openpos;
-	while (amount > 0) {
-		if (open.size() == 0)
-			return false;
-		Point pos = pickRandom(open);
-		open.erase(pos);
-		int fails = 0;
-		while (fails++ < 20) { //Keep picking random directions until one works
-			int choice = (parity == -1 ? rand(8) : rand(4));
-			Point dir = Panel::DIRECTIONS8_2[choice];
-			if (panel.isCylinder && dir.y == 0) continue; //Sideways arrows on a pillar would wrap forever
-			int count = panel.countCrossings(pos, dir);
-			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
-			if (dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
-				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2 && rand(10) > 0)
-				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
-			set(pos, Arrow | color | (choice << 16) | (count << 19));
-			openpos.erase(pos);
-			amount--;
-			break;
-		}
-	}
-	return true;
-}
-
 //Place the given amount of erasers with the given colors. eraseSymbols are the symbols that were erased
 bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols) {
 	std::set<Point> open = openpos;
@@ -1775,4 +1751,47 @@ bool Generate::combineShapes(std::vector<Shape>& shapes) {
 		}
 	}
 	return false;
+}
+
+//Place the given amount of arrows with the given color. targetCount is how many ticks on the arrows, or 0 for random
+bool Generate::placeArrows(int color, int amount, int targetCount) {
+	std::set<Point> open = openpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		open.erase(pos);
+		int fails = 0;
+		while (fails++ < 20) { //Keep picking random directions until one works
+			int choice = (parity == -1 ? rand(8) : rand(4));
+			Point dir = Panel::DIRECTIONS8_2[choice];
+			if (panel.isCylinder && dir.y == 0) continue; //Sideways arrows on a pillar would wrap forever
+			int count = panel.countCrossings(pos, dir);
+			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
+			if (dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
+				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2 && rand(10) > 0)
+				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
+			set(pos, SymbolData::GetValFromSymbolID(ARROW1E + choice + (count - 1) * 8) | color);
+			openpos.erase(pos);
+			amount--;
+			break;
+		}
+	}
+	return true;
+}
+
+bool Generate::placeAntiTriangles(int color, int amount, int targetCount) {
+	std::set<Point> open = openpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		open.erase(pos);
+		int count = panel.countTurns(pos);
+		if (count == 0 || count > 4 || targetCount && count != targetCount) continue;
+		set(pos, SymbolData::GetValFromSymbolID(ANTITRIANGLE1 + count - 1) | color);
+		openpos.erase(pos);
+		amount--;
+	}
+	return true;
 }

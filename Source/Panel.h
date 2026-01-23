@@ -87,6 +87,7 @@ public:
 	int countColor(const std::set<Point>& region, int color);
 	int countSides(Point pos);
 	int countCrossings(Point pos, Point dir);
+	int countTurns(Point pos);
 
 	Point indexToPoint(int index);
 	int pointToIndex(int x, int y);
@@ -99,6 +100,7 @@ public:
 	int width, height; //Dimensions of internal grid, including both edge and block spaces
 	std::vector<Point> startpoints;
 	std::vector<Endpoint> endpoints;
+	std::map<Point, int> path; //Points mapped to their order
 	Symmetry symmetry;
 	int style;
 	float lineThickness;

@@ -121,15 +121,15 @@ void SymbolsWatchdog::initPath() {
 			x1 = (p1 % (width / 2)) * 2, y1 = height - 1 - (p1 / (width / 2)) * 2;
 			x2 = (p2 % (width / 2)) * 2, y2 = height - 1 - (p2 / (width / 2)) * 2;
 			set(x1, y1, PATH);
-			set(x2, y2, PATH);
 			if (x1 == x2 || x1 == x2 + 2 || x1 == x2 - 2)
 				set((x1 + x2) / 2, (y1 + y2) / 2, PATH);
 			else set(width - 1, (y1 + y2) / 2, PATH);
+			set(x2, y2, PATH);
 		}
 		else {
 			set(x1, y1, PATH);
-			set(x2, y2, PATH);
 			set((x1 + x2) / 2, (y1 + y2) / 2, PATH);
+			set(x2, y2, PATH);
 		}
 	}
 }
@@ -143,28 +143,27 @@ void SymbolsWatchdog::set(int x, int y, int val) {
 }
 
 bool SymbolsWatchdog::checkSymbol(int x, int y) {
-	int type = GetWitnessSymbolId(get(x, y));
-	if (type >= SymbolId::Arrow1E && type <= SymbolId::Arrow3NE) {
+	int type = getCustomSymbol(x, y) & 0xFF00;
+	if (type == Arrow) {
 		if (!checkArrow(x, y)) return false;
+	}
+	else if (type == AntiTriangle) {
+		if (!checkAntiTriangle(x, y)) return false;
 	}
 	return true;
 }
 
 bool SymbolsWatchdog::checkArrow(int x, int y) {
-	int symbol = get(x, y);
-	int targetCount = (symbol >> 19);
-	Point dir = Panel::DIRECTIONS8_2[(symbol >> 16) & 0x7];
-	x += dir.x / 2; y += dir.y / 2;
-	int count = 0;
-	while (get(x, y) != OFF_GRID) {
-		if (get(x, y) == PATH) {
-			if (++count > targetCount) {
-				break;
-			}
-		}
-		x += dir.x; y += dir.y;
-	}
-	return count == targetCount;
+	int symbol = getCustomSymbol(x, y);
+	int targetCount = (symbol >> 23) + 1;
+	Point dir = Panel::DIRECTIONS8_2[(symbol >> 20) & 0x7];
+	return panel.countCrossings({ x, y }, dir) == targetCount;
+}
+
+bool SymbolsWatchdog::checkAntiTriangle(int x, int y) {
+	int symbol = getCustomSymbol(x, y);
+	int targetCount = (symbol >> 20) + 1;
+	return panel.countTurns({ x, y }) == targetCount;
 }
 
 //Keep Watchdog - Keep the big panel off until all panels are solved

@@ -50,6 +50,7 @@ void Panel::read() {
 	}
 	startpoints.clear();
 	endpoints.clear();
+	path.clear();
 	readIntersections();
 	readDecorations();
 }
@@ -99,13 +100,12 @@ int Panel::get(int x, int y) {
 
 void Panel::set(int x, int y, int val) {
 	if (y < 0 || y >= height) return;
-	if (x < 0) {
-		if (isCylinder && x > -width) grid[x + width][y] = val;
-	}
-	else if (x >= width) {
-		if (isCylinder && x < width * 2 - 1) grid[x - width][y] = val;
-	}
-	else grid[x][y] = val;
+	if (isCylinder && x < 0) x += width;
+	if (isCylinder && x >= width) x -= width;
+	if (x < 0 || x >= width) return;
+	grid[x][y] = val;
+	if (val == PATH)
+		path[{x, y}] = static_cast<int>(path.size());
 }
 
 void Panel::setSymbol(int x, int y, Symbol symbol, SymbolColor color) {
@@ -279,6 +279,37 @@ int Panel::countCrossings(Point pos, Point dir) {
 	while (get(pos) != OFF_GRID) {
 		if (get(pos) == PATH) count++;
 		pos = pos + dir;
+	}
+	return count;
+}
+
+int Panel::countTurns(Point pos) //TODO: Use path order to get multiple exits working correctly
+{
+	int count = 0;
+	for (Point dir : { Point(1, 1), Point(1, -1), Point(-1, -1), Point(-1, 1) }) {
+		Point p = pos + dir;
+		bool pathH = get(p + Point(-1, 0)) == PATH || get(p + Point(1, 0)) == PATH;
+		bool pathV = get(p + Point(0, -1)) == PATH || get(p + Point(0, 1)) == PATH;
+		for (Endpoint& e : endpoints) {
+			if (e.x == p.x && e.y == p.y && get(e.x, e.y) == PATH) {
+				switch (e.dir) {
+				case Endpoint::LEFT:
+				case Endpoint::RIGHT: pathH = true; break;
+				case Endpoint::UP:
+				case Endpoint::DOWN: pathV = true; break;
+				default: pathH = pathV = true;
+				}
+			}
+		}
+		if (pathH && pathV)
+			count++;
+	}
+	//Mid-segment exits
+	for (Endpoint& e : endpoints) {
+		if (e.x == pos.x && abs(e.y - pos.y) == 1 && get(e.x, e.y) == PATH)
+			count++;
+		if (e.y == pos.y && abs(e.x - pos.x) == 1 && get(e.x, e.y) == PATH)
+			count++;
 	}
 	return count;
 }

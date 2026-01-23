@@ -6,44 +6,55 @@
 
 #include <array>
 #include <vector>
+#include "Enums.h"
 
-enum SymbolId {
-	Arrow1E  = 0x00,
-	Arrow1SE = 0x01,
-	Arrow1S  = 0x02,
-	Arrow1SW = 0x03,
-	Arrow1W  = 0x04,
-	Arrow1NW = 0x05,
-	Arrow1N  = 0x06,
-	Arrow1NE = 0x07,
-	Arrow2E  = 0x08,
-	Arrow2SE = 0x09,
-	Arrow2S  = 0x0A,
-	Arrow2SW = 0x0B,
-	Arrow2W  = 0x0C,
-	Arrow2NW = 0x0D,
-	Arrow2N  = 0x0E,
-	Arrow2NE = 0x0F,
-	Arrow3E  = 0x10,
-	Arrow3SE = 0x11,
-	Arrow3S  = 0x12,
-	Arrow3SW = 0x13,
-	Arrow3W  = 0x14,
-	Arrow3NW = 0x15,
-	Arrow3N  = 0x16,
-	Arrow3NE = 0x17,
+//NOTE: When SymbolData is updated, the game must be closed and re-opened for changes to take effect.
 
-	BigSquare = 0x18,
+enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the same ordering
+	ARROW1E  = 0x00,
+	ARROW1SE = 0x01,
+	ARROW1S  = 0x02,
+	ARROW1SW = 0x03,
+	ARROW1W  = 0x04,
+	ARROW1NW = 0x05,
+	ARROW1N  = 0x06,
+	ARROW1NE = 0x07,
+	ARROW2E  = 0x08,
+	ARROW2SE = 0x09,
+	ARROW2S  = 0x0A,
+	ARROW2SW = 0x0B,
+	ARROW2W  = 0x0C,
+	ARROW2NW = 0x0D,
+	ARROW2N  = 0x0E,
+	ARROW2NE = 0x0F,
+	ARROW3E  = 0x10,
+	ARROW3SE = 0x11,
+	ARROW3S  = 0x12,
+	ARROW3SW = 0x13,
+	ARROW3W  = 0x14,
+	ARROW3NW = 0x15,
+	ARROW3N  = 0x16,
+	ARROW3NE = 0x17,
+
+	ANTITRIANGLE1 = 0x18,
+	ANTITRIANGLE2 = 0x19,
+	ANTITRIANGLE3 = 0x1A,
+	ANTITRIANGLE4 = 0x1B,
+
+	BigSquare = 0x1C,
 
 	NUM_SYMBOLS, // Must be last
 };
 
-constexpr int GetWitnessDecorationId(SymbolId symbolId) { return ((int)symbolId << 16) + 0x80700; }
-constexpr SymbolId GetWitnessSymbolId(int decId) { return static_cast<SymbolId>((decId - 0x80700) >> 16); }
+inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, BigSquare };
 
 class SymbolData {
 public:
 	static std::vector<float> GenerateData();
+	static int GetValFromSymbolID(int symbolID);
+	static SymbolID GetSymbolIDFromVal(int val);
+	static Symbol GetSymbolFromVal(int val);
+	static int GetValFromSymbol(int val);
 
 private:
 	using Point = std::array<double, 2>;
@@ -53,14 +64,13 @@ private:
 	static Shape Scale(const Shape& shape, double scale);
 	static Shape Translate(const Shape& shape, double dx, double dy);
 	static Shape FlipX(const Shape& shape);
-
 	static std::vector<Shape> RotateClockwise(const std::vector<Shape>& shapes, int degrees);
 	static std::vector<Shape> Scale(const std::vector<Shape>& shapes, double scale);
 	static std::vector<Shape> Translate(const std::vector<Shape>& shapes, double dx, double dy);
 	static std::vector<Shape> FlipX(const std::vector<Shape>& shapes);
-
 	static std::vector<Shape> DrawCounter(const Shape& shape, int count);
-	static std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS> GetAllShapes();
 
-	static void AddArrows(std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS > & data);
+	static std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS> GetAllShapes();
+	static void AddArrows(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	static void AddAntiTriangles(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 };
