@@ -151,7 +151,7 @@ bool SymbolsWatchdog::checkSymbol(int x, int y) {
 		if (!checkAntiTriangle(x, y)) return false;
 	}
 	else if (type == Cave) {
-		if (!checkAntiTriangle(x, y)) return false;
+		if (!checkCave(x, y)) return false;
 	}
 	return true;
 }
