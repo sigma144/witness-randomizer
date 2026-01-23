@@ -170,8 +170,8 @@ bool SymbolsWatchdog::checkAntiTriangle(int x, int y) {
 }
 
 bool SymbolsWatchdog::checkCave(int x, int y) {
-	int symbol = get(x, y);
-	int targetCount = 0;
+	int symbol = getCustomSymbol(x, y);
+	int targetCount = (symbol >> 20) + 1;
 	int count = 1;
 	for (Point dir : Panel::DIRECTIONS) {
 		Point temp = { x, y };
@@ -180,7 +180,7 @@ bool SymbolsWatchdog::checkCave(int x, int y) {
 			temp = temp + dir + dir;
 		}
 	}
-	return count = targetCount;
+	return count == targetCount;
 }
 
 //Keep Watchdog - Keep the big panel off until all panels are solved

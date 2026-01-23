@@ -126,7 +126,7 @@ private:
 	//Custom Symbols
 	bool placeArrows(int color, int amount, int targetCount);
 	bool placeAntiTriangles(int color, int amount, int targetCount);
-	bool placeCaveClues(int color, int amount);
+	bool placeCaveClues(int color, int amount, int targetCount);
 
 	
 

@@ -1799,7 +1799,7 @@ bool Generate::placeAntiTriangles(int color, int amount, int targetCount) {
 	return true;
 }
 
-bool Generate::placeCaveClues(int color, int amount) {
+bool Generate::placeCaveClues(int color, int amount, int targetCount) {
 	std::set<Point> open = openpos;
 	while (amount > 0) {
 		if (open.size() == 0)
@@ -1816,7 +1816,7 @@ bool Generate::placeCaveClues(int color, int amount) {
 		}
 		if (count > 9)
 			continue; 
-		set(pos, SymbolData::GetValFromSymbolID())
+		set(pos, SymbolData::GetValFromSymbolID(CAVE1 + count - 1) | color);
 		openpos.erase(pos);
 		amount--;
 	}

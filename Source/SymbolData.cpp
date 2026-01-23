@@ -315,12 +315,12 @@ void SymbolData::AddAntiTriangles(std::array<std::vector<Shape>, SymbolID::NUM_S
 	data[ANTITRIANGLE4] = DrawCounter(triangle, 4);
 }
 
-void SymbolData::AddCaves(std::array<std::vector<Shape>, SymbolId::NUM_SYMBOLS>& data) {
+void SymbolData::AddCaves(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
 	Shape pip = {
-		{-0.1, 0.0},
-		{0.0, 1.0},
-		{0.1, 0.0},
-		{0.0, -0.1},
+		{-0.15, 0.0},
+		{0.0, 0.15},
+		{0.15, 0.0},
+		{0.0, -0.15},
 	};
 
 	Shape viewer = {

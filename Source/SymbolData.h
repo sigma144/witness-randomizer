@@ -56,7 +56,7 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 	NUM_SYMBOLS, // Must be last
 };
 
-inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, BigSquare };
+inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, BigSquare };
 
 class SymbolData {
 public:
