@@ -27,7 +27,7 @@ enum Symbol : int {
 	Dot_Intersection = 0x600020,
 	//Custom symbols - Don't actually set these values into the grid.
 	//Instead, use values from GetValFromSymbol or GetValFromSymbolID.
-	//Format: 0xVVTT700		T = Symbol Type		V = Symbol Variant
+	//Format: 0xVVTT700		T = Symbol Type (Must go up by 1 for each new type)		V = Symbol Variant
 	Arrow = 0x000700,
 	Arrow1 = 0x100700,
 	Arrow2 = 0x200700,
