@@ -175,7 +175,7 @@ bool SymbolsWatchdog::checkCave(int x, int y) {
 	int count = 1;
 	for (Point dir : Panel::DIRECTIONS) {
 		Point temp = { x, y };
-		while (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y) != OFF_GRID && get(temp.x + dir.x, temp.y + dir.y) != PATH) {
+		while (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y) != OFF_GRID && (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y)&Empty) != Empty && get(temp.x + dir.x, temp.y + dir.y) != PATH) {
 			count++;
 			temp = temp + dir + dir;
 		}

@@ -1809,7 +1809,7 @@ bool Generate::placeCaveClues(int color, int amount, int targetCount) {
 		int count = 1;
 		for (Point dir : Panel::DIRECTIONS) {
 			Point temp = pos;
-			while (get(temp + dir + dir) != OFF_GRID && get(temp + dir) != PATH) {
+			while (get(temp + dir + dir) != OFF_GRID && get(temp + dir) != PATH && (get(temp + dir + dir)&Empty) != Empty) {
 				count++;
 				temp = temp + dir + dir;
 			}
