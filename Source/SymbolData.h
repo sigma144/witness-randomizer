@@ -41,12 +41,22 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 	ANTITRIANGLE3 = 0x1A,
 	ANTITRIANGLE4 = 0x1B,
 
-	BigSquare = 0x1C,
+	CAVE1 = 0x1C,
+	CAVE2 = 0x1D,
+	CAVE3 = 0x1E,
+	CAVE4 = 0x1F,
+	CAVE5 = 0x20,
+	CAVE6 = 0x21,
+	CAVE7 = 0x22,
+	CAVE8 = 0x23,
+	CAVE9 = 0x24,
+
+	BigSquare = 0x25,
 
 	NUM_SYMBOLS, // Must be last
 };
 
-inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, BigSquare };
+inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, BigSquare };
 
 class SymbolData {
 public:
@@ -92,4 +102,5 @@ private:
 	static std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS> GetAllShapes();
 	static void AddArrows(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddAntiTriangles(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	static void AddCaves(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 };

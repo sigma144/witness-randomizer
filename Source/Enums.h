@@ -37,6 +37,16 @@ enum Symbol : int {
 	AntiTriangle2 = 0x201700,
 	AntiTriangle3 = 0x301700,
 	AntiTriangle4 = 0x401700,
+	Cave = 0x002700,
+	Cave1 = 0x102700,
+	Cave2 = 0x202700,
+	Cave3 = 0x302700,
+	Cave4 = 0x402700,
+	Cave5 = 0x502700,
+	Cave6 = 0x602700,
+	Cave7 = 0x702700,
+	Cave8 = 0x802700,
+	Cave9 = 0x902700,
 };
 
 enum SymbolColor {

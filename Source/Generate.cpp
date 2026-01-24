@@ -580,6 +580,9 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 	for (const std::pair<int, int>& s : symbols[AntiTriangle]) {
 		if (!placeAntiTriangles(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
+	for (const std::pair<int, int>& s : symbols[Cave]) {
+		if (!placeCaveClues(s.first & 0xf, s.second, s.first >> 20)) return false;
+	}
 	for (const std::pair<int, int>& s : symbols[Star]) {
 		if (!placeStars(s.first & 0xf, s.second)) return false;
 	}
@@ -1790,6 +1793,30 @@ bool Generate::placeAntiTriangles(int color, int amount, int targetCount) {
 		int count = panel.countTurns(pos);
 		if (count == 0 || count > 4 || targetCount && count != targetCount) continue;
 		set(pos, SymbolData::GetValFromSymbolID(ANTITRIANGLE1 + count - 1) | color);
+		openpos.erase(pos);
+		amount--;
+	}
+	return true;
+}
+
+bool Generate::placeCaveClues(int color, int amount, int targetCount) {
+	std::set<Point> open = openpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		open.erase(pos);
+		int count = 1;
+		for (Point dir : Panel::DIRECTIONS) {
+			Point temp = pos;
+			while (get(temp + dir + dir) != OFF_GRID && get(temp + dir) != PATH && (get(temp + dir + dir)&Empty) != Empty) {
+				count++;
+				temp = temp + dir + dir;
+			}
+		}
+		if (count > 9)
+			continue; 
+		set(pos, SymbolData::GetValFromSymbolID(CAVE1 + count - 1) | color);
 		openpos.erase(pos);
 		amount--;
 	}
