@@ -553,14 +553,14 @@ void SymbolData::AddMines(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>&
 		{5, 1},
 		{4, 1},
 	};
-	float scale = 0.15;
-	data[MINE0] = { Scale(mine0,scale) };
-	data[MINE1] = { Scale(mine1,scale) };
-	data[MINE2] = { Scale(mine2,scale) };
-	data[MINE3] = { Scale(mine3,scale) };
-	data[MINE4] = { Scale(mine4,scale) };
-	data[MINE5] = { Scale(mine5,scale) };
-	data[MINE6] = { Scale(mine6,scale) };
-	data[MINE7] = { Scale(mine7,scale) };
-	data[MINE8] = { Scale(mine8,scale) };
+	double scale = 0.15;
+	data[MINESWEEPER0] = { Scale(mine0,scale) };
+	data[MINESWEEPER1] = { Scale(mine1,scale) };
+	data[MINESWEEPER2] = { Scale(mine2,scale) };
+	data[MINESWEEPER3] = { Scale(mine3,scale) };
+	data[MINESWEEPER4] = { Scale(mine4,scale) };
+	data[MINESWEEPER5] = { Scale(mine5,scale) };
+	data[MINESWEEPER6] = { Scale(mine6,scale) };
+	data[MINESWEEPER7] = { Scale(mine7,scale) };
+	data[MINESWEEPER8] = { Scale(mine8,scale) };
 }

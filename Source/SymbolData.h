@@ -51,22 +51,22 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 	CAVE8 = 0x23,
 	CAVE9 = 0x24,
 
-	MINE0 = 0x25,
-	MINE1 = 0x26,
-	MINE2 = 0x27,
-	MINE3 = 0x28,
-	MINE4 = 0x29,
-	MINE5 = 0x2A,
-	MINE6 = 0x2B,
-	MINE7 = 0x2C,
-	MINE8 = 0x2D,
+	MINESWEEPER0 = 0x25,
+	MINESWEEPER1 = 0x26,
+	MINESWEEPER2 = 0x27,
+	MINESWEEPER3 = 0x28,
+	MINESWEEPER4 = 0x29,
+	MINESWEEPER5 = 0x2A,
+	MINESWEEPER6 = 0x2B,
+	MINESWEEPER7 = 0x2C,
+	MINESWEEPER8 = 0x2D,
 
 	BigSquare = 0x2E,
 
 	NUM_SYMBOLS, // Must be last
 };
 
-inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINE0, BigSquare };
+inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, BigSquare };
 
 class SymbolData {
 public:

@@ -1839,8 +1839,9 @@ bool Generate::placeMinesweeperClues(int color, int amount, int targetCount) {
 			if (get(pos + dir) != OFF_GRID && !(region.count(pos + dir)))
 				count++;
 		}
-		set(pos, SymbolData::GetValFromSymbolID(MINE0 + count) | color);
+		set(pos, SymbolData::GetValFromSymbolID(MINESWEEPER0 + count - 1) | color);
 		openpos.erase(pos);
 		amount--;
 	}
 	return true;
+}
