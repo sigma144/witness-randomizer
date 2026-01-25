@@ -53,6 +53,7 @@ public:
 	bool checkArrow(int x, int y);
 	bool checkAntiTriangle(int x, int y);
 	bool checkCave(int x, int y);
+	bool checkMinesweeper(int x, int y);
 
 	PanelID id;
 	std::vector<SolutionPoint> traced;
