@@ -153,6 +153,9 @@ bool SymbolsWatchdog::checkSymbol(int x, int y) {
 	else if (type == Cave) {
 		if (!checkCave(x, y)) return false;
 	}
+	else if (type == Minesweeper) {
+		if (!checkMinesweeper(x, y)) return false;
+	}
 	return true;
 }
 
@@ -179,6 +182,18 @@ bool SymbolsWatchdog::checkCave(int x, int y) {
 			count++;
 			temp = temp + dir + dir;
 		}
+	}
+	return count == targetCount;
+}
+
+bool SymbolsWatchdog::checkMinesweeper(int x, int y) {
+	int symbol = getCustomSymbol(x, y);
+	int targetCount = (symbol >> 20);
+	int count = 0;
+	std::set<Point> region = panel.getRegion({ x, y });
+	for (Point dir : Panel::DIRECTIONS8_2) {
+		if (get(x + dir.x, y + dir.y) != OFF_GRID && !(region.count({x + dir.x, y + dir.y})))
+			count++;
 	}
 	return count == targetCount;
 }

@@ -127,6 +127,7 @@ private:
 	bool placeArrows(int color, int amount, int targetCount);
 	bool placeAntiTriangles(int color, int amount, int targetCount);
 	bool placeCaveClues(int color, int amount, int targetCount);
+	bool placeMinesweeperClues(int color, int amount, int targetCount);
 
 	
 

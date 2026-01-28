@@ -47,6 +47,16 @@ enum Symbol : int {
 	Cave7 = 0x702700,
 	Cave8 = 0x802700,
 	Cave9 = 0x902700,
+	Minesweeper = 0x0903700,
+	Minesweeper0 = 0x003700,
+	Minesweeper1 = 0x103700,
+	Minesweeper2 = 0x203700,
+	Minesweeper3 = 0x303700,
+	Minesweeper4 = 0x403700,
+	Minesweeper5 = 0x503700,
+	Minesweeper6 = 0x603700,
+	Minesweeper7 = 0x703700,
+	Minesweeper8 = 0x803700,
 };
 
 enum SymbolColor {
