@@ -583,7 +583,7 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 	for (const std::pair<int, int>& s : symbols[Cave]) {
 		if (!placeCaveClues(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
-	for (const std::pair<int, int>& s : symbols[Minesweeper]) {
+	for (const std::pair<int, int>& s : symbols[Minesweeper0]) {
 		if (!placeMinesweeperClues(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Star]) {
@@ -1817,8 +1817,7 @@ bool Generate::placeCaveClues(int color, int amount, int targetCount) {
 				temp = temp + dir + dir;
 			}
 		}
-		if (count > 9)
-			continue; 
+		if (count > 9 || (targetCount && count != targetCount && targetCount > 0)) continue; 
 		set(pos, SymbolData::GetValFromSymbolID(CAVE1 + count - 1) | color);
 		openpos.erase(pos);
 		amount--;
@@ -1839,6 +1838,7 @@ bool Generate::placeMinesweeperClues(int color, int amount, int targetCount) {
 			if (get(pos + dir) != OFF_GRID && !(region.count(pos + dir)))
 				count++;
 		}
+		if (targetCount && count != targetCount && targetCount != 9) continue;
 		set(pos, SymbolData::GetValFromSymbolID(MINESWEEPER0 + count) | color);
 		openpos.erase(pos);
 		amount--;
