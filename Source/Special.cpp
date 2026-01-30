@@ -1576,5 +1576,5 @@ void Special::test() {
 	g.resetConfig();
 	g.setGridSize(4, 4);
 	g.lineThickness = 1.0f;
-	g.generate(TUT_DOT_1, AntiTriangle | Orange, 8, Arrow | Purple, 4, Start, 1, Exit, 1);
+	g.generate(TUT_DOT_1, Minesweeper|Black, 4, AntiTriangle|Black, 4, Arrow|Black, 4, Start, 1, Exit, 1);
 }

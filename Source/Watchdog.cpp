@@ -153,7 +153,7 @@ bool SymbolsWatchdog::checkSymbol(int x, int y) {
 	else if (type == Cave) {
 		if (!checkCave(x, y)) return false;
 	}
-	else if (type == Minesweeper) {
+	else if (type == Minesweeper0) {
 		if (!checkMinesweeper(x, y)) return false;
 	}
 	return true;

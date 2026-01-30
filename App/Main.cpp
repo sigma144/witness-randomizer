@@ -17,18 +17,11 @@
 #include "PuzzleList.h"
 #include "Watchdog.h"
 #include "Random.h"
+#include "SymbolData.h"
 
 #define IDC_RANDOMIZE 0x401
-#define IDC_TOGGLESPEED 0x402
-#define IDC_SPEEDRUNNER 0x403
-#define IDC_HARDMODE 0x404
-#define IDC_READ 0x405
+#define IDC_RERANDOMIZE 0x405
 #define IDC_TEST 0x406
-#define IDC_WRITE 0x407
-#define IDC_DUMP 0x408
-#define IDT_RANDOMIZED 0x409
-#define IDC_TOGGLELASERS 0x410
-#define IDC_TOGGLESNIPES 0x411
 
 #define IDC_ADD 0x301
 #define IDC_REMOVE 0x302
@@ -59,21 +52,12 @@
 #define SHAPE_43 0x0004
 #define SHAPE_44 0x0008
 
-#define ARROW_DOWN 0x700
-#define ARROW_UP 0x701
-#define ARROW_RIGHT 0x702
-#define ARROW_LEFT 0x703
-#define ARROW_DOWN_RIGHT 0x704
-#define ARROW_UP_RIGHT 0x705
-#define ARROW_UP_LEFT 0x706
-#define ARROW_DOWN_LEFT 0x707
-
 #define DEBUG true
 
 //Panel to edit
-PanelID panelID = MOUNTAIN_GREEN_4;
+PanelID panelID = TUT_DOT_1;
 
-HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
+HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndVariant, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
 Panel panel;
 Randomizer randomizer;
 Generate generator;
@@ -83,15 +67,14 @@ std::vector<byte> bytes;
 
 int ctr = 0;
 TCHAR text[30];
-int x, y;
+int x, y, variant;
 std::wstring str;
-Symbol symbol;
+int symbol;
 SymbolColor color;
 int currentShape;
 int currentDir;
 std::vector<long long> shapePos = { SHAPE_11, SHAPE_12, SHAPE_13, SHAPE_14, SHAPE_21, SHAPE_22, SHAPE_23, SHAPE_24, SHAPE_31, SHAPE_32, SHAPE_33, SHAPE_34, SHAPE_41, SHAPE_42, SHAPE_43, SHAPE_44 };
 std::vector<long long> defaultShape = { SHAPE_21, SHAPE_31, SHAPE_32, SHAPE_33 }; //L-shape
-std::vector<long long> directions = { ARROW_UP_RIGHT, ARROW_UP, ARROW_UP_LEFT, ARROW_LEFT, 0, ARROW_RIGHT, ARROW_DOWN_LEFT, ARROW_DOWN, ARROW_DOWN_RIGHT }; //Order of directional check boxes
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -117,8 +100,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_TEST:
 			randomizer.StartWatchdogs();
 			specialCase = Special(&specialCase.g);
-			//specialCase.g.seed(static_cast<unsigned int>(time(NULL)));
-			specialCase.g.seed(ctr++);
+			specialCase.g.seed(static_cast<unsigned int>(time(NULL)));
+			//specialCase.g.seed(ctr++);
 			//specialCase.g.seed(1);
 			specialCase.test();
 			break;
@@ -253,16 +236,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDC_ADD:
 			memset(&text, 0, sizeof(text));
 			GetWindowText(hwndElem, text, 30);
+			str.reserve(30);
+			GetWindowText(hwndVariant, &str[0], 30);
+			variant = _wtoi(str.c_str());
 			if (wcscmp(text, L"Stone") == 0) symbol = Stone;
 			if (wcscmp(text, L"Star") == 0) symbol = Star;
 			if (wcscmp(text, L"Eraser") == 0) symbol = Eraser;
 			if (wcscmp(text, L"Shape") == 0) symbol = Poly;
-			if (wcscmp(text, L"Triangle 1") == 0) symbol = Triangle1;
-			if (wcscmp(text, L"Triangle 2") == 0) symbol = Triangle2;
-			if (wcscmp(text, L"Triangle 3") == 0) symbol = Triangle3;
-			if (wcscmp(text, L"Arrow 1") == 0) symbol = Arrow1;
-			if (wcscmp(text, L"Arrow 2") == 0) symbol = Arrow2;
-			if (wcscmp(text, L"Arrow 3") == 0) symbol = Arrow3;
+			if (wcscmp(text, L"Triangle") == 0) symbol = Triangle | (variant << 16);
+			if (wcscmp(text, L"Arrow") == 0) symbol = SymbolData::GetValFromSymbolID(ARROW1E + variant);
+			if (wcscmp(text, L"Anti-Triangle") == 0) symbol = SymbolData::GetValFromSymbolID(ANTITRIANGLE1 + variant - 1);
+			if (wcscmp(text, L"Cave") == 0) symbol = SymbolData::GetValFromSymbolID(CAVE1 + variant - 1);
+			if (wcscmp(text, L"Minesweeper") == 0) symbol = SymbolData::GetValFromSymbolID(MINESWEEPER0 + variant);
 			if (wcscmp(text, L"Dot (Intersection)") == 0) symbol = Dot_Intersection;
 			if (wcscmp(text, L"Dot (Row)") == 0) symbol = Dot_Row;
 			if (wcscmp(text, L"Dot (Column)") == 0) symbol = Dot_Column;
@@ -272,6 +257,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (wcscmp(text, L"Exit") == 0) symbol = Exit;
 			memset(&text, 0, sizeof(text));
 			GetWindowText(hwndColor, text, 30);
+			if (wcscmp(text, L"None") == 0) color = NoColor;
 			if (wcscmp(text, L"Black") == 0) color = Black;
 			if (wcscmp(text, L"White") == 0) color = White;
 			if (wcscmp(text, L"Red") == 0) color = Red;
@@ -282,31 +268,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (wcscmp(text, L"Blue") == 0) color = Blue;
 			if (wcscmp(text, L"Purple") == 0) color = Purple;
 			if (wcscmp(text, L"Magenta") == 0) color = Magenta;
-			if (wcscmp(text, L"None") == 0) color = NoColor;
-			if (wcscmp(text, L"???") == 0) color = Invisible;
-			str.reserve(30);
+			if (wcscmp(text, L"Invisible") == 0) color = Invisible;
 			GetWindowText(hwndCol, &str[0], 30);
 			x = _wtoi(str.c_str());
 			GetWindowText(hwndRow, &str[0], 30);
 			y = _wtoi(str.c_str());
 
+			panelID = memory->GetActivePanel();
+			if (panelID == -1) break;
 			panel.read(panelID);
 			if (symbol == Poly)
 				panel.setShape(x, y, currentShape, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
-			else if (symbol == Arrow1 || symbol == Arrow2 || symbol == Arrow3)
-				panel.setShape(x, y, symbol | currentDir, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
-			else panel.setSymbol(x, y, symbol, color);
+			else panel.setSymbol(x, y, static_cast<Symbol>(symbol), color);
 			panel.write(panelID);
 			break;
 
 			//Remove a symbol from the puzzle (debug mode only)
 		case IDC_REMOVE:
+			str.reserve(30);
 			GetWindowText(hwndCol, &str[0], 30);
 			x = _wtoi(str.c_str());
 			GetWindowText(hwndRow, &str[0], 30);
 			y = _wtoi(str.c_str());
 			GetWindowText(hwndElem, text, 30);
 
+			panelID = memory->GetActivePanel();
+			if (panelID == -1) break;
 			panel.read(panelID);
 			if (wcscmp(text, L"Dot (Intersection)") == 0 ||
 				wcscmp(text, L"Start") == 0 || wcscmp(text, L"Exit") == 0)
@@ -318,7 +305,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				wcscmp(text, L"Dot (Row)") == 0)
 				panel.setGridSymbol(x * 2 + 1, y * 2, None, NoColor);
 			else
-				panel.setGridSymbol(x, y, None, NoColor);
+				panel.setSymbol(x, y, None, NoColor);
 			panel.write(panelID);
 			break;
 
@@ -354,7 +341,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else panel.symmetry = NoSymmetry;
 			panel.write(panelID);
 			break;
-			//Tetris shape editing
+		//Tetris shape editing
 		case SHAPE_11: CheckDlgButton(hwnd, SHAPE_11, !IsDlgButtonChecked(hwnd, SHAPE_11)); currentShape ^= SHAPE_11; break;
 		case SHAPE_12: CheckDlgButton(hwnd, SHAPE_12, !IsDlgButtonChecked(hwnd, SHAPE_12)); currentShape ^= SHAPE_12; break;
 		case SHAPE_13: CheckDlgButton(hwnd, SHAPE_13, !IsDlgButtonChecked(hwnd, SHAPE_13)); currentShape ^= SHAPE_13; break;
@@ -371,15 +358,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case SHAPE_42: CheckDlgButton(hwnd, SHAPE_42, !IsDlgButtonChecked(hwnd, SHAPE_42)); currentShape ^= SHAPE_42; break;
 		case SHAPE_43: CheckDlgButton(hwnd, SHAPE_43, !IsDlgButtonChecked(hwnd, SHAPE_43)); currentShape ^= SHAPE_43; break;
 		case SHAPE_44: CheckDlgButton(hwnd, SHAPE_44, !IsDlgButtonChecked(hwnd, SHAPE_44)); currentShape ^= SHAPE_44; break;
-			//Arrow direction selection
-		case ARROW_UP_LEFT: CheckDlgButton(hwnd, ARROW_UP_LEFT, !IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_LEFT)) currentDir = ARROW_UP_LEFT; break;
-		case ARROW_UP: CheckDlgButton(hwnd, ARROW_UP, !IsDlgButtonChecked(hwnd, ARROW_UP)); if (IsDlgButtonChecked(hwnd, ARROW_UP)) currentDir = ARROW_UP; break;
-		case ARROW_UP_RIGHT: CheckDlgButton(hwnd, ARROW_UP_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_UP_RIGHT)) currentDir = ARROW_UP_RIGHT; break;
-		case ARROW_LEFT: CheckDlgButton(hwnd, ARROW_LEFT, !IsDlgButtonChecked(hwnd, ARROW_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_LEFT)) currentDir = ARROW_LEFT; break;
-		case ARROW_RIGHT: CheckDlgButton(hwnd, ARROW_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_RIGHT)) currentDir = ARROW_RIGHT; break;
-		case ARROW_DOWN_LEFT: CheckDlgButton(hwnd, ARROW_DOWN_LEFT, !IsDlgButtonChecked(hwnd, ARROW_DOWN_LEFT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_LEFT)) currentDir = ARROW_DOWN_LEFT; break;
-		case ARROW_DOWN: CheckDlgButton(hwnd, ARROW_DOWN, !IsDlgButtonChecked(hwnd, ARROW_DOWN)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN)) currentDir = ARROW_DOWN; break;
-		case ARROW_DOWN_RIGHT: CheckDlgButton(hwnd, ARROW_DOWN_RIGHT, !IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)); if (IsDlgButtonChecked(hwnd, ARROW_DOWN_RIGHT)) currentDir = ARROW_DOWN_RIGHT; break;
 		}
 	}
 	return DefWindowProc(hwnd, message, wParam, lParam);
@@ -490,10 +468,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			160, 330, 100, 26, hwnd, NULL, hInstance, NULL);
 		hwndCol = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-			220, 330, 50, 26, hwnd, NULL, hInstance, NULL);
+			220, 330, 40, 26, hwnd, NULL, hInstance, NULL);
 		hwndRow = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-			270, 330, 50, 26, hwnd, NULL, hInstance, NULL);
+			260, 330, 40, 26, hwnd, NULL, hInstance, NULL);
 		SetWindowText(hwndCol, L"0");
 		SetWindowText(hwndRow, L"0");
 
@@ -504,11 +482,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		const int NUM_ELEMS = 17;
 		TCHAR elems[NUM_ELEMS][24] =
 		{
-			TEXT("Stone"), TEXT("Star"), TEXT("Eraser"), TEXT("Shape"),
-			TEXT("Triangle 1"), TEXT("Triangle 2"), TEXT("Triangle 3"),
-			TEXT("Arrow 1"), TEXT("Arrow 2"), TEXT("Arrow 3"),
-			TEXT("Start"), TEXT("Exit"), TEXT("Gap (Row)"), TEXT("Gap (Column)"),
-			TEXT("Dot (Intersection)"), TEXT("Dot (Row)"), TEXT("Dot (Column)"),
+			TEXT("Stone"), TEXT("Star"), TEXT("Eraser"), TEXT("Shape"), TEXT("Triangle"),
+			TEXT("Arrow"), TEXT("Anti-Triangle"), TEXT("Cave"), TEXT("Minesweeper"),
+			TEXT("Gap (Row)"), TEXT("Gap (Column)"), TEXT("Dot (Intersection)"), TEXT("Dot (Row)"), TEXT("Dot (Column)"),
+			TEXT("Start"), TEXT("Exit"),
 		};
 		TCHAR option[24];
 		memset(&option, 0, sizeof(option));
@@ -526,8 +503,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		const int NUM_COLORS = 12;
 		TCHAR colors[NUM_COLORS][24] =
 		{
-			TEXT("Black"), TEXT("White"), TEXT("Red"), TEXT("Orange"), TEXT("Yellow"), TEXT("Green"),
-			TEXT("Cyan"), TEXT("Blue"), TEXT("Purple"), TEXT("Magenta"), TEXT("None"), TEXT("???")
+			TEXT("None"), TEXT("Black"), TEXT("White"), TEXT("Red"), TEXT("Orange"), TEXT("Yellow"), TEXT("Green"),
+			TEXT("Cyan"), TEXT("Blue"), TEXT("Purple"), TEXT("Magenta"), TEXT("Invisible"),
 		};
 		memset(&option, 0, sizeof(option));
 		for (int i = 0; i < NUM_COLORS; i++)
@@ -537,15 +514,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		}
 		SendMessage(hwndColor, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 
+		CreateWindow(L"STATIC", L"Count/Variant:",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
+			160, 420, 100, 26, hwnd, NULL, hInstance, NULL);
+		hwndVariant = CreateWindow(MSFTEDIT_CLASS, L"",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
+			270, 420, 40, 26, hwnd, NULL, hInstance, NULL);
+		SetWindowText(hwndVariant, L"0");
 		CreateWindow(L"BUTTON", L"Place Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 420, 150, 26, hwnd, (HMENU)IDC_ADD, hInstance, NULL);
+			160, 450, 150, 26, hwnd, (HMENU)IDC_ADD, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Remove Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 450, 150, 26, hwnd, (HMENU)IDC_REMOVE, hInstance, NULL);
+			160, 480, 150, 26, hwnd, (HMENU)IDC_REMOVE, hInstance, NULL);
+		//CreateWindow(L"BUTTON", L"Randomize Active",
+		//	WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		//	160, 510, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Test",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 530, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
+			160, 540, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
 
 		CreateWindow(L"STATIC", L"Shape:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
@@ -590,19 +577,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		CreateWindow(L"STATIC", L"V. Symmetry",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
 			65, 540, 90, 16, hwnd, NULL, hInstance, NULL);
-
-		CreateWindow(L"STATIC", L"Direction:",
-			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			50, 560, 90, 16, hwnd, NULL, hInstance, NULL);
-
-		for (int x = 0; x < 3; x++) {
-			for (int y = 0; y < 3; y++) {
-				if (x == 1 && y == 1) continue;
-				CreateWindow(L"BUTTON", L"",
-					WS_VISIBLE | WS_CHILD | BS_CHECKBOX,
-					50 + x * 15, 580 + y * 15, 12, 12, hwnd, (HMENU)directions[x + y * 3], hInstance, NULL);
-			}
-		}
 
 		if (panel.symmetry == Horizontal || panel.symmetry == Rotational)
 			CheckDlgButton(hwnd, IDC_SYMMETRYX, TRUE);
