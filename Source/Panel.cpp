@@ -122,6 +122,7 @@ void Panel::setSymbol(int x, int y, Symbol symbol, SymbolColor color) {
 			set(sp.x, sp.y, symbol & ~Dot);
 		}
 	}
+	if (symbol == Gap_Row || symbol == Gap_Column) color = NoColor;
 	set(gridx, gridy, symbol | color);
 }
 

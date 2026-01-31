@@ -57,7 +57,7 @@
 //Panel to edit
 PanelID panelID = TUT_DOT_1;
 
-HWND hwndSeed, hwndRandomize, hwndCol, hwndRow, hwndElem, hwndVariant, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
+HWND hwndSeed, hwndRandomize, hwndW, hwndH, hwndCol, hwndRow, hwndElem, hwndVariant, hwndColor, hwndLoadingText, hwndNormal, hwndExpert, hwndColorblind, hwndDoubleMode;
 Panel panel;
 Randomizer randomizer;
 Generate generator;
@@ -67,7 +67,9 @@ std::vector<byte> bytes;
 
 int ctr = 0;
 TCHAR text[30];
-int x, y, variant;
+int x, y, width, height, variant;
+std::map<int, int> symbolMap;
+std::vector<std::pair<int, int>> symbolVec;
 std::wstring str;
 int symbol;
 SymbolColor color;
@@ -96,17 +98,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		switch (LOWORD(wParam)) {
 
-			//Test button  - general testing (debug mode only)
+		//Test button  - general testing (debug mode only)
 		case IDC_TEST:
-			randomizer.StartWatchdogs();
 			specialCase = Special(&specialCase.g);
 			specialCase.g.seed(static_cast<unsigned int>(time(NULL)));
 			//specialCase.g.seed(ctr++);
 			//specialCase.g.seed(1);
 			specialCase.test();
 			break;
-
-			//Difficulty selection
+		case IDC_RERANDOMIZE:
+			panel = Panel(memory->GetActivePanel());
+			symbolMap.clear();
+			for (int x = 0; x < panel.width; x++) {
+				for (int y = 0; y < panel.height; y++) {
+					int symbol = SymbolData::GetSymbolFromVal(panel.get(x, y));
+					if (symbol & 0xFFF0 || symbol == Gap_Row || symbol == Gap_Column) {
+						if (symbol & Dot) symbol = Dot;
+						else if (symbol == Gap_Row || symbol == Gap_Column) symbol = Gap;
+						else symbol = symbol & 0xFFFF;
+						if (symbolMap.count(symbol))
+							symbolMap[symbol]++;
+						else
+							symbolMap[symbol] = 1;
+					}
+				}
+			}
+			symbolVec.clear();
+			for (auto& p : symbolMap) {
+				symbolVec.emplace_back(p);
+			}
+			specialCase = Special(&specialCase.g);
+			specialCase.g.seed(static_cast<unsigned int>(time(NULL)));
+			specialCase.g.seed(ctr++);
+			specialCase.g.generate(memory->GetActivePanel(), symbolVec);
+			break;
+		//Difficulty selection
 		case IDC_DIFFICULTY_NORMAL:
 			randomizer.difficulty = Normal;
 			break;
@@ -122,7 +148,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CheckDlgButton(hwnd, IDC_DOUBLE, randomizer.doubleMode);
 			break;
 
-			//Randomize button
+		//Randomize button
 		case IDC_RANDOMIZE:
 		{
 			bool rerandomize = false;
@@ -156,8 +182,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			memory->ClearOffsets();
 
 			ShowWindow(hwndLoadingText, SW_SHOW);
-
-			randomizer.AdjustSpeed(); //Makes certain moving objects move faster
 
 			//If the save was previously randomized, check that seed and difficulty match with the save file
 			int lastSeed = memory->ReadPanelData<int>(TUT_ENTER_1, BACKGROUND_HIDDEN_VAR);
@@ -273,10 +297,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			x = _wtoi(str.c_str());
 			GetWindowText(hwndRow, &str[0], 30);
 			y = _wtoi(str.c_str());
+			GetWindowText(hwndW, &str[0], 30);
+			width = _wtoi(str.c_str()) * 2 + 1;
+			GetWindowText(hwndH, &str[0], 30);
+			height = _wtoi(str.c_str()) * 2 + 1;
 
 			panelID = memory->GetActivePanel();
 			if (panelID == -1) break;
 			panel.read(panelID);
+			panel.resize(width - (panel.isCylinder ? 1 : 0), height);
 			if (symbol == Poly)
 				panel.setShape(x, y, currentShape, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
 			else panel.setSymbol(x, y, static_cast<Symbol>(symbol), color);
@@ -290,11 +319,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			x = _wtoi(str.c_str());
 			GetWindowText(hwndRow, &str[0], 30);
 			y = _wtoi(str.c_str());
+			GetWindowText(hwndW, &str[0], 30);
+			width = _wtoi(str.c_str()) * 2 + 1;
+			GetWindowText(hwndH, &str[0], 30);
+			height = _wtoi(str.c_str()) * 2 + 1;
 			GetWindowText(hwndElem, text, 30);
 
 			panelID = memory->GetActivePanel();
 			if (panelID == -1) break;
 			panel.read(panelID);
+			panel.resize(width - (panel.isCylinder ? 1 : 0), height);
 			if (wcscmp(text, L"Dot (Intersection)") == 0 ||
 				wcscmp(text, L"Start") == 0 || wcscmp(text, L"Exit") == 0)
 				panel.setGridSymbol(x * 2, y * 2, None, NoColor);
@@ -370,6 +404,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	Memory* memory = memory->get();
 	specialCase = Special(&generator);
+	randomizer.AdjustSpeed();
+	randomizer.StartWatchdogs();
 
 	LoadLibrary(L"Msftedit.dll");
 
@@ -463,21 +499,33 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//---------------------Debug/editing controls (debug mode only)---------------------
 
 	if (DEBUG) {
-		CreateWindow(L"STATIC", L"Col/Row:",
+		CreateWindow(L"STATIC", L"Width/Height:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			160, 330, 100, 26, hwnd, NULL, hInstance, NULL);
-		hwndCol = CreateWindow(MSFTEDIT_CLASS, L"",
+			130, 330, 90, 26, hwnd, NULL, hInstance, NULL);
+		hwndW = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 			220, 330, 40, 26, hwnd, NULL, hInstance, NULL);
-		hwndRow = CreateWindow(MSFTEDIT_CLASS, L"",
+		hwndH = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 			260, 330, 40, 26, hwnd, NULL, hInstance, NULL);
+		SetWindowText(hwndW, L"4");
+		SetWindowText(hwndH, L"4");
+
+		CreateWindow(L"STATIC", L"Col/Row:",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
+			160, 360, 100, 26, hwnd, NULL, hInstance, NULL);
+		hwndCol = CreateWindow(MSFTEDIT_CLASS, L"",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
+			220, 360, 40, 26, hwnd, NULL, hInstance, NULL);
+		hwndRow = CreateWindow(MSFTEDIT_CLASS, L"",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
+			260, 360, 40, 26, hwnd, NULL, hInstance, NULL);
 		SetWindowText(hwndCol, L"0");
 		SetWindowText(hwndRow, L"0");
 
 		hwndElem = CreateWindow(L"COMBOBOX", L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWN | CBS_HASSTRINGS,
-			160, 360, 150, 300, hwnd, NULL, hInstance, NULL);
+			160, 390, 150, 300, hwnd, NULL, hInstance, NULL);
 
 		const int NUM_ELEMS = 17;
 		TCHAR elems[NUM_ELEMS][24] =
@@ -498,7 +546,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 		hwndColor = CreateWindow(L"COMBOBOX", L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWN | CBS_HASSTRINGS,
-			160, 390, 150, 300, hwnd, NULL, hInstance, NULL);
+			160, 420, 150, 300, hwnd, NULL, hInstance, NULL);
 
 		const int NUM_COLORS = 12;
 		TCHAR colors[NUM_COLORS][24] =
@@ -516,27 +564,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 		CreateWindow(L"STATIC", L"Count/Variant:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			160, 420, 100, 26, hwnd, NULL, hInstance, NULL);
+			160, 450, 100, 26, hwnd, NULL, hInstance, NULL);
 		hwndVariant = CreateWindow(MSFTEDIT_CLASS, L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
-			270, 420, 40, 26, hwnd, NULL, hInstance, NULL);
+			270, 450, 40, 26, hwnd, NULL, hInstance, NULL);
 		SetWindowText(hwndVariant, L"0");
 		CreateWindow(L"BUTTON", L"Place Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 450, 150, 26, hwnd, (HMENU)IDC_ADD, hInstance, NULL);
+			160, 480, 150, 26, hwnd, (HMENU)IDC_ADD, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Remove Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 480, 150, 26, hwnd, (HMENU)IDC_REMOVE, hInstance, NULL);
-		//CreateWindow(L"BUTTON", L"Randomize Active",
-		//	WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		//	160, 510, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
+			160, 510, 150, 26, hwnd, (HMENU)IDC_REMOVE, hInstance, NULL);
+		CreateWindow(L"BUTTON", L"Randomize Active",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			160, 540, 150, 26, hwnd, (HMENU)IDC_RERANDOMIZE, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Test",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 540, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
+			160, 570, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
+
 
 		CreateWindow(L"STATIC", L"Shape:",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | SS_LEFT,
-			50, 350, 50, 16, hwnd, NULL, hInstance, NULL);
+			50, 360, 50, 16, hwnd, NULL, hInstance, NULL);
 
 		for (int x = 0; x < 4; x++) {
 			for (int y = 0; y < 4; y++) {

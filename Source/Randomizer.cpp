@@ -37,7 +37,6 @@ void Randomizer::Generate(HWND loadingHandle) {
 	if (difficulty == Normal) puzzles.GenerateAllN();
 	if (difficulty == Expert) puzzles.GenerateAllH();
 	if (doubleMode) ShufflePanels();
-	StartWatchdogs();
 	SetWindowText(loadingHandle, L"Done!");
 
 	if (difficulty == Expert && !HasBeenRandomized())

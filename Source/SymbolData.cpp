@@ -177,6 +177,8 @@ SymbolID SymbolData::GetSymbolIDFromVal(int val) {
 }
 
 Symbol SymbolData::GetSymbolFromVal(int val) {
+	if ((val & 0xF00) != 0x700)
+		return static_cast<Symbol>(val);
 	int symbolID = GetSymbolIDFromVal(val);
 	for (int i = 1; i < sizeof(SYMBOL_TYPES) / sizeof(SymbolID); i++) {
 		if (symbolID < SYMBOL_TYPES[i]) {
