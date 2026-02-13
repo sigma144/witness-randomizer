@@ -1901,6 +1901,15 @@ bool Generate::placeMinesweeperClues(int color, int amount, int targetCount) {
 
 bool Generate::placeFlowers(int color, int amount) {
 	std::set<Point> open = openpos;
+	for (Point p : gridpos) {
+		if (get(p) && (get(p) & 0xf) == color) {
+			for (Point q : getRegion(p)) {
+				if (!(q.x == p.x || q.y == p.y)) {
+					open.erase(q);
+				}
+			}
+		}
+	}
 	while (amount > 0) {
 		if (open.size() == 0)
 			return false;
@@ -1921,6 +1930,11 @@ bool Generate::placeFlowers(int color, int amount) {
 		}
 		if ((colCount > 0) != (rowCount > 0)) {
 			set(pos, SymbolData::GetValFromSymbolID(FLOWER) | color);
+			for (Point q : getRegion(pos)) {
+				if (!(q.x == pos.x || q.y == pos.y)) {
+					open.erase(q);
+				}
+			}
 			amount--;
 			if (colCount > 0) {
 				for (Point p : row) {
@@ -1964,6 +1978,11 @@ bool Generate::placeFlowers(int color, int amount) {
 					}
 					else {
 						set(pos2, SymbolData::GetValFromSymbolID(FLOWER) | color);
+						for (Point q : getRegion(pos2)) {
+							if (!(q.x == pos2.x || q.y == pos2.y)) {
+								open.erase(q);
+							}
+						}
 						amount--;
 						for (Point p : subRow) {
 							open.erase(p);
@@ -1985,6 +2004,11 @@ bool Generate::placeFlowers(int color, int amount) {
 					}
 					else {
 						set(pos2, SymbolData::GetValFromSymbolID(FLOWER) | color);
+						for (Point q : getRegion(pos2)) {
+							if (!(q.x == pos2.x || q.y == pos2.y)) {
+								open.erase(q);
+							}
+						}
 						amount--;
 						for (Point p : subCol) {
 							open.erase(p);

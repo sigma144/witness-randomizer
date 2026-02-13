@@ -7,15 +7,13 @@ Eraser:
 - Eraser generation with new symbols (make this more automatic if possible)
 - Multi-eraser support
 - Proper tetris shape checking
-Flower:
-- Fix checking
-- Fix generation
 Antitriangle:
 - Get multiple exits working correctly
 Change watchdog to detect exits
 Have Empty tiles return OFF_GRID when checked, yet still write correctly
 Fix invisible symbols with double mode
 Fix metapuzzle rotated shape not getting placed sometimes
+Restore colorblind mode
 
 NEW FEATURES:
 

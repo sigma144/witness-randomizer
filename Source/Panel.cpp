@@ -395,7 +395,8 @@ bool Panel::checkFlower(Point pos, int symbol) {
 			col.insert(p);
 	}
 	int color = getColor(symbol);
-	return (countColor(col, color) > 1) != (countColor(row, color) > 1);
+	int colorCount = countColor(region, color);
+	return (countColor(col, color) == colorCount) != (countColor(row, color) == colorCount);
 }
 
 //Count the occurrence of the given symbol color in the given region
@@ -404,7 +405,7 @@ int Panel::countColor(const std::set<Point>& region, int color) {
 	for (Point p : region) {
 		int sym = get(p);
 		if (sym && (sym & 0xf) == color)
-			if (count++ == 2) return count;
+			count++;
 	}
 	return count;
 }
