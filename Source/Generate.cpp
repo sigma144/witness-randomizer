@@ -2079,7 +2079,7 @@ bool Generate::placeDarts(int color, int amount, int targetCount) {
 			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
 			if (dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
 				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2 && rand(10) > 0)
-				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
+				continue; //Make it so that there will be some possible cells that aren't included, in the vast majority of cases
 			set(pos, SymbolData::GetValFromSymbolID(DART1E + choice + (count - 1) * 8) | color);
 			openpos.erase(pos);
 			amount--;
