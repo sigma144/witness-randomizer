@@ -579,6 +579,9 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 	for (const std::pair<int, int>& s : symbols[Arrow]) {
 		if (!placeArrows(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
+	for (const std::pair<int, int>& s : symbols[Dart]) {
+		if (!placeDarts(s.first & 0xf, s.second, s.first >> 20)) return false;
+	}
 	for (const std::pair<int, int>& s : symbols[AntiTriangle]) {
 		if (!placeAntiTriangles(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
@@ -2056,6 +2059,32 @@ bool Generate::placeFlowerStarPairs(int color, int amount) {
 			set(pos1, SymbolData::GetValFromSymbolID(FLOWER) | color);
 		}
 		amount--;
+	}
+	return true;
+}
+
+bool Generate::placeDarts(int color, int amount, int targetCount) {
+	std::set<Point> open = openpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		open.erase(pos);
+		int fails = 0;
+		while (fails++ < 20) { //Keep picking random directions until one works
+			int choice = (parity == -1 ? rand(8) : rand(4));
+			Point dir = Panel::DIRECTIONS8_2[choice];
+			if (panel.isCylinder && dir.y == 0) continue; //Sideways darts on a pillar would wrap forever
+			int count = panel.countSameRegionCells(pos, dir);
+			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
+			if (dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
+				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2 && rand(10) > 0)
+				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
+			set(pos, SymbolData::GetValFromSymbolID(DART1E + choice + (count - 1) * 8) | color);
+			openpos.erase(pos);
+			amount--;
+			break;
+		}
 	}
 	return true;
 }

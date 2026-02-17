@@ -130,6 +130,7 @@ private:
 	bool placeMinesweeperClues(int color, int amount, int targetCount);
 	bool placeFlowers(int color, int amount);
 	bool placeFlowerStarPairs(int color, int amount);
+	bool placeDarts(int color, int amount, int targetCount);
 
 	
 

@@ -96,10 +96,12 @@ public:
 	bool checkCave(Point pos, int symbol);
 	bool checkMinesweeper(Point pos, int symbol);
 	bool checkFlower(Point pos, int symbol);
+	bool checkDart(Point pos, int symbol);
 	//***************************************************
 	int countColor(const std::set<Point>& region, int color);
 	int countSides(Point pos);
 	int countCrossings(Point pos, Point dir);
+	int countSameRegionCells(Point pos, Point dir);
 	int countTurns(Point pos);
 
 	Point indexToPoint(int index);

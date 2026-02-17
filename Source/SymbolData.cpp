@@ -207,6 +207,7 @@ std::array<std::vector<SymbolData::Shape>, SymbolID::NUM_SYMBOLS> SymbolData::Ge
 	AddCaves(data);
 	AddMines(data);
 	AddFlower(data);
+	AddDarts(data);
 
 	return data;
 }
@@ -593,4 +594,48 @@ void SymbolData::AddFlower(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>
 
 	double scale = 0.21;
 	data[FLOWER] = { RotateClockwise(Scale(Combine(petal, RotateClockwise(petal, 60), RotateClockwise(petal, 120), RotateClockwise(petal, 180), RotateClockwise(petal, 240), RotateClockwise(petal, 300)),scale),30) };
+}
+
+void SymbolData::AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
+	Shape dart = {
+		{ 0.0,  0.2},
+		{-0.1, -0.1},
+		{0.0, 0.0},
+		{0.1, -0.1},
+	};
+
+	double scale = 1;
+	double translate = 0.15;
+
+	std::vector<Shape> dart1 = RotateClockwise(DrawCounter(Scale(dart, scale), 1), 90);
+	std::vector<Shape> dart2 = RotateClockwise(DrawCounter(Scale(dart, scale), 2), 90);
+	std::vector<Shape> dart3 = RotateClockwise(DrawCounter(Scale(dart, scale), 3), 90);
+
+	data[DART1E] = { RotateClockwise(dart1, 0) };
+	data[DART1SE] = { RotateClockwise(dart1, 45) };
+	data[DART1S] = { RotateClockwise(dart1, 90) };
+	data[DART1SW] = { RotateClockwise(dart1, 135) };
+	data[DART1W] = { RotateClockwise(dart1, 180) };
+	data[DART1NW] = { RotateClockwise(dart1, 225) };
+	data[DART1N] = { RotateClockwise(dart1, 270) };
+	data[DART1NE] = { RotateClockwise(dart1, 315) };
+
+	data[DART2E] = { RotateClockwise(dart2, 0) };
+	data[DART2SE] = { Translate(RotateClockwise(dart2, 45), translate / 2, translate / 2) };
+	data[DART2S] = { RotateClockwise(dart2, 90) };
+	data[DART2SW] = { Translate(RotateClockwise(dart2, 135), -translate / 2, translate / 2) };
+	data[DART2W] = { RotateClockwise(dart2, 180) };
+	data[DART2NW] = { Translate(RotateClockwise(dart2, 225), -translate / 2, -translate / 2) };
+	data[DART2N] = { RotateClockwise(dart2, 270) };
+	data[DART2NE] = { Translate(RotateClockwise(dart2, 315), translate / 2, -translate / 2) };
+
+
+	data[DART3E] = { RotateClockwise(dart3, 0) };
+	data[DART3SE] = { Translate(RotateClockwise(dart3, 45), translate, translate) };
+	data[DART3S] = { RotateClockwise(dart3, 90) };
+	data[DART3SW] = { Translate(RotateClockwise(dart3, 135), -translate, translate) };
+	data[DART3W] = { RotateClockwise(dart3, 180) };
+	data[DART3NW] = { Translate(RotateClockwise(dart3, 225), -translate, -translate) };
+	data[DART3N] = { RotateClockwise(dart3, 270) };
+	data[DART3NE] = { Translate(RotateClockwise(dart3, 315), translate, -translate) };
 }
