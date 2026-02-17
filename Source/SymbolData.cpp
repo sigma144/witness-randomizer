@@ -598,18 +598,18 @@ void SymbolData::AddFlower(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>
 
 void SymbolData::AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
 	Shape dart = {
-		{ 0.0,  0.2},
-		{-0.1, -0.1},
-		{0.0, 0.0},
-		{0.1, -0.1},
+		{ 0.0,  0.15},
+		{-0.1, -0.15},
+		{0.0, -0.05},
+		{0.1, -0.15},
 	};
 
-	double scale = 1;
-	double translate = 0.15;
+	double scale = 1.7;
+	double translate = 0;
 
-	std::vector<Shape> dart1 = RotateClockwise(DrawCounter(Scale(dart, scale), 1), 90);
-	std::vector<Shape> dart2 = RotateClockwise(DrawCounter(Scale(dart, scale), 2), 90);
-	std::vector<Shape> dart3 = RotateClockwise(DrawCounter(Scale(dart, scale), 3), 90);
+	std::vector<Shape> dart1 = RotateClockwise(DrawCounter(Scale(dart, scale), 1), 270);
+	std::vector<Shape> dart2 = RotateClockwise(DrawCounter(Scale(dart, scale), 2), 270);
+	std::vector<Shape> dart3 = RotateClockwise(DrawCounter(Scale(dart, scale), 3), 270);
 
 	data[DART1E] = { RotateClockwise(dart1, 0) };
 	data[DART1SE] = { RotateClockwise(dart1, 45) };
