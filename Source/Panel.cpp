@@ -444,8 +444,8 @@ int Panel::countCrossings(Point pos, Point dir) {
 
 //Count the number of cells in the same region as pos the given vector is passing through (for the darts)
 int Panel::countSameRegionCells(Point pos, Point dir) {
+	std::set<Point> region = getRegion(pos);
 	pos = pos + dir;
-	Shape region = getRegion(pos);
 	int count = 0;
 	while (get(pos) != OFF_GRID) {
 		if (region.find(pos) != region.end() ) count++;
