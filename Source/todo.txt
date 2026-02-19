@@ -8,10 +8,12 @@ Eraser:
 - Combined eraser support?
 Flower:
 - Fix bugged generation (generating impossible puzzles)
+- Flowers+Stars does not accurately match symbol counts
 Antitriangle:
 - Get multiple exits working correctly
 Darts:
 - Make symbol placement non-trivial more often
+Fix "Stone" getting removed from the drop-down list after another symbol is selected
 Change watchdog to detect exits
 Have Empty tiles return OFF_GRID when checked, yet still write correctly
 Fix invisible symbols with double mode

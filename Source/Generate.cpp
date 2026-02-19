@@ -1601,32 +1601,35 @@ bool Generate::placeTriangles(int color, int amount, int targetCount)
 //Place the given amount of erasers with the given colors. eraseSymbols are the symbols that were erased
 bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols) {
 	std::set<Point> open = openpos;
-	//TODO: Replace with setSymbol.
-	if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert) open.erase({ 5, 5 });
 	int amount = static_cast<int>(colors.size());
 	while (amount > 0) {
 		if (open.size() == 0)
 			return false;
 		int toErase = eraseSymbols[amount - 1];
 		int color = colors[amount - 1];
-		Point pos = pickRandom(open);
-		std::set<Point> region = panel.getRegion(pos);
+		Point epos = pickRandom(open); //Pick random position for eraser
+		std::set<Point> region = panel.getRegion(epos);
 		std::set<Point> open2;
 		for (Point p : region) {
 			if (open.erase(p)) open2.insert(p);
 		}
-		if (splitPoints.size() > 0) { //Make sure this is one of the split point regions
+
+		if (splitPoints.size() > 0) { //Get eraser pos from splitPoints instead
 			bool found = false;
 			for (Point p : splitPoints) {
 				if (region.count(p)) {
 					found = true;
+					epos = p;
 					break;
 				}
 			}
 			if (!found) continue;
 		}
-		//TODO: Don't hardcode this
-		if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert && !region.count({ 5, 5 })) continue; //For the puzzle in the cave with a pillar in middle
+		//TODO: Don't hardcode this - replace with setSymbol.
+		if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert) {
+			if (!open2.count({ 5, 5 })) continue;
+			epos = { 5, 5 };
+		}
 		if (hasConfig(MakeStonesUnsolvable)) {
 			std::set<Point> valid;
 			for (Point p : open2) {
@@ -1639,9 +1642,6 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			}
 			open2 = valid;
 		}
-		if ((open2.size() == 0 || splitPoints.size() == 0 && open2.size() == 1) && !(toErase & Dot)) continue;
-
-		int symbol = 0;
 		if (toErase & Dot) {
 			std::set<Point> openEdge;
 			for (Point p : region) {
@@ -1655,7 +1655,7 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			}
 			if (openEdge.size() == 0)
 				continue;
-			pos = pickRandom(openEdge);
+			Point pos = pickRandom(openEdge);
 			toErase &= ~INTERSECTION;
 			if ((toErase & 0xf) == Blue || (toErase & 0xf) == Cyan) toErase |= DOT_IS_BLUE;
 			if ((toErase & 0xf) == Yellow || (toErase & 0xf) == Orange) toErase |= DOT_IS_ORANGE;
@@ -1663,8 +1663,17 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			if ((pos.x & 1) == 0 && (pos.y & 1) == 0) toErase |= Dot_Intersection;
 			else if ((pos.y & 1) == 0) toErase |= Dot_Row;
 			set(pos, ((pos.x & 1) == 1 ? Dot_Row : (pos.y & 1) == 1 ? Dot_Column : Dot_Intersection) | (toErase & 0xffff));
+			set(epos, Eraser | color);
+			openpos.erase(pos);
+			amount--;
+			continue;
 		}
-		else if (getType(toErase) == Poly) {
+		//Attempt to place an incorrect symbol to get erased
+		open2.erase(epos);
+		if (open2.size() == 0) continue;
+		Point pos = pickRandom(open2);
+		int symbol = 0;
+		if (getType(toErase) == Poly) {
 			while (symbol == 0) {
 				std::set<Point> area = gridpos;
 				int shapeSize;
@@ -1723,26 +1732,16 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 		}
 		else symbol = toErase;
 
-		if (!(toErase & Dot)) {
-			panel.preCalcResult.clear();
-			set(pos, symbol | getColor(toErase));
-			if (panel.checkSymbol(pos)) { //Make sure the symbol isn't correct
-				set(pos, None);
-				continue;
-			}
-			openpos.erase(pos);
-			open2.erase(pos);
+		set(pos, symbol | getColor(toErase));
+		set(epos, Eraser | color);
+		panel.preCalcResult.clear();
+		if (panel.checkSymbol(pos)) { //Make sure the symbol isn't correct
+			set(pos, None);
+			set(epos, None);
+			continue;
 		}
-		//Place the eraser at a random open point
-		if (splitPoints.size() == 0) pos = pickRandom(open2);
-		else for (Point p : splitPoints) if (region.count(p)) { pos = p; break; }
-		//TODO: Don't hardcode this
-		if (panel.id == CAVES_PERSPECTIVE_2 && randomizer->difficulty == Expert) {
-			if (get(5, 5) != 0) return false;
-			pos = { 5, 5 }; //For the puzzle in the cave with a pillar in middle
-		}
-		set(pos, Eraser | color);
 		openpos.erase(pos);
+		openpos.erase(epos);
 		amount--;
 	}
 	return true;
