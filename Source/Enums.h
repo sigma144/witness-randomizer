@@ -59,6 +59,10 @@ enum Symbol : int {
 	Minesweeper7 = 0x703700,
 	Minesweeper8 = 0x803700,
 	Flower = 0x004700,
+	Dart = 0x005700,
+	Dart1 = 0x105700,
+	Dart2 = 0x205700,
+	Dart3 = 0x305700,
 };
 
 enum SymbolColor {

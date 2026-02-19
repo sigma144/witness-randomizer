@@ -279,6 +279,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (wcscmp(text, L"Cave") == 0) symbol = SymbolData::GetValFromSymbolID(CAVE1 + variant - 1);
 			if (wcscmp(text, L"Minesweeper") == 0) symbol = SymbolData::GetValFromSymbolID(MINESWEEPER0 + variant);
 			if (wcscmp(text, L"Flower") == 0) symbol = SymbolData::GetValFromSymbolID(FLOWER);
+			if (wcscmp(text, L"Dart") == 0) symbol = SymbolData::GetValFromSymbolID(DART1E + variant);
 			if (wcscmp(text, L"Dot (Intersection)") == 0) symbol = Dot_Intersection;
 			if (wcscmp(text, L"Dot (Row)") == 0) symbol = Dot_Row;
 			if (wcscmp(text, L"Dot (Column)") == 0) symbol = Dot_Column;
@@ -550,11 +551,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWN | CBS_HASSTRINGS,
 			160, 390, 150, 300, hwnd, NULL, hInstance, NULL);
 
-		const int NUM_ELEMS = 17;
+		const int NUM_ELEMS = 18;
 		TCHAR elems[NUM_ELEMS][25] =
 		{
 			TEXT("Stone"), TEXT("Star"), TEXT("Eraser"), TEXT("Shape"), TEXT("Triangle"),
-			TEXT("Arrow"), TEXT("Anti-Triangle"), TEXT("Cave"), TEXT("Minesweeper"), TEXT("Flower"),
+			TEXT("Arrow"), TEXT("Anti-Triangle"), TEXT("Cave"), TEXT("Minesweeper"), TEXT("Flower"), TEXT("Dart"),
 			TEXT("Gap (Row)"), TEXT("Gap (Column)"), TEXT("Dot (Intersection)"), TEXT("Dot (Row)"), TEXT("Dot (Column)"),
 			TEXT("Start"), TEXT("Exit"),
 		};

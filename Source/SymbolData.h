@@ -63,12 +63,37 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 
 	FLOWER = 0x2E,
 
-	BigSquare = 0x2F,
+	DART1E = 0x2F,
+	DART1SE = 0x30,
+	DART1S = 0x31,
+	DART1SW = 0x32,
+	DART1W = 0x33,
+	DART1NW = 0x34,
+	DART1N = 0x35,
+	DART1NE = 0x36,
+	DART2E = 0x37,
+	DART2SE = 0x38,
+	DART2S = 0x39,
+	DART2SW = 0x3A,
+	DART2W = 0x3B,
+	DART2NW = 0x3C,
+	DART2N = 0x3D,
+	DART2NE = 0x3E,
+	DART3E = 0x3F,
+	DART3SE = 0x40,
+	DART3S = 0x41,
+	DART3SW = 0x42,
+	DART3W = 0x43,
+	DART3NW = 0x44,
+	DART3N = 0x45,
+	DART3NE = 0x46,
+
+	BigSquare = 0x47,
 
 	NUM_SYMBOLS, // Must be last
 };
 
-inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, FLOWER, BigSquare };
+inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, FLOWER, DART1E, BigSquare };
 
 class SymbolData {
 public:
@@ -117,4 +142,5 @@ private:
 	static void AddCaves(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddMines(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddFlower(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	static void AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 };

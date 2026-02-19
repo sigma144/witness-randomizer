@@ -316,6 +316,9 @@ bool Panel::checkSymbol(Point pos, int symbol) {
 		else if (type == Flower) {
 			if (!checkFlower(pos, symbol)) return false;
 		}
+		else if (type == Dart) {
+			if (!checkDart(pos, symbol)) return false;
+		}
 	}
 	return true;
 }
@@ -412,6 +415,12 @@ bool Panel::checkFlower(Point pos, int symbol) {
 	return (countColor(col, color) == colorCount) != (countColor(row, color) == colorCount);
 }
 
+bool Panel::checkDart(Point pos, int symbol) {
+	int targetCount = (symbol >> 23) + 1;
+	Point dir = DIRECTIONS8_2[(symbol >> 20) & 0x7];
+	return countSameRegionCells(pos, dir) == targetCount;
+}
+
 //Count the occurrence of the given symbol color in the given region
 int Panel::countColor(const std::set<Point>& region, int color) {
 	int count = 0;
@@ -441,6 +450,18 @@ int Panel::countCrossings(Point pos, Point dir) {
 	int count = 0;
 	while (get(pos) != OFF_GRID) {
 		if (get(pos) == PATH) count++;
+		pos = pos + dir;
+	}
+	return count;
+}
+
+//Count the number of cells in the same region as pos the given vector is passing through (for the darts)
+int Panel::countSameRegionCells(Point pos, Point dir) {
+	std::set<Point> region = getRegion(pos);
+	pos = pos + dir;
+	int count = 0;
+	while (get(pos) != OFF_GRID) {
+		if (region.find(pos) != region.end() ) count++;
 		pos = pos + dir;
 	}
 	return count;
