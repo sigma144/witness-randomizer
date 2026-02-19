@@ -136,9 +136,9 @@ void EraserWatchdog::action() { //TODO: Multi-eraser support, fix dot cancellati
 		for (int y = 1; y < panel.height; y++) {
 			int symbol = get(x, y);
 			if (getType(symbol) == Eraser) {
-				panel.set(x, y, None);
 				int eraser = panel.pointToDecorationIndex(x, y);
 				Point erasedPos = getErasedSymbol({ x, y });
+				if (erasedPos.x == -1) continue;
 				int erased = -1;
 				if (erasedPos.x % 2 == 1 && erasedPos.y % 2 == 1) //Grid block point
 					erased = panel.pointToDecorationIndex(erasedPos.x, erasedPos.y);
@@ -188,6 +188,7 @@ Point EraserWatchdog::getErasedSymbol(Point eraserPos) {
 		}
 	}
 	if (errors.size() == 0) return { -1, -1 };
+	panel.set(eraserPos, None);
 	panel.preCalcResult.clear();
 	for (Point p : errors) {
 		int symbol = panel.get(p);
