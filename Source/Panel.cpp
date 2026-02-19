@@ -213,6 +213,19 @@ std::vector<int> Panel::getSymbolsInRegion(Point pos) {
 	return symbols;
 }
 
+std::set<Point> Panel::getEdgesInRegion(std::set<Point>& region) {
+	std::set<Point> openEdge;
+	for (Point p : region) {
+		for (Point dir : Panel::DIRECTIONS8) {
+			Point p2 = p + dir;
+			if (get(p2) != PATH) {
+				openEdge.insert(p2);
+			}
+		}
+	}
+	return openEdge;
+}
+
 Point Panel::getSymPoint(int x, int y, Symmetry symmetry) {
 	switch (symmetry) {
 	case NoSymmetry: return Point(x, y);

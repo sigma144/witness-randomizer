@@ -1574,5 +1574,13 @@ bool Special::hasBeenRandomized() {
 //For testing/debugging purposes only
 void Special::test() {
 	g.resetConfig();
-	PanelID id = MILL_STONE_2;
+	PanelID id = MILL_FINAL;
+	int active = memory->ReadPanelData<int>(id, ERASER_ACTIVE);
+	int decNum = memory->ReadPanelData<int>(id, NUM_ERASED_DECORATIONS);
+	int dotNum = memory->ReadPanelData<int>(id, NUM_ERASED_DOTS);
+	uintptr_t decptr = memory->ReadPanelData<uintptr_t>(id, ERASED_DECORATIONS);
+	uintptr_t dotptr = memory->ReadPanelData<uintptr_t>(id, ERASED_DOTS);
+	std::vector<int> dec = memory->ReadArray<int>(id, ERASED_DECORATIONS, decNum);
+	std::vector<int> dot = memory->ReadArray<int>(id, ERASED_DOTS, dotNum);
+	int test = 0;
 }

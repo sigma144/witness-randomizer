@@ -130,6 +130,7 @@ void EraserWatchdog::action() { //TODO: Multi-eraser support, fix dot cancellati
 		}
 		return;
 	}
+	std::vector<int> erasedDecorations, erasedDots;
 	bool success = true;
 	for (int x = 1; x < panel.width; x++) {
 		for (int y = 1; y < panel.height; y++) {
@@ -137,25 +138,56 @@ void EraserWatchdog::action() { //TODO: Multi-eraser support, fix dot cancellati
 			if (getType(symbol) == Eraser) {
 				panel.set(x, y, None);
 				int eraser = panel.pointToDecorationIndex(x, y);
-				int erased = getErasedSymbol({ x, y });
-				if (erased != -1)
-					memory->WriteArray<int>(id, ERASED_DECORATIONS, { eraser, erased });
+				Point erasedPos = getErasedSymbol({ x, y });
+				int erased = -1;
+				if (erasedPos.x % 2 == 1 && erasedPos.y % 2 == 1) //Grid block point
+					erased = panel.pointToDecorationIndex(erasedPos.x, erasedPos.y);
+				else if (erasedPos.x % 2 == 0 && erasedPos.y % 2 == 0) //Intersection point
+					erased = panel.pointToIndex(erasedPos.x, erasedPos.y);
+				else { //Edge point
+					float x = panel.minx + erasedPos.x * panel.unitWidth;
+					float y = panel.maxy - erasedPos.y * panel.unitHeight;
+					std::vector<float> positions = memory->ReadArray<float>(id, DOT_POSITIONS, memory->ReadPanelData<int>(id, NUM_DOTS)*2);
+					for (int i = panel.getNumGridPoints(); i < positions.size() / 2; i++) {
+						if (abs(x - positions[i * 2]) < 0.001f && abs(y - positions[i * 2 + 1]) < 0.001f) {
+							erased = i;
+							break;
+						}
+					}
+				}
+				if (erased != -1) {
+					erasedDecorations.emplace_back(eraser);
+					if (erasedPos.x % 2 == 1 && erasedPos.y % 2 == 1)
+						erasedDecorations.emplace_back(erased);
+					else erasedDots.emplace_back(erased);
+				}
 			}
 		}
 	}
+	memory->WritePanelData<int>(id, NUM_ERASED_DECORATIONS, static_cast<int>(erasedDecorations.size()));
+	memory->WriteArray<int>(id, ERASED_DECORATIONS, erasedDecorations, true);
+	memory->WritePanelData<int>(id, NUM_ERASED_DOTS, static_cast<int>(erasedDots.size()));
+	memory->WriteArray<int>(id, ERASED_DOTS, erasedDots, true);
 	success = panel.checkCustomSymbols(false);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
 	checked = true;
 }
 
-int EraserWatchdog::getErasedSymbol(Point eraserPos) {
-	std::set<Point> region = panel.getRegion(eraserPos);
+Point EraserWatchdog::getErasedSymbol(Point eraserPos) {
 	std::set<Point> errors;
+	std::set<Point> region = panel.getRegion(eraserPos);
 	for (Point p : region) {
 		if (!panel.checkSymbol(p)) {
 			errors.insert(p);
 		}
 	}
+	std::set<Point> edges = panel.getEdgesInRegion(region);
+	for (Point p : edges) {
+		if (panel.get(p) & Dot) {
+			errors.insert(p);
+		}
+	}
+	if (errors.size() == 0) return { -1, -1 };
 	panel.preCalcResult.clear();
 	for (Point p : errors) {
 		int symbol = panel.get(p);
@@ -169,15 +201,12 @@ int EraserWatchdog::getErasedSymbol(Point eraserPos) {
 		}
 		panel.preCalcResult.clear();
 		if (valid)
-			return panel.pointToDecorationIndex(p.x, p.y);
+			return p;
 		panel.set(p, symbol);
 	}
-	if (errors.size() > 0) {
-		Point p = Random::pickRandom(errors);
-		panel.set(p, None);
-		return panel.pointToDecorationIndex(p.x, p.y);
-	}
-	return -1;
+	Point p = Random::pickRandom(errors);
+	panel.set(p, None);
+	return p;
 }
 
 //Keep Watchdog - Keep the big panel off until all panels are solved

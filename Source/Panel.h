@@ -80,6 +80,7 @@ public:
 
 	std::set<Point> getRegion(Point pos);
 	std::vector<int> getSymbolsInRegion(Point pos);
+	std::set<Point> getEdgesInRegion(std::set<Point>& region);
 	Point getSymPoint(int x, int y) { return getSymPoint(x, y, symmetry); }
 	Point getSymPoint(int x, int y, Symmetry symmetry);
 	int getSymSolutionPoint(int index);
@@ -111,6 +112,7 @@ public:
 
 	PanelID id;
 	int width, height; //Dimensions of internal grid, including both edge and block spaces
+	float minx, miny, maxx, maxy, unitWidth, unitHeight;
 	std::vector<Point> startpoints;
 	std::vector<Endpoint> endpoints;
 	std::map<Point, int> path; //Points mapped to their order
@@ -138,7 +140,6 @@ private:
 
 	Memory* memory;
 	std::vector<std::vector<int>> grid;
-	float minx, miny, maxx, maxy, unitWidth, unitHeight;
 
 	friend class Special;
 };

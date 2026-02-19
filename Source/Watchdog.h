@@ -59,7 +59,7 @@ class EraserWatchdog : public Watchdog {
 public:
 	EraserWatchdog(PanelID id, Panel& panel, uintptr_t sequenceArray);
 	virtual void action();
-	int getErasedSymbol(Point eraserPos);
+	Point getErasedSymbol(Point eraserPos);
 	int get(int x, int y) { return panel.get(x, y); }
 	void set(int x, int y, int val) { panel.set(x, y, val); }
 private:

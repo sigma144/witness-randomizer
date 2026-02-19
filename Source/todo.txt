@@ -3,7 +3,7 @@ TODO LIST FOR 2.0
 BUGS / INCOMPLETE FEATURES:
 
 Eraser:
-- Fix eraser+custom+dots
+- Figure out dot+eraser crashes
 - Eraser generation with new symbols (make this more automatic if possible)
 - Multi-eraser support
 - Proper tetris shape checking
@@ -25,12 +25,14 @@ Have only one user-facing set function (setSymbol)
 Automatic start/exit placement for custom symmetry
 Add desert latch watchdog
 Add target watchdog to replace Town, Treehouse, and Keep watchdogs
+Override game's shape checking logic to make negative shapes work correctly
+Make erasers erase symbols with uniform probability rather than types
 
 SYMBOLS TO ADD:
 
 For 2.0:
 - Rotating arrow
-- Crown (Basically ghost but hopefully easier to draw)
+- Ghost (From Despair rando)
 - Dart
 - Negation Start (may require a lot of work)
 - Copier (also may be a bit hard to make)
@@ -51,7 +53,7 @@ For Variety/Despair Compatibility (Might not be in first release):
 
 SYMBOL LOCATIONS (CURRENT PLAN)
 
-Tutorial: Open Circle, Crown
+Tutorial: Open Circle, Minesweeper
 Symmetry: Arrow, Rotating Arrow, Arch?
 Desert: Arch, Wormhole?
 Quarry: Eraser Start, Copier
@@ -63,4 +65,4 @@ Treehouse: Anti-triangle, Dart, Cave
 Town: Custom symbol combinations
 Jungle: ? (Might also be non-randomized if birds are too annoying)
 Monastery: Probably nothing due to lack of actual panels
-Discards/Caves: Minesweeper
+Discards/Caves: Ghost
