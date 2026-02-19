@@ -304,7 +304,7 @@ void Generate::setPath(Point pos) {
 //Remove the path and all symbols from the grid. This does not affect starts/exits. If PreserveStructure is active, open gaps will be kept. If a custom grid is set, this will reset it back to the custom grid state.
 void Generate::clear() {
 	if (customGrid.size() > 0) {
-		panel.setGrid(customGrid); //TOOD: Why don't we clear here?
+		panel.setGrid(customGrid);
 	}
 	else for (int x = 0; x < panel.width; x++) {
 		for (int y = 0; y < panel.height; y++) {
@@ -510,6 +510,12 @@ bool Generate::generate(PanelID id, PuzzleSymbols symbols) {
 		}
 	}
 	else path = customPath;
+	
+	//If erasers are present, create a second path for generating cancelled symbols
+	if (symbols.any(Eraser)) {
+		fakePanel = panel;
+		while (!generatePath(symbols));
+	}
 
 	std::vector<std::string> solution; //For debugging only
 	for (int y = 0; y < panel.height; y++) {
@@ -1634,20 +1640,9 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			open2 = valid;
 		}
 		if ((open2.size() == 0 || splitPoints.size() == 0 && open2.size() == 1) && !(toErase & Dot)) continue;
-		bool canPlace = false;
-		if (getType(toErase) == Stone) {
-			canPlace = !canPlaceStone(region, toErase & 0xf);
-		}
-		else if (getType(toErase) == Star) {
-			canPlace = (panel.countColor(region, toErase & 0xf) + (color == (toErase & 0xf) ? 1 : 0) != 1);
-		}
-		else canPlace = true;
-		if (!canPlace) continue;
 
-		if (getType(toErase) == Stone || getType(toErase) == Star) {
-			set(pos, toErase);
-		}
-		else if (toErase & Dot) { //Find an open edge to put the dot on
+		int symbol = 0;
+		if (toErase & Dot) {
 			std::set<Point> openEdge;
 			for (Point p : region) {
 				for (Point dir : Panel::DIRECTIONS8) {
@@ -1670,7 +1665,6 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			set(pos, ((pos.x & 1) == 1 ? Dot_Row : (pos.y & 1) == 1 ? Dot_Column : Dot_Intersection) | (toErase & 0xffff));
 		}
 		else if (getType(toErase) == Poly) {
-			int symbol = 0; //Make a random shape to cancel
 			while (symbol == 0) {
 				std::set<Point> area = gridpos;
 				int shapeSize;
@@ -1681,12 +1675,10 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 						shapeSize += rand(3);
 				}
 				Shape shape = generateShape(area, pickRandom(area), shapeSize);
-				if (shape.size() == region.size()) continue; //Don't allow the shape to match the region, to guarantee it will be wrong
 				symbol = makeShapeSymbol(shape, toErase & Rotate, toErase & Negative);
 			}
-			set(pos, symbol | (toErase & 0xf));
 		}
-		else if (getType(toErase) == Triangle) {
+		else if (getType(toErase) == Triangle && (toErase & 0xF0000) == 0) {
 			//If the block is adjacent to a start or exit, don't place a triangle there
 			//TODO: Don't hardcode this
 			if (hasConfig(TreehouseLayout) || panel.id == CAVES_PERSPECTIVE_3) {
@@ -1702,10 +1694,42 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			int count = panel.countSides(pos);
 			if (count == 0) count = rand(1, 3);
 			else count = (count + rand(2)) % 3 + 1;
-			set(pos, toErase | (count << 16));
+			symbol = Triangle | count << 16;
 		}
+		else if (getCustomType(toErase) == Arrow || getCustomType(toErase) == Dart ||
+			getCustomType(toErase) == AntiTriangle || getCustomType(toErase) == Cave ||
+			getCustomType(toErase) == Minesweeper0) {
+			//For custom counter types, use a random path to determine what variant to use.
+			Panel backupPanel = panel;
+			panel = fakePanel;
+			std::set<Point> backupOpen = openpos;
+			openpos.clear();
+			openpos.insert(pos);
+			bool result = true;
+			switch (getCustomType(toErase)) {
+			case Arrow: result = placeArrows(NoColor, 1, toErase >> 20); break;
+			case Dart: result = placeDarts(NoColor, 1, toErase >> 20); break;
+			case AntiTriangle: result = placeAntiTriangles(NoColor, 1, toErase >> 20); break;
+			case Cave: result = placeCaveClues(NoColor, 1, toErase >> 20); break;
+			case Minesweeper0: result = placeMinesweeperClues(NoColor, 1, toErase >> 20); break;
+			}
+			symbol = get(pos);
+			panel = backupPanel;
+			openpos = backupOpen;
+			if (!result) continue;
+		}
+		else if (getType(toErase) == Custom) {
+			symbol = SymbolData::GetValFromSymbol(toErase);
+		}
+		else symbol = toErase;
 
 		if (!(toErase & Dot)) {
+			panel.preCalcResult.clear();
+			set(pos, symbol | getColor(toErase));
+			if (panel.checkSymbol(pos)) { //Make sure the symbol isn't correct
+				set(pos, None);
+				continue;
+			}
 			openpos.erase(pos);
 			open2.erase(pos);
 		}
@@ -1722,44 +1746,6 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 		amount--;
 	}
 	return true;
-}
-
-//WIP
-int Generate::makeCanceledSymbol(Point pos, int toErase, const std::set<Point>& region) {
-	if (getType(toErase) == Poly) {
-		int symbol = 0; //Make a random shape to cancel
-		while (symbol == 0) {
-			std::set<Point> area = gridpos;
-			int shapeSize;
-			if ((toErase & Negative) || hasConfig(SmallShapes)) shapeSize = rand(1, 3);
-			else {
-				shapeSize = rand(1, 5);
-				if (shapeSize < 3)
-					shapeSize += rand(3);
-			}
-			Shape shape = generateShape(area, pickRandom(area), shapeSize);
-			symbol = makeShapeSymbol(shape, toErase & Rotate, toErase & Negative);
-		}
-		return symbol | getColor(toErase);
-	}
-	if (getType(toErase) == Triangle && (toErase & 0xF0000) == 0) {
-		//If the block is adjacent to a start or exit, don't place a triangle there
-		//TODO: Don't hardcode this
-		if (hasConfig(TreehouseLayout) || panel.id == CAVES_PERSPECTIVE_3) {
-			bool found = false;
-			for (Point dir : Panel::DIRECTIONS) {
-				if (starts.count(pos + dir) || exits.count(pos + dir)) {
-					found = true;
-					break;
-				}
-			}
-			if (found) return 0;
-		}
-		int count = rand(3) + 1;
-		return toErase | (count << 16);
-	}
-
-	return toErase;
 }
 
 //For the mountain floor puzzle on hard mode. Combine two tetris shapes into one

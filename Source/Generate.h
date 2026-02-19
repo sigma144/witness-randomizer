@@ -121,7 +121,6 @@ private:
 	bool checkStarZigzag(Panel& panel);
 	bool placeTriangles(int color, int amount, int targetCount);
 	bool placeErasers(const std::vector<int>& colors, const std::vector<int>& eraseSymbols);
-	int makeCanceledSymbol(Point pos, int toErase, const std::set<Point>& region);
 	bool combineShapes(std::vector<Shape>& shapes);
 	//Custom Symbols
 	bool placeArrows(int color, int amount, int targetCount);
@@ -132,9 +131,8 @@ private:
 	bool placeFlowerStarPairs(int color, int amount);
 	bool placeDarts(int color, int amount, int targetCount);
 
-	
-
 	Panel panel;
+	Panel fakePanel; //For generating cancelled symbols
 	std::vector<std::vector<int>> customGrid;
 	int width, height;
 	Symmetry symmetry;
@@ -144,7 +142,7 @@ private:
 	std::set<Point> path, path1, path2; //Path points
 	std::set<Point> customPath; //TODO: Add points in the correct order (for symbols where that matters)
 	bool bisect; //Used for stone generation
-	int stoneTypes; //Used fo stone generation
+	int stoneTypes; //Used for stone generation
 	std::set<Config> config, oneTimeAdd, oneTimeRemove;
 	long randomSeed;
 	std::vector<Point> splitPoints; //For double eraser generation. TODO: Replace this with setSymbol.

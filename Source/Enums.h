@@ -248,4 +248,5 @@ enum Config {
 enum Difficulty { Normal, Expert, Symbols };
 
 constexpr Symbol getType(int symbol) { return static_cast<Symbol>(symbol & 0xF00); }
+constexpr Symbol getCustomType(int symbol) { return static_cast<Symbol>(symbol & 0xFF00); }
 constexpr SymbolColor getColor(int symbol) { return static_cast<SymbolColor>(symbol & 0xF); }

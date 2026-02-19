@@ -3,12 +3,15 @@ TODO LIST FOR 2.0
 BUGS / INCOMPLETE FEATURES:
 
 Eraser:
-- Figure out dot+eraser crashes
-- Eraser generation with new symbols (make this more automatic if possible)
-- Multi-eraser support
+- Fix dot+eraser crashes
 - Proper tetris shape checking
+- Combined eraser support?
+Flower:
+- Fix bugged generation (generating impossible puzzles)
 Antitriangle:
 - Get multiple exits working correctly
+Darts:
+- Make symbol placement non-trivial more often
 Change watchdog to detect exits
 Have Empty tiles return OFF_GRID when checked, yet still write correctly
 Fix invisible symbols with double mode
@@ -33,7 +36,6 @@ SYMBOLS TO ADD:
 For 2.0:
 - Rotating arrow
 - Ghost (From Despair rando)
-- Dart
 - Negation Start (may require a lot of work)
 - Copier (also may be a bit hard to make)
 - Matcher (Sigma)
@@ -41,10 +43,11 @@ For 2.0:
 - Open Circle (Sigma)
 - Arch (Sigma)
 - Wormhole (Sigma)
+- Diamond (Has generation complications)
+- Pentagons?
 - Bars?
 - Inverse myopia arrows?
 For Variety/Despair Compatibility (Might not be in first release):
-- Diamond (Has generation complications)
 - Myopia
 - Dice
 - Black Hole
@@ -54,15 +57,16 @@ For Variety/Despair Compatibility (Might not be in first release):
 SYMBOL LOCATIONS (CURRENT PLAN)
 
 Tutorial: Open Circle, Minesweeper
-Symmetry: Arrow, Rotating Arrow, Arch?
-Desert: Arch, Wormhole?
+Symmetry: Arrow, Rotating Arrow, Dart
+Desert: Ghost?
 Quarry: Eraser Start, Copier
 Shadows: ? (Maybe nothing if the shadows are too distracting)
 Keep: Symbols from other areas
-Bunker: Flower
+Bunker: Pentagons?
 Swamp: Matcher, Replicator
-Treehouse: Anti-triangle, Dart, Cave
+Treehouse: Flower, Arch, Wormhole, Diamond?
 Town: Custom symbol combinations
 Jungle: ? (Might also be non-randomized if birds are too annoying)
 Monastery: Probably nothing due to lack of actual panels
-Discards/Caves: Ghost
+Discards: Anti-Triangles?
+Caves: Cave?

@@ -21,7 +21,8 @@
 
 #define IDC_RANDOMIZE 0x401
 #define IDC_RERANDOMIZE 0x405
-#define IDC_TEST 0x406
+#define IDC_CLEAR 0x406
+#define IDC_TEST 0x407
 
 #define IDC_ADD 0x301
 #define IDC_REMOVE 0x302
@@ -107,6 +108,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			specialCase.test();
 			break;
 		case IDC_RERANDOMIZE:
+			if (memory->GetActivePanel() == -1) break;
 			panel = Panel(memory->GetActivePanel());
 			symbolMap.clear();
 			for (int x = 0; x < panel.width; x++) {
@@ -132,6 +134,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			specialCase.g.seed(ctr++);
 			specialCase.g.generate(memory->GetActivePanel(), symbolVec);
 			randomizer.symbolsWatchdog->id = static_cast<PanelID>(-1); //Re-initialize panel for symbol checking
+			break;
+		case IDC_CLEAR:
+			if (memory->GetActivePanel() == -1) break;
+			specialCase.g.generate(memory->GetActivePanel(), { });
 			break;
 		//Difficulty selection
 		case IDC_DIFFICULTY_NORMAL:
@@ -599,12 +605,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		CreateWindow(L"BUTTON", L"Remove Symbol",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 			160, 510, 150, 26, hwnd, (HMENU)IDC_REMOVE, hInstance, NULL);
+		CreateWindow(L"BUTTON", L"Clear Active",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			160, 540, 150, 26, hwnd, (HMENU)IDC_CLEAR, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Randomize Active",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 540, 150, 26, hwnd, (HMENU)IDC_RERANDOMIZE, hInstance, NULL);
+			160, 570, 150, 26, hwnd, (HMENU)IDC_RERANDOMIZE, hInstance, NULL);
 		CreateWindow(L"BUTTON", L"Test",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			160, 570, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
+			160, 600, 150, 26, hwnd, (HMENU)IDC_TEST, hInstance, NULL);
 
 
 		CreateWindow(L"STATIC", L"Shape:",
