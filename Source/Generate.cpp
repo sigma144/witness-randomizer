@@ -1966,6 +1966,7 @@ bool Generate::placeFlowers(int color, int amount) {
 						for (Point p : region) {
 							if (!(p.y == pos2.y)) {
 								open.erase(p);
+								openSub.erase(p);
 							}
 						}
 						amount--;
@@ -1985,6 +1986,7 @@ bool Generate::placeFlowers(int color, int amount) {
 						for (Point p : region) {
 							if (!(p.x == pos2.x)) {
 								open.erase(p);
+								openSub.erase(p);
 							}
 						}
 						amount--;
