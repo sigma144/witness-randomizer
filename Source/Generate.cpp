@@ -1951,11 +1951,11 @@ bool Generate::placeFlowers(int color, int amount) {
 			for (Point p : crossSub) {
 				if (open.erase(p)) openSub.insert(p);
 			}
-			while (openSub.size() > 0) {
+			while (openSub.size() > 0 && amount > 0) {
 				Point pos2 = pickRandom(openSub);
 				openSub.erase(pos2);
 				open.erase(pos2);
-				if (col.find(pos2) != col.end()) {
+				if (pos2.y == pos.y) {
 					std::set<Point> subRow;
 					for (Point p : region) {
 						if (p.x == pos2.x)
@@ -1996,7 +1996,7 @@ bool Generate::placeFlowers(int color, int amount) {
 					}
 				}
 			}
-			if (openSub.size() == 0)
+			if (openSub.size() == 0 && amount > 0)
 				return false;
 		}
 	}
