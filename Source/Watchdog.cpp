@@ -131,11 +131,13 @@ void EraserWatchdog::action() { //TODO: Multi-eraser support, fix dot cancellati
 		return;
 	}
 	std::vector<int> erasedDecorations, erasedDots;
+	int numErasers = 0;
 	bool success = true;
 	for (int x = 1; x < panel.width; x++) {
 		for (int y = 1; y < panel.height; y++) {
 			int symbol = get(x, y);
 			if (getType(symbol) == Eraser) {
+				numErasers++;
 				int eraser = panel.pointToDecorationIndex(x, y);
 				Point erasedPos = getErasedSymbol({ x, y });
 				if (erasedPos.x == -1) continue;
@@ -165,9 +167,14 @@ void EraserWatchdog::action() { //TODO: Multi-eraser support, fix dot cancellati
 		}
 	}
 	memory->WritePanelData<int>(id, NUM_ERASED_DECORATIONS, static_cast<int>(erasedDecorations.size()));
-	memory->WriteArray<int>(id, ERASED_DECORATIONS, erasedDecorations, true);
 	memory->WritePanelData<int>(id, NUM_ERASED_DOTS, static_cast<int>(erasedDots.size()));
-	memory->WriteArray<int>(id, ERASED_DOTS, erasedDots, true);
+	//Pre-allocate arrays to always be big enough so that the game doesn't try to free this memory
+	erasedDecorations.resize(numErasers * 2);
+	erasedDots.resize(numErasers);
+	memory->WritePanelData<int>(id, ERASED_DECORATIONS_LEN, static_cast<int>(erasedDecorations.size()));
+	memory->WriteArray<int>(id, ERASED_DECORATIONS, erasedDecorations);
+	memory->WritePanelData<int>(id, ERASED_DOTS_LEN, static_cast<int>(erasedDots.size()));
+	memory->WriteArray<int>(id, ERASED_DOTS, erasedDots);
 	success = panel.checkCustomSymbols(false);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
 	checked = true;
