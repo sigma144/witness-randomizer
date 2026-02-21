@@ -555,7 +555,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 		hwndElem = CreateWindow(L"COMBOBOX", L"",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | CBS_DROPDOWN | CBS_HASSTRINGS,
-			160, 390, 150, 300, hwnd, NULL, hInstance, NULL);
+			160, 390, 150, 1000, hwnd, NULL, hInstance, NULL);
 
 		const int NUM_ELEMS = 18;
 		TCHAR elems[NUM_ELEMS][25] =

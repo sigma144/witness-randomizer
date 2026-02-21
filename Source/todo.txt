@@ -7,9 +7,6 @@ Eraser:
 - Combined eraser support?
 Antitriangle:
 - Get multiple exits working correctly
-Darts:
-- Make symbol placement non-trivial more often
-Restore intersection-dot in debug
 Change watchdog to detect exits
 Fix invisible symbols with double mode
 Fix metapuzzle rotated shape not getting placed sometimes

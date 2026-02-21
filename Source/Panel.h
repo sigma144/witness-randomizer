@@ -70,7 +70,7 @@ public:
 	int getFlag(int x, int y, int flag) { return get(x, y) & flag; };
 	void setFlag(int x, int y, int flag) { set(x, y, get(x, y) | flag); };
 	void clearFlag(int x, int y, int flag) { set(x, y, get(x, y) & ~flag); };
-	void setSymbol(int x, int y, Symbol symbol, SymbolColor color);
+	void setSymbol(int x, int y, Symbol symbol, SymbolColor color); //Only used by debug editor
 	void setShape(int x, int y, int shape, bool rotate, bool negative, SymbolColor color);
 	void setGridSymbol(int x, int y, Symbol symbol, SymbolColor color); //TODO: Rename this?
 	void resize(int width, int height);

@@ -107,8 +107,8 @@ void Panel::set(int x, int y, int val) {
 }
 
 void Panel::setSymbol(int x, int y, Symbol symbol, SymbolColor color) {
-	int gridx = x * 2 + (symbol == Dot_Column || symbol == Gap_Column ? 0 : 1);
-	int gridy = y * 2 + (symbol == Dot_Row || symbol == Gap_Row ? 0 : 1);
+	int gridx = x * 2 + (symbol == Dot_Column || symbol == Dot_Intersection || symbol == Gap_Column ? 0 : 1);
+	int gridy = y * 2 + (symbol == Dot_Row || symbol == Dot_Intersection || symbol == Gap_Row ? 0 : 1);
 	if (symbol & DOT) {
 		if (color == Blue || color == Cyan)
 			color = static_cast<SymbolColor>(DOT_IS_BLUE);
