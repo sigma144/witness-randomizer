@@ -9,6 +9,7 @@ Antitriangle:
 - Get multiple exits working correctly
 Darts:
 - Make symbol placement non-trivial more often
+Restore intersection-dot in debug
 Change watchdog to detect exits
 Have Empty tiles return OFF_GRID when checked, yet still write correctly
 Fix invisible symbols with double mode
