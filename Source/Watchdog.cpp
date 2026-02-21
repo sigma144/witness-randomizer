@@ -171,9 +171,9 @@ void EraserWatchdog::action() { //TODO: Multi-eraser support, fix dot cancellati
 	//Pre-allocate arrays to always be big enough so that the game doesn't try to free this memory
 	erasedDecorations.resize(numErasers * 2);
 	erasedDots.resize(numErasers);
-	memory->WritePanelData<int>(id, ERASED_DECORATIONS_LEN, static_cast<int>(erasedDecorations.size()));
+	memory->WritePanelData<int>(id, ERASED_DECORATIONS_LEN, static_cast<int>(erasedDecorations.size()) + 1);
 	memory->WriteArray<int>(id, ERASED_DECORATIONS, erasedDecorations);
-	memory->WritePanelData<int>(id, ERASED_DOTS_LEN, static_cast<int>(erasedDots.size()));
+	memory->WritePanelData<int>(id, ERASED_DOTS_LEN, static_cast<int>(erasedDots.size()) + 1);
 	memory->WriteArray<int>(id, ERASED_DOTS, erasedDots);
 	success = panel.checkCustomSymbols(false);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
