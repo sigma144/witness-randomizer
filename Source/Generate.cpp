@@ -84,7 +84,7 @@ void Generate::initPanel(PanelID id) {
 		if (hasConfig(PreserveStructure)) {
 			for (int x = 0; x < panel.width; x++)
 				for (int y = 0; y < panel.height; y++)
-					if (get(x, y) == OPEN || panel.getFlag(x, y, 0x60000f) == NO_POINT || panel.getFlag(x, y, Empty) == Empty)
+					if (get(x, y) == OPEN || get(x, y) == OFF_GRID || panel.getFlag(x, y, 0x60000f) == NO_POINT)
 						customGrid[x][y] = get(x, y);
 		}
 		panel.setGrid(customGrid);
@@ -109,7 +109,7 @@ void Generate::initPanel(PanelID id) {
 	gridpos.clear();
 	for (int x = 1; x < panel.width; x += 2) {
 		for (int y = 1; y < panel.height; y += 2) {
-			if (!(hasConfig(PreserveStructure) && panel.getFlag(x, y, Empty) == Empty)) //TODO: When do these empty points get erased?
+			if (!(hasConfig(PreserveStructure) && get(x, y) == OFF_GRID))
 				gridpos.emplace(Point(x, y));
 		}
 	}
@@ -308,7 +308,7 @@ void Generate::clear() {
 	}
 	else for (int x = 0; x < panel.width; x++) {
 		for (int y = 0; y < panel.height; y++) {
-			if (hasConfig(PreserveStructure) && (get(x, y) == OPEN || panel.getFlag(x, y, 0x60000f) == NO_POINT || panel.getFlag(x, y, Empty) == Empty))
+			if (hasConfig(PreserveStructure) && (get(x, y) == OPEN || get(x, y) == OFF_GRID || panel.getFlag(x, y, 0x60000f) == NO_POINT))
 				continue;
 			set(x, y, 0);
 		}
@@ -1853,7 +1853,7 @@ bool Generate::placeCaveClues(int color, int amount, int targetCount) {
 		int count = 1;
 		for (Point dir : Panel::DIRECTIONS) {
 			Point temp = pos;
-			while (get(temp + dir + dir) != OFF_GRID && get(temp + dir) != PATH && (get(temp + dir + dir)&Empty) != Empty) {
+			while (get(temp + dir + dir) != OFF_GRID && get(temp + dir) != PATH) {
 				count++;
 				temp = temp + dir + dir;
 			}

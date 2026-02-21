@@ -1574,15 +1574,7 @@ bool Special::hasBeenRandomized() {
 //For testing/debugging purposes only
 void Special::test() {
 	g.resetConfig();
-	PanelID id = MILL_FINAL;
-	int active = memory->ReadPanelData<int>(id, ERASER_ACTIVE);
-	int decNum = memory->ReadPanelData<int>(id, NUM_ERASED_DECORATIONS);
-	int decLen = memory->ReadPanelData<int>(id, ERASED_DECORATIONS_LEN);
-	uintptr_t decptr = memory->ReadPanelData<uintptr_t>(id, ERASED_DECORATIONS);
-	std::vector<int> dec = memory->ReadArray<int>(id, ERASED_DECORATIONS, decLen);
-	int dotNum = memory->ReadPanelData<int>(id, NUM_ERASED_DOTS);
-	int dotLen = memory->ReadPanelData<int>(id, ERASED_DOTS_LEN);
-	uintptr_t dotptr = memory->ReadPanelData<uintptr_t>(id, ERASED_DOTS);
-	std::vector<int> dot = memory->ReadArray<int>(id, ERASED_DOTS, dotLen);
-	int test = 0;
+	PanelID id = THEATER_EXIT_R;
+	g.setConfig(PreserveStructure);
+	g.generate(id, Dart|Black, 8);
 }

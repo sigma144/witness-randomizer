@@ -194,9 +194,9 @@ std::set<Point> Panel::getRegion(Point pos) {
 		check.pop_back();
 		for (Point dir : DIRECTIONS) {
 			Point p1 = p + dir;
-			if (get(p1.x, p1.y) == PATH || get(p1.x, p1.y) == OPEN) continue;
+			if (get(p1.x, p1.y) == PATH) continue;
 			Point p2 = p + dir * 2;
-			if (get(p2.x, p2.y) < 0 || (get(p2.x, p2.y) & Empty) == Empty) continue;
+			if (get(p2.x, p2.y) == OFF_GRID) continue;
 			if (region.insert(p2).second) {
 				check.push_back(p2);
 			}
@@ -382,7 +382,7 @@ bool Panel::checkCave(Point pos, int symbol) {
 	int count = 1;
 	for (Point dir : DIRECTIONS) {
 		Point temp = pos;
-		while (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y) != OFF_GRID && (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y) & Empty) != Empty && get(temp.x + dir.x, temp.y + dir.y) != PATH) {
+		while (get(temp.x + dir.x + dir.x, temp.y + dir.y + dir.y) != OFF_GRID && get(temp.x + dir.x, temp.y + dir.y) != PATH) {
 			count++;
 			temp = temp + dir + dir;
 		}
@@ -426,7 +426,7 @@ int Panel::countColor(const std::set<Point>& region, int color) {
 	int count = 0;
 	for (Point p : region) {
 		int sym = get(p);
-		if (sym && (sym & 0xf) == color)
+		if (sym && getColor(sym) == color)
 			count++;
 	}
 	return count;
@@ -504,8 +504,10 @@ void Panel::readDecorations() {
 	for (int i=0; i<numDecorations; i++) {
 		Point p = decorationIndexToPoint(i);
 		set(p, decorations[i]);
-		if ((decorations[i] & Empty) == Empty)
+		if ((decorations[i] & Empty) == Empty) {
+			set(p, OFF_GRID);
 			fixBackground = true;
+		}
 	}
 	preCalcResult.clear();
 }
@@ -518,6 +520,7 @@ void Panel::writeDecorations() {
 	for (int y = height - 2; y > 0; y -= 2) {
 		for (int x = 1; x < width; x += 2) {
 			int val = get(x, y);
+			if (val == OFF_GRID) val = Empty;
 			decorations.push_back(val);
 			decorationColors.push_back(getColorRGB(getColor(val)));
 			if (val) any = true;
