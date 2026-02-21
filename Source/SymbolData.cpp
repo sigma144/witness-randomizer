@@ -599,9 +599,9 @@ void SymbolData::AddFlower(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>
 void SymbolData::AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
 	Shape dart = {
 		{ 0.0,  0.15},
-		{-0.1, -0.15},
+		{-0.15, -0.15},
 		{0.0, -0.05},
-		{0.1, -0.15},
+		{0.15, -0.15},
 	};
 
 	double scale = 1.7;

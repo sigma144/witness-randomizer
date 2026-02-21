@@ -1810,13 +1810,13 @@ bool Generate::placeArrows(int color, int amount, int targetCount) {
 		open.erase(pos);
 		int fails = 0;
 		while (fails++ < 20) { //Keep picking random directions until one works
-			int choice = (parity == -1 ? rand(8) : rand(4));
+			int choice = (parity == -1 ? rand(8) : rand(4) * 2);
 			Point dir = Panel::DIRECTIONS8_2[choice];
 			if (panel.isCylinder && dir.y == 0) continue; //Sideways arrows on a pillar would wrap forever
 			int count = panel.countCrossings(pos, dir);
 			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
-			if (dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
-				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2 && rand(10) > 0)
+			if ((dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
+				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2) && rand(10) > 0)
 				continue; //Make it so that there will be some possible edges that aren't passed, in the vast majority of cases
 			set(pos, SymbolData::GetValFromSymbolID(ARROW1E + choice + (count - 1) * 8) | color);
 			openpos.erase(pos);
@@ -2046,13 +2046,14 @@ bool Generate::placeDarts(int color, int amount, int targetCount) {
 		open.erase(pos);
 		int fails = 0;
 		while (fails++ < 20) { //Keep picking random directions until one works
-			int choice = (parity == -1 ? rand(8) : rand(4));
+			int choice = rand(8);
 			Point dir = Panel::DIRECTIONS8_2[choice];
 			if (panel.isCylinder && dir.y == 0) continue; //Sideways darts on a pillar would wrap forever
 			int count = panel.countSameRegionCells(pos, dir);
 			if (count == 0 || count > 3 || targetCount && count != targetCount) continue;
-			if (dir.x < 0 && count == (pos.x + 1) / 2 || dir.x > 0 && count == (panel.width - pos.x) / 2 ||
-				dir.y < 0 && count == (pos.y + 1) / 2 || dir.y > 0 && count == (panel.height - pos.y) / 2 && rand(10) > 0)
+			if (count == 1 && rand(2) == 0) continue; //Reduce the number of 1-darts
+			if ((dir.x < 0 && count == (pos.x - 1) / 2 || dir.x > 0 && count == (panel.width - pos.x - 2) / 2 ||
+				dir.y < 0 && count == (pos.y - 1) / 2 || dir.y > 0 && count == (panel.height - pos.y - 2) / 2) && rand(10) > 0)
 				continue; //Make it so that there will be some possible cells that aren't included, in the vast majority of cases
 			set(pos, SymbolData::GetValFromSymbolID(DART1E + choice + (count - 1) * 8) | color);
 			openpos.erase(pos);
