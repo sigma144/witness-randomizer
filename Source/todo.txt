@@ -6,9 +6,6 @@ Eraser:
 - Fix dot+eraser crashes
 - Proper tetris shape checking
 - Combined eraser support?
-Flower:
-- Fix bugged generation (generating impossible puzzles)
-- Flowers+Stars does not accurately match symbol counts
 Antitriangle:
 - Get multiple exits working correctly
 Darts:
