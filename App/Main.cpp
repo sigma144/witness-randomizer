@@ -324,9 +324,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (symbol == Poly)
 				panel.setShape(x, y, currentShape, IsDlgButtonChecked(hwnd, IDC_ROTATED), IsDlgButtonChecked(hwnd, IDC_NEGATIVE), color);
 			else if (symbol == Start)
-				panel.setFlag(x, y, STARTPOINT);
+				panel.setGridSymbol(x * 2, y * 2, Start, NoColor);
 			else if (symbol == Exit)
-				panel.setFlag(x, y, ENDPOINT);
+				panel.setGridSymbol(x * 2, y * 2, Exit, NoColor);
 			else panel.setSymbol(x, y, static_cast<Symbol>(symbol), color);
 			panel.write(panelID);
 			randomizer.symbolsWatchdog->id = static_cast<PanelID>(-1); //Re-initialize panel for symbol checking
