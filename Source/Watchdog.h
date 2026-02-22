@@ -48,10 +48,11 @@ public:
 
 	PanelID id;
 	std::vector<SolutionPoint> traced;
-	int tracedLength;
+	int endpoint;
 private:
 	Memory* memory;
 	Panel panel;
+	std::set<int> endpoints;
 	uintptr_t sequenceArray = 0;
 };
 

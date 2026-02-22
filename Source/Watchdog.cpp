@@ -24,7 +24,7 @@ void Watchdog::run()
 //Symbols Watchdog - For custom symbols
 SymbolsWatchdog::SymbolsWatchdog() : Watchdog(0.1f) {
 	id = TUT_DOT_1;
-	tracedLength = 0;
+	endpoint = -1;
 	memory = Memory::get();
 	// The sequence array is used to indicate panel validity. A panel with a nonnull SEQUENCE will always fail as a 0-length solution does not exist.
 	sequenceArray = memory->AllocArray<int>(1); //Don't have to actually initialize with a value as SEQUENCE_LEN is set to 0.
@@ -44,22 +44,31 @@ void SymbolsWatchdog::action() {
 			return;
 		}
 		panel = Panel(id);
+		endpoints.clear();
+		for (Endpoint& e : panel.endpoints) {
+			endpoints.insert(panel.pointToIndex(e.x, e.y));
+		}
 		sleepTime = 0.01f;
 	}
 	if (sleepTime == 0.1f) return;
+
 	int length = ReadPanelData<int>(id, TRACED_EDGES);
-	if (length == tracedLength)
-		return;
-	tracedLength = length;
+	if (length == 0) return;
+	std::vector<SolutionPoint> tracedData = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, length);
+	if (tracedData.size() > 1 && endpoints.count(tracedData[tracedData.size() - 1].pointA))
+		tracedData.pop_back();
+	SolutionPoint end = tracedData[tracedData.size() - 1];
+	if (end.pointB == endpoint) return;
+	endpoint = end.pointB;
+	if (!endpoints.count(endpoint)) return;
 	
 	std::vector<std::vector<int>> backupGrid = panel.getGrid();
 	initPath();
-	//TODO: Have watchdog check for exits instead of running on every path length change
 
 	bool success = panel.checkCustomSymbols(true);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
 	panel.setGrid(backupGrid);
-	//LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+	//memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
 void SymbolsWatchdog::initPath() {
@@ -77,6 +86,10 @@ void SymbolsWatchdog::initPath() {
 				tracedData[i].pointB = tracedData[i + 1].pointB;
 		}
 		traced.emplace_back(tracedData[i]);
+	}
+	if (traced.size() > 1 && endpoints.count(traced[traced.size() - 1].pointA)) {
+		traced.pop_back();
+		numTraced--;
 	}
 	if (panel.style & SYMMETRICAL) {
 		for (int i = 0; i < numTraced; i++) {

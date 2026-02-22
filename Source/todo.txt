@@ -7,7 +7,7 @@ Eraser:
 - Combined eraser support?
 Antitriangle:
 - Get multiple exits working correctly
-Change watchdog to detect exits
+Fix editor start and exit placement
 Fix invisible symbols with double mode
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
