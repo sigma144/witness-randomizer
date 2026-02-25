@@ -34,32 +34,32 @@ For 2.0:
 - Matcher (Sigma)
 - Replicator (Sigma)
 - Open Circle (Sigma)
-- Arch (Sigma)
-- Wormhole (Sigma)
-- Diamond (Has generation complications)
+- Chevron (Sigma)
 - Pentagons?
-- Bars?
 - Inverse myopia arrows?
 For Variety/Despair Compatibility (Might not be in first release):
+- Diamond (Has generation complications)
 - Myopia
 - Dice
 - Black Hole
 - Heads
 - Water drops
+- Mushrooms
+- Bars
 
 SYMBOL LOCATIONS (CURRENT PLAN)
 
-Tutorial: Open Circle, Minesweeper
-Symmetry: Arrow, Rotating Arrow, Dart
-Desert: Ghost?
+Tutorial: Open Circle, Arrow, Minesweeper
+Symmetry: Dart, Rotating Arrow, Anti-triangle
+Desert: Caves?
 Quarry: Eraser Start, Copier
-Shadows: ? (Maybe nothing if the shadows are too distracting)
+Shadows: Water drops? Mushrooms? (Maybe nothing if the shadows are too distracting)
 Keep: Symbols from other areas
 Bunker: Pentagons?
-Swamp: Matcher, Replicator
-Treehouse: Flower, Arch, Wormhole, Diamond?
+Swamp: Matcher, Exact Matcher
+Treehouse: Flower, Chevron
 Town: Custom symbol combinations
-Jungle: ? (Might also be non-randomized if birds are too annoying)
-Monastery: Probably nothing due to lack of actual panels
-Discards: Anti-Triangles?
-Caves: Cave?
+Jungle: Open Circle + Sound dots
+Monastery: Dice? Or maybe nothing due to lack of actual panels
+Discards: Ghost?
+Caves: Gimmicks/Other symbols?
