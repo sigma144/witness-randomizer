@@ -7,7 +7,6 @@ Eraser:
 - Combined eraser support?
 Antitriangle:
 - Get multiple exits working correctly
-Fix invisible symbols with double mode
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
 

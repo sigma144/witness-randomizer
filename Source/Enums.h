@@ -244,6 +244,7 @@ enum Config {
 	LongestPath, //Make the longest path possible, covering every point. For full dot puzzles
 	InvisibleSymmetryLine, //Make the symmetry path invisible
 	MountainFloorH, //Only for the mountain floor puzzles on hard mode
+	MountainFloor, //Only for the mountain floor puzzles
 	PowerOffOnFail, //Have the panel power off with an incorrect solution
 };
 
