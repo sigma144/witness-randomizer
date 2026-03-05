@@ -23,7 +23,8 @@ void Special::generateSpecialSymMaze(PanelID id) {
 		gen->setSymbol(Exit, 14, 0);
 		gen->setConfigOnce(ShortPath);
 		gen->generateMaze(SYM_MAZE_V5);
-	} while (gen->path.count(Point(12, 16)));
+		//TODO: Probably use obstructions for this.
+	} while (gen->panel.pathHasPos(12, 16));
 	Panel* puzzle = &(gen->panel);
 	for (int x = 0; x < puzzle->width / 2; x++) {
 		for (int y = 0; y < puzzle->height; y++) {
@@ -209,21 +210,11 @@ void Special::generateSoundDotPuzzle(PanelID id, Point size, std::vector<int> do
 		else gen->set(8, 1, Dot_Column);
 	}
 	else gen->generate(id, Dot_Intersection, static_cast<int>(dotSequence.size()));
-	Point p = *gen->starts.begin();
-	std::set<Point> path = gen->path;
 	int seqPos = 0;
-	while (!gen->exits.count(p)) {
-		path.erase(p);
+	for (Point p : gen->panel.path) {
 		int sym = gen->get(p);
 		if (sym & Dot) {
 			gen->set(p, sym | dotSequence[seqPos++]);
-		}
-		for (Point dir : Panel::DIRECTIONS) {
-			Point newp = p + dir;
-			if (path.count(newp)) {
-				p = newp;
-				break;
-			}
 		}
 	}
 	if (writeSequence) {
@@ -257,47 +248,27 @@ void Special::generateSoundDotReflectionPuzzle(PanelID id, Point size, std::vect
 		return;
 	}
 	else gen->generate(id, Dot_Intersection | Blue, static_cast<int>(dotSequence1.size()), Dot_Intersection | Yellow, static_cast<int>(dotSequence2.size()));
-	std::set<Point> path1 = gen->path1, path2 = gen->path2;
-	Point p1, p2;
 	std::set<Point> dots1, dots2;
-	for (Point p : gen->starts) {
-		if (gen->path1.count(p)) p1 = p;
-		if (gen->path2.count(p)) p2 = p;
-	}
+	Point p1 = gen->panel.path[0];
+	Point p2 = gen->panel.pathSym[0];
 	if (id == JUNGLE_DOT_5) {
 		gen->set(p1, Dot_Intersection);
 		gen->set(p2, Dot_Intersection);
 	}
 	int seqPos = 0;
-	while (!gen->exits.count(p1)) {
-		path1.erase(p1);
-		int sym = gen->get(p1);
+	for (Point p : gen->panel.path) {
+		int sym = gen->get(p);
 		if (sym & Dot) {
-			gen->set(p1, sym | dotSequence1[seqPos++]);
-			dots1.insert(p1);
-		}
-		for (Point dir : Panel::DIRECTIONS) {
-			Point newp = p1 + dir;
-			if (path1.count(newp)) {
-				p1 = newp;
-				break;
-			}
+			gen->set(p, sym | dotSequence1[seqPos++]);
+			dots1.insert(p);
 		}
 	}
 	seqPos = 0;
-	while (!gen->exits.count(p2)) {
-		path2.erase(p2);
-		int sym = gen->get(p2);
+	for (Point p : gen->panel.pathSym) {
+		int sym = gen->get(p);
 		if (sym & Dot) {
-			gen->set(p2, sym | dotSequence2[seqPos++]);
-			dots2.insert(p2);
-		}
-		for (Point dir : Panel::DIRECTIONS) {
-			Point newp = p2 + dir;
-			if (path2.count(newp)) {
-				p2 = newp;
-				break;
-			}
+			gen->set(p, sym | dotSequence2[seqPos++]);
+			dots2.insert(p);
 		}
 	}
 	if (id == JUNGLE_DOT_6) {
@@ -350,12 +321,11 @@ bool Special::generateSoundDotReflectionSpecial(PanelID id, Point size, std::vec
 	gen->setSymbol(Exit, 6, 0); gen->setSymbol(Exit, gen->width - 1, 6);
 	gen->setSymbol(Exit, 0, gen->height - 7); gen->setSymbol(Exit, gen->width - 7, gen->height - 1);
 	gen->generate(id, Dot_Intersection | Blue, static_cast<int>(dotSequence1.size() - 1), Dot_Intersection | Yellow, static_cast<int>(dotSequence2.size() - 1));
-	std::set<Point> path1 = gen->path1, path2 = gen->path2;
 	std::set<Point> intersect;
-	for (Point p : path1) {
+	for (Point p : gen->panel.path) {
 		if (p.x % 2 != 0 || p.y % 2 != 0)
 			continue;
-		if (path2.count(p)) {
+		if (gen->panel.pathSymHasPos(p.x, p.y)) {
 			if (gen->get(p) & Dot)
 				return false;
 			intersect.insert(p);
@@ -363,43 +333,26 @@ bool Special::generateSoundDotReflectionSpecial(PanelID id, Point size, std::vec
 	}
 	Point pshared = pickRandom(intersect);
 	gen->set(pshared, Dot_Intersection);
-	Point p1 = start, p2 = gen->getSymPoint(start);
 	std::set<Point> dots1, dots2;
 
 	int seqPos = 0;
-	while (seqPos < dotSequence1.size()) {
-		path1.erase(p1);
-		int sym = gen->get(p1);
+	for (Point p : gen->panel.path) {
+		int sym = gen->get(p);
 		if (sym & Dot) {
-			gen->set(p1, sym | dotSequence1[seqPos++]);
-			dots1.insert(p1);
-		}
-		for (Point dir : Panel::DIRECTIONS) {
-			Point newp = p1 + dir;
-			if (path1.count(newp)) {
-				p1 = newp;
-				break;
-			}
+			gen->set(p, sym | dotSequence1[seqPos++]);
+			dots1.insert(p);
 		}
 	}
 	seqPos = 0;
-	while (seqPos < dotSequence2.size()) {
-		path2.erase(p2);
-		int sym = gen->get(p2);
+	for (Point p : gen->panel.pathSym) {
+		int sym = gen->get(p);
 		if (sym & Dot) {
 			if ((sym & 0xf000) && ((sym & 0xf000) == DOT_MEDIUM))
 				return false;
 			if ((sym & 0xf000) && (sym & 0xf000) != dotSequence2[seqPos])
 				return false;
-			gen->set(p2, sym | dotSequence2[seqPos++]);
-			if (!gen->starts.count(p2)) dots2.insert(p2);
-		}
-		for (Point dir : Panel::DIRECTIONS) {
-			Point newp = p2 + dir;
-			if (path2.count(newp)) {
-				p2 = newp;
-				break;
-			}
+			gen->set(p, sym | dotSequence2[seqPos++]);
+			if (!gen->starts.count(p)) dots2.insert(p);
 		}
 	}
 
@@ -603,7 +556,7 @@ void Special::generateApplePuzzle(PanelID id, bool changeExit, bool flip)
 	}
 }
 
-void Special::generateKeepLaserPuzzle(PanelID id, const std::set<Point>& path1, const std::set<Point>& path2, const std::set<Point>& path3, const std::set<Point>& path4, std::vector<std::pair<int, int>> symbols)
+void Special::generateKeepLaserPuzzle(PanelID id, const std::vector<Point>& path1, const std::vector<Point>& path2, const std::vector<Point>& path3, const std::vector<Point>& path4, std::vector<std::pair<int, int>> symbols)
 {
 	PuzzleSymbols psymbols(symbols);
 	PuzzleSymbols psymbolsBackup = psymbols;
@@ -633,7 +586,8 @@ void Special::generateKeepLaserPuzzle(PanelID id, const std::set<Point>& path1, 
 	for (Point p : path3) gen->setPath(Point(8 - p.x, 8 - p.y + 2));
 	if (randomizer->difficulty == Normal) {
 		for (Point p : path4) gen->setPath(Point(p.x, p.y + 14));
-		if (path4.count(Point({ 8, 4 }))) for (Point p : pathPoints2) gen->setPath(p);
+		if (std::find(path4.begin(), path4.end(), Point({ 8, 4 })) != path4.end())
+			for (Point p : pathPoints2) gen->setPath(p);
 	}
 	else {
 		for (Point p : path4) gen->setPath(Point(8 - p.x, 8 - p.y + 14));
@@ -735,7 +689,7 @@ void Special::generateMultiPuzzle(std::vector<PanelID> ids, const std::vector<st
 		gens[i].setConfig(WriteColors);
 		if (symbols[i].getNum(Poly)  - symbols[i].getNum(Eraser) > 1) gens[i].setConfig(RequireCombineShapes);
 	}
-	while (!generateMultiPuzzle(ids, gens, symbols, gen->path)) {
+	while (!generateMultiPuzzle(ids, gens, symbols, gen->panel.path)) {
 		gen->generate(ids[0]);
 	}
 	for (int i = 0; i < ids.size(); i++) {
@@ -759,7 +713,7 @@ void Special::generateMultiPuzzle(std::vector<PanelID> ids, const std::vector<st
 	gen->resetVars();
 }
 
-bool Special::generateMultiPuzzle(std::vector<PanelID> ids, std::vector<Generate>& gens, const std::vector<PuzzleSymbols>& symbols, const std::set<Point>& path) {
+bool Special::generateMultiPuzzle(std::vector<PanelID> ids, std::vector<Generate>& gens, const std::vector<PuzzleSymbols>& symbols, const std::vector<Point>& path) {
 	for (int i = 0; i < ids.size(); i++) {
 		gens[i].customGrid.clear();
 		gens[i].setCustomPath(path);
@@ -773,7 +727,7 @@ bool Special::generateMultiPuzzle(std::vector<PanelID> ids, std::vector<Generate
 	for (int y = 0; y < 11; y++) {
 		std::string row;
 		for (int x = 0; x < 11; x++) {
-			if (path.count(Point(x, y))) {
+			if (gens[0].get(x, y) == PATH) {
 				row += "xx";
 			}
 			else row += "    ";
@@ -803,7 +757,7 @@ bool Special::generate2Bridge(PanelID id1, PanelID id2, std::vector<std::shared_
 {
 	for (int i = 0; i < gens.size(); i++) {
 		gens[i]->customGrid.clear();
-		gens[i]->setCustomPath(std::set<Point>());
+		gens[i]->setCustomPath(std::vector<Point>());
 		std::vector<Point> walls = { { 12, 1 },{ 12, 3 },{ 3, 8 },{ 9, 8 } };
 		for (Point p : walls) gens[i]->setSymbol(Gap, p.x, p.y);
 		if (i % 2 == 0) {
@@ -822,7 +776,7 @@ bool Special::generate2Bridge(PanelID id1, PanelID id2, std::vector<std::shared_
 	if (!gens[0]->tryGenerate(id1, { {Poly | Rotate | Yellow, 1}, {Star | Yellow, 1} }))
 		return false;
 
-	gens[1]->setCustomPath(gens[0]->path);
+	gens[1]->setCustomPath(gens[0]->panel.path);
 	gens[1]->customPath.clear();
 	gens[1]->customGrid = gens[0]->panel.getGrid();
 
@@ -898,7 +852,7 @@ bool Special::generate2BridgeH(PanelID id1, PanelID id2, std::vector<std::shared
 {
 	for (int i = 0; i < gens.size(); i++) {
 		gens[i]->customGrid.clear();
-		gens[i]->setCustomPath(std::set<Point>());
+		gens[i]->setCustomPath(std::vector<Point>());
 		std::vector<Point> walls = { { 12, 1 },{ 12, 3 },{ 3, 8 },{ 9, 8 } };
 		for (Point p : walls) gens[i]->setSymbol(Gap, p.x, p.y);
 		if (i == 0) {
@@ -913,7 +867,7 @@ bool Special::generate2BridgeH(PanelID id1, PanelID id2, std::vector<std::shared
 	gens[1]->exits = { { 0, 0 } };
 
 	gens[0]->generate(id1);
-	gens[1]->setCustomPath(gens[0]->path);
+	gens[1]->setCustomPath(gens[0]->panel.path);
 	gens[1]->customPath.clear();
 	gens[1]->customGrid = gens[0]->panel.getGrid();
 	gens[1]->generate(id2);
@@ -1574,7 +1528,8 @@ bool Special::hasBeenRandomized() {
 //For testing/debugging purposes only
 void Special::test() {
 	g.resetConfig();
-	PanelID id = THEATER_EXIT_R;
-	g.setConfig(PreserveStructure);
-	g.generate(id, Dart|Black, 8);
+	g.setSymmetry(NoSymmetry);
+	//g.setSymmetry(Rotational);
+	PanelID id = SYM_DOT_4;
+	g.generate(id, AntiTriangle, 12);
 }

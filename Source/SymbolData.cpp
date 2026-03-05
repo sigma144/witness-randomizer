@@ -208,6 +208,7 @@ std::array<std::vector<SymbolData::Shape>, SymbolID::NUM_SYMBOLS> SymbolData::Ge
 	AddMines(data);
 	AddFlower(data);
 	AddDarts(data);
+	AddCircleArrow(data);
 
 	return data;
 }
@@ -638,4 +639,26 @@ void SymbolData::AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>&
 	data[DART3NW] = { Translate(RotateClockwise(dart3, 225), -translate, -translate) };
 	data[DART3N] = { RotateClockwise(dart3, 270) };
 	data[DART3NE] = { Translate(RotateClockwise(dart3, 315), translate, -translate) };
+}
+
+void SymbolData::AddCircleArrow(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
+	Shape arrow = {
+		//Circle
+		{-0.6,  0.6},
+		{-0.6, -0.6},
+		{0.6, -0.6},
+		{0.6, -0.4},
+		{-0.4, -0.4},
+		{-0.4, 0.4},
+		{0.2, 0.4},
+		//Arrowhead
+		{0.0, 0.2},
+		{0.2, 0.2},
+		{0.5, 0.5},
+		{0.2, 0.8},
+		{0.0, 0.8},
+		{0.2, 0.6},
+	};
+	data[CIRCLEARROW_CW] = { arrow };
+	data[CIRCLEARROW_CCW] = { FlipX(arrow) };
 }

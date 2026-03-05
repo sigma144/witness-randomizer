@@ -11,30 +11,12 @@
 //NOTE: When SymbolData is updated, the game must be closed and re-opened for changes to take effect.
 
 enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the same ordering
-	ARROW1E  = 0x00,
-	ARROW1SE = 0x01,
-	ARROW1S  = 0x02,
-	ARROW1SW = 0x03,
-	ARROW1W  = 0x04,
-	ARROW1NW = 0x05,
-	ARROW1N  = 0x06,
-	ARROW1NE = 0x07,
-	ARROW2E  = 0x08,
-	ARROW2SE = 0x09,
-	ARROW2S  = 0x0A,
-	ARROW2SW = 0x0B,
-	ARROW2W  = 0x0C,
-	ARROW2NW = 0x0D,
-	ARROW2N  = 0x0E,
-	ARROW2NE = 0x0F,
-	ARROW3E  = 0x10,
-	ARROW3SE = 0x11,
-	ARROW3S  = 0x12,
-	ARROW3SW = 0x13,
-	ARROW3W  = 0x14,
-	ARROW3NW = 0x15,
-	ARROW3N  = 0x16,
-	ARROW3NE = 0x17,
+	ARROW1E  = 0x00, ARROW1SE = 0x01, ARROW1S  = 0x02, ARROW1SW = 0x03,
+	ARROW1W  = 0x04, ARROW1NW = 0x05, ARROW1N  = 0x06, ARROW1NE = 0x07,
+	ARROW2E  = 0x08, ARROW2SE = 0x09, ARROW2S  = 0x0A, ARROW2SW = 0x0B,
+	ARROW2W  = 0x0C, ARROW2NW = 0x0D, ARROW2N  = 0x0E, ARROW2NE = 0x0F,
+	ARROW3E  = 0x10, ARROW3SE = 0x11, ARROW3S  = 0x12, ARROW3SW = 0x13,
+	ARROW3W  = 0x14, ARROW3NW = 0x15, ARROW3N  = 0x16, ARROW3NE = 0x17,
 
 	ANTITRIANGLE1 = 0x18,
 	ANTITRIANGLE2 = 0x19,
@@ -63,37 +45,23 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 
 	FLOWER = 0x2E,
 
-	DART1E = 0x2F,
-	DART1SE = 0x30,
-	DART1S = 0x31,
-	DART1SW = 0x32,
-	DART1W = 0x33,
-	DART1NW = 0x34,
-	DART1N = 0x35,
-	DART1NE = 0x36,
-	DART2E = 0x37,
-	DART2SE = 0x38,
-	DART2S = 0x39,
-	DART2SW = 0x3A,
-	DART2W = 0x3B,
-	DART2NW = 0x3C,
-	DART2N = 0x3D,
-	DART2NE = 0x3E,
-	DART3E = 0x3F,
-	DART3SE = 0x40,
-	DART3S = 0x41,
-	DART3SW = 0x42,
-	DART3W = 0x43,
-	DART3NW = 0x44,
-	DART3N = 0x45,
-	DART3NE = 0x46,
+	DART1E = 0x2F, DART1SE = 0x30, DART1S = 0x31, DART1SW = 0x32,
+	DART1W = 0x33, DART1NW = 0x34, DART1N = 0x35, DART1NE = 0x36,
+	DART2E = 0x37, DART2SE = 0x38, DART2S = 0x39, DART2SW = 0x3A,
+	DART2W = 0x3B, DART2NW = 0x3C, DART2N = 0x3D, DART2NE = 0x3E,
+	DART3E = 0x3F, DART3SE = 0x40, DART3S = 0x41, DART3SW = 0x42,
+	DART3W = 0x43, DART3NW = 0x44, DART3N = 0x45, DART3NE = 0x46,
 
-	BigSquare = 0x47,
+	CIRCLEARROW_CW = 0x47,
+	CIRCLEARROW_CCW = 0x48,
+
+	BigSquare, // For testing
 
 	NUM_SYMBOLS, // Must be last
 };
 
-inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, FLOWER, DART1E, BigSquare };
+inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, FLOWER, DART1E,
+	CIRCLEARROW_CW, BigSquare };
 
 class SymbolData {
 public:
@@ -143,4 +111,5 @@ private:
 	static void AddMines(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddFlower(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	static void AddCircleArrow(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 };

@@ -63,6 +63,9 @@ enum Symbol : int {
 	Dart1 = 0x105700,
 	Dart2 = 0x205700,
 	Dart3 = 0x305700,
+	CircularArrow = 0x006700,
+	CircularArrowCW = 0x106700,
+	CircularArrowCCW = 0x206700,
 };
 
 enum SymbolColor {

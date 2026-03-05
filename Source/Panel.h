@@ -65,6 +65,10 @@ public:
 	void set(int x, int y, int val);
 	int get(Point p) { return get(p.x, p.y); }
 	void set(Point p, int val) { set(p.x, p.y, val); }
+	void setPath(Point pos);
+	bool pathHasPos(int x, int y);
+	bool pathSymHasPos(int x, int y);
+	int totalPathSize();
 	std::vector<std::vector<int>> getGrid() { return grid; }
 	void setGrid(std::vector<std::vector<int>> grid) { this->grid = grid; }
 	int getFlag(int x, int y, int flag) { return get(x, y) & flag; };
@@ -98,12 +102,15 @@ public:
 	bool checkMinesweeper(Point pos, int symbol);
 	bool checkFlower(Point pos, int symbol);
 	bool checkDart(Point pos, int symbol);
-	//***************************************************
+	bool checkCircularArrow(Point pos, int symbol);
+	//**************CUSTOM SYMBOL HELPERS****************
 	int countColor(const std::set<Point>& region, int color);
 	int countSides(Point pos);
 	int countCrossings(Point pos, Point dir);
 	int countSameRegionCells(Point pos, Point dir);
 	int countTurns(Point pos);
+	int getRotationDir(Point pos);
+	int getRotationDir(Point pos, Point dir, std::vector<Point> pth);
 
 	Point indexToPoint(int index);
 	int pointToIndex(int x, int y);
@@ -117,7 +124,6 @@ public:
 	float minx, miny, maxx, maxy, unitWidth, unitHeight;
 	std::vector<Point> startpoints;
 	std::vector<Endpoint> endpoints;
-	std::map<Point, int> path; //Points mapped to their order
 	Symmetry symmetry;
 	int style;
 	float lineThickness;
@@ -126,6 +132,7 @@ public:
 	ColorMode colorMode;
 	bool fixBackground;
 	std::map<Point, bool> preCalcResult;
+	std::vector<Point> path, pathSym;
 
 private:
 

@@ -45,9 +45,9 @@ public:
 	void initPath();
 	int get(int x, int y) { return panel.get(x, y); }
 	void set(int x, int y, int val) { panel.set(x, y, val); }
+	void setPath(int x, int y) { panel.setPath({ x, y }); }
 
 	PanelID id;
-	std::vector<SolutionPoint> traced;
 	int endpoint;
 private:
 	Memory* memory;

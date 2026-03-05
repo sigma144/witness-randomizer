@@ -286,20 +286,7 @@ void Generate::incrementProgress() {
 	}
 }
 
-//----------------------Private--------------------------
-
-//Add the point (pos) to the intended solution path, using symmetry if applicable.
-void Generate::setPath(Point pos) {
-	set(pos.x, pos.y, PATH);
-	path.insert(pos);
-	if (panel.symmetry) {
-		Point sp = getSymPoint(pos.x, pos.y);
-		set(sp.x, sp.y, PATH);
-		path.insert(sp);
-		path1.insert(pos);
-		path2.insert(sp);
-	}
-}
+//----------------------Private--------------------------}
 
 //Remove the path and all symbols from the grid. This does not affect starts/exits. If PreserveStructure is active, open gaps will be kept. If a custom grid is set, this will reset it back to the custom grid state.
 void Generate::clear() {
@@ -313,7 +300,8 @@ void Generate::clear() {
 			set(x, y, 0);
 		}
 	}
-	path.clear(); path1.clear(); path2.clear();
+	panel.path.clear();
+	panel.pathSym.clear();
 }
 
 //Reset generator variables and lists used when generating puzzles. (not config settings)
@@ -371,13 +359,11 @@ bool Generate::generateMazeI(PanelID id, int numStarts, int numExits) {
 		while (!generatePathLength((panel.width + panel.height),
 			min((panel.width + panel.height) * 2, (panel.width / 2 + 1) * (panel.height / 2 + 1) * 4 / 5))) clear();
 	}
-	
-	std::set<Point> backupPath = path; //Backup
 
 	//Extra false starts are tracked in a separate list so that the generator can make sure to extend each of them by a higher amount than usual.
 	std::set<Point> extraStarts;
 	for (Point pos : starts) {
-		if (!path.count(pos)) {
+		if (get(pos) != PATH) {
 			extraStarts.insert(pos);
 		}
 		setPath(pos);
@@ -388,7 +374,7 @@ bool Generate::generateMazeI(PanelID id, int numStarts, int numExits) {
 
 	std::set<Point> check;
 	std::vector<Point> deadEndH, deadEndV;
-	for (Point p : path) {
+	for (Point p : panel.path) {
 		if (p.x % 2 == 0 && p.y % 2 == 0)
 			check.insert(p); //Only extend off of the points at grid intersections.
 	}
@@ -462,18 +448,6 @@ bool Generate::generateMazeI(PanelID id, int numStarts, int numExits) {
 	for (Point p : deadEndV) {
 		set(p, Gap_Column);
 	}
-	path = backupPath; //Restore backup of the correct solution for testing purposes
-	std::vector<std::string> solution; //For debugging only
-	for (int y = 0; y < panel.height; y++) {
-		std::string row;
-		for (int x = 0; x < panel.width; x++) {
-			if (path.count(Point(x, y))) {
-				row += "xx";
-			}
-			else row += "    ";
-		}
-		solution.push_back(row);
-	}
 	if (!hasConfig(DisableWrite)) write(id);
 	return true;
 }
@@ -509,7 +483,7 @@ bool Generate::generate(PanelID id, PuzzleSymbols symbols) {
 			if (fails++ > 20) return false; //It gets several chances to make a path so that the whole init process doesn't have to be repeated so many times
 		}
 	}
-	else path = customPath;
+	else panel.path = customPath;
 	
 	//If erasers are present, create a second path for generating cancelled symbols
 	if (symbols.any(Eraser)) {
@@ -579,17 +553,21 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 	for (const std::pair<int, int>& s : symbols[Stone]) {
 		if (!placeStones(s.first & 0xf, s.second)) return false;
 	}
-	for (const std::pair<int, int>& s : symbols[Triangle]) {
-		if (!placeTriangles(s.first & 0xf, s.second, s.first >> 16)) return false;
+	for (const std::pair<int, int>& s : symbols[Dart]) {
+		if (!placeDarts(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Arrow]) {
 		if (!placeArrows(s.first & 0xf, s.second, s.first >> 20)) return false;
 	}
-	for (const std::pair<int, int>& s : symbols[Dart]) {
-		if (!placeDarts(s.first & 0xf, s.second, s.first >> 20)) return false;
+	for (const std::pair<int, int>& s : symbols[Triangle]) {
+		if (!placeTriangles(s.first & 0xf, s.second, s.first >> 16)) return false;
 	}
 	for (const std::pair<int, int>& s : symbols[AntiTriangle]) {
 		if (!placeAntiTriangles(s.first & 0xf, s.second, s.first >> 20)) return false;
+	}
+	for (const std::pair<int, int>& s : symbols[CircularArrow]) {
+		if (!placeCircularArrows(s.first & 0xf, s.second, s.first >> 20))
+			return false;
 	}
 	for (const std::pair<int, int>& s : symbols[Cave]) {
 		if (!placeCaveClues(s.first & 0xf, s.second, s.first >> 20)) return false;
@@ -691,7 +669,7 @@ bool Generate::generatePathLength(int minLength, int maxLength) {
 		Point dir = pickRandom(Panel::DIRECTIONS_2);
 		Point newPos = pos + dir;
 		if (get(newPos) != 0 || get(pos + dir / 2) != 0
-			|| newPos == exit && path.size() / 2 + 2 < minLength) continue;
+			|| newPos == exit && panel.totalPathSize() / 2 + 2 < minLength) continue;
 		if (panel.symmetry && (offEdge(getSymPoint(newPos)) || newPos == getSymPoint(newPos)))
 			continue;
 		setPath(pos + dir / 2);
@@ -699,7 +677,7 @@ bool Generate::generatePathLength(int minLength, int maxLength) {
 		pos = newPos;
 		fails = 0;
 	}
-	return path.size() / 2 + 1 >= minLength && path.size() / 2 + 1 <= maxLength;
+	return panel.totalPathSize() / 2 + 1 >= minLength && panel.totalPathSize() / 2 + 1 <= maxLength;
 }
 
 //Generate a path with the provided number of regions.
@@ -749,7 +727,7 @@ bool Generate::generateLongestPath() {
 	else if (getParity(pos + exit) != panel.getParity())
 		return false;
 	int fails = 0;
-	int reqLength = panel.getNumGridPoints() + static_cast<int>(path.size()) / 2;
+	int reqLength = panel.getNumGridPoints() + panel.totalPathSize() / 2;
 	bool centerFlag = !onEdge(pos);
 	setPath(pos);
 	while (pos != exit && !(panel.symmetry && getSymPoint(pos) == exit)) {
@@ -775,8 +753,8 @@ bool Generate::generateLongestPath() {
 		Point newPos = pos + dir;
 		//Various checks to see if going this direction will lead to any issues 
 		if (get(newPos) != 0 || get(pos + dir / 2) != 0
-			|| newPos == exit && path.size() / 2 + 3 < reqLength ||
-			panel.symmetry && getSymPoint(newPos) == exit && path.size() / 2 + 3 < reqLength) continue;
+			|| newPos == exit && panel.totalPathSize() / 2 + 3 < reqLength ||
+			panel.symmetry && getSymPoint(newPos) == exit && panel.totalPathSize() / 2 + 3 < reqLength) continue;
 		if (panel.symmetry && (offEdge(getSymPoint(newPos)) || newPos == getSymPoint(newPos))) continue;
 		if (onEdge(newPos) && !panel.isCylinder && panel.symmetry != Horizontal && newPos + dir != block && get(newPos + dir) != 0) {
 			if (centerFlag && offEdge(newPos + dir)) {
@@ -799,7 +777,7 @@ bool Generate::generateLongestPath() {
 	}
 	if (!offEdge(block)) //Uncover the one dot for false parity
 		set(block, 0);
-	return path.size() / 2 + 1 == reqLength;
+	return panel.totalPathSize() / 2 + 1 == reqLength;
 }
 
 //Generate path that passes through all of the hitPoints in order
@@ -826,7 +804,7 @@ bool Generate::generateSpecialPath() {
 				hitIndex++;
 				break;
 			}
-			if (get(newPos) != 0 || get(connectPos) != 0 || newPos == exit && (hitIndex != hitPoints.size() || path.size() / 2 + 2 < minLength))
+			if (get(newPos) != 0 || get(connectPos) != 0 || newPos == exit && (hitIndex != hitPoints.size() || panel.totalPathSize() / 2 + 2 < minLength))
 				continue;
 			if (panel.symmetry && newPos == getSymPoint(newPos)) continue;
 			bool fail = false;
@@ -846,18 +824,7 @@ bool Generate::generateSpecialPath() {
 		setPath(pos + dir);
 		pos = pos + dir;
 	}
-	return hitIndex == hitPoints.size() && path.size() >= minLength;
-}
-
-void Generate::erasePath()
-{
-	for (int y = 0; y < panel.height; y++) {
-		for (int x = 0; x < panel.width; x++) {
-			if (get(x, y) == PATH) {
-				set(x, y, 0);
-			}
-		}
-	}
+	return hitIndex == hitPoints.size() && panel.totalPathSize() >= minLength;
 }
 
 //If a point is on an edge, bump it randomly to an adjacent vertex. Otherwise, the point is untouched
@@ -1028,8 +995,10 @@ bool Generate::canPlaceDot(Point pos, bool intersectionOnly) {
 		}
 		panel.symmetry = backupSym;
 	}
-	if (panel.symmetry == RotateLeft && path1.count(pos) && path2.count(pos))
-		return false; //Prevent sharing of dots between symmetry lines
+	if (panel.symmetry == RotateLeft) {
+		if (panel.pathHasPos(pos.x, pos.y) && panel.pathSymHasPos(pos.x, pos.y))
+			return false; //Prevent sharing of dots between symmetry lines
+	}
 	if (hasConfig(DisableDotIntersection)) return true;
 	for (Point dir : Panel::DIRECTIONS8) {
 		Point p = pos + dir;
@@ -1076,7 +1045,13 @@ bool Generate::placeDots(int amount, int color, bool intersectionOnly) {
 		color = IntersectionFlags::DOT_IS_ORANGE;
 	else color = 0;
 
-	std::set<Point> open = (color == 0 ? path : color == IntersectionFlags::DOT_IS_BLUE ? path1 : path2);
+	std::set<Point> open;
+	if (color != IntersectionFlags::DOT_IS_ORANGE) {
+		for (Point p : panel.path) open.insert(p);
+	}
+	if (color != IntersectionFlags::DOT_IS_BLUE) {
+		for (Point p : panel.pathSym) open.insert(p);
+	}
 	for (Point p : starts) open.erase(p);
 	for (Point p : exits) open.erase(p);
 	for (Point p : blockPos) open.erase(p);
@@ -1731,6 +1706,15 @@ bool Generate::placeErasers(const std::vector<int>& colors, const std::vector<in
 			openpos = backupOpen;
 			if (!result) continue;
 		}
+		else if (getCustomType(toErase) == CircularArrow) {
+			if ((toErase & 0xF00000) == 0x100000) symbol = SymbolData::GetValFromSymbolID(CIRCLEARROW_CW);
+			else if ((toErase & 0xF00000) == 0x200000) symbol = SymbolData::GetValFromSymbolID(CIRCLEARROW_CCW);
+			else {
+				int rot = panel.getRotationDir(pos);
+				if (rot == 0) symbol = SymbolData::GetValFromSymbolID(Random::rand(2) ? CIRCLEARROW_CW : CIRCLEARROW_CCW);
+				else symbol = SymbolData::GetValFromSymbolID(rot == 1 ? CIRCLEARROW_CW : CIRCLEARROW_CCW);
+			}
+		}
 		else if (getType(toErase) == Custom) {
 			symbol = SymbolData::GetValFromSymbol(toErase);
 		}
@@ -2063,6 +2047,24 @@ bool Generate::placeDarts(int color, int amount, int targetCount) {
 			openpos.erase(pos);
 			amount--;
 			break;
+		}
+	}
+	return true;
+}
+
+bool Generate::placeCircularArrows(int color, int amount, int rot) {
+	int target = (rot == 0 ? 0 : rot == 1 ? -1 : 1);
+	std::set<Point> open = openpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		open.erase(pos);
+		int rot = panel.getRotationDir(pos);
+		if (rot != 0 && (target == 0 || target == rot)) {
+			set(pos, SymbolData::GetValFromSymbolID(rot == 1 ? CIRCLEARROW_CCW : CIRCLEARROW_CW) | color);
+			openpos.erase(pos);
+			amount--;
 		}
 	}
 	return true;
