@@ -103,7 +103,7 @@ public:
 	bool checkFlower(Point pos, int symbol);
 	bool checkDart(Point pos, int symbol);
 	bool checkCircularArrow(Point pos, int symbol);
-	//***************************************************
+	//**************CUSTOM SYMBOL HELPERS****************
 	int countColor(const std::set<Point>& region, int color);
 	int countSides(Point pos);
 	int countCrossings(Point pos, Point dir);

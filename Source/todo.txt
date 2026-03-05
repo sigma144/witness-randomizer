@@ -7,8 +7,6 @@ Circular Arrow:
 Eraser:
 - Proper tetris shape checking
 - Combined eraser support?
-Antitriangle:
-- Get multiple exits working correctly
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
 

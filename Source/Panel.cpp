@@ -504,7 +504,7 @@ int Panel::countTurns(Point pos) //TODO: Use path order to get multiple exits wo
 		bool pathH = get(p + Point(-1, 0)) == PATH || get(p + Point(1, 0)) == PATH;
 		bool pathV = get(p + Point(0, -1)) == PATH || get(p + Point(0, 1)) == PATH;
 		for (Endpoint& e : endpoints) {
-			if (e.x == p.x && e.y == p.y && get(e.x, e.y) == PATH) {
+			if (e.x == p.x && e.y == p.y && (path.size() > 0 && path[path.size() - 1] == p || pathSym.size() > 0 && pathSym[pathSym.size() - 1] == p)) {
 				switch (e.dir) {
 				case Endpoint::LEFT:
 				case Endpoint::RIGHT: pathH = true; break;

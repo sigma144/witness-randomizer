@@ -69,7 +69,7 @@ void SymbolsWatchdog::action() {
 	bool success = panel.checkCustomSymbols(true);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
 	panel.setGrid(backupGrid);
-	memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+	//memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
 void SymbolsWatchdog::initPath() {
