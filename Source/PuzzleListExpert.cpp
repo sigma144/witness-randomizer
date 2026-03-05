@@ -1061,7 +1061,7 @@ void PuzzleList::GenerateKeepH() {
 	g.setObstructions({ { 8, 3 },{ 4, 5 },{ 3, 0 },{ 3, 2 },{ 5, 6 } });
 	g.setConfigOnce(DisableWrite);
 	g.generate(KEEP_PRESSURE_1, Triangle|Yellow, 4, Star|Yellow, 3, Stone|Yellow, 2);
-	std::set<Point> path1 = g.path;
+	std::vector<Point> path1 = g.panel.path;
 	g.write(KEEP_PRESSURE_1);
 
 	g.resetConfig();
@@ -1069,7 +1069,7 @@ void PuzzleList::GenerateKeepH() {
 	g.hitPoints = { { 3, 2 },{ 1, 0 } };
 	g.setConfigOnce(DisableWrite);
 	g.generate(KEEP_PRESSURE_2, Star|Black, 3, Star|White, 3, Stone|Black, 2, Stone|White, 2, Poly|Rotate|Black, 1, Poly|White, 1);
-	std::set<Point> path2 = g.path;
+	std::vector<Point> path2 = g.panel.path;
 	g.write(KEEP_PRESSURE_2);
 
 	g.resetConfig();
@@ -1081,7 +1081,7 @@ void PuzzleList::GenerateKeepH() {
 	g.setConfigOnce(SplitShapes);
 	g.setConfigOnce(DisableWrite);
 	g.generate(KEEP_PRESSURE_3, Stone|Black, 3, Stone|White, 2, Triangle|Yellow, 5, Poly, 1, Poly|Rotate, 1);
-	std::set<Point> path3 = g.path;
+	std::vector<Point> path3 = g.panel.path;
 	g.write(KEEP_PRESSURE_3);
 
 	g.resetConfig();
@@ -1097,7 +1097,7 @@ void PuzzleList::GenerateKeepH() {
 	if (g.panel.endpoints[0].x == 0) {
 		std::swap(g.panel.endpoints[0], g.panel.endpoints[1]); //Need to have endpoints in right order to associate with pressure plates correctly
 	}
-	std::set<Point> path4 = g.path;
+	std::vector<Point> path4 = g.panel.path;
 	g.write(KEEP_PRESSURE_4);
 
 	special.generateKeepLaserPuzzle(KEEP_PRESSURE_LASER, path1, path2, path3, path4,

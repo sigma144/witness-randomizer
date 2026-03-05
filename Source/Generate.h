@@ -38,7 +38,7 @@ public:
 	void generateMaze(PanelID id, int numStarts, int numExits);
 
 	void initPanel(PanelID id);
-	void setCustomPath(const std::set<Point>& path) { customPath = path; for (Point p : path) setSymbol(PATH, p.x, p.y); }
+	void setCustomPath(const std::vector<Point>& path) { customPath = path; for (Point p : path) panel.setPath(p); }
 	void setObstructions(const std::vector<Point>& walls) { obstructions = { walls }; }
 	void setObstructions(const std::vector<std::vector<Point>>& walls) { obstructions = walls; }
 	void setSymbol(int symbol, int x, int y);
@@ -73,7 +73,7 @@ private:
 	int get(Point p) { return panel.get(p); }
 	void set(int x, int y, int val) { panel.set(x, y, val); }
 	void set(Point p, int val) { panel.set(p, val); }
-	void setPath(Point pos);
+	void setPath(Point pos) { panel.setPath(pos); }
 	Point getSymPoint(int x, int y) { return panel.getSymPoint(x, y); }
 	Point getSymPoint(Point p) { return panel.getSymPoint(p.x, p.y); }
 	int getParity(Point pos) { return (pos.x / 2 + pos.y / 2) % 2; }
@@ -100,7 +100,6 @@ private:
 	bool generatePathRegions(int minRegions);
 	bool generateLongestPath();
 	bool generateSpecialPath();
-	void erasePath();
 	Point adjustPoint(Point pos);
 
 	bool placeStart(int amount);
@@ -130,6 +129,7 @@ private:
 	bool placeFlowers(int color, int amount);
 	bool placeFlowerStarPairs(int color, int amount);
 	bool placeDarts(int color, int amount, int targetCount);
+	bool placeCircularArrows(int color, int amount, int rot);
 
 	Panel panel;
 	Panel fakePanel; //For generating cancelled symbols
@@ -139,8 +139,7 @@ private:
 	std::set<Point> starts, exits;
 	std::set<Point> gridpos; //Coordinates of the cells of the grid.
 	std::set<Point> openpos; //(Possibly not proper) subset of gridpos where decorations can be.
-	std::set<Point> path, path1, path2; //Path points
-	std::set<Point> customPath; //TODO: Add points in the correct order (for symbols where that matters)
+	std::vector<Point> customPath; //TODO: Add points in the correct order (for symbols where that matters)
 	bool bisect; //Used for stone generation
 	int stoneTypes; //Used for stone generation
 	std::set<Config> config, oneTimeAdd, oneTimeRemove;

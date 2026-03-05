@@ -50,6 +50,7 @@ void Panel::read() {
 	startpoints.clear();
 	endpoints.clear();
 	path.clear();
+	pathSym.clear();
 	readIntersections();
 	readDecorations();
 }
@@ -102,8 +103,28 @@ void Panel::set(int x, int y, int val) {
 	if (isCylinder && x >= width) x -= width;
 	if (x < 0 || x >= width) return;
 	grid[x][y] = val;
-	if (val == PATH)
-		path[{x, y}] = static_cast<int>(path.size());
+}
+
+void Panel::setPath(Point pos) {
+	set(pos.x, pos.y, PATH);
+	path.emplace_back(pos);
+	if (symmetry) {
+		Point sp = getSymPoint(pos.x, pos.y);
+		set(sp.x, sp.y, PATH);
+		pathSym.emplace_back(sp);
+	}
+}
+
+bool Panel::pathHasPos(int x, int y) {
+	return std::find(path.begin(), path.end(), Point(x, y)) != path.end();
+}
+
+bool Panel::pathSymHasPos(int x, int y) {
+	return std::find(pathSym.begin(), pathSym.end(), Point(x, y)) != pathSym.end();
+}
+
+int Panel::totalPathSize() {
+	return static_cast<int>(path.size() + pathSym.size());
 }
 
 void Panel::setSymbol(int x, int y, Symbol symbol, SymbolColor color) {
@@ -319,6 +340,9 @@ bool Panel::checkSymbol(Point pos, int symbol) {
 		else if (type == Dart) {
 			if (!checkDart(pos, symbol)) return false;
 		}
+		else if (type == CircularArrow) {
+			if (!checkCircularArrow(pos, symbol)) return false;
+		}
 	}
 	return true;
 }
@@ -421,6 +445,11 @@ bool Panel::checkDart(Point pos, int symbol) {
 	return countSameRegionCells(pos, dir) == targetCount;
 }
 
+bool Panel::checkCircularArrow(Point pos, int symbol) {
+	int rot = symbol >> 20 ? 1 : -1;
+	return rot == getRotationDir(pos);
+}
+
 //Count the occurrence of the given symbol color in the given region
 int Panel::countColor(const std::set<Point>& region, int color) {
 	int count = 0;
@@ -496,6 +525,40 @@ int Panel::countTurns(Point pos) //TODO: Use path order to get multiple exits wo
 			count++;
 	}
 	return count;
+}
+
+int Panel::getRotationDir(Point pos) {
+	int rot = 0;
+	for (Point& dir : DIRECTIONS) {
+		if (get(pos + dir) == PATH) {
+			int nrot = getRotationDir(pos, dir, path);
+			if (rot == 0) rot = nrot;
+			else if (nrot != 0 && nrot != rot) return 0;
+			if (pathSym.size() > 0) {
+				nrot = getRotationDir(pos, dir, pathSym);
+				if (rot == 0) rot = nrot;
+				else if (nrot != 0 && nrot != rot) return 0;
+			}
+		}
+	}
+	return rot;
+}
+
+int Panel::getRotationDir(Point pos, Point dir, std::vector<Point> pth) {
+	Point next = pos + dir;
+	for (int i = 0; i < pth.size(); i++) {
+		if (pth[i] == next) {
+			if (i > 0 && pth[i - 1] == next + Point(dir.y, -dir.x) ||
+				i < pth.size() - 1 && pth[i + 1] == next + Point(-dir.y, dir.x)) {
+				return -1;
+			}
+			if (i > 0 && pth[i - 1] == next + Point(-dir.y, dir.x) ||
+				i < pth.size() - 1 && pth[i + 1] == next + Point(dir.y, -dir.x)) {
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
 
 void Panel::readDecorations() {

@@ -36,10 +36,10 @@ public:
 	void generateRGBDotPuzzleH(PanelID id);
 	void generateJungleVault(PanelID id);
 	void generateApplePuzzle(PanelID id, bool changeExit, bool flip);
-	void generateKeepLaserPuzzle(PanelID id, const std::set<Point>& path1, const std::set<Point>& path2, const std::set<Point>& path3, const std::set<Point>& path4, std::vector<std::pair<int, int>> symbols);
+	void generateKeepLaserPuzzle(PanelID id, const std::vector<Point>& path1, const std::vector<Point>& path2, const std::vector<Point>& path3, const std::vector<Point>& path4, std::vector<std::pair<int, int>> symbols);
 	void generateMountaintop(PanelID id, const std::vector<std::pair<int, int>>& symbolVec);
 	void generateMultiPuzzle(std::vector<PanelID> ids, const std::vector<std::vector<std::pair<int, int>>>& symbolVec, bool flip);
-	bool generateMultiPuzzle(std::vector<PanelID> ids, std::vector<Generate>& gens, const std::vector<PuzzleSymbols>& symbols, const std::set<Point>& path);
+	bool generateMultiPuzzle(std::vector<PanelID> ids, std::vector<Generate>& gens, const std::vector<PuzzleSymbols>& symbols, const std::vector<Point>& path);
 	void generate2Bridge(PanelID id1, PanelID id2);
 	bool generate2Bridge(PanelID id1, PanelID id2, std::vector<std::shared_ptr<Generate>> gens);
 	void generate2BridgeH(PanelID id1, PanelID id2);

@@ -41,6 +41,7 @@ void SymbolsWatchdog::action() {
 		id = active;
 		if (active == -1 || (ReadPanelData<int>(active, STYLE_FLAGS) & HAS_CUSTOM) == 0) {
 			sleepTime = 0.1f;
+			endpoint = -1;
 			return;
 		}
 		panel = Panel(id);
@@ -68,7 +69,7 @@ void SymbolsWatchdog::action() {
 	bool success = panel.checkCustomSymbols(true);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
 	panel.setGrid(backupGrid);
-	//memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+	memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
 void SymbolsWatchdog::initPath() {
@@ -78,7 +79,7 @@ void SymbolsWatchdog::initPath() {
 	int numPoints = panel.getNumGridPoints();
 	int width = panel.width; int height = panel.height;
 	std::vector<SolutionPoint> tracedData = ReadArray<SolutionPoint>(id, TRACED_EDGE_DATA, numTraced);
-	traced.clear();
+	std::vector<SolutionPoint> traced;
 	for (int i = 0; i < numTraced; i++) { //Remove mid-segment points
 		if (tracedData[i].pointA < 0 || tracedData[i].pointA >= numPoints) continue;
 		if (tracedData[i].pointB < 0 || tracedData[i].pointB >= numPoints) {
@@ -91,34 +92,25 @@ void SymbolsWatchdog::initPath() {
 		traced.pop_back();
 		numTraced--;
 	}
-	if (panel.style & SYMMETRICAL) {
-		for (int i = 0; i < numTraced; i++) {
-			SolutionPoint sp;
-			sp.pointA = panel.getSymSolutionPoint(traced[i].pointA);
-			sp.pointB = panel.getSymSolutionPoint(traced[i].pointB);
-			traced.push_back(sp);
-		}
-	}
-	for (const SolutionPoint& p : traced) {
+	for (int i = 0; i < traced.size(); i++) {
+		SolutionPoint p = traced[i];
 		int p1 = p.pointA, p2 = p.pointB;
-		if (p1 < 0 || p2 < 0 || p1 >= numPoints || p2 >= numPoints) {
-			continue;
-		}
 		int x1 = (p1 % (width / 2 + 1)) * 2, y1 = height - 1 - (p1 / (width / 2 + 1)) * 2;
 		int x2 = (p2 % (width / 2 + 1)) * 2, y2 = height - 1 - (p2 / (width / 2 + 1)) * 2;
 		if (panel.isCylinder) {
 			x1 = (p1 % (width / 2)) * 2, y1 = height - 1 - (p1 / (width / 2)) * 2;
 			x2 = (p2 % (width / 2)) * 2, y2 = height - 1 - (p2 / (width / 2)) * 2;
-			set(x1, y1, PATH);
+		}
+		if (i == 0) setPath(x1, y1);
+		if (panel.isCylinder) {
 			if (x1 == x2 || x1 == x2 + 2 || x1 == x2 - 2)
-				set((x1 + x2) / 2, (y1 + y2) / 2, PATH);
-			else set(width - 1, (y1 + y2) / 2, PATH);
-			set(x2, y2, PATH);
+				setPath((x1 + x2) / 2, (y1 + y2) / 2);
+			else setPath(width - 1, (y1 + y2) / 2);
+			setPath(x2, y2);
 		}
 		else {
-			set(x1, y1, PATH);
-			set((x1 + x2) / 2, (y1 + y2) / 2, PATH);
-			set(x2, y2, PATH);
+			setPath((x1 + x2) / 2, (y1 + y2) / 2);
+			setPath(x2, y2);
 		}
 	}
 }

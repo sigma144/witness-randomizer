@@ -869,12 +869,12 @@ void PuzzleList::GenerateKeepN() {
 	g.setConfigOnce(DisableWrite);
 	g.setObstructions({ { 1, 4 },{ 2, 3 },{ 5, 4 },{ 5, 8 } });
 	g.generate(KEEP_PRESSURE_1);
-	std::set<Point> path1 = g.path;
+	std::vector<Point> path1 = g.panel.path;
 	std::vector<std::vector<Point>> sets = { { { 7, 8 },{ 8, 7 },{ 7, 6 },{ 6, 7 } },{ { 6, 5 },{ 7, 4 },{ 8, 5 } },{ { 7, 0 },{ 7, 2 },{ 6, 1 },{ 8, 1 },{ 5, 2 } },
 	{ { 2, 7 },{ 4, 7 },{ 3, 8 },{ 3, 6 },{ 1, 6 } },{ { 0, 1 },{ 1, 0 },{ 2, 1 },{ 1, 2 } } };
 	for (std::vector<Point> set : sets) {
 		Point p = g.pickRandom(set);
-		while (!path1.count(p)) p = g.pickRandom(set);
+		while (!g.panel.pathHasPos(p.x, p.y)) p = g.pickRandom(set);
 		g.set(p, p.x % 2 == 0 ? Dot_Column : Dot_Row);
 	}
 	g.write(KEEP_PRESSURE_1);
@@ -883,7 +883,7 @@ void PuzzleList::GenerateKeepN() {
 	g.setObstructions({ { 3, 2 },{ 8, 5 } });
 	g.setConfigOnce(DisableWrite);
 	g.generate(KEEP_PRESSURE_2, Star|Black, 2, Star|White, 2, Stone|Black, 6, Stone|White, 6);
-	std::set<Point> path2 = g.path;
+	std::vector<Point> path2 = g.panel.path;
 	g.write(KEEP_PRESSURE_2);
 
 	g.resetConfig();
@@ -895,7 +895,7 @@ void PuzzleList::GenerateKeepN() {
 	g.hitPoints = validHitPoints[Random::rand() % validHitPoints.size()];
 	g.setConfigOnce(DisableWrite);
 	g.generate(KEEP_PRESSURE_3, Poly, 2, Stone|Black, 1, Stone|White, 1, Stone|Cyan, 1, Stone|Magenta, 1);
-	std::set<Point> path3 = g.path;
+	std::vector<Point> path3 = g.panel.path;
 	g.write(KEEP_PRESSURE_3);
 
 	g.resetConfig();
@@ -905,8 +905,8 @@ void PuzzleList::GenerateKeepN() {
 	if (g.panel.endpoints[0].x == 0) {
 		std::swap(g.panel.endpoints[0], g.panel.endpoints[1]); //Need to have endpoints in right order to associate with pressure plates correctly
 	}
-	std::set<Point> path4 = (g.path1.count(Point(0, 8)) ? g.path2 : g.path1);
-	if (g.path.count({ 7, 0 })) g.set(7, 0, Dot_Row);
+	std::vector<Point> path4 = (g.panel.pathHasPos(0, 8) ? g.panel.pathSym : g.panel.path);
+	if (g.panel.pathHasPos(7, 0)) g.set(7, 0, Dot_Row);
 	else g.set(8, 1, Dot_Column);
 	g.write(KEEP_PRESSURE_4);
 

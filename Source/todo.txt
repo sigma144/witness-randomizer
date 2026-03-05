@@ -2,12 +2,13 @@ TODO LIST FOR 2.0
 
 BUGS / INCOMPLETE FEATURES:
 
+Circular Arrow:
+- Make it look more circular
 Eraser:
 - Proper tetris shape checking
 - Combined eraser support?
 Antitriangle:
 - Get multiple exits working correctly
-Fix invisible symbols with double mode
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
 
@@ -27,7 +28,6 @@ Make erasers erase symbols with uniform probability rather than types
 SYMBOLS TO ADD:
 
 For 2.0:
-- Rotating arrow
 - Ghost (From Despair rando)
 - Negation Start (may require a lot of work)
 - Copier (also may be a bit hard to make)
