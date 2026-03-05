@@ -96,8 +96,9 @@ private:
 	bool placeSymbols(PuzzleSymbols& symbols);
 	bool generatePath(PuzzleSymbols& symbols);
 	bool generatePathLength(int minLength, int maxLength);
-	bool generatePathLength(int minLength) { return generatePathLength(minLength, 10000); };
-	bool generatePathRegions(int minRegions);
+	bool generatePathLength(int minLength) { return generatePathLength(minLength, 10000); }
+	bool generatePathRegions(int minRegions, int maxRegions);
+	bool generatePathRegions(int minRegions) { return generatePathRegions(minRegions, 10000); }
 	bool generateLongestPath();
 	bool generateSpecialPath();
 	Point adjustPoint(Point pos);

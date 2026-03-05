@@ -612,7 +612,7 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 bool Generate::generatePath(PuzzleSymbols& symbols) {
 	clear();
 	if (hasConfig(MountainFloor)) {
-		path = { { 0, 0 } };
+		panel.path = { { 0, 0 } };
 		return true;
 	}
 	if (obstructions.size() > 0) {
@@ -681,7 +681,7 @@ bool Generate::generatePathLength(int minLength, int maxLength) {
 }
 
 //Generate a path with the provided number of regions.
-bool Generate::generatePathRegions(int minRegions) {
+bool Generate::generatePathRegions(int minRegions, int maxRegions) {
 	int fails = 0;
 	int regions = 1;
 	Point pos = adjustPoint(pickRandom(starts));
@@ -697,12 +697,13 @@ bool Generate::generatePathRegions(int minRegions) {
 			|| newPos == exit && regions < minRegions)
 			continue;
 		if (panel.symmetry && (offEdge(getSymPoint(newPos)) || newPos == getSymPoint(newPos))) continue;
-		setPath(pos + dir / 2);
-		setPath(newPos);
 		if (!onEdge(newPos) && onEdge(pos)) {
+			if (regions == maxRegions) continue;
 			regions++;
 			if (panel.symmetry) regions++;
 		}
+		setPath(pos + dir / 2);
+		setPath(newPos);
 		pos = newPos;
 		fails = 0;
 	}
