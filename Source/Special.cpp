@@ -1021,8 +1021,8 @@ void Special::generateMountainFloor() //TODO: Sometimes doesn't make a rotated s
 				}
 			}
 		}
-		g.setCustomPath({ {0, 0} }); //Just to stop it from trying to make a path
 		g.setConfig(DecorationsOnly);
+		g.setConfig(MountainFloor);
 		g.setConfig(DisableWrite);
 		if (i == rotateIndex) g.generate(ids[i], { });
 		else
@@ -1102,10 +1102,10 @@ void Special::generateMountainFloorH()
 				}
 			}
 		}
-		gen.setCustomPath({ { 0, 0 } }); //Just to stop it from trying to make a path
 		gen.setConfig(DecorationsOnly);
 		gen.setConfig(DisableWrite);
 		gen.setConfig(MountainFloorH);
+		gen.setConfig(MountainFloor);
 		gen.setConfig(DisableCancelShapes);
 		PuzzleSymbols symbols({ { Poly, 2 },{ Eraser | Green, 1 } });
 		if (newShape.size() > 5) {

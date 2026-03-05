@@ -515,7 +515,7 @@ bool Generate::generate(PanelID id, PuzzleSymbols symbols) {
 bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 	std::vector<int> eraseSymbols;
 	std::vector<int> eraserColors;
-	std::array<int, Invisible> starDiff; //For symbols that have region color constraints so we place stars earlier
+	std::array<int, Invisible + 1> starDiff; //For symbols that have region color constraints so we place stars earlier
 	starDiff.fill(0);
 	//If erasers are present, choose symbols to be erased and remove them pre-emptively
 	for (std::pair<int, int> s : symbols[Eraser]) {
@@ -611,6 +611,10 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 //Puzzle symbols are provided because they can influence how long the path should be.
 bool Generate::generatePath(PuzzleSymbols& symbols) {
 	clear();
+	if (hasConfig(MountainFloor)) {
+		path = { { 0, 0 } };
+		return true;
+	}
 	if (obstructions.size() > 0) {
 		//TODO: Change this code to not be duplicated.
 		std::vector<Point> walls = pickRandom(obstructions);
