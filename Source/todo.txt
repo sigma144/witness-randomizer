@@ -2,6 +2,8 @@ TODO LIST FOR 2.0
 
 BUGS / INCOMPLETE FEATURES:
 
+Ghost:
+- Make it look better / give eyes?
 Circular Arrow:
 - Make it look more circular
 Eraser:
@@ -26,7 +28,6 @@ Make erasers erase symbols with uniform probability rather than types
 SYMBOLS TO ADD:
 
 For 2.0:
-- Ghost (From Despair rando)
 - Negation Start (may require a lot of work)
 - Copier (also may be a bit hard to make)
 - Matcher/Replicator (Sigma)
