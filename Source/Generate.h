@@ -131,6 +131,7 @@ private:
 	bool placeFlowerStarPairs(int color, int amount);
 	bool placeDarts(int color, int amount, int targetCount);
 	bool placeCircularArrows(int color, int amount, int rot);
+	bool placeGhosts(int color, int amount);
 
 	Panel panel;
 	Panel fakePanel; //For generating cancelled symbols

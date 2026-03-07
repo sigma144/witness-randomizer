@@ -1530,6 +1530,6 @@ void Special::test() {
 	g.resetConfig();
 	g.setSymmetry(NoSymmetry);
 	//g.setSymmetry(Rotational);
-	PanelID id = SYM_DOT_4;
-	g.generate(id, AntiTriangle, 12);
+	PanelID id = TUT_STONE_7;
+	g.generate(id, Ghost|White, 3, Ghost|Black, 3);
 }

@@ -55,13 +55,15 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 	CIRCLEARROW_CW = 0x47,
 	CIRCLEARROW_CCW = 0x48,
 
+	GHOST = 0x49,
+
 	BigSquare, // For testing
 
 	NUM_SYMBOLS, // Must be last
 };
 
 inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, FLOWER, DART1E,
-	CIRCLEARROW_CW, BigSquare };
+	CIRCLEARROW_CW, GHOST, BigSquare };
 
 class SymbolData {
 public:
@@ -112,4 +114,5 @@ private:
 	static void AddFlower(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddCircleArrow(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	static void AddGhost(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 };

@@ -29,8 +29,7 @@ For 2.0:
 - Ghost (From Despair rando)
 - Negation Start (may require a lot of work)
 - Copier (also may be a bit hard to make)
-- Matcher (Sigma)
-- Replicator (Sigma)
+- Matcher/Replicator (Sigma)
 - Open Circle (Sigma)
 - Chevron (Sigma)
 - Pentagons?

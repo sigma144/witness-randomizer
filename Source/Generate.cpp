@@ -524,11 +524,13 @@ bool Generate::placeSymbols(PuzzleSymbols & symbols) {
 			eraseSymbols.push_back(hasConfig(FalseParity) ? Dot_Intersection : symbols.popRandomSymbol());
 		}
 	}
-
 	//Symbols are placed in stages according to their type
 	//In each of these loops, s.first is the symbol and s.second is the amount of it to add
-	//TODO: Separate negative rotated shapes
 
+	for (const std::pair<int, int>& s : symbols[Ghost]) {
+		if (!placeGhosts(s.first & 0xf, s.second)) return false;
+	}
+	//TODO: Separate negative rotated shapes
 	SHAPEDIRECTIONS = (hasConfig(DisconnectShapes) ? DISCONNECT : Panel::DIRECTIONS_2);
 	int numShapes = 0, numRotate = 0, numNegative = 0;
 	std::vector<int> colors, negativeColors;
@@ -2069,4 +2071,22 @@ bool Generate::placeCircularArrows(int color, int amount, int rot) {
 		}
 	}
 	return true;
+}
+
+bool Generate::placeGhosts(int color, int amount) {
+	std::set<Point> open = openpos;
+	std::set<Point> all = gridpos;
+	while (amount > 0) {
+		if (open.size() == 0)
+			return false;
+		Point pos = pickRandom(open);
+		set(pos, SymbolData::GetValFromSymbolID(GHOST) | color);
+		openpos.erase(pos);
+		amount--;
+		for (Point p : getRegion(pos)) {
+			open.erase(p);
+			all.erase(p);
+		}
+	}
+	return all.size() == 0;
 }

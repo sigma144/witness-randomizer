@@ -343,6 +343,9 @@ bool Panel::checkSymbol(Point pos, int symbol) {
 		else if (type == CircularArrow) {
 			if (!checkCircularArrow(pos, symbol)) return false;
 		}
+		else if (type == Ghost) {
+			if (!checkGhost(pos, symbol)) return false;
+		}
 	}
 	return true;
 }
@@ -448,6 +451,28 @@ bool Panel::checkDart(Point pos, int symbol) {
 bool Panel::checkCircularArrow(Point pos, int symbol) {
 	int rot = symbol >> 20 ? 1 : -1;
 	return rot == getRotationDir(pos);
+}
+
+bool Panel::checkGhost(Point pos, int symbol) {
+	int color = getColor(symbol);
+	std::set<Point> checked;
+	for (int x = 1; x < width; x += 2) {
+		for (int y = 1; y < height; y += 2) {
+			Point p = Point(x, y);
+			if (checked.count(p)) continue;
+			std::set<Point> region = getRegion(p);
+			int countGhost = 0;
+			for (Point p2 : region) {
+				checked.insert(p2);
+				int type = getCustomType(SymbolData::GetSymbolFromVal(get(p2)));
+				if (type == Ghost && color == getColor(get(p2)))
+					countGhost++;
+			}
+			if (countGhost != 1)
+				return false;
+		}
+	}
+	return true;
 }
 
 //Count the occurrence of the given symbol color in the given region

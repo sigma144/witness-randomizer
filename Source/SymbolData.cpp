@@ -209,6 +209,7 @@ std::array<std::vector<SymbolData::Shape>, SymbolID::NUM_SYMBOLS> SymbolData::Ge
 	AddFlower(data);
 	AddDarts(data);
 	AddCircleArrow(data);
+	AddGhost(data);
 
 	return data;
 }
@@ -661,4 +662,19 @@ void SymbolData::AddCircleArrow(std::array<std::vector<Shape>, SymbolID::NUM_SYM
 	};
 	data[CIRCLEARROW_CW] = { arrow };
 	data[CIRCLEARROW_CCW] = { FlipX(arrow) };
+}
+
+void SymbolData::AddGhost(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
+	Shape ghost = {
+		{-0.5, 0.3},
+		{-0.3, 0.5},
+		{0.3, 0.5},
+		{0.5, 0.3},
+		{0.5, -0.6},
+		{0.25, -0.3},
+		{0, -0.6},
+		{-0.25, -0.3},
+		{-0.5, -0.6},
+	};
+	data[GHOST] = { ghost };
 }
