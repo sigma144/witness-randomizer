@@ -104,6 +104,7 @@ void Memory::create()
 		_singleton->setupCustomSymbols();
 		_singleton->findActivePanel();
 		_singleton->findPillarLegacyChange();
+		_singleton->findLaserActivationFunction();
 	}
 }
 
@@ -127,6 +128,13 @@ void Memory::findActivePanel() {
 void Memory::findPillarLegacyChange() {
 	ScanForBytes({ 0x0F, 0x2F, 0xE3, 0x73, 0x08, 0xF3, 0x0F, 0x59, 0x15}, [this](__int64 offset, int index, const std::vector<byte>& data) {
 		_pillarLegacyChange = offset + index + 3;
+		return true;
+		});
+}
+
+void Memory::findLaserActivationFunction() {
+	ScanForBytes({ 0x40, 0x53, 0x48, 0x83, 0xEC, 0x60, 0x83, 0xB9 }, [this](__int64 offset, int index, const std::vector<byte>& data) {
+		_activateLaserFunction = _baseAddress + offset + index;
 		return true;
 		});
 }
@@ -310,6 +318,44 @@ bool Memory::ScanForBytes(const std::vector<byte>& scanBytes, const ScanFunc& sc
 
 	return false; // Not found
 }
+
+void Memory::CallVoidFunction(int id, uint64_t functionAdress) {
+	uint64_t offset = reinterpret_cast<uintptr_t>(ComputeOffset({ GLOBALS, 0x18, id * 8, 0 }));
+
+	unsigned char buffer[] =
+		"\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00" //mov rax [address]
+		"\x48\xB9\x00\x00\x00\x00\x00\x00\x00\x00" //mov rcx [address]
+		"\x48\x83\xEC\x48" // sub rsp,48
+		"\xFF\xD0" //call rax
+		"\x48\x83\xC4\x48" // add rsp,48
+		"\xC3"; //ret
+
+	buffer[2] = functionAdress & 0xff; //address of laser activation function
+	buffer[3] = (functionAdress >> 8) & 0xff;
+	buffer[4] = (functionAdress >> 16) & 0xff;
+	buffer[5] = (functionAdress >> 24) & 0xff;
+	buffer[6] = (functionAdress >> 32) & 0xff;
+	buffer[7] = (functionAdress >> 40) & 0xff;
+	buffer[8] = (functionAdress >> 48) & 0xff;
+	buffer[9] = (functionAdress >> 56) & 0xff;
+	buffer[12] = offset & 0xff; //address of laser
+	buffer[13] = (offset >> 8) & 0xff;
+	buffer[14] = (offset >> 16) & 0xff;
+	buffer[15] = (offset >> 24) & 0xff;
+	buffer[16] = (offset >> 32) & 0xff;
+	buffer[17] = (offset >> 40) & 0xff;
+	buffer[18] = (offset >> 48) & 0xff;
+	buffer[19] = (offset >> 56) & 0xff;
+
+	SIZE_T allocation_size = sizeof(buffer);
+
+	LPVOID allocation_start = VirtualAllocEx(_handle, NULL, allocation_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(_handle, allocation_start, buffer, allocation_size, NULL);
+	HANDLE thread = CreateRemoteThread(_handle, NULL, 0, (LPTHREAD_START_ROUTINE)allocation_start, NULL, 0, 0);
+
+	WaitForSingleObject(thread, INFINITE);
+}
+
 
 __int64 Memory::ReadStaticInt(__int64 offset, int index, const std::vector<byte>& data, size_t bytesToEOL) {
 	// (address of next line) + (index interpreted as 4byte int)

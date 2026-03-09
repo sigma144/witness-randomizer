@@ -217,6 +217,19 @@ enum PanelVar : int {
 	METADATA = 0x13A, //short
 };
 
+enum Laser : int {
+	TreehouseLaser = 0x028A4,
+	JungleLaser = 0x00274,
+	TownLaser = 0x032F9,
+	ShadowsLaser = 0x181B3,
+	BunkerLaser = 0x0C2B2,
+	SymmetryLaser = 0x00509,
+	SwampLaser = 0x00BF6,
+	KeepLaser = 0x014BB,
+	DesertLaser = 0x012FB,
+	MonasteryLaser = 0x17C65,
+};
+
 enum Config {
 	FullGaps, //Gaps go all the way between two vertices instead of part of the way.
 	StartEdgeOnly, //Starts will only be placed on the edges of the puzzle.
