@@ -157,12 +157,15 @@ public:
 	};
 	bool retryOnFail = true;
 
+	void ActivateLaser(int id) { CallVoidFunction(id, _activateLaserFunction); };
+
 	private:
 		void findGlobals();
 		void fixTriangleNegation();
 		void setupCustomSymbols();
 		void findActivePanel();
 		void findPillarLegacyChange();
+		void findLaserActivationFunction();
 
 		template<class T>
 		std::vector<T> ReadData(const std::vector<int>& offsets, size_t numItems) {
@@ -207,12 +210,15 @@ public:
 		void ThrowError(const std::vector<int>& offsets, bool rw_flag);
 		void ThrowError();
 
+		void CallVoidFunction(int id, uint64_t functionAdress);
+
 		void* ComputeOffset(std::vector<int> offsets);
 
 		std::map<uintptr_t, uintptr_t> _computedAddresses;
 		std::vector<int> _activePanelOffsets;
 		std::map<std::pair<int, int>, int> _arraySizes;
 		uint64_t _pillarLegacyChange;
+		uint64_t _activateLaserFunction;
 		uintptr_t _baseAddress = 0;
 		HANDLE _handle = nullptr;
 

@@ -264,6 +264,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			memory->WritePanelData<int>(TUT_2START, BACKGROUND_HIDDEN_VAR, randomizer.doubleMode);
 			SetWindowText(hwndRandomize, L"Randomized!");
 			SetWindowText(hwndSeed, std::to_wstring(seed).c_str());
+			memory->ActivateLaser(ShadowsLaser);
+			memory->ActivateLaser(MonasteryLaser);
+			memory->ActivateLaser(BunkerLaser);
 
 			break;
 		}
