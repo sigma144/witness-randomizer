@@ -9,8 +9,6 @@
 #include <algorithm>
 #include "Random.h"
 
-typedef std::set<Point> Shape;
-
 //The main class for generating puzzles.
 class Generate
 {

@@ -22,6 +22,61 @@ std::vector<Point> Panel::DIRECTIONS8 = { Point(1, 0), Point(1, -1), Point(0, -1
 std::vector<Point> Panel::DIRECTIONS_2 = { Point(0, 2), Point(0, -2), Point(2, 0), Point(-2, 0) };
 std::vector<Point> Panel::DIRECTIONS8_2 = { Point(2, 0), Point(2, -2), Point(0, -2), Point(-2, -2), Point(-2, 0), Point(-2, 2), Point(0, 2), Point(2, 2) };
 
+void ShapeData::addShape(int symbol) {
+	bool rotated = symbol & Rotate;
+	bool negative = symbol & Negative;
+	symbol >>= 16;
+	Shape shape;
+	for (int i = 0; i < 16; i++) {
+		if ((symbol >> i) & 1) {
+			shape.insert(Point((i % 4) * 2, (i / 4) * -2));
+		}
+	}
+	shape = adjustShape(shape);
+	if (!findMatchingShape(shape, negative)) {
+		std::vector<Shape> newList;
+		newList.emplace_back(shape);
+		if (rotated) {
+			for (int rot = 1; rot <= 3; rot++) {
+				Shape rotShape;
+				for (Point p : shape) {
+					rotShape.insert(rot == 1 ? Point(p.y, -p.x) : rot == 2 ? Point(-p.x, -p.y) : Point(-p.y, p.x));
+				}
+				rotShape = adjustShape(rotShape);
+				if (rotShape == newList[0]) break;
+				newList.emplace_back(adjustShape(rotShape));
+			}
+		}
+		shapes.emplace_back(newList);
+		counts.emplace_back(1);
+		negatives.emplace_back(negative);
+	}
+}
+
+Shape ShapeData::adjustShape(Shape& shape) {
+	Shape adjusted;
+	Point minPoint;
+	for (Point p : shape) {
+		minPoint = min(minPoint, p);
+	}
+	for (Point p : shape) {
+		adjusted.insert(Point(p.x - minPoint.x, p.y - minPoint.y));
+	}
+	return adjusted;
+}
+
+bool ShapeData::findMatchingShape(Shape& shape, bool negative) {
+	for (int i = 0; i < shapes.size(); i++) {
+		for (Shape& s : shapes[i]) {
+			if (s == shape && negative == negatives[i]) {
+				counts[i]++;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 Panel::Panel() { }
 
 Panel::Panel(PanelID id) {
@@ -285,10 +340,10 @@ int Panel::getSymSolutionPoint(int index) {
 bool Panel::checkCustomSymbols(bool flash) {
 	//memory->LogDebug("Checking symbols");
 	bool success = true;
-	for (int x = 1; x < width; x++) {
-		for (int y = 1; y < height; y++) {
+	for (int x = 1; x < width; x += 2) {
+		for (int y = 1; y < height; y += 2) {
 			int symbol = get(x, y);
-			if (getType(symbol) != Custom) continue; //Skip non-custom symbols
+			//if (getType(symbol) != Custom) continue; //Skip non-custom symbols
 			if (!checkSymbol({ x, y })) {
 				if (!flash) return false;
 				//memory->LogDebug("Symbol at %d, %d NOT valid", x, y);
@@ -301,6 +356,7 @@ bool Panel::checkCustomSymbols(bool flash) {
 			}
 		}
 	}
+	memory->WritePanelData<int>(id, STYLE_FLAGS, 0);
 	return success;
 }
 
@@ -374,6 +430,7 @@ bool Panel::checkShape(Point pos, int symbol) {
 		if (getType(sym) == Poly) {
 			shapes.emplace_back(sym);
 			shapePos.insert(p);
+			sym = sym & 0xFFFF0000;
 			while (sym) {
 				totalArea += (sym & 1);
 				sym >>= 1;
@@ -381,12 +438,42 @@ bool Panel::checkShape(Point pos, int symbol) {
 		}
 	}
 	bool result;
-	if (totalArea == 0) result = true;
-	else result = (totalArea == region.size()); //TODO: Write an actual shape checker
+	if (totalArea == 0) result = true; //TODO: Actually check if shapes cancel
+	else if (totalArea != region.size()) result = false;
+	else {
+		ShapeData shapeData;
+		for (int s : shapes) shapeData.addShape(s);
+		result = fitShapes(region, shapeData);
+	}
+
 	for (Point p : shapePos) {
 		preCalcResult[p] = result;
 	}
 	return result;
+}
+
+bool Panel::fitShapes(std::set<Point> region, ShapeData shapes) {
+	if (region.size() == 0) return true; //TODO: Negatives
+	Point p = *region.begin();
+	for (int i = 0; i < shapes.counts.size(); i++) {
+		if (shapes.counts[i] == 0) continue;
+		for (Shape& s : shapes.shapes[i]) {
+			std::set<Point> newRegion = region;
+			bool fits = true;
+			for (Point sp : s) {
+				if (!newRegion.erase(p + sp)) {
+					fits = false;
+					break;
+				}
+			}
+			if (!fits) continue;
+			ShapeData newShapes = shapes;
+			newShapes.counts[i]--;
+			if (fitShapes(newRegion, newShapes))
+				return true;
+		}
+	}
+	return false;
 }
 
 bool Panel::checkTriangle(Point pos, int symbol) {

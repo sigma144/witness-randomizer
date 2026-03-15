@@ -39,7 +39,7 @@ void SymbolsWatchdog::action() {
 			(new EraserWatchdog(id, panel, sequenceArray))->start();
 		}
 		id = active;
-		if (active == -1 || (ReadPanelData<int>(active, STYLE_FLAGS) & HAS_CUSTOM) == 0) {
+		if (active == -1) {// || (ReadPanelData<int>(active, STYLE_FLAGS) & HAS_CUSTOM) == 0) {
 			sleepTime = 0.1f;
 			endpoint = -1;
 			return;

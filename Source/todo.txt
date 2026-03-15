@@ -2,6 +2,7 @@ TODO LIST FOR 2.0
 
 BUGS / INCOMPLETE FEATURES:
 
+Watchdog still sometimes not running at the right time
 Ghost:
 - Make it look better / give eyes?
 Circular Arrow:

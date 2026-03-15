@@ -51,6 +51,16 @@ struct SolutionPoint {
 	int endnum;
 };
 
+typedef std::set<Point> Shape;
+struct ShapeData {
+	std::vector<std::vector<Shape>> shapes;
+	std::vector<int> counts;
+	std::vector<bool> negatives;
+	void addShape(int shape);
+	Shape adjustShape(Shape& shape);
+	bool findMatchingShape(Shape& shape, bool negative);
+};
+
 class Panel
 {
 public:
@@ -94,6 +104,7 @@ public:
 	bool checkStone(Point pos, int symbol);
 	bool checkStar(Point pos, int symbol);
 	bool checkShape(Point pos, int symbol);
+	bool fitShapes(std::set<Point> region, ShapeData shapes);
 	bool checkTriangle(Point pos, int symbol);
 	//**************CUSTOM SYMBOLS***********************
 	bool checkArrow(Point pos, int symbol);
