@@ -33,7 +33,7 @@ SymbolsWatchdog::SymbolsWatchdog() : Watchdog(0.1f) {
 void SymbolsWatchdog::action() {
 	PanelID active = memory->GetActivePanel();
 	if (active != id) {
-		if (active == -1 && (ReadPanelData<int>(id, STYLE_FLAGS) & HAS_CUSTOM)
+		if (active == -1 && (ReadPanelData<int>(id, STYLE_FLAGS) & (HAS_CUSTOM | HAS_SHAPERS))
 			&& ReadPanelData<int>(id, ERASER_ACTIVE)) {
 			initPath();
 			(new EraserWatchdog(id, panel, sequenceArray))->start();
