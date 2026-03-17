@@ -2,20 +2,18 @@ TODO LIST FOR 2.0
 
 BUGS / INCOMPLETE FEATURES:
 
-Watchdog still sometimes not running at the right time
 Ghost:
 - Make it look better / give eyes?
 Circular Arrow:
 - Make it look more circular
 Eraser:
-- Proper tetris shape checking
 - Combined eraser support?
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
 
 NEW FEATURES:
 
-Activate non-randomized lasers and doors automatically
+Activate non-randomized lasers and doors automatically (In progress)
 Normal/Expert Bunker randomization?
 Randomize challenge?
 Forced symbol placement using setSymbol rather than hard-coding
@@ -23,7 +21,6 @@ Have only one user-facing set function (setSymbol)
 Automatic start/exit placement for custom symmetry
 Add desert latch watchdog
 Add target watchdog to replace Town, Treehouse, and Keep watchdogs
-Override game's shape checking logic to make negative shapes work correctly
 Make erasers erase symbols with uniform probability rather than types
 
 SYMBOLS TO ADD:

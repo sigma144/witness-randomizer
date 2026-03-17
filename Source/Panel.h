@@ -56,9 +56,15 @@ struct ShapeData {
 	std::vector<std::vector<Shape>> shapes;
 	std::vector<int> counts;
 	std::vector<bool> negatives;
-	void addShape(int shape);
+	std::set<Point> region;
+	Point testPoint = Point(-3, -3);
+	std::set<Point> negativePoints;
+	int negativeArea = 0;
+	Point panelSize;
+	void addShape(int symbol);
 	Shape adjustShape(Shape& shape);
 	bool findMatchingShape(Shape& shape, bool negative);
+	bool fitShapes(bool negative);
 };
 
 class Panel
@@ -104,7 +110,6 @@ public:
 	bool checkStone(Point pos, int symbol);
 	bool checkStar(Point pos, int symbol);
 	bool checkShape(Point pos, int symbol);
-	bool fitShapes(std::set<Point> region, ShapeData shapes);
 	bool checkTriangle(Point pos, int symbol);
 	//**************CUSTOM SYMBOLS***********************
 	bool checkArrow(Point pos, int symbol);
