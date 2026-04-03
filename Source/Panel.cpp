@@ -387,9 +387,10 @@ bool Panel::checkCustomSymbols(bool flash) {
 	//memory->LogDebug("Checking symbols");
 	preCalcResult.clear();
 	bool negationStart = false;
-	Point offsets[] = { Point(-1, -1), Point(-1, 1), Point(1, -1), Point(1, 1) };
-	for (Point p : offsets) {
-		if (getCustomType(SymbolData::GetSymbolFromVal(get(path[0] + p))) == NegationStart) //TODO: Check the variant
+	Point offsets[] = { Point(1, -1), Point(1, 1), Point(-1, -1), Point(-1, 1) };
+	int symOffsets[] = { NEGATION_START_00, NEGATION_START_01, NEGATION_START_10, NEGATION_START_11 };
+	for (int i = 0; i < 4; i++) {
+		if (SymbolData::GetSymbolIDFromVal(get(path[0] + offsets[i])) == symOffsets[i])
 			negationStart = true;
 	}
 	bool success = true;

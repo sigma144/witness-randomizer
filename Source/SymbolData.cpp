@@ -693,8 +693,8 @@ void SymbolData::AddNegationStarts(std::array<std::vector<Shape>, SymbolID::NUM_
 		{-0.1, 0.2},
 	};
 	//eraser = Translate(eraser, 0.5, 0.5);
-	data[NEGATION_START_00] = { eraser };
-	data[NEGATION_START_01] = { eraser };
-	data[NEGATION_START_10] = { eraser };
-	data[NEGATION_START_11] = { eraser };
+	data[NEGATION_START_00] = { Translate(eraser, -1, -1) };
+	data[NEGATION_START_01] = { Translate(eraser, -1, 1) };
+	data[NEGATION_START_10] = { Translate(eraser, 1, -1) };
+	data[NEGATION_START_11] = { Translate(eraser, 1, 1) };
 }
