@@ -7,6 +7,8 @@ Fix visuals on ghost, circular arrow, negation start
 Eraser:
 	Combined eraser support?
 	FIgure out interactions with negation start
+Negation Start:
+	Support generation
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
 
