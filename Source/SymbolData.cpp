@@ -210,6 +210,7 @@ std::array<std::vector<SymbolData::Shape>, SymbolID::NUM_SYMBOLS> SymbolData::Ge
 	AddDarts(data);
 	AddCircleArrow(data);
 	AddGhost(data);
+	AddNegationStarts(data);
 
 	return data;
 }
@@ -677,4 +678,23 @@ void SymbolData::AddGhost(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>&
 		{-0.5, -0.6},
 	};
 	data[GHOST] = { ghost };
+}
+
+void SymbolData::AddNegationStarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data) {
+	Shape eraser = {
+		{0.1, 0.2},
+		{0.1, 0},
+		{0.3, -0.1},
+		{0.27, -0.2},
+		{0, -0.05},
+		{-0.27, -0.2},
+		{-0.3, -0.1},
+		{-0.1, 0},
+		{-0.1, 0.2},
+	};
+	//eraser = Translate(eraser, 0.5, 0.5);
+	data[NEGATION_START_00] = { eraser };
+	data[NEGATION_START_01] = { eraser };
+	data[NEGATION_START_10] = { eraser };
+	data[NEGATION_START_11] = { eraser };
 }

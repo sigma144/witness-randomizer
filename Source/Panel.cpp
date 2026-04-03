@@ -383,14 +383,23 @@ int Panel::getSymSolutionPoint(int index) {
 
 #define LOG_DEBUG(fmt, ...) LogDebug(__FILE__, __LINE__, fmt, __VA_ARGS__)
 bool Panel::checkCustomSymbols(bool flash) {
+	if (memory->ReadPanelData<long>(id, DECORATION_FLAGS) == 0) return true;
 	//memory->LogDebug("Checking symbols");
 	preCalcResult.clear();
+	bool negationStart = false;
+	Point offsets[] = { Point(-1, -1), Point(-1, 1), Point(1, -1), Point(1, 1) };
+	for (Point p : offsets) {
+		if (getCustomType(SymbolData::GetSymbolFromVal(get(path[0] + p))) == NegationStart) //TODO: Check the variant
+			negationStart = true;
+	}
 	bool success = true;
 	for (int x = 1; x < width; x += 2) {
 		for (int y = 1; y < height; y += 2) {
 			int symbol = get(x, y);
-			if (getType(symbol) != Custom && getType(symbol) != Poly) continue; //Skip non-custom symbols
-			if (!checkSymbol({ x, y })) {
+			//if (getType(symbol) != Custom && getType(symbol) != Poly) continue; //Skip non-custom symbols
+			if (getType(symbol) == None || getType(symbol) == Eraser) continue; //TODO: How to handle erasers with custom regions?
+			if (getCustomType(SymbolData::GetSymbolFromVal(symbol)) == NegationStart) continue;
+			if (checkSymbol({ x, y }) == negationStart) {
 				if (!flash) return false;
 				//memory->LogDebug("Symbol at %d, %d NOT valid", x, y);
 				memory->WriteToArray(id, DECORATION_FLAGS, pointToDecorationIndex(x, y), 1);
@@ -402,7 +411,7 @@ bool Panel::checkCustomSymbols(bool flash) {
 			}
 		}
 	}
-	memory->WritePanelData<int>(id, STYLE_FLAGS, memory->ReadPanelData<int>(id, STYLE_FLAGS) & ~HAS_SHAPERS);
+	memory->WritePanelData<int>(id, STYLE_FLAGS, memory->ReadPanelData<int>(id, STYLE_FLAGS) & (HAS_DOTS | HAS_ERASERS));
 	return success;
 }
 
@@ -454,11 +463,28 @@ bool Panel::checkSymbol(Point pos, int symbol) {
 
 bool Panel::checkStone(Point pos, int symbol) {
 	std::set<Point> region = getRegion(pos);
+	std::map<int, int> colors;
 	for (Point p : region) {
 		int sym = get(p);
-		if (getType(sym) == Stone && getColor(sym) != getColor(symbol)) return false;
+		if (getType(sym) == Stone) {
+			int color = getColor(sym);
+			if (colors.find(color) == colors.end()) {
+				colors[color] = 1;
+			}
+			else colors[color]++;
+		}
 	}
-	return true;
+	int maxColor = -1, maxCount = 0;
+	for (auto p : colors) {
+		if (p.second > maxCount) {
+			maxCount = p.second;
+			maxColor = p.first;
+		}
+		else if (p.second == maxCount) {
+			maxColor = -1;
+		}
+	}
+	return getColor(symbol) == maxColor;
 }
 
 bool Panel::checkStar(Point pos, int symbol) {

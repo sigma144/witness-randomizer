@@ -67,6 +67,7 @@ enum Symbol : int {
 	CircularArrowCW = 0x106700,
 	CircularArrowCCW = 0x206700,
 	Ghost = 0x7700,
+	NegationStart = 0x8700,
 };
 
 enum SymbolColor {

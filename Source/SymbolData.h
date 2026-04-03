@@ -57,13 +57,18 @@ enum SymbolID : int { //This list, SYMBOL_TYPES, and Symbol enums must have the 
 
 	GHOST = 0x49,
 
+	NEGATION_START_00 = 0x4A,
+	NEGATION_START_01 = 0x4B,
+	NEGATION_START_10 = 0x4C,
+	NEGATION_START_11 = 0x4D,
+
 	BigSquare, // For testing
 
 	NUM_SYMBOLS, // Must be last
 };
 
 inline constexpr SymbolID SYMBOL_TYPES[] = { ARROW1E, ANTITRIANGLE1, CAVE1, MINESWEEPER0, FLOWER, DART1E,
-	CIRCLEARROW_CW, GHOST, BigSquare };
+	CIRCLEARROW_CW, GHOST, NEGATION_START_00, BigSquare };
 
 class SymbolData {
 public:
@@ -115,4 +120,6 @@ private:
 	static void AddDarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddCircleArrow(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
 	static void AddGhost(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	static void AddNegationStarts(std::array<std::vector<Shape>, SymbolID::NUM_SYMBOLS>& data);
+	//Remember to actually call these functions in GetAllShapes
 };

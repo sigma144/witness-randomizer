@@ -33,7 +33,7 @@ SymbolsWatchdog::SymbolsWatchdog() : Watchdog(0.1f) {
 void SymbolsWatchdog::action() {
 	PanelID active = memory->GetActivePanel();
 	if (active != id) {
-		if (active == -1 && (ReadPanelData<int>(id, STYLE_FLAGS) & (HAS_CUSTOM | HAS_SHAPERS))
+		if (active == -1 //&& (ReadPanelData<int>(id, STYLE_FLAGS) & (HAS_CUSTOM | HAS_SHAPERS))
 			&& ReadPanelData<int>(id, ERASER_ACTIVE)) {
 			initPath();
 			(new EraserWatchdog(id, panel, sequenceArray))->start();
@@ -69,7 +69,7 @@ void SymbolsWatchdog::action() {
 	bool success = panel.checkCustomSymbols(true);
 	WritePanelData<uintptr_t>(id, SEQUENCE, success ? 0 : sequenceArray);
 	panel.setGrid(backupGrid);
-	//memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
+	memory->LogDebug("Puzzle is overall %s", (success ? "VALID" : "INVALID"));
 }
 
 void SymbolsWatchdog::initPath() {

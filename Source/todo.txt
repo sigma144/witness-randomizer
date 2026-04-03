@@ -2,12 +2,11 @@ TODO LIST FOR 2.0
 
 BUGS / INCOMPLETE FEATURES:
 
-Ghost:
-- Make it look better / give eyes?
-Circular Arrow:
-- Make it look more circular
+Fix watchdog with mid-segment starts
+Fix visuals on ghost, circular arrow, negation start
 Eraser:
-- Combined eraser support?
+	Combined eraser support?
+	FIgure out interactions with negation start
 Fix metapuzzle rotated shape not getting placed sometimes
 Restore colorblind mode
 
